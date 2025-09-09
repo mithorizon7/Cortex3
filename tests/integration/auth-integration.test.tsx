@@ -69,8 +69,8 @@ describe('Firebase Auth Integration', () => {
     // The component should handle the missing config gracefully
     // Since Firebase is not configured, it should show an error state
     await waitFor(() => {
-      // The button should still be there, possibly in error state
-      expect(screen.getByTestId('auth-button-sign-in')).toBeInTheDocument();
+      // The button should change to error state when Firebase is not configured
+      expect(screen.getByTestId('auth-button-error')).toBeInTheDocument();
     }, { timeout: 3000 });
   });
 

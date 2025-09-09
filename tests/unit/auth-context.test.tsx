@@ -4,17 +4,16 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { AuthProvider, useAuth } from '../../client/src/contexts/auth-context';
 
 // Mock Firebase modules
-const mockSignInWithGoogle = vi.fn();
-const mockSignOut = vi.fn();
-const mockHandleRedirectResult = vi.fn();
-const mockOnAuthStateChange = vi.fn();
-
 vi.mock('../../client/src/lib/firebase', () => ({
-  signInWithGoogle: mockSignInWithGoogle,
-  signOut: mockSignOut,
-  handleRedirectResult: mockHandleRedirectResult,
-  onAuthStateChange: mockOnAuthStateChange,
+  signInWithGoogle: vi.fn(),
+  signOut: vi.fn(),
+  handleRedirectResult: vi.fn().mockResolvedValue(null),
+  onAuthStateChange: vi.fn((callback) => {
+    setTimeout(() => callback(null), 0);
+    return vi.fn();
+  }),
   getAuthErrorMessage: (error: any) => error.message || 'Generic error',
+  isFirebaseConfigured: vi.fn(() => true),
 }));
 
 // Test component to access auth context
@@ -37,14 +36,20 @@ const TestComponent = () => {
 };
 
 describe('AuthContext', () => {
-  beforeEach(() => {
+  let mockSignInWithGoogle: any;
+  let mockSignOut: any;
+  let mockHandleRedirectResult: any;
+  let mockOnAuthStateChange: any;
+
+  beforeEach(async () => {
     vi.clearAllMocks();
-    mockHandleRedirectResult.mockResolvedValue(null);
-    mockOnAuthStateChange.mockImplementation((callback) => {
-      // Simulate initial auth state check
-      setTimeout(() => callback(null), 0);
-      return vi.fn(); // Return unsubscribe function
-    });
+    
+    // Get mocked functions after they're set up
+    const firebase = await import('../../client/src/lib/firebase');
+    mockSignInWithGoogle = firebase.signInWithGoogle;
+    mockSignOut = firebase.signOut;
+    mockHandleRedirectResult = firebase.handleRedirectResult;
+    mockOnAuthStateChange = firebase.onAuthStateChange;
   });
 
   afterEach(() => {
