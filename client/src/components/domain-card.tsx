@@ -7,6 +7,7 @@ interface DomainCardProps {
   stage: number;
   priority?: number;
   contextReason?: string;
+  contextGuidance?: any;
 }
 
 const DOMAIN_GUIDANCE = {
@@ -102,10 +103,10 @@ const DOMAIN_GUIDANCE = {
   }
 };
 
-export default function DomainCard({ pillar, stage, priority, contextReason }: DomainCardProps) {
+export default function DomainCard({ pillar, stage, priority, contextReason, contextGuidance }: DomainCardProps) {
   const pillarInfo = CORTEX_PILLARS[pillar as keyof typeof CORTEX_PILLARS];
   const stageInfo = MATURITY_STAGES[stage];
-  const guidance = DOMAIN_GUIDANCE[pillar as keyof typeof DOMAIN_GUIDANCE];
+  const guidance = contextGuidance?.[pillar] || DOMAIN_GUIDANCE[pillar as keyof typeof DOMAIN_GUIDANCE];
   
   if (!pillarInfo || !stageInfo || !guidance) return null;
 
@@ -142,14 +143,14 @@ export default function DomainCard({ pillar, stage, priority, contextReason }: D
           <div>
             <h4 className="font-medium mb-2 text-primary">Why This Matters</h4>
             <p className="text-sm text-muted-foreground">
-              {guidance.whyMatters}
+              {guidance.why_it_matters || guidance.whyMatters}
             </p>
           </div>
           
           <div>
             <h4 className="font-medium mb-2 text-primary">What Good Looks Like</h4>
             <ul className="text-sm text-muted-foreground space-y-1">
-              {guidance.whatGoodLooks.map((item, index) => (
+              {(guidance.what_good_looks_like || guidance.whatGoodLooks || []).map((item: string, index: number) => (
                 <li key={index}>• {item}</li>
               ))}
             </ul>
@@ -158,10 +159,19 @@ export default function DomainCard({ pillar, stage, priority, contextReason }: D
           <div>
             <h4 className="font-medium mb-2 text-primary">How to Improve</h4>
             <ul className="text-sm text-muted-foreground space-y-1">
-              {guidance.howToImprove.map((item, index) => (
+              {(guidance.how_to_improve || guidance.howToImprove || []).map((item: string, index: number) => (
                 <li key={index}>• <strong>{item.split(' ')[0]} {item.split(' ')[1]}</strong> {item.split(' ').slice(2).join(' ')}</li>
               ))}
             </ul>
+            
+            {/* Context-specific priority note */}
+            {guidance.priority_note && (
+              <p className="text-xs text-blue-700 mt-2 bg-blue-50 dark:bg-blue-950 p-2 rounded">
+                <i className="fas fa-star mr-1"></i>
+                <strong>Context Priority:</strong> {guidance.priority_note}
+              </p>
+            )}
+            
             {contextReason && (
               <p className="text-xs text-amber-700 mt-2 bg-amber-50 dark:bg-amber-950 p-2 rounded">
                 <i className="fas fa-info-circle mr-1"></i>

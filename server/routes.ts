@@ -80,10 +80,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         assessment.contextProfile,
         assessment.pillarScores
       );
+      
+      const contentTags = generateContentTags(assessment.contextProfile);
+      const contextGuidance: any = {};
+      
+      // Generate context-aware guidance for each pillar
+      Object.keys(assessment.pillarScores).forEach(pillar => {
+        contextGuidance[pillar] = generateContextAwareGuidance(
+          pillar, 
+          assessment.pillarScores[pillar], 
+          contentTags
+        );
+      });
 
       const completed = await storage.updateAssessment(req.params.id, {
         triggeredGates,
         priorityMoves,
+        contentTags,
+        contextGuidance,
         completedAt: new Date().toISOString(),
       });
 
@@ -568,4 +582,210 @@ function generatePriorityMoves(contextProfile: any, pillarScores: any) {
   });
   
   return priorityMovesByPillar;
+}
+
+// Content Routing - Generate content tags based on context profile
+function generateContentTags(contextProfile: any) {
+  const tags = [];
+  
+  // Risk and compliance tags
+  if (contextProfile.regulatory_intensity >= 3) {
+    tags.push('regulated');
+  }
+  if (contextProfile.safety_criticality >= 3) {
+    tags.push('high_safety');
+  }
+  if (contextProfile.data_sensitivity >= 3) {
+    tags.push('high_sensitivity');
+  }
+  if (contextProfile.brand_exposure >= 3) {
+    tags.push('brand_critical');
+  }
+  
+  // Operational context tags
+  if (contextProfile.clock_speed >= 3) {
+    tags.push('fast_pace');
+  }
+  if (contextProfile.latency_edge >= 3) {
+    tags.push('edge_computing');
+  }
+  if (contextProfile.scale_throughput >= 3) {
+    tags.push('hyperscale');
+  }
+  
+  // Capability and readiness tags
+  if (contextProfile.data_advantage >= 3) {
+    tags.push('data_advantage');
+  }
+  if (contextProfile.build_readiness <= 1) {
+    tags.push('low_readiness');
+  } else if (contextProfile.build_readiness >= 3) {
+    tags.push('high_readiness');
+  }
+  if (contextProfile.finops_priority >= 3) {
+    tags.push('finops_strict');
+  }
+  
+  // Organizational constraints
+  if (contextProfile.procurement_constraints) {
+    tags.push('public_procurement');
+  }
+  if (contextProfile.edge_operations) {
+    tags.push('edge_operations');
+  }
+  
+  return tags;
+}
+
+// Enhanced domain guidance with context-aware content
+function generateContextAwareGuidance(pillar: string, stage: number, contentTags: string[]) {
+  const baseGuidance: any = {
+    'C': {
+      name: 'Clarity & Command',
+      why_it_matters: 'Clear AI strategy and accountable leadership prevent pilot sprawl and align resources to high-impact initiatives.',
+      what_good_looks_like: [
+        'Written AI vision tied to measurable business outcomes',
+        'Named senior AI leader (CAIO) with budget authority',
+        'Quarterly executive reviews that reallocate resources'
+      ],
+      how_to_improve: [
+        'Publish a one-page AI ambition with 3-5 success metrics',
+        'Assign dedicated AI leader with P&L responsibility',
+        'Schedule quarterly "AI performance vs. plan" reviews',
+        'Define clear CoE (enable) vs BU (deliver) roles'
+      ]
+    },
+    'O': {
+      name: 'Operations & Data',
+      why_it_matters: 'Production-ready AI requires reliable deployment, monitoring, and governed data to deliver consistent business value.',
+      what_good_looks_like: [
+        'Documented AI lifecycle with performance monitoring',
+        'Data catalog with quality metrics and clear ownership',
+        'Use-case intake process with value/feasibility gates'
+      ],
+      how_to_improve: [
+        'Implement basic MLOps pipeline with monitoring',
+        'Create searchable data catalog with stewards',
+        'Design intake form focusing on business impact',
+        'Set up drift detection and alerting systems'
+      ]
+    },
+    'R': {
+      name: 'Risk, Trust & Security',
+      why_it_matters: 'AI safety, fairness, and security protect brand reputation, ensure compliance, and maintain stakeholder trust.',
+      what_good_looks_like: [
+        'Complete AI system inventory with risk levels',
+        'Regular bias testing and security red-teaming',
+        'Tested incident response plan and governance reviews'
+      ],
+      how_to_improve: [
+        'Create AI inventory with risk owners and controls',
+        'Implement bias testing for customer-facing systems',
+        'Develop AI incident response playbook',
+        'Schedule annual governance review process'
+      ]
+    },
+    'T': {
+      name: 'Talent & Culture',
+      why_it_matters: 'AI adoption requires people with right skills and redesigned workflows that embed AI into daily work effectively.',
+      what_good_looks_like: [
+        'Role-based AI training programs across functions',
+        'Updated job descriptions and SOPs including AI',
+        'Regular sharing of AI wins and lessons learned'
+      ],
+      how_to_improve: [
+        'Map AI skills needed by role and create training',
+        'Redesign key workflows with human-AI handoffs',
+        'Establish AI champions network across BUs',
+        'Update incentives to reward safe AI adoption'
+      ]
+    },
+    'E': {
+      name: 'Ecosystem & Infrastructure',
+      why_it_matters: 'Scalable, flexible AI infrastructure and partnerships enable growth without lock-in or capacity constraints.',
+      what_good_looks_like: [
+        'Right-sized compute with cost monitoring and scaling',
+        'Multi-vendor strategy with documented exit plans',
+        'Secure, governed external data sharing mechanisms'
+      ],
+      how_to_improve: [
+        'Implement AI FinOps with cost tracking by project',
+        'Evaluate vendor portfolio and exit strategies',
+        'Set up secure API-based data sharing',
+        'Plan for elastic capacity and budget controls'
+      ]
+    },
+    'X': {
+      name: 'Experimentation & Evolution',
+      why_it_matters: 'Systematic experimentation and learning velocity prevent pilot purgatory and accelerate AI innovation.',
+      what_good_looks_like: [
+        'Safe sandbox environment for rapid AI prototyping',
+        'Reserved budget and time for high-uncertainty projects',
+        'Clear success/sunset criteria ending pilot purgatory'
+      ],
+      how_to_improve: [
+        'Create guarded sandbox with synthetic datasets',
+        'Reserve 10-20% of AI budget for exploration',
+        'Set decision dates and go/no-go criteria',
+        'Track technology trends and competitor moves'
+      ]
+    }
+  };
+  
+  let guidance = { ...baseGuidance[pillar] };
+  
+  // Context-aware modifications
+  if (contentTags.includes('regulated')) {
+    if (pillar === 'R') {
+      guidance.how_to_improve.unshift('Implement monthly compliance monitoring dashboards');
+      guidance.priority_note = 'Regulatory environment requires enhanced risk controls';
+    }
+    if (pillar === 'O') {
+      guidance.how_to_improve.push('Add audit trails for all AI decision paths');
+    }
+  }
+  
+  if (contentTags.includes('high_safety')) {
+    if (pillar === 'R') {
+      guidance.how_to_improve.unshift('Implement human-in-the-loop for safety-critical decisions');
+    }
+    if (pillar === 'O') {
+      guidance.how_to_improve.push('Add safety circuit breakers and fail-safe mechanisms');
+    }
+  }
+  
+  if (contentTags.includes('low_readiness')) {
+    if (pillar === 'C') {
+      guidance.how_to_improve.unshift('Start with vendor solutions before building internally');
+      guidance.priority_note = 'Focus on buy-first strategy given current capabilities';
+    }
+    if (pillar === 'T') {
+      guidance.how_to_improve.unshift('Begin with basic AI literacy training across all roles');
+    }
+  }
+  
+  if (contentTags.includes('high_readiness')) {
+    if (pillar === 'O') {
+      guidance.how_to_improve.push('Implement advanced MLOps with automated testing');
+    }
+    if (pillar === 'X') {
+      guidance.how_to_improve.push('Explore cutting-edge AI research and techniques');
+    }
+  }
+  
+  if (contentTags.includes('finops_strict')) {
+    if (pillar === 'E') {
+      guidance.how_to_improve.unshift('Implement strict cost controls and budget alerts');
+      guidance.priority_note = 'Cost control is critical for your organization';
+    }
+  }
+  
+  if (contentTags.includes('fast_pace')) {
+    if (pillar === 'X') {
+      guidance.how_to_improve.unshift('Set up weekly AI trend monitoring and response');
+      guidance.priority_note = 'Rapid market changes require agile AI strategy';
+    }
+  }
+  
+  return guidance;
 }

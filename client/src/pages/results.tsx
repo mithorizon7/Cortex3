@@ -115,6 +115,8 @@ export default function ResultsPage() {
   const pillarScores = assessment.pillarScores as PillarScores;
   const triggeredGates = (assessment.triggeredGates as any[]) || [];
   const priorityMoves = (assessment.priorityMoves as any) || {};
+  const contextGuidance = (assessment.contextGuidance as any) || {};
+  const contentTags = (assessment.contentTags as any[]) || [];
   const priorities = getPriorityLevel(pillarScores, assessment.contextProfile as ContextProfile);
   
   const strengths = Object.entries(pillarScores).filter(([_, score]) => score >= 2);
@@ -399,6 +401,7 @@ export default function ResultsPage() {
                     stage={stage as number}
                     priority={priority}
                     contextReason={contextReason}
+                    contextGuidance={contextGuidance}
                   />
                 );
               })}
