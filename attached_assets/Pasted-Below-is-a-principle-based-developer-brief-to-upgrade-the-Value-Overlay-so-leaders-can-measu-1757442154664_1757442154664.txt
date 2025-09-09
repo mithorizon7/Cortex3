@@ -1,0 +1,251 @@
+Below is a **principle‑based developer brief** to upgrade the “Value Overlay” so leaders can **measure impact** without overwhelming them or narrowing to a single sector.
+
+---
+
+# CORTEX “Value Overlay” Upgrade — Developer Directions
+
+## 0) Context (what’s the problem and why it matters)
+
+**Problem:** Our current Results page focuses on **maturity** (scores and guidance) but gives leaders **little help measuring outcomes**. CORTEX promises a “Value Overlay”—simple, credible **metrics/KPIs** that show whether improving a pillar changes business results. Today, domain cards are qualitative; there’s no default metric, no baseline/target capture, and nothing carried into exports.
+
+**Why it matters:** Executives trust what they can **measure**. Lightweight, context‑aware metrics:
+
+* Turn guidance into **accountable goals**.
+* Enable **trend tracking** over quarters.
+* Keep the program focused on **business value**, not just capability maturity.
+
+**Constraints:** Audience is broad (all sectors/sizes). The overlay must be **universal, plain‑English, and optional**—no heavy integrations or bespoke analytics in v1.
+
+---
+
+## 1) CORTEX background you need (for quality)
+
+* **Six pillars (C‑O‑R‑T‑E‑X):** Clarity & Command, Operations & Data, Risk/Trust/Security, Talent & Culture, Ecosystem & Infrastructure, Experimentation & Evolution.
+* **Maturity scores (0–3)** come **only** from the 18‑item Pulse. **Do not alter scores** with context or metrics.
+* **Context Profile (12 sliders/flags)** tailors **gates** and **recommendation ordering**—it does **not** change scores.
+* **Results page** shows: gates (if any), Honeycomb radar (equal‑area rings), and Domain Cards (why/what good/how to improve).
+
+The Value Overlay must **sit alongside** these—not replace them.
+
+---
+
+## 2) Goal (what we’re building)
+
+Add a **Value Overlay** to the Results experience that:
+
+1. recommends **one default metric per pillar** (with 1–2 alternates),
+2. lets users **set a baseline and a 90‑day target** (optional),
+3. shows **how to measure** each metric in plain language, and
+4. includes selected metrics in the **export**.
+
+Everything stays **simple, generic, and context‑aware** (light tailoring), with **no external data integrations** in v1.
+
+---
+
+## 3) Principles (design guardrails)
+
+* **Universal, not sector‑specific.** Metrics must be understandable to any leader.
+* **One metric per pillar by default.** More can overwhelm; allow 1–2 alternates for power users.
+* **Leading + lagging balance.** Prefer operational signals that move in weeks (leading), not only annual P\&L (lagging).
+* **Attribution humility.** We don’t prove causality; we track **directional impact**. Include an “Attribution confidence” note if we add it later.
+* **Transparency.** Show why a default metric was selected (which context factor influenced it).
+* **Score‑neutrality.** Metrics **never** affect maturity scores.
+
+---
+
+## 4) UX changes (minimal but powerful)
+
+**A) On the Results page (each Domain Card):**
+
+* Add a **“Metric to track”** chip with:
+
+  * **Name** (e.g., “% use‑cases passing the value gate”)
+  * Short **why it matters** tooltip
+  * A **“Change”** link to pick an alternate from a small list
+* Beneath the chip, **optional fields**:
+
+  * **Baseline** (number + unit)
+  * **90‑day target** (number + unit)
+  * **Update cadence** (dropdown: monthly/quarterly)
+* A small **“How to measure”** link opens a micro‑guide (\~150–250 words) for that metric.
+
+**B) In the Summary block (top of Results):**
+
+* Add a **“Value Snapshot”** line:
+  “You selected 6 metrics (one per domain). Add baselines/targets to track progress next quarter.”
+
+**C) Export (PDF + JSON):**
+
+* Include the **selected metric per pillar**, baseline, target, and cadence in a dedicated **“Value Overlay”** section.
+
+---
+
+## 5) KPI library (starter set; keep it universal)
+
+> Use these as the **default set**. Each pillar has **1 canonical metric** (bold) and **2 alternates**. Provide plain definitions in tooltips/micro‑guides. Units/examples are generic.
+
+### C — Clarity & Command
+
+* **% strategic initiatives with explicit AI outcomes** (share of enterprise initiatives that specify measurable AI impact)
+* % reallocation decisions driven by AI results (per quarter)
+* % leadership reviews with AI on the agenda (per quarter)
+
+### O — Operations & Data
+
+* **% AI use‑cases passing the value gate** (approved after value/feasibility screening)
+* p95 latency or service availability of AI endpoints (end‑to‑end)
+* **Drift incidents** acknowledged and resolved (per quarter)
+
+### R — Risk, Trust, Security & Assurance
+
+* **AI incidents mean time to resolve (MTTR)** (hours/days)
+* % high‑impact AI systems with **HITL** active
+* **Audit/assurance pass rate** (internal/external reviews within the past 12 months)
+
+### T — Talent & Culture
+
+* **% target roles actively using AI weekly** (adoption in roles we expect to use AI)
+* % target roles trained in last 12 months (role‑based)
+* % redesigned SOPs/tasks that embed AI + checkpoints
+
+### E — Ecosystem & Infrastructure
+
+* **Unit cost of AI** (e.g., cost per 1k tokens/call) with trend direction
+* **Quota/limit breach rate** (e.g., 429s or licence caps hit per month)
+* % critical paths with **dual vendor/region** readiness tested
+
+### X — Experimentation & Evolution
+
+* **Pilot throughput** (ideas → pilots → decisions per quarter)
+* **% pilots retired on schedule** (sunset logic honored)
+* **Time‑to‑learning** (median days from pilot start to decision)
+
+> Keep these metric names short and neutral. Tooltips/micro‑guides provide detail.
+
+---
+
+## 6) Context‑aware default selection (simple rules)
+
+**Default metric per pillar** can adapt (lightly) to the Context Profile. Use small, transparent rules:
+
+* If **regulatory\_intensity ≥ 3** or **safety\_criticality ≥ 3** →
+
+  * R default = **AI incidents MTTR**; alt = HITL coverage, Audit pass rate.
+  * O alternate suggestion = **Drift incidents** (surface early).
+
+* If **clock\_speed ≥ 3** →
+
+  * X default = **Pilot throughput**; alt = Time‑to‑learning.
+
+* If **scale\_throughput ≥ 3** or **latency\_edge ≥ 3** →
+
+  * O default = **p95 latency/availability**; alt = value‑gate pass %.
+
+* If **data\_sensitivity ≥ 3** →
+
+  * R alternate = **Audit/assurance pass rate**.
+
+* If **build\_readiness ≤ 1** →
+
+  * T default = **% target roles using AI weekly** (adoption focus).
+  * E alternate = **unit cost** (FinOps discipline as they start with buy).
+
+* If **finops\_priority ≥ 3** →
+
+  * E default = **unit cost**.
+
+**UX:** Show a tiny “Why this metric?” hint that lists the triggering context factor(s).
+
+---
+
+## 7) Data model (minimal, future‑proof)
+
+Add to the assessment record:
+
+```json
+{
+  "value_overlay": {
+    "C": {"metric_id":"c_initiatives_ai_outcomes","name":"% initiatives with AI outcomes","baseline":null,"target":null,"unit":"%","cadence":"quarterly"},
+    "O": {"metric_id":"o_value_gate_pass","name":"% use-cases passing value gate","baseline":null,"target":null,"unit":"%","cadence":"monthly"},
+    "R": {"metric_id":"r_mttr","name":"AI incidents MTTR","baseline":null,"target":null,"unit":"hours","cadence":"monthly"},
+    "T": {"metric_id":"t_adoption","name":"% target roles using AI weekly","baseline":null,"target":null,"unit":"%","cadence":"monthly"},
+    "E": {"metric_id":"e_unit_cost","name":"Unit cost of AI","baseline":null,"target":null,"unit":"$ per 1k tokens/call","cadence":"monthly"},
+    "X": {"metric_id":"x_pilot_throughput","name":"Pilot throughput","baseline":null,"target":null,"unit":"# per quarter","cadence":"quarterly"}
+  }
+}
+```
+
+Maintain a small **metric catalog** with: `metric_id`, `pillar`, `name`, `definition`, `unit_hint`, `how_to_measure` text, and `tags` (e.g., `regulated`, `finops`).
+
+---
+
+## 8) Content: “How to measure” micro‑guides (150–250 words each)
+
+For each catalog metric provide:
+
+* **Definition** (what exactly we’re counting)
+* **Scope** (what’s in/out)
+* **How to get it** (manual tally or typical systems)
+* **Quality note** (e.g., end‑to‑end vs API‑only; avoid vanity measures)
+* **Cadence** (monthly/quarterly)
+
+Keep examples neutral (no vendor names required). We can add sector variants later.
+
+---
+
+## 9) Acceptance criteria (v1)
+
+1. Each Domain Card shows **one default metric** with a short tooltip and a **Change** option.
+2. Users can optionally enter **baseline**, **90‑day target**, and **cadence** per metric.
+3. Default metric selection **adapts** to context profile using the rules above, with a visible “Why this metric?” explanation.
+4. **Export** includes a “Value Overlay” section with selected metrics and any baseline/target entered.
+5. No external integrations required; all fields are simple numbers + units.
+6. Maturity scores remain **unchanged**; Value Overlay is purely additive.
+
+---
+
+## 10) Non‑goals (for now)
+
+* No benchmarking or peer comparisons on metrics.
+* No automated data ingestion from third‑party systems.
+* No composite “Impact score.” (We can add later if needed.)
+* No per‑use‑case ROI calculator (out of scope for v1).
+
+---
+
+## 11) Rollout plan (1–2 sprints)
+
+**Sprint 1**
+
+* Metric catalog + selection logic (context‑aware defaults).
+* UI: metric chip + change dialog + baseline/target fields.
+* Tooltips + 6–8 micro‑guides (start with canonicals).
+* Export updates.
+
+**Sprint 2**
+
+* Remaining micro‑guides (alternates).
+* Value Snapshot in summary.
+* Telemetry & polish.
+
+---
+
+## 12) Telemetry (to learn and improve)
+
+Log (no PII): `metric.default_shown`, `metric.changed`, `metric.baseline_set`, `metric.target_set`, `export.value_overlay_included`.
+Later, we can see which metrics resonate and refine defaults.
+
+---
+
+## 13) Risks & mitigations
+
+* **Too many choices → paralysis.** Limit to **1 default + 2 alternates** per pillar.
+* **Over‑precision temptation.** Keep units simple; no decimals required.
+* **Attribution confusion.** Add a small note in the micro‑guide: “This tracks directional impact; not pure causality.”
+* **Sector mismatch.** Use neutral names; rely on the **context rules** to nudge domain emphasis rather than invent sector‑specific metrics.
+
+---
+
+### Bottom line
+
+This upgrade keeps CORTEX **universal and lightweight**, but makes it **measurable**—one metric per pillar, context‑aware defaults, optional baselines/targets, and a clear “how to measure.” It reinforces credibility with executives and sets us up for future iterations (trend charts, benchmarks, integrations) without overbuilding now.
