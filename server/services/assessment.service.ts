@@ -53,13 +53,45 @@ export class AssessmentService {
   }
   
   /**
-   * Update assessment data (e.g., value overlay)
+   * Update assessment data (e.g., value overlay, pulse responses, pillar scores)
    */
   async updateAssessmentData(assessmentId: string, data: any): Promise<Assessment | null> {
     const updateData: any = {};
     
+    // Handle value overlay updates
     if (data.valueOverlay) {
       updateData.valueOverlay = data.valueOverlay;
+    }
+    
+    // Handle pulse responses updates
+    if (data.pulseResponses) {
+      updateData.pulseResponses = data.pulseResponses;
+    }
+    
+    // Handle pillar scores updates
+    if (data.pillarScores) {
+      updateData.pillarScores = data.pillarScores;
+    }
+    
+    // Handle other fields
+    if (data.triggeredGates) {
+      updateData.triggeredGates = data.triggeredGates;
+    }
+    
+    if (data.priorityMoves) {
+      updateData.priorityMoves = data.priorityMoves;
+    }
+    
+    if (data.contentTags) {
+      updateData.contentTags = data.contentTags;
+    }
+    
+    if (data.contextGuidance) {
+      updateData.contextGuidance = data.contextGuidance;
+    }
+    
+    if (data.completedAt) {
+      updateData.completedAt = data.completedAt;
     }
     
     const assessment = await storage.updateAssessment(assessmentId, updateData);
@@ -74,7 +106,7 @@ export class AssessmentService {
     logger.info('Assessment data updated', {
       additionalContext: {
         assessmentId,
-        hasValueOverlay: !!data.valueOverlay,
+        updateKeys: Object.keys(updateData),
         operation: 'update_assessment_data'
       }
     });
