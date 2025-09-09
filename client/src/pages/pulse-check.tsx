@@ -9,7 +9,7 @@ import ProgressHeader from "@/components/progress-header";
 import { PULSE_QUESTIONS, CORTEX_PILLARS } from "@/lib/cortex";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { ChevronLeft, ChevronRight, CheckCircle, XCircle, Clock, Target } from "lucide-react";
+import { ChevronLeft, ChevronRight, CheckCircle, XCircle, HelpCircle, Clock, Target } from "lucide-react";
 
 // Group questions by pillar for domain-based flow
 const DOMAIN_GROUPS = [
@@ -26,7 +26,7 @@ export default function PulseCheckPage() {
   const { toast } = useToast();
   const assessmentId = window.location.pathname.split('/')[2];
   
-  const [responses, setResponses] = useState<Record<string, boolean>>({});
+  const [responses, setResponses] = useState<Record<string, boolean | null>>({});
   const [currentDomain, setCurrentDomain] = useState(0);
   
   const { data: assessment, isLoading } = useQuery({
@@ -51,7 +51,7 @@ export default function PulseCheckPage() {
     },
   });
 
-  const handleResponseChange = (questionId: string, value: boolean) => {
+  const handleResponseChange = (questionId: string, value: boolean | null) => {
     setResponses(prev => ({
       ...prev,
       [questionId]: value
@@ -71,7 +71,11 @@ export default function PulseCheckPage() {
   };
 
   const handleComplete = () => {
-    updatePulse.mutate(responses);
+    // Convert responses: null (unsure) becomes false for scoring, but we track it was "unsure"
+    const scoringResponses = Object.fromEntries(
+      Object.entries(responses).map(([key, value]) => [key, value === true])
+    );
+    updatePulse.mutate(scoringResponses);
   };
 
   const currentGroup = DOMAIN_GROUPS[currentDomain];
@@ -167,12 +171,12 @@ export default function PulseCheckPage() {
                     {question.id}. {question.text}
                   </h3>
                   
-                  <div className="flex justify-center space-x-6">
+                  <div className="flex justify-center space-x-4">
                     <Button
                       variant={responses[question.id] === false ? "destructive" : "outline"}
                       size="lg"
                       onClick={() => handleResponseChange(question.id, false)}
-                      className="flex items-center space-x-2 min-w-[120px]"
+                      className="flex items-center space-x-2 min-w-[100px]"
                       data-testid={`button-no-${question.id}`}
                     >
                       <XCircle className="h-5 w-5" />
@@ -180,10 +184,21 @@ export default function PulseCheckPage() {
                     </Button>
                     
                     <Button
+                      variant={responses[question.id] === null ? "secondary" : "outline"}
+                      size="lg"
+                      onClick={() => handleResponseChange(question.id, null)}
+                      className="flex items-center space-x-2 min-w-[100px]"
+                      data-testid={`button-unsure-${question.id}`}
+                    >
+                      <HelpCircle className="h-5 w-5" />
+                      <span>Unsure</span>
+                    </Button>
+                    
+                    <Button
                       variant={responses[question.id] === true ? "default" : "outline"}
                       size="lg"
                       onClick={() => handleResponseChange(question.id, true)}
-                      className="flex items-center space-x-2 min-w-[120px]"
+                      className="flex items-center space-x-2 min-w-[100px]"
                       data-testid={`button-yes-${question.id}`}
                     >
                       <CheckCircle className="h-5 w-5" />
@@ -194,10 +209,10 @@ export default function PulseCheckPage() {
                   {responses[question.id] !== undefined && (
                     <div className="text-center mt-4">
                       <Badge 
-                        variant={responses[question.id] ? "default" : "destructive"}
+                        variant={responses[question.id] === true ? "default" : responses[question.id] === false ? "destructive" : "secondary"}
                         className="text-sm"
                       >
-                        {responses[question.id] ? 'Yes' : 'No'}
+                        {responses[question.id] === true ? 'Yes' : responses[question.id] === false ? 'No' : 'Unsure'}
                       </Badge>
                     </div>
                   )}
