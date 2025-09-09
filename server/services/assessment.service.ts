@@ -568,7 +568,7 @@ export class AssessmentService {
     
     // Generate specific recommendations based on weak pillars
     Object.entries(pillarScores).forEach(([pillar, score]) => {
-      if (score < 2) { // Weak pillar
+      if (typeof score === 'number' && score < 2) { // Weak pillar
         switch (pillar) {
           case 'C':
             guidance.recommendations.push('Establish clear AI strategy and governance structure');

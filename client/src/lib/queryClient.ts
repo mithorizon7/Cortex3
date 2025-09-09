@@ -143,8 +143,8 @@ export async function apiRequest(
     };
     
     // Don't log sensitive request bodies for certain endpoints
-    if (!url.includes('/assessments')) {
-      errorContext.requestBody = data;
+    if (!url.includes('/assessments') && data) {
+      (errorContext as any).requestBody = data;
     }
     
     console.error(JSON.stringify(errorContext));
