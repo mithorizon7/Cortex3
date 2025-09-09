@@ -49,7 +49,7 @@ export default function ContextProfilePage() {
       return response.json();
     },
     onSuccess: (data) => {
-      navigate(`/pulse-check/${data.id}`);
+      navigate(`/profile-summary/${data.id}`);
     },
     onError: (error) => {
       console.error("Context profile error:", error);

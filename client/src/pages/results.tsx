@@ -210,7 +210,7 @@ export default function ResultsPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <ProgressHeader currentStep={3} />
+        <ProgressHeader currentStep={4} />
         <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <ResultsSkeleton />
         </main>
@@ -253,7 +253,7 @@ export default function ResultsPage() {
         onRetry={() => window.location.reload()} 
         showRetryButton={true}
       />
-      <ProgressHeader currentStep={3} />
+      <ProgressHeader currentStep={4} />
       
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Executive Header */}

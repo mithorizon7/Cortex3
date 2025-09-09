@@ -9,8 +9,9 @@ interface ProgressHeaderProps {
 export default function ProgressHeader({ currentStep, onExport }: ProgressHeaderProps) {
   const steps = [
     { id: 1, name: "Context Profile" },
-    { id: 2, name: "Pulse Check" },
-    { id: 3, name: "Results" }
+    { id: 2, name: "Profile Summary" },
+    { id: 3, name: "Pulse Check" },
+    { id: 4, name: "Results" }
   ];
 
   return (
