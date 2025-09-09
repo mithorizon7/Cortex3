@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PillarScores } from "@shared/schema";
 import { CORTEX_PILLARS, calculateRingRadius, getPillarPosition, getStageColor, MATURITY_STAGES } from "@/lib/cortex";
+import { BarChart3 } from "lucide-react";
 
 interface HoneycombRadarProps {
   pillarScores: PillarScores;
@@ -27,7 +28,7 @@ export default function HoneycombRadar({ pillarScores, className }: HoneycombRad
           onClick={() => setShowTable(!showTable)}
           data-testid="button-toggle-radar-view"
         >
-          <i className="fas fa-table mr-2"></i>
+          <BarChart3 className="h-4 w-4 mr-2" />
           {showTable ? 'Chart View' : 'Table View'}
         </Button>
       </div>

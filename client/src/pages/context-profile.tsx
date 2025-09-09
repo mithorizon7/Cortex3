@@ -48,9 +48,10 @@ export default function ContextProfilePage() {
       navigate(`/pulse-check/${data.id}`);
     },
     onError: (error) => {
+      console.error("Context profile error:", error);
       toast({
-        title: "Error",
-        description: "Failed to save context profile. Please try again.",
+        title: "Connection Error",
+        description: "Unable to save your responses. Please check your connection and try again.",
         variant: "destructive",
       });
     },

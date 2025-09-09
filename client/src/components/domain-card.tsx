@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { CORTEX_PILLARS, MATURITY_STAGES, getStageColor } from "@/lib/cortex";
+import { Star, Info, Target, Cog, Shield, Users, Network, Lightbulb } from "lucide-react";
 
 interface DomainCardProps {
   pillar: string;
@@ -129,7 +130,12 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
             className="text-white p-2 rounded-lg"
             style={{ backgroundColor: getStageColor(stage) }}
           >
-            <i className={`fas fa-${pillarInfo.icon} text-lg`}></i>
+            {pillar === 'C' && <Target className="h-5 w-5" />}
+            {pillar === 'O' && <Cog className="h-5 w-5" />}
+            {pillar === 'R' && <Shield className="h-5 w-5" />}
+            {pillar === 'T' && <Users className="h-5 w-5" />}
+            {pillar === 'E' && <Network className="h-5 w-5" />}
+            {pillar === 'X' && <Lightbulb className="h-5 w-5" />}
           </div>
           <div>
             <h3 className="font-semibold text-lg">{pillarInfo.name}</h3>
@@ -167,14 +173,14 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
             {/* Context-specific priority note */}
             {guidance.priority_note && (
               <p className="text-xs text-blue-700 mt-2 bg-blue-50 dark:bg-blue-950 p-2 rounded">
-                <i className="fas fa-star mr-1"></i>
+                <Star className="h-4 w-4 mr-1" />
                 <strong>Context Priority:</strong> {guidance.priority_note}
               </p>
             )}
             
             {contextReason && (
               <p className="text-xs text-amber-700 mt-2 bg-amber-50 dark:bg-amber-950 p-2 rounded">
-                <i className="fas fa-info-circle mr-1"></i>
+                <Info className="h-4 w-4 mr-1" />
                 <strong>Because:</strong> {contextReason}
               </p>
             )}

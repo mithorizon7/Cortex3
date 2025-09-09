@@ -255,9 +255,9 @@ export default function HomePage() {
               className="text-lg sm:text-xl px-8 sm:px-12 py-6 w-full sm:w-auto"
               data-testid="button-start-assessment-cta"
             >
-              <Zap className="h-5 h-6 w-5 w-6 mr-2" />
+              <Zap className="h-5 w-5 mr-2" />
               Start Your Assessment
-              <ArrowRight className="h-5 h-6 w-5 w-6 ml-2" />
+              <ArrowRight className="h-5 w-5 ml-2" />
             </Button>
             
             <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-6 text-sm text-muted-foreground">

@@ -332,7 +332,7 @@ export default function ResultsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="flex justify-center p-6">
-              <HoneycombRadar pillarScores={pillarScores} size={300} />
+              <HoneycombRadar pillarScores={pillarScores} />
             </CardContent>
           </Card>
 
@@ -463,8 +463,7 @@ export default function ResultsPage() {
                   <DomainCard 
                     key={key} 
                     pillar={key} 
-                    score={score}
-                    contextProfile={contextProfile}
+                    stage={score}
                   />
                 );
               })}
@@ -480,7 +479,7 @@ export default function ResultsPage() {
                 <Checkbox
                   id="quarterly-reminder"
                   checked={remindQuarterly}
-                  onCheckedChange={setRemindQuarterly}
+                  onCheckedChange={(checked) => setRemindQuarterly(checked === true)}
                 />
                 <label htmlFor="quarterly-reminder" className="text-sm">
                   Email me quarterly AI readiness updates
