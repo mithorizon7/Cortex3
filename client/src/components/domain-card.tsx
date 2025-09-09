@@ -1,7 +1,11 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { CORTEX_PILLARS, MATURITY_STAGES, getStageColor } from "@/lib/cortex";
-import { Star, Info, Target, Cog, Shield, Users, Network, Lightbulb, TrendingUp, ArrowRight } from "lucide-react";
+import { getMicroGuidesByPillar, getMicroGuidesByTags } from "@/lib/micro-guides";
+import { Star, Info, Target, Cog, Shield, Users, Network, Lightbulb, TrendingUp, ArrowRight, BookOpen, ChevronDown } from "lucide-react";
+import { useState } from "react";
 
 interface DomainCardProps {
   pillar: string;
@@ -118,9 +122,16 @@ const DOMAIN_GUIDANCE = {
 };
 
 export default function DomainCard({ pillar, stage, priority, contextReason, contextGuidance, priorityMoves }: DomainCardProps) {
+  const [showGuides, setShowGuides] = useState(false);
   const pillarInfo = CORTEX_PILLARS[pillar as keyof typeof CORTEX_PILLARS];
   const stageInfo = MATURITY_STAGES[stage];
   const guidance = contextGuidance?.[pillar] || DOMAIN_GUIDANCE[pillar as keyof typeof DOMAIN_GUIDANCE];
+  
+  // Get micro-guides for this pillar and context
+  const pillarGuides = getMicroGuidesByPillar(pillar);
+  const contextTags = contextGuidance?.contentTags || [];
+  const contextGuides = getMicroGuidesByTags(contextTags);
+  const relevantGuides = [...pillarGuides, ...contextGuides].slice(0, 2); // Show top 2 most relevant
   
   if (!pillarInfo || !stageInfo || !guidance) return null;
 
@@ -236,6 +247,52 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
                 ))}
               </div>
             </div>
+          )}
+          
+          {/* Micro-Guides */}
+          {relevantGuides.length > 0 && (
+            <Collapsible open={showGuides} onOpenChange={setShowGuides}>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="w-full justify-between p-2 h-auto">
+                  <div className="flex items-center space-x-2">
+                    <BookOpen className="h-4 w-4" />
+                    <span className="text-sm font-medium">Implementation Guides ({relevantGuides.length})</span>
+                  </div>
+                  <ChevronDown className={`h-3 w-3 transition-transform ${showGuides ? 'rotate-180' : ''}`} />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-3 mt-2">
+                {relevantGuides.map((guide) => (
+                  <div key={guide.id} className="bg-muted/30 p-3 rounded-lg border border-muted/50">
+                    <div className="flex items-start justify-between mb-2">
+                      <h5 className="font-medium text-sm">{guide.title}</h5>
+                      <Badge variant="outline" className="text-xs">
+                        {guide.steps.length} steps
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-2">{guide.overview}</p>
+                    
+                    {guide.steps.slice(0, 2).map((step) => (
+                      <div key={step.order} className="flex items-start space-x-2 text-xs mb-1">
+                        <div className="bg-primary text-primary-foreground rounded-full w-4 h-4 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
+                          {step.order}
+                        </div>
+                        <div>
+                          <span className="font-medium">{step.title}</span>
+                          <span className="text-muted-foreground ml-1">({step.timeframe})</span>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    {guide.steps.length > 2 && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        +{guide.steps.length - 2} more steps...
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </CollapsibleContent>
+            </Collapsible>
           )}
         </div>
       </CardContent>
