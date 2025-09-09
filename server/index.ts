@@ -2,13 +2,25 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { requestContextMiddleware, errorHandlerMiddleware } from "./middleware";
+import { corsMiddleware, rateLimitMiddleware, securityMiddleware, sanitizationMiddleware } from "./middleware/security";
 import { logger } from "./logger";
+import { APP_CONFIG } from "./constants";
 
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
 
-// Add request context middleware first
+// Security middleware first
+app.use(corsMiddleware);
+app.use(securityMiddleware);
+app.use(rateLimitMiddleware);
+
+// Body parsing with size limits
+app.use(express.json({ limit: APP_CONFIG.JSON_LIMIT }));
+app.use(express.urlencoded({ extended: false, limit: APP_CONFIG.URL_ENCODED_LIMIT }));
+
+// Input sanitization
+app.use(sanitizationMiddleware);
+
+// Request context middleware
 app.use(requestContextMiddleware);
 
 // Note: Request logging is now handled by requestContextMiddleware

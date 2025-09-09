@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { logger, generateRequestId } from './logger';
+import { generateIncidentId, createUserError, sanitizeErrorForUser } from './utils/incident';
+import { USER_ERROR_MESSAGES, HTTP_STATUS } from './constants';
 
 // Extend Express Request type to include our custom properties
 declare global {
@@ -66,10 +68,10 @@ export function requestContextMiddleware(req: Request, res: Response, next: Next
 }
 
 export function errorHandlerMiddleware(err: any, req: Request, res: Response, next: NextFunction) {
-  const status = err.status || err.statusCode || 500;
-  const message = err.message || "Internal Server Error";
+  const status = err.status || err.statusCode || HTTP_STATUS.INTERNAL_SERVER_ERROR;
+  const incidentId = generateIncidentId();
   
-  // Log the error with full context
+  // Log the error with full technical details and incident ID
   logger.error(
     `Unhandled error in request: ${req.method} ${req.path}`,
     err instanceof Error ? err : new Error(String(err)),
@@ -81,20 +83,29 @@ export function errorHandlerMiddleware(err: any, req: Request, res: Response, ne
         userId: req.userId,
         method: req.method,
         path: req.path,
-        statusCode: status
+        statusCode: status,
+        incidentId // Critical: Log incident ID for correlation
       }
     }
   );
 
-  // Don't expose internal errors to client in production
-  const clientMessage = status >= 500 && process.env.NODE_ENV === 'production' 
-    ? 'Internal Server Error' 
-    : message;
+  // Create user-friendly error response with incident ID
+  let userMessage: string;
+  
+  if (status >= 500) {
+    userMessage = USER_ERROR_MESSAGES.SERVER_ERROR;
+  } else if (status === HTTP_STATUS.NOT_FOUND) {
+    userMessage = USER_ERROR_MESSAGES.NOT_FOUND;
+  } else if (status === HTTP_STATUS.BAD_REQUEST || status === HTTP_STATUS.UNPROCESSABLE_ENTITY) {
+    userMessage = USER_ERROR_MESSAGES.VALIDATION_ERROR;
+  } else if (status === HTTP_STATUS.TOO_MANY_REQUESTS) {
+    userMessage = USER_ERROR_MESSAGES.RATE_LIMIT_ERROR;
+  } else {
+    userMessage = sanitizeErrorForUser(err);
+  }
 
-  res.status(status).json({ 
-    error: clientMessage,
-    requestId: req.requestId 
-  });
+  // Return user-friendly error with incident ID
+  res.status(status).json(createUserError(userMessage, incidentId, status));
   
   // Clear context
   logger.clearContext();
