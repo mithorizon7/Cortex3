@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Info, Edit3, HelpCircle } from 'lucide-react';
 import { getMetricsByPillar, getMetricById, getMetricContextExplanation, type Metric } from '@/lib/value-overlay';
+import { getMetricGuide } from '@/lib/metric-guides';
 import type { ValueOverlayPillar, ContextProfile } from '@shared/schema';
 
 interface ValueMetricChipProps {
@@ -199,6 +200,7 @@ interface HowToMeasureDialogProps {
 
 export function HowToMeasureDialog({ metric, children }: HowToMeasureDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const metricGuide = getMetricGuide(metric.id);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -221,16 +223,26 @@ export function HowToMeasureDialog({ metric, children }: HowToMeasureDialogProps
             </div>
           </div>
           
-          <div className="prose prose-sm max-w-none">
-            <div 
-              className="text-sm leading-relaxed"
-              dangerouslySetInnerHTML={{ 
-                __html: metric.howToMeasure
-                  .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                  .replace(/\n\n/g, '</p><p>')
-                  .replace(/^(.*)$/, '<p>$1</p>')
-              }} 
-            />
+          {metricGuide ? (
+            <div className="prose prose-sm max-w-none">
+              <div 
+                className="text-sm leading-relaxed"
+                dangerouslySetInnerHTML={{ 
+                  __html: metricGuide.content
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\n\n/g, '</p><p>')
+                    .replace(/^(.*)$/, '<p>$1</p>')
+                }} 
+              />
+            </div>
+          ) : (
+            <div className="text-sm text-muted-foreground">
+              <p>Detailed measurement guide for this metric is being prepared.</p>
+            </div>
+          )}
+          
+          <div className="text-xs text-muted-foreground pt-2 border-t">
+            <p><strong>Attribution note:</strong> This tracks directional impact; not pure causality.</p>
           </div>
         </div>
       </DialogContent>
