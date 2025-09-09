@@ -232,7 +232,7 @@ export default function PulseCheckPage() {
               variant="outline" 
               onClick={handlePrevious}
               disabled={currentDomain === 0}
-              className="flex items-center space-x-2"
+              className="flex items-center space-x-2 h-12 sm:h-auto"
               data-testid="button-previous"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -251,7 +251,7 @@ export default function PulseCheckPage() {
                 onClick={handleComplete}
                 disabled={totalAnswered < 18 || updatePulse.isPending}
                 size="lg"
-                className="flex items-center space-x-2 sm:hidden"
+                className="flex items-center space-x-2 sm:hidden h-12"
                 data-testid="button-complete-mobile"
               >
                 <span>{updatePulse.isPending ? "Generating..." : "Get Results"}</span>
@@ -261,7 +261,7 @@ export default function PulseCheckPage() {
               <Button 
                 onClick={handleNext}
                 size="lg"
-                className="flex items-center space-x-2 sm:hidden"
+                className="flex items-center space-x-2 sm:hidden h-12"
                 data-testid="button-next-mobile"
               >
                 <span>Next</span>

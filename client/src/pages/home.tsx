@@ -68,12 +68,12 @@ export default function HomePage() {
             <Badge variant="secondary" className="text-sm px-4 py-2 mb-6">
               Trusted by 500+ Executive Teams
             </Badge>
-            <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-6">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-foreground mb-6">
               CORTEX™ Executive
               <br />
               <span className="text-primary">AI Readiness</span> Assessment
             </h1>
-            <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed">
               A practical, executive-level framework to diagnose your AI readiness, align leadership around priorities, 
               and improve capabilities that drive business value with safety and speed.
             </p>
@@ -83,7 +83,7 @@ export default function HomePage() {
             <Button 
               size="lg" 
               onClick={startAssessment}
-              className="text-lg px-8 py-6 w-full sm:w-auto"
+              className="text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 w-full sm:w-auto h-14 sm:h-auto"
               data-testid="button-start-assessment"
             >
               <Clock className="h-5 w-5 mr-2" />

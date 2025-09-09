@@ -114,14 +114,14 @@ export default function ContextProfilePage() {
 
         {/* Current Screen */}
         <Card className="mb-8">
-          <CardContent className="p-8">
-            <div className="mb-8">
-              <h2 className="text-2xl font-bold text-foreground mb-2">{currentScreenData.title}</h2>
-              <p className="text-lg text-muted-foreground">{currentScreenData.subtitle}</p>
+          <CardContent className="p-4 sm:p-8">
+            <div className="mb-6 sm:mb-8">
+              <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">{currentScreenData.title}</h2>
+              <p className="text-base sm:text-lg text-muted-foreground">{currentScreenData.subtitle}</p>
             </div>
 
             <Form {...form}>
-              <div className="space-y-10">
+              <div className="space-y-8 sm:space-y-10">
                 {currentScreenData.questions.map((questionKey) => {
                   const item = CONTEXT_ITEMS.find(i => i.key === questionKey);
                   if (!item) return null;
@@ -133,10 +133,10 @@ export default function ContextProfilePage() {
                       name={item.key as keyof ContextProfile}
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xl font-semibold text-foreground">
+                          <FormLabel className="text-lg sm:text-xl font-semibold text-foreground">
                             {item.label}
                           </FormLabel>
-                          <p className="text-base text-muted-foreground mb-4">
+                          <p className="text-sm sm:text-base text-muted-foreground mb-4">
                             {item.description}
                           </p>
                           
@@ -248,7 +248,7 @@ export default function ContextProfilePage() {
               variant="outline" 
               onClick={handlePrevious}
               disabled={currentScreen === 0}
-              className="flex items-center space-x-2"
+              className="flex items-center space-x-2 h-12 sm:h-auto"
               data-testid="button-previous"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -266,7 +266,7 @@ export default function ContextProfilePage() {
                 onClick={form.handleSubmit(onSubmit)}
                 disabled={createAssessment.isPending}
                 size="lg"
-                className="flex items-center space-x-2 sm:hidden"
+                className="flex items-center space-x-2 sm:hidden h-12"
                 data-testid="button-start-pulse-check-mobile"
               >
                 <span>{createAssessment.isPending ? "Starting..." : "Start Check"}</span>
@@ -276,7 +276,7 @@ export default function ContextProfilePage() {
               <Button 
                 onClick={handleNext}
                 size="lg"
-                className="flex items-center space-x-2 sm:hidden"
+                className="flex items-center space-x-2 sm:hidden h-12"
                 data-testid="button-next-mobile"
               >
                 <span>Next</span>
