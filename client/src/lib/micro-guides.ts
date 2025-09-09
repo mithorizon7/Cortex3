@@ -15,11 +15,11 @@ export const MICRO_GUIDES: Record<string, MicroGuide> = {
   // Gate-specific guides (Critical Requirements)
   gate_hitl: {
     id: 'gate.hitl',
-    title: 'Human‑in‑the‑Loop (HITL) — When and How to Use It',
+    title: 'Human-in-the-Loop (HITL) — When and How to Use It',
     category: 'gate',
     tags: ['regulatory', 'safety', 'oversight'],
-    overview: 'A human reviews, approves, or can intervene in AI‑assisted decisions where stakes are high (financial exposure, safety, legal or brand risk). HITL is not a permanent brake; it's a temporary guardrail until you have evidence that automation is safe for specific tasks.',
-    body: `**What it is:** A human reviews, approves, or can intervene in AI‑assisted decisions where stakes are high (financial exposure, safety, legal or brand risk). HITL is not a permanent brake; it's a **temporary guardrail** until you have evidence that automation is safe for specific tasks.
+    overview: 'A human reviews, approves, or can intervene in AI-assisted decisions where stakes are high (financial exposure, safety, legal or brand risk). HITL is not a permanent brake; it is a temporary guardrail until you have evidence that automation is safe for specific tasks.',
+    body: `**What it is:** A human reviews, approves, or can intervene in AI-assisted decisions where stakes are high (financial exposure, safety, legal or brand risk). HITL is not a permanent brake; it is a **temporary guardrail** until you have evidence that automation is safe for specific tasks.
 
 **Why it matters:** Complex systems fail in unexpected ways. HITL prevents single‑point failures from harming customers or the organization while you learn how the system behaves. It also builds regulator and stakeholder confidence that you're balancing innovation with care.
 

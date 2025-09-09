@@ -32,19 +32,15 @@ export const METRIC_CATALOG: Metric[] = [
     id: 'c_initiatives_ai_outcomes',
     pillar: 'C',
     name: '% strategic initiatives with explicit AI outcomes',
-    definition: 'Share of enterprise initiatives that specify measurable AI impact',
+    definition: 'Share of enterprise initiatives that name a measurable AI impact (e.g., cycle-time reduction, cost-to-serve, risk reduction).',
     unit: '%',
     unitHint: 'percentage',
     tags: ['strategic', 'leadership'],
-    howToMeasure: `**Definition:** Count strategic initiatives (typically 10-50 per organization) that explicitly define AI success metrics in their charter.
+    howToMeasure: `**Definition:** Share of enterprise initiatives that name a measurable AI impact (e.g., cycle-time reduction, cost-to-serve, risk reduction).
 
-**Scope:** Include all enterprise initiatives, transformation programs, and major projects. Count as "AI-explicit" only if outcomes specify measurable AI impact (cost savings, efficiency gains, etc.).
+**How to measure:** Count initiatives in your plan; count those with explicit AI outcome metrics; divide. Review quarterly.
 
-**How to get it:** Review initiative charters, quarterly business reviews, or strategy documentation. Simple tally: initiatives with AI outcomes / total strategic initiatives.
-
-**Quality note:** Focus on meaningful measurement, not just "AI mentioned." Look for specific targets like "reduce processing time by 30% using AI" rather than vague "explore AI opportunities."
-
-**Cadence:** Quarterly review aligns with most strategic planning cycles.`,
+**Why it helps:** Keeps AI tied to strategy and makes reallocation easier.`,
     isDefault: true
   },
   {
@@ -89,19 +85,15 @@ export const METRIC_CATALOG: Metric[] = [
     id: 'o_value_gate_pass',
     pillar: 'O',
     name: '% AI use-cases passing the value gate',
-    definition: 'Use-cases approved after value/feasibility screening',
+    definition: 'Share of proposed use-cases that clear a basic value/feasibility screen.',
     unit: '%',
     unitHint: 'percentage',
     tags: ['screening', 'value'],
-    howToMeasure: `**Definition:** Track use-cases that pass formal value screening (business case, technical feasibility, resource requirements) and get approved for development.
+    howToMeasure: `**Definition:** Share of proposed use-cases that clear a basic value/feasibility screen.
 
-**Scope:** Count all AI use-cases that enter formal evaluation. Include both pilot and production proposals. Gate should assess value, feasibility, and fit.
+**How to measure:** Track proposals and approvals in a simple register.
 
-**How to get it:** Maintain a simple log of use-cases evaluated vs. approved. Most organizations review 5-20 use-cases per quarter initially.
-
-**Quality note:** Ensure the gate has real criteria, not rubber-stamp approval. Healthy pass rate is typically 30-60% as screening improves.
-
-**Cadence:** Monthly tracking as use-case flow increases.`,
+**Why it helps:** Encourages disciplined selection; reduces zombie pilots.`,
     isDefault: true
   },
   {
@@ -146,19 +138,15 @@ export const METRIC_CATALOG: Metric[] = [
     id: 'r_mttr',
     pillar: 'R',
     name: 'AI incidents mean time to resolve (MTTR)',
-    definition: 'Average time to resolve AI-related incidents',
+    definition: 'Average time from detection to resolution for AI-related incidents.',
     unit: 'hours',
     unitHint: 'hours or days',
     tags: ['incident', 'response'],
-    howToMeasure: `**Definition:** Track time from AI incident detection (bias, failure, security issue) to full resolution and normal operations.
+    howToMeasure: `**Definition:** Average time from detection to resolution for AI-related incidents.
 
-**Scope:** Include model failures, bias incidents, data breaches, and performance degradations that affect users. Start timer at first alert or user report.
+**How to measure:** Timestamp incidents, resolution, and severity; calculate the mean monthly.
 
-**How to get it:** Use incident management system or simple log. Track: incident start time, escalation points, and resolution confirmation.
-
-**Quality note:** Focus on business impact resolution, not just technical fixes. Include communication, investigation, and prevention steps.
-
-**Cadence:** Monthly MTTR calculation with quarterly trend analysis.`,
+**Why it helps:** Focuses teams on fast, calm recovery and learning.`,
     isDefault: true
   },
   {
@@ -203,19 +191,15 @@ export const METRIC_CATALOG: Metric[] = [
     id: 't_adoption',
     pillar: 'T',
     name: '% target roles actively using AI weekly',
-    definition: 'Adoption in roles expected to use AI tools regularly',
+    definition: 'Adoption rate in roles you expect to benefit from AI.',
     unit: '%',
     unitHint: 'percentage',
     tags: ['adoption', 'usage'],
-    howToMeasure: `**Definition:** Count employees in AI-target roles (analysts, developers, marketers, etc.) who actively use AI tools at least weekly for work tasks.
+    howToMeasure: `**Definition:** Adoption rate in roles you expect to benefit from AI.
 
-**Scope:** Define "target roles" based on your AI strategy. Focus on roles where AI provides clear value. "Active use" means meaningful work application, not experimentation.
+**How to measure:** Survey or system logs; count active users vs. target population.
 
-**How to get it:** Use tool usage logs, surveys, or manager assessments. Track consistent usage patterns, not one-time trials.
-
-**Quality note:** Measure productive usage that improves work outcomes. Avoid vanity metrics like "signed up for AI tool."
-
-**Cadence:** Monthly pulse checks on adoption trends.`,
+**Why it helps:** Tracks real usage, not just training completions.`,
     isDefault: true
   },
   {
@@ -260,19 +244,15 @@ export const METRIC_CATALOG: Metric[] = [
     id: 'e_unit_cost',
     pillar: 'E',
     name: 'Unit cost of AI',
-    definition: 'Cost per 1k tokens/call with trend direction',
+    definition: 'Average cost per unit of AI work.',
     unit: '$/call',
     unitHint: 'dollars per unit',
     tags: ['cost', 'finops'],
-    howToMeasure: `**Definition:** Track total AI costs (APIs, compute, storage, tools) divided by usage units (tokens, calls, requests) to get cost per unit with month-over-month trend.
+    howToMeasure: `**Definition:** Average cost per unit of AI work.
 
-**Scope:** Include all AI-related expenses: model APIs, cloud compute, data processing, tools, and infrastructure. Normalize by usage volume.
+**How to measure:** Divide total spend by total units for a period; trend month-to-month.
 
-**How to get it:** Aggregate cloud bills, vendor invoices, and tool subscriptions. Divide by usage metrics from API logs or usage dashboards.
-
-**Quality note:** Track total cost of ownership, not just model inference. Include data pipeline, storage, and tooling costs for complete picture.
-
-**Cadence:** Monthly cost analysis with quarterly optimization reviews.`,
+**Why it helps:** Prevents budget surprises; enables smart scaling.`,
     isDefault: true
   },
   {
@@ -317,19 +297,15 @@ export const METRIC_CATALOG: Metric[] = [
     id: 'x_pilot_throughput',
     pillar: 'X',
     name: 'Pilot throughput',
-    definition: 'Ideas → pilots → decisions per quarter',
+    definition: 'Ideas → pilots → decisions per quarter.',
     unit: 'count',
     unitHint: 'number per quarter',
     tags: ['innovation', 'velocity'],
-    howToMeasure: `**Definition:** Track the flow from AI ideas through pilot execution to go/no-go decisions. Measure both volume and conversion rates across stages.
+    howToMeasure: `**Definition:** Ideas → pilots → decisions per quarter.
 
-**Scope:** Include all AI experiments, pilot projects, and innovation initiatives. Track ideas generated, pilots launched, and decisions made.
+**How to measure:** Maintain a simple pipeline and count stage transitions.
 
-**How to get it:** Maintain innovation pipeline tracking. Count: submitted ideas, approved pilots, completed pilots, and final decisions (scale/stop/pivot).
-
-**Quality note:** Balance speed with quality. High throughput with low learning indicates rushed pilots. Aim for fast, decisive learning cycles.
-
-**Cadence:** Quarterly assessment of innovation pipeline health.`,
+**Why it helps:** Shows learning velocity and portfolio discipline.`,
     isDefault: true
   },
   {
