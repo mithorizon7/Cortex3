@@ -1,0 +1,80 @@
+You’re 95% there. The content pack is complete **except** for one critical piece you’ll want in the site copy itself: the **exact text of the 18 Pulse questions**. I referenced them (“you already have them”) to keep the answer short, but for a hand‑off to engineering we should include the authoritative wording and stable IDs so they don’t have to hunt.
+
+I’ve added them below in the same format as the rest of the pack. Everything else (welcome copy, context anchors, results headings, domain cards, pillar/gate micro‑guides, metric tooltips, glossary, export sections, facilitator prompts) is present and wired with IDs. No further changes needed after you drop in the Pulse block.
+
+---
+
+## Pulse‑Check 18 — Authoritative Copy (add to Section 3)
+
+> **IDs:** `pulse.C1` … `pulse.X3`
+> **Instruction reminder:** Answer **Yes** only if fully true **today**.
+
+### Clarity & Command (C)
+
+**ID:** `pulse.C1`
+**Text:** Top leadership has approved a written AI ambition with measurable business outcomes.
+
+**ID:** `pulse.C2`
+**Text:** One senior leader owns AI success **and** CoE↔BU roles are clear.
+
+**ID:** `pulse.C3`
+**Text:** AI progress is reviewed on a defined cadence (at least twice per year) and results in **resource reallocation** (fund/defund) decisions.
+
+### Operations & Data (O)
+
+**ID:** `pulse.O1`
+**Text:** All AI solutions you operate or consume follow a documented lifecycle with performance logging, alerts for issues/drift, and **HITL/QA where risk warrants**.
+
+**ID:** `pulse.O2`
+**Text:** Key data or prompts feeding those solutions have documented owners, lineage, and quality standards in an accessible catalogue/register.
+
+**ID:** `pulse.O3`
+**Text:** Every new AI idea—build or buy—passes a standardized **value/feasibility gate** before major spend or effort.
+
+### Risk, Trust, Security & Assurance (R)
+
+**ID:** `pulse.R1`
+**Text:** A living inventory lists each AI system or vendor service with risk level and a named risk owner.
+
+**ID:** `pulse.R2`
+**Text:** High‑impact AI undergoes scheduled fairness, privacy, and performance checks **and** periodic security red‑teaming.
+
+**ID:** `pulse.R3`
+**Text:** AI controls have been reviewed (internal audit or third‑party assurance) within the last 12 months, and an **incident response & communications plan** exists.
+
+### Talent & Culture (T)
+
+**ID:** `pulse.T1`
+**Text:** A written plan exists to attract, develop, and retain the AI‑related skills the strategy requires.
+
+**ID:** `pulse.T2`
+**Text:** Most AI‑touching roles completed role‑appropriate training in the last 12 months **and** tasks have been **redesigned** to use AI safely/productively.
+
+**ID:** `pulse.T3`
+**Text:** AI wins, failures, and lessons are shared organization‑wide on a regular rhythm, with incentives that reward safe, effective adoption.
+
+### Ecosystem & Infrastructure (E)
+
+**ID:** `pulse.E1`
+**Text:** Compute/licence/API capacity scales to demand, and **FinOps** visibility prevents delays or budget surprises.
+
+**ID:** `pulse.E2`
+**Text:** You maintain strategic model/tool/data partners **and** documented exit/portability plans to avoid lock‑in.
+
+**ID:** `pulse.E3`
+**Text:** Data exchanged with external parties flows only through governed, auditable, interoperable mechanisms (e.g., secure APIs, clean rooms).
+
+### Experimentation & Evolution (X)
+
+**ID:** `pulse.X1`
+**Text:** Business teams have access to a safe sandbox with representative data **and** a structured practice of external scanning.
+
+**ID:** `pulse.X2`
+**Text:** A defined slice of budget/time/credits is reserved each year for exploratory or high‑uncertainty AI work.
+
+**ID:** `pulse.X3`
+**Text:** All AI pilots include explicit **success and sunset** criteria; non‑performers are consistently retired or redirected on schedule.
+
+---
+
+**Verdict:** With the Pulse block added above, the content set is complete for a two‑hour, one‑off snapshot experience with credible depth, educational guidance, and strong exports. No other changes needed.
