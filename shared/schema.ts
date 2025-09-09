@@ -12,6 +12,7 @@ export const assessments = pgTable("assessments", {
   priorityMoves: jsonb("priority_moves"),
   contentTags: jsonb("content_tags"),
   contextGuidance: jsonb("context_guidance"),
+  valueOverlay: jsonb("value_overlay"),
   completedAt: text("completed_at"),
   createdAt: text("created_at").default(sql`now()`),
 });
@@ -67,3 +68,25 @@ export const gateSchema = z.object({
 });
 
 export type Gate = z.infer<typeof gateSchema>;
+
+// Value Overlay Types
+export const valueOverlayPillarSchema = z.object({
+  metric_id: z.string(),
+  name: z.string(),
+  baseline: z.number().nullable(),
+  target: z.number().nullable(),
+  unit: z.string(),
+  cadence: z.enum(['monthly', 'quarterly']),
+});
+
+export const valueOverlaySchema = z.object({
+  C: valueOverlayPillarSchema.optional(),
+  O: valueOverlayPillarSchema.optional(),
+  R: valueOverlayPillarSchema.optional(),
+  T: valueOverlayPillarSchema.optional(),
+  E: valueOverlayPillarSchema.optional(),
+  X: valueOverlayPillarSchema.optional(),
+});
+
+export type ValueOverlayPillar = z.infer<typeof valueOverlayPillarSchema>;
+export type ValueOverlay = z.infer<typeof valueOverlaySchema>;
