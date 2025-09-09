@@ -36,18 +36,98 @@ export const PULSE_QUESTIONS = [
 ];
 
 export const CONTEXT_ITEMS = [
-  { key: 'regulatory_intensity', label: 'Regulatory Intensity', description: 'Level of regulatory oversight and compliance requirements', type: 'slider' as const },
-  { key: 'data_sensitivity', label: 'Data Sensitivity', description: 'Sensitivity level of data handled', type: 'slider' as const },
-  { key: 'safety_criticality', label: 'Safety Criticality', description: 'Potential impact of AI failures on safety', type: 'slider' as const },
-  { key: 'brand_exposure', label: 'Brand Exposure', description: 'Public visibility and reputational risk', type: 'slider' as const },
-  { key: 'clock_speed', label: 'Market Clock Speed', description: 'Pace of change in your market/technology', type: 'slider' as const },
-  { key: 'latency_edge', label: 'Latency/Edge Needs', description: 'Requirements for low-latency or edge computing', type: 'slider' as const },
-  { key: 'scale_throughput', label: 'Scale/Throughput', description: 'Volume and scale requirements', type: 'slider' as const },
-  { key: 'data_advantage', label: 'Proprietary Data Advantage', description: 'Uniqueness and value of your data assets', type: 'slider' as const },
-  { key: 'build_readiness', label: 'Build Readiness', description: 'Organizational capability for building AI systems', type: 'slider' as const },
-  { key: 'finops_priority', label: 'FinOps Priority', description: 'Importance of cost optimization and financial operations', type: 'slider' as const },
-  { key: 'procurement_constraints', label: 'Procurement Constraints', description: 'Significant procurement or vendor restrictions', type: 'boolean' as const },
-  { key: 'edge_operations', label: 'Edge Operations', description: 'Operations at network edge or remote locations', type: 'boolean' as const },
+  { 
+    key: 'regulatory_intensity', 
+    label: 'Regulatory Intensity', 
+    description: 'How heavily regulated is your industry or business unit?', 
+    type: 'slider' as const,
+    anchors: ['No regulatory oversight', 'Industry guidance and best practices', 'Some specific rules and requirements', 'Regular audits and prescriptive requirements', 'Heavily regulated with multiple regimes'],
+    labels: ['None', 'Guidance', 'Some Rules', 'Audited', 'Heavily Regulated']
+  },
+  { 
+    key: 'data_sensitivity', 
+    label: 'Data Sensitivity & Residency', 
+    description: 'What level of data sensitivity and residency requirements do you have?', 
+    type: 'slider' as const,
+    anchors: ['Public information only', 'Internal business data', 'Confidential company information', 'Personal data and trade secrets', 'Healthcare/payment data with regional processing requirements'],
+    labels: ['Public', 'Internal', 'Confidential', 'PII/Trade Secrets', 'PHI/PCI + Regional']
+  },
+  { 
+    key: 'safety_criticality', 
+    label: 'Safety/Mission Criticality', 
+    description: 'How critical is system reliability and safety in your operations?', 
+    type: 'slider' as const,
+    anchors: ['Minimal harm from system failures', 'User inconvenience or minor disruptions', 'Costly business mistakes and financial impact', 'Serious legal, financial, or operational consequences', 'Physical safety risks or systemic threats'],
+    labels: ['Low Harm', 'Inconvenience', 'Costly Mistakes', 'Serious Impact', 'Physical Safety']
+  },
+  { 
+    key: 'brand_exposure', 
+    label: 'Brand/PR Exposure', 
+    description: 'What level of public scrutiny and brand risk does your organization face?', 
+    type: 'slider' as const,
+    anchors: ['High tolerance for AI experimentation', 'Minor brand impact from AI issues', 'Meaningful reputational consequences possible', 'Major brand damage from AI failures', 'Existential threat to organization if AI goes wrong'],
+    labels: ['Tolerant', 'Minor Risk', 'Meaningful Risk', 'Major Risk', 'Existential Risk']
+  },
+  { 
+    key: 'clock_speed', 
+    label: 'Market/Tech Clock-Speed', 
+    description: 'How fast does your market or technology environment change?', 
+    type: 'slider' as const,
+    anchors: ['Changes measured in years', 'Quarterly business cycles', 'Monthly technology updates', 'Weekly competitive moves', 'Frontier pace with constant innovation'],
+    labels: ['Annual', 'Quarterly', 'Monthly', 'Weekly', 'Frontier Pace']
+  },
+  { 
+    key: 'latency_edge', 
+    label: 'Latency/Edge Dependence', 
+    description: 'How sensitive are your operations to response time and connectivity?', 
+    type: 'slider' as const,
+    anchors: ['Multi-second response times acceptable', 'Sub-second response required', 'Under 500ms latency needed', 'Under 200ms for critical operations', 'Offline capability or air-gapped requirements'],
+    labels: ['Seconds OK', '<1s', '<500ms', '<200ms', 'Offline/Edge']
+  },
+  { 
+    key: 'scale_throughput', 
+    label: 'Scale/Throughput Requirements', 
+    description: 'What scale of operations and throughput do you need to support?', 
+    type: 'slider' as const,
+    anchors: ['Small internal team usage', 'Department-wide deployment', 'Enterprise-scale across organization', 'High-traffic external systems', 'Hyperscale with millions of interactions'],
+    labels: ['Small Internal', 'Department', 'Enterprise', 'High-Traffic', 'Hyperscale']
+  },
+  { 
+    key: 'data_advantage', 
+    label: 'Proprietary Data Advantage', 
+    description: 'How much competitive advantage do you have from your data assets?', 
+    type: 'slider' as const,
+    anchors: ['No significant data advantage', 'Small competitive benefit from data', 'Moderate advantage from unique datasets', 'Strong competitive moat from proprietary data', 'Large advantage with clear rights and fresh, labeled data'],
+    labels: ['None', 'Small', 'Moderate', 'Strong', 'Large & Clear']
+  },
+  { 
+    key: 'build_readiness', 
+    label: 'Build Readiness', 
+    description: 'What is your current capability to build and maintain AI systems internally?', 
+    type: 'slider' as const,
+    anchors: ['No internal AI development capability', 'Early pilots and proof-of-concepts', 'Basic infrastructure and processes in place', 'Mature Center of Excellence with MLOps and governance', 'Industrialized AI development and deployment'],
+    labels: ['None', 'Early Pilots', 'Basics in Place', 'Mature CoE', 'Industrialized']
+  },
+  { 
+    key: 'finops_priority', 
+    label: 'FinOps Priority', 
+    description: 'How important is cost optimization and financial controls for AI initiatives?', 
+    type: 'slider' as const,
+    anchors: ['Cost is not a primary concern', 'Moderate attention to cost efficiency', 'Balanced focus on value and cost', 'High priority on cost optimization', 'Strict per-unit budgets and cost controls required'],
+    labels: ['Low', 'Med-Low', 'Medium', 'High', 'Strict Budgets']
+  },
+  { 
+    key: 'procurement_constraints', 
+    label: 'Procurement Constraints', 
+    description: 'Do you have public RFP requirements or mandatory vendor selection processes?', 
+    type: 'boolean' as const 
+  },
+  { 
+    key: 'edge_operations', 
+    label: 'Edge Operations', 
+    description: 'Do you operate OT/SCADA systems, field robots, or remote vehicles?', 
+    type: 'boolean' as const 
+  },
 ];
 
 export const MATURITY_STAGES = [

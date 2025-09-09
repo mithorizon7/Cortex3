@@ -99,18 +99,26 @@ export default function ContextProfilePage() {
                                   className="w-full"
                                   data-testid={`slider-${item.key}`}
                                 />
-                                <div className="flex justify-between text-xs text-muted-foreground">
-                                  <span>None (0)</span>
-                                  <span>Low (1)</span>
-                                  <span>Medium (2)</span>
-                                  <span>High (3)</span>
-                                  <span>Critical (4)</span>
-                                </div>
+                                {item.labels && (
+                                  <div className="flex justify-between text-xs text-muted-foreground">
+                                    {item.labels.map((label, index) => (
+                                      <span key={index} className="text-center flex-1">
+                                        {label} ({index})
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
                                 <div className="text-center">
                                   <span className="inline-block bg-muted text-muted-foreground px-2 py-1 rounded text-sm">
-                                    Current: {field.value}/4
+                                    Current: {field.value}/4 
+                                    {item.labels && ` - ${item.labels[field.value as number]}`}
                                   </span>
                                 </div>
+                                {item.anchors && (
+                                  <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-950 rounded text-xs">
+                                    <strong>What this means:</strong> {item.anchors[field.value as number]}
+                                  </div>
+                                )}
                               </div>
                             ) : (
                               <div className="flex items-center space-x-2">
