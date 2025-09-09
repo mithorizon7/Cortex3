@@ -7,7 +7,12 @@ if (!globalThis.crypto) {
   globalThis.crypto = {
     randomUUID: () => crypto.randomUUID(),
     subtle: {} as SubtleCrypto,
-    getRandomValues: (array: Uint8Array) => crypto.getRandomValues(array),
+    getRandomValues: <T extends ArrayBufferView | null>(array: T): T => {
+      if (array) {
+        crypto.getRandomValues(array)
+      }
+      return array
+    },
   }
 }
 

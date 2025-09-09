@@ -3,9 +3,9 @@ import { randomUUID } from "crypto";
 import { logger, withErrorHandling } from "./logger";
 
 export interface IStorage {
-  getAssessment(id: string): Promise<Assessment | undefined>;
+  getAssessment(id: string): Promise<Assessment | null>;
   createAssessment(assessment: InsertAssessment): Promise<Assessment>;
-  updateAssessment(id: string, updates: Partial<InsertAssessment>): Promise<Assessment | undefined>;
+  updateAssessment(id: string, updates: Partial<InsertAssessment>): Promise<Assessment | null>;
 }
 
 export class MemStorage implements IStorage {
@@ -15,7 +15,7 @@ export class MemStorage implements IStorage {
     this.assessments = new Map();
   }
 
-  async getAssessment(id: string): Promise<Assessment | undefined> {
+  async getAssessment(id: string): Promise<Assessment | null> {
     return withErrorHandling(
       'getAssessment',
       async () => {
@@ -25,13 +25,13 @@ export class MemStorage implements IStorage {
           logger.debug('Assessment retrieved successfully', {
             additionalContext: { assessmentId: id }
           });
+          return assessment;
         } else {
           logger.warn('Assessment not found', {
             additionalContext: { assessmentId: id }
           });
+          return null;
         }
-        
-        return assessment;
       },
       { functionArgs: { id } }
     );
@@ -70,7 +70,7 @@ export class MemStorage implements IStorage {
     );
   }
 
-  async updateAssessment(id: string, updates: Partial<InsertAssessment>): Promise<Assessment | undefined> {
+  async updateAssessment(id: string, updates: Partial<InsertAssessment>): Promise<Assessment | null> {
     return withErrorHandling(
       'updateAssessment',
       async () => {
@@ -79,7 +79,7 @@ export class MemStorage implements IStorage {
           logger.warn('Cannot update assessment - not found', {
             additionalContext: { assessmentId: id }
           });
-          return undefined;
+          return null;
         }
         
         const updated: Assessment = { ...existing, ...updates };
