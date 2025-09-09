@@ -223,46 +223,80 @@ export default function PulseCheckPage() {
         </Card>
 
         {/* Navigation */}
-        <div className="flex justify-between items-center">
-          <Button 
-            variant="outline" 
-            onClick={handlePrevious}
-            disabled={currentDomain === 0}
-            className="flex items-center space-x-2"
-            data-testid="button-previous"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            <span>Previous Domain</span>
-          </Button>
+        <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
+          <div className="flex justify-between sm:justify-start items-center">
+            <Button 
+              variant="outline" 
+              onClick={handlePrevious}
+              disabled={currentDomain === 0}
+              className="flex items-center space-x-2"
+              data-testid="button-previous"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span className="hidden sm:inline">Previous Domain</span>
+              <span className="sm:hidden">Previous</span>
+            </Button>
+            
+            <div className="text-center sm:hidden">
+              <p className="text-xs text-muted-foreground">
+                {currentDomainAnswers}/{currentDomainTotal} • {totalAnswered}/18 total
+              </p>
+            </div>
+            
+            {isLastDomain ? (
+              <Button 
+                onClick={handleComplete}
+                disabled={totalAnswered < 18 || updatePulse.isPending}
+                size="lg"
+                className="flex items-center space-x-2 sm:hidden"
+                data-testid="button-complete-mobile"
+              >
+                <span>{updatePulse.isPending ? "Generating..." : "Get Results"}</span>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button 
+                onClick={handleNext}
+                size="lg"
+                className="flex items-center space-x-2 sm:hidden"
+                data-testid="button-next-mobile"
+              >
+                <span>Next</span>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
           
-          <div className="text-center">
+          <div className="text-center hidden sm:block">
             <p className="text-sm text-muted-foreground">
               {currentDomainAnswers}/{currentDomainTotal} domain questions • {totalAnswered}/18 total
             </p>
           </div>
           
-          {isLastDomain ? (
-            <Button 
-              onClick={handleComplete}
-              disabled={totalAnswered < 18 || updatePulse.isPending}
-              size="lg"
-              className="flex items-center space-x-2"
-              data-testid="button-complete"
-            >
-              <span>{updatePulse.isPending ? "Generating Results..." : "Get My Results"}</span>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          ) : (
-            <Button 
-              onClick={handleNext}
-              size="lg"
-              className="flex items-center space-x-2"
-              data-testid="button-next"
-            >
-              <span>Next Domain</span>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          )}
+          <div className="hidden sm:block">
+            {isLastDomain ? (
+              <Button 
+                onClick={handleComplete}
+                disabled={totalAnswered < 18 || updatePulse.isPending}
+                size="lg"
+                className="flex items-center space-x-2"
+                data-testid="button-complete"
+              >
+                <span>{updatePulse.isPending ? "Generating Results..." : "Get My Results"}</span>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button 
+                onClick={handleNext}
+                size="lg"
+                className="flex items-center space-x-2"
+                data-testid="button-next"
+              >
+                <span>Next Domain</span>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Domain Overview */}

@@ -241,46 +241,79 @@ export default function ContextProfilePage() {
         </Card>
 
         {/* Navigation */}
-        <div className="flex justify-between items-center">
-          <Button 
-            variant="outline" 
-            onClick={handlePrevious}
-            disabled={currentScreen === 0}
-            className="flex items-center space-x-2"
-            data-testid="button-previous"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            <span>Previous</span>
-          </Button>
+        <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
+          <div className="flex justify-between sm:justify-start items-center">
+            <Button 
+              variant="outline" 
+              onClick={handlePrevious}
+              disabled={currentScreen === 0}
+              className="flex items-center space-x-2"
+              data-testid="button-previous"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span>Previous</span>
+            </Button>
+            
+            <div className="text-center sm:hidden">
+              <p className="text-xs text-muted-foreground">
+                {currentScreenAnswers} of {currentScreenTotal} answered
+              </p>
+            </div>
+            
+            {isLastScreen ? (
+              <Button 
+                onClick={form.handleSubmit(onSubmit)}
+                disabled={createAssessment.isPending}
+                size="lg"
+                className="flex items-center space-x-2 sm:hidden"
+                data-testid="button-start-pulse-check-mobile"
+              >
+                <span>{createAssessment.isPending ? "Starting..." : "Start Check"}</span>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button 
+                onClick={handleNext}
+                size="lg"
+                className="flex items-center space-x-2 sm:hidden"
+                data-testid="button-next-mobile"
+              >
+                <span>Next</span>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
           
-          <div className="text-center">
+          <div className="text-center hidden sm:block">
             <p className="text-sm text-muted-foreground">
               {currentScreenAnswers} of {currentScreenTotal} questions answered
             </p>
           </div>
           
-          {isLastScreen ? (
-            <Button 
-              onClick={form.handleSubmit(onSubmit)}
-              disabled={createAssessment.isPending}
-              size="lg"
-              className="flex items-center space-x-2"
-              data-testid="button-start-pulse-check"
-            >
-              <span>{createAssessment.isPending ? "Starting..." : "Start Pulse Check"}</span>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          ) : (
-            <Button 
-              onClick={handleNext}
-              size="lg"
-              className="flex items-center space-x-2"
-              data-testid="button-next"
-            >
-              <span>Next</span>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          )}
+          <div className="hidden sm:block">
+            {isLastScreen ? (
+              <Button 
+                onClick={form.handleSubmit(onSubmit)}
+                disabled={createAssessment.isPending}
+                size="lg"
+                className="flex items-center space-x-2"
+                data-testid="button-start-pulse-check"
+              >
+                <span>{createAssessment.isPending ? "Starting..." : "Start Pulse Check"}</span>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button 
+                onClick={handleNext}
+                size="lg"
+                className="flex items-center space-x-2"
+                data-testid="button-next"
+              >
+                <span>Next</span>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
       </main>
     </div>

@@ -79,27 +79,27 @@ export default function HomePage() {
             </p>
           </div>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
+          <div className="flex flex-col gap-4 justify-center items-center mb-12">
             <Button 
               size="lg" 
               onClick={startAssessment}
-              className="text-lg px-8 py-6"
+              className="text-lg px-8 py-6 w-full sm:w-auto"
               data-testid="button-start-assessment"
             >
               <Clock className="h-5 w-5 mr-2" />
               Get Your AI Strategy in 10 Minutes
             </Button>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground text-center">
               Free • No signup required • Immediate results
             </p>
           </div>
 
           {/* Social Proof Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-2xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 max-w-2xl mx-auto">
             {TESTIMONIAL_STATS.map((stat) => (
               <div key={stat.label} className="text-center">
-                <div className="text-3xl font-bold text-primary">{stat.metric}</div>
-                <div className="text-sm text-muted-foreground">{stat.label}</div>
+                <div className="text-2xl sm:text-3xl font-bold text-primary">{stat.metric}</div>
+                <div className="text-xs sm:text-sm text-muted-foreground">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -252,15 +252,15 @@ export default function HomePage() {
             <Button 
               size="lg" 
               onClick={startAssessment}
-              className="text-xl px-12 py-6"
+              className="text-lg sm:text-xl px-8 sm:px-12 py-6 w-full sm:w-auto"
               data-testid="button-start-assessment-cta"
             >
-              <Zap className="h-6 w-6 mr-2" />
+              <Zap className="h-5 h-6 w-5 w-6 mr-2" />
               Start Your Assessment
-              <ArrowRight className="h-6 w-6 ml-2" />
+              <ArrowRight className="h-5 h-6 w-5 w-6 ml-2" />
             </Button>
             
-            <div className="flex justify-center items-center space-x-6 text-sm text-muted-foreground">
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-6 text-sm text-muted-foreground">
               <div className="flex items-center space-x-2">
                 <CheckCircle className="h-4 w-4 text-green-500" />
                 <span>100% Free</span>
