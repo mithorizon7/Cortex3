@@ -13,6 +13,39 @@ import { useToast } from "@/hooks/use-toast";
 import { AlertTriangle, CheckCircle, CircleOff } from "lucide-react";
 import type { Assessment, PillarScores, ContextProfile } from "@shared/schema";
 
+// Helper function to get gate thresholds for transparency
+function getGateThreshold(gateId: string, dimension: string): string | null {
+  const thresholds: Record<string, Record<string, string>> = {
+    'require_hitl': {
+      'regulatory_intensity': '≥3',
+      'safety_criticality': '≥3'
+    },
+    'assurance_cadence': {
+      'regulatory_intensity': '≥3'
+    },
+    'data_residency': {
+      'data_sensitivity': '≥3'
+    },
+    'latency_fallback': {
+      'latency_edge': '≥3'
+    },
+    'scale_hardening': {
+      'scale_throughput': '≥3'
+    },
+    'build_readiness_gate': {
+      'build_readiness': '≤1'
+    },
+    'procurement_compliance': {
+      'procurement_constraints': 'True'
+    },
+    'edge_operations_security': {
+      'edge_operations': 'True'
+    }
+  };
+  
+  return thresholds[gateId]?.[dimension] || null;
+}
+
 export default function ResultsPage() {
   const { toast } = useToast();
   const assessmentId = window.location.pathname.split('/')[2];
@@ -171,15 +204,31 @@ export default function ResultsPage() {
                               <strong>Why this is required:</strong> {gate.reason}
                             </p>
                             {gate.explain && (
-                              <div className="bg-muted/30 p-3 rounded text-xs">
-                                <strong>Based on your profile:</strong>{' '}
-                                {Object.entries(gate.explain).map(([key, value], index) => (
-                                  <span key={key}>
-                                    {index > 0 && ', '}
-                                    {key.replace(/_/g, ' ')}: {String(value)}
-                                    {typeof value === 'number' && key !== 'procurement_constraints' && key !== 'edge_operations' && '/4'}
-                                  </span>
-                                ))}
+                              <div className="bg-amber-50 dark:bg-amber-950 p-3 rounded text-xs">
+                                <div className="space-y-2">
+                                  <div>
+                                    <strong>Why this gate was triggered:</strong>
+                                  </div>
+                                  {Object.entries(gate.explain).map(([key, value]) => {
+                                    const isBoolean = typeof value === 'boolean';
+                                    const isNumber = typeof value === 'number';
+                                    const threshold = getGateThreshold(gate.id, key);
+                                    
+                                    return (
+                                      <div key={key} className="flex justify-between items-center">
+                                        <span>{key.replace(/_/g, ' ')}: </span>
+                                        <span className="font-medium">
+                                          {isBoolean ? (value ? 'Yes' : 'No') : String(value)}
+                                          {isNumber && !isBoolean && '/4'}
+                                          {threshold && ` (requires ${threshold})`}
+                                        </span>
+                                      </div>
+                                    );
+                                  })}
+                                  <div className="text-xs text-muted-foreground pt-2 border-t">
+                                    This gate ensures your AI scaling aligns with your risk profile.
+                                  </div>
+                                </div>
                               </div>
                             )}
                           </div>
