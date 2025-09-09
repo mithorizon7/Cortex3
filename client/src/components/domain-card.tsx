@@ -4,8 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { CORTEX_PILLARS, MATURITY_STAGES, getStageColor } from "@/lib/cortex";
 import { getMicroGuidesByPillar, getMicroGuidesByTags } from "@/lib/micro-guides";
-import { Star, Info, Target, Cog, Shield, Users, Network, Lightbulb, TrendingUp, ArrowRight, BookOpen, ChevronDown } from "lucide-react";
+import { getMetricById, getContextAwareDefaults, getDefaultMetricForPillar } from "@/lib/value-overlay";
+import { ValueMetricChip, ValueInputFields, HowToMeasureDialog } from "@/components/value-overlay";
+import { Star, Info, Target, Cog, Shield, Users, Network, Lightbulb, TrendingUp, ArrowRight, BookOpen, ChevronDown, HelpCircle } from "lucide-react";
 import { useState } from "react";
+import type { ValueOverlay, ValueOverlayPillar, ContextProfile } from "@shared/schema";
 
 interface DomainCardProps {
   pillar: string;
@@ -13,6 +16,9 @@ interface DomainCardProps {
   priority?: number;
   contextReason?: string;
   contextGuidance?: any;
+  contextProfile?: ContextProfile;
+  valueOverlay?: ValueOverlayPillar;
+  onValueOverlayUpdate?: (pillar: string, updates: Partial<ValueOverlayPillar>) => void;
   priorityMoves?: Array<{
     id: string;
     pillar: string;
@@ -121,7 +127,7 @@ const DOMAIN_GUIDANCE = {
   }
 };
 
-export default function DomainCard({ pillar, stage, priority, contextReason, contextGuidance, priorityMoves }: DomainCardProps) {
+export default function DomainCard({ pillar, stage, priority, contextReason, contextGuidance, contextProfile, valueOverlay, onValueOverlayUpdate, priorityMoves }: DomainCardProps) {
   const [showGuides, setShowGuides] = useState(false);
   const pillarInfo = CORTEX_PILLARS[pillar as keyof typeof CORTEX_PILLARS];
   const stageInfo = MATURITY_STAGES[stage];
@@ -132,6 +138,29 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
   const contextTags = contextGuidance?.contentTags || [];
   const contextGuides = getMicroGuidesByTags(contextTags);
   const relevantGuides = [...pillarGuides, ...contextGuides].slice(0, 2); // Show top 2 most relevant
+  
+  // Handle Value Overlay
+  const selectedMetric = valueOverlay ? getMetricById(valueOverlay.metric_id) : (contextProfile ? getMetricById(getContextAwareDefaults(contextProfile)[pillar]) : getDefaultMetricForPillar(pillar));
+  
+  const handleMetricChange = (metricId: string) => {
+    if (!onValueOverlayUpdate) return;
+    const metric = getMetricById(metricId);
+    if (!metric) return;
+    
+    onValueOverlayUpdate(pillar, {
+      metric_id: metricId,
+      name: metric.name,
+      unit: metric.unit,
+      baseline: null,
+      target: null,
+      cadence: pillar === 'X' ? 'quarterly' : 'monthly'
+    });
+  };
+
+  const handleValueUpdate = (updates: Partial<ValueOverlayPillar>) => {
+    if (!onValueOverlayUpdate) return;
+    onValueOverlayUpdate(pillar, updates);
+  };
   
   if (!pillarInfo || !stageInfo || !guidance) return null;
 
@@ -168,6 +197,40 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
             </p>
           </div>
         </div>
+        
+        {/* Value Overlay Section */}
+        {selectedMetric && (
+          <div className="border-t pt-4 mb-4">
+            <h4 className="font-medium mb-2 text-primary flex items-center space-x-2">
+              <TrendingUp className="h-4 w-4" />
+              <span>Value Overlay</span>
+            </h4>
+            
+            <ValueMetricChip
+              pillar={pillar}
+              metric={selectedMetric}
+              contextProfile={contextProfile}
+              onChangeMetric={handleMetricChange}
+            />
+            
+            {valueOverlay && (
+              <ValueInputFields
+                pillar={pillar}
+                valueData={valueOverlay}
+                onUpdate={handleValueUpdate}
+              />
+            )}
+            
+            <div className="mt-2">
+              <HowToMeasureDialog metric={selectedMetric}>
+                <Button variant="ghost" size="sm" className="text-xs px-2 h-6" data-testid={`button-how-to-measure-${pillar.toLowerCase()}`}>
+                  <HelpCircle className="w-3 h-3 mr-1" />
+                  How to measure
+                </Button>
+              </HowToMeasureDialog>
+            </div>
+          </div>
+        )}
         
         <div className="space-y-4">
           <div>
