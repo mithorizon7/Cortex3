@@ -166,6 +166,7 @@ export default function ResultsPage() {
         contextProfile: assessment.contextProfile as ContextProfile,
         pillarScores: assessment.pillarScores as PillarScores,
         triggeredGates: (assessment.triggeredGates as any[]) || [],
+        priorityMoves: (assessment as any).priorityMoves || null,
         completedAt: assessment.completedAt || new Date().toISOString(),
       });
       
@@ -198,6 +199,7 @@ export default function ResultsPage() {
       contextProfile: assessment.contextProfile as ContextProfile,
       pillarScores: assessment.pillarScores as PillarScores,
       triggeredGates: (assessment.triggeredGates as any[]) || [],
+      priorityMoves: (assessment as any).priorityMoves || null,
       completedAt: assessment.completedAt || new Date().toISOString(),
     });
     
@@ -242,6 +244,8 @@ export default function ResultsPage() {
   const triggeredGates = (assessment.triggeredGates as any[]) || [];
   const contextProfile = assessment.contextProfile as ContextProfile;
   const priorityMoves = (assessment as any).priorityMoves?.moves || [];
+  const contextGuidance = (assessment as any).contextGuidance || {};
+  const contentTags = (assessment as any).contentTags || [];
   const { insights, priorities } = generateExecutiveInsights(pillarScores, triggeredGates, contextProfile);
   
   const avgScore = Object.values(pillarScores).reduce((sum, score) => sum + score, 0) / 6;
@@ -477,6 +481,7 @@ export default function ResultsPage() {
                     pillar={key} 
                     stage={score}
                     priorityMoves={pillarMoves}
+                    contextGuidance={contextGuidance}
                   />
                 );
               })}

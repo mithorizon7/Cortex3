@@ -2,6 +2,7 @@ export interface AssessmentResults {
   contextProfile: any;
   pillarScores: any;
   triggeredGates: any[];
+  priorityMoves?: any;
   completedAt: string;
 }
 
@@ -28,6 +29,14 @@ ${results.triggeredGates.map((gate: any) => `
 ${gate.title}
 Reason: ${gate.reason}
 `).join('\n')}
+
+PRIORITY MOVES
+==============
+${results.priorityMoves?.moves ? results.priorityMoves.moves.map((move: any) => `
+#${move.rank} - ${move.title} (${move.pillar} Domain)
+Priority Score: ${move.priority.toFixed(3)}
+${move.explain ? `Gap Impact: +${(move.explain.gapBoost * 100).toFixed(0)}%, Context Fit: +${(move.explain.profileBoost * 100).toFixed(0)}%` : ''}
+`).join('\n') : 'No priority moves available'}
 
 CONTEXT PROFILE
 ===============
