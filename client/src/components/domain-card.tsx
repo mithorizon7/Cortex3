@@ -45,6 +45,16 @@ const DOMAIN_GUIDANCE = {
     ],
     howToImprove: [
       "Progress usually starts with publishing a simple ambition (outcomes, not technologies), then clarifying who owns what between a Center of Excellence and business units. Reviews move from \"show‑and‑tell\" to decide‑and‑do—small amounts of money shift to what works, with clear rationale. Over time, AI outcomes appear in strategy documents and operating plans. In more regulated settings, leadership reviews also check that safeguards and evidence are in place."
+    ],
+    commonPitfalls: [
+      "Vision without ownership; ownership without budget",
+      "Treating the CoE as a gatekeeper instead of an enabler", 
+      "Endless exploration with no reallocation"
+    ],
+    discussionPrompts: [
+      "What two business outcomes will AI influence this year?",
+      "Who is accountable for those outcomes and what budget do they control?",
+      "What will we stop doing if it doesn't perform?"
     ]
   },
   O: {
@@ -58,6 +68,16 @@ const DOMAIN_GUIDANCE = {
     ],
     howToImprove: [
       "Start with monitoring what you already run (latency, cost, error rate) and add simple alerts. Introduce a two‑page intake for new ideas: value hypothesis, data sources, risk level. Designate data owners for key tables or content used by AI. Where decisions affect customers, add human approval until you have evidence that automation is safe."
+    ],
+    commonPitfalls: [
+      "Over‑engineering MLOps before any value has shipped",
+      "No drift or cost alerts; discovering issues from users or invoices",
+      "Unowned data; stale or inconsistent sources"
+    ],
+    discussionPrompts: [
+      "What do we measure today on our AI services? What's missing?",
+      "Which one dataset, if cleaned and owned, would unlock the most value?",
+      "Where should a human stay in the loop for now?"
     ]
   },
   R: {
@@ -71,6 +91,16 @@ const DOMAIN_GUIDANCE = {
     ],
     howToImprove: [
       "Catalog what you already use (systems, vendors, purpose, data). Schedule basic checks for high‑impact use‑cases and test your defenses with simple adversarial prompts. Draft a one‑page IR plan: who triages, who decides, who informs customers. Regulated contexts often add annual assurance whether internal or external."
+    ],
+    commonPitfalls: [
+      "Policy documents without monitoring",
+      "Unknown owners; no one reacts when metrics drift",
+      "Treating red‑teaming as a one‑time event"
+    ],
+    discussionPrompts: [
+      "Which AI system could create the most damage if it failed? Do we monitor it?",
+      "Who picks up the phone when an AI incident occurs?",
+      "How often do we test for bias, privacy, and jailbreaks?"
     ]
   },
   T: {
@@ -83,6 +113,16 @@ const DOMAIN_GUIDANCE = {
     ],
     howToImprove: [
       "Pick two or three job families that touch customers or costly processes. Create before/after task maps and add simple guardrails (checklists, approval steps). Offer short, role‑specific training with real examples. Share what works and what fails—both teach."
+    ],
+    commonPitfalls: [
+      "Generic training without job redesign",
+      "Incentives that reward activity over outcomes",
+      "\"One wizard\" knows everything; no diffusion"
+    ],
+    discussionPrompts: [
+      "Which roles will benefit most from AI in 90 days?",
+      "What checkpoints keep customers safe while we learn?",
+      "How will we recognize and reward smart usage?"
     ]
   },
   E: {
@@ -95,6 +135,16 @@ const DOMAIN_GUIDANCE = {
     ],
     howToImprove: [
       "Start by measuring unit costs and watching quotas. Consolidate on a few well‑understood services with clear terms (\"no training on our data/outputs\" when needed). Draft a one‑page exit plan: how we would switch, what we'd export, and a secondary option for critical paths."
+    ],
+    commonPitfalls: [
+      "Vendor lock‑in via proprietary formats and unclear rights",
+      "Quota bottlenecks; budget surprises",
+      "One‑off integrations that don't scale"
+    ],
+    discussionPrompts: [
+      "Which costs or quotas block us most often?",
+      "What contractual term would protect our data and options?",
+      "If our primary vendor failed tomorrow, what's our plan?"
     ]
   },
   X: {
@@ -107,6 +157,16 @@ const DOMAIN_GUIDANCE = {
     ],
     howToImprove: [
       "Provide a clear on‑ramp: where to try ideas, what's allowed, and how to request data. Require a simple metric and decision date for every pilot. Run a short horizon brief quarterly to decide what to watch or ignore. Retire experiments on time so resources return to the pool."
+    ],
+    commonPitfalls: [
+      "Pilots with no metrics or end dates",
+      "Sandboxes with real data but no guardrails",
+      "Chasing every new model without a hypothesis"
+    ],
+    discussionPrompts: [
+      "Which two experiments should we run next quarter, and why?",
+      "What decision will each pilot inform?",
+      "What will we stop if it doesn't meet the threshold?"
     ]
   }
 };
@@ -256,6 +316,30 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
               </p>
             )}
           </div>
+          
+          {/* Common Pitfalls */}
+          {(guidance.common_pitfalls || guidance.commonPitfalls) && (
+            <div>
+              <h4 className="font-medium mb-2 text-primary">Common Pitfalls</h4>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                {(guidance.common_pitfalls || guidance.commonPitfalls || []).map((item: string, index: number) => (
+                  <li key={index}>• {item}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          
+          {/* Discussion Prompts */}
+          {(guidance.discussion_prompts || guidance.discussionPrompts) && (
+            <div>
+              <h4 className="font-medium mb-2 text-primary">Discussion Prompts</h4>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                {(guidance.discussion_prompts || guidance.discussionPrompts || []).map((item: string, index: number) => (
+                  <li key={index}>• {item}</li>
+                ))}
+              </ul>
+            </div>
+          )}
           
           {/* Priority Moves */}
           {priorityMoves && priorityMoves.length > 0 && (

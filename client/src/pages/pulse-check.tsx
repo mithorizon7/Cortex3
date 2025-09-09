@@ -181,6 +181,12 @@ export default function PulseCheckPage() {
           <p className="text-lg text-muted-foreground mb-4">
             Answer <strong>Yes</strong> only if the statement is <strong>fully true today</strong>. The six domains are: <strong>Clarity & Command (C)</strong>, <strong>Operations & Data (O)</strong>, <strong>Risk/Trust/Security (R)</strong>, <strong>Talent & Culture (T)</strong>, <strong>Ecosystem & Infrastructure (E)</strong>, <strong>Experimentation & Evolution (X)</strong>. Each "Yes" earns a point; your domain score is 0–3.
           </p>
+          <div className="max-w-xl mx-auto mb-6 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+            <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">A Note on Honesty</h3>
+            <p className="text-sm text-blue-800 dark:text-blue-200">
+              Treat this as a mirror, not a performance review. The most useful results come from candid answers.
+            </p>
+          </div>
           <div className="space-y-3">
             <Progress value={progress} className="w-full max-w-md mx-auto" />
             <p className="text-sm text-muted-foreground">

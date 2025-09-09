@@ -79,6 +79,37 @@ export default function HomePage() {
               CORTEX is a short, executive-level snapshot of your organization's AI readiness. In about <strong>20 minutes</strong>, you'll complete a <strong>Context Profile</strong> (your operating environment) and a <strong>Pulse Check</strong> (your current practices). You'll then get a clear visual readout and <strong>practical guidance</strong>: what matters, how it typically works, and what leaders in similar situations often do next.
             </p>
           </div>
+
+          {/* Privacy Statement */}
+          <div className="max-w-2xl mx-auto mb-8 p-4 bg-muted/30 rounded-lg border">
+            <h3 className="text-lg font-semibold mb-2 text-foreground">About Your Data</h3>
+            <p className="text-sm text-muted-foreground">
+              We store your answers as simple numbers/flags to generate guidance. We do <strong>not</strong> collect sensitive personal information. Your results are yours; we don't share them outside your organization.
+            </p>
+          </div>
+
+          <div className="space-y-4 mb-8">
+            <p className="text-base text-muted-foreground text-center max-w-2xl mx-auto">
+              This is <strong>educational, not prescriptive</strong>. We won't tell you to buy a specific tool or reorganize your company. Instead, we'll explain:
+            </p>
+            <ul className="text-sm text-muted-foreground max-w-xl mx-auto space-y-2">
+              <li className="flex items-start space-x-2">
+                <span className="text-primary">•</span>
+                <span>What good looks like in each domain</span>
+              </li>
+              <li className="flex items-start space-x-2">
+                <span className="text-primary">•</span>
+                <span>Why certain safeguards ("critical requirements") matter in some contexts</span>
+              </li>
+              <li className="flex items-start space-x-2">
+                <span className="text-primary">•</span>
+                <span>Simple, broadly applicable ways to improve</span>
+              </li>
+            </ul>
+            <p className="text-sm text-muted-foreground text-center max-w-2xl mx-auto">
+              You can complete this as a solo leader or with your team. Expect to spend <strong>60–90 minutes</strong> exploring the results and micro‑guides. A <strong>downloadable brief</strong> is available at the end.
+            </p>
+          </div>
           
           <div className="flex flex-col gap-4 justify-center items-center mb-12">
             <Button 
