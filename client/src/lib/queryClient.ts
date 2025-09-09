@@ -37,19 +37,95 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  // Generate a frontend request ID for correlation
+  const frontendRequestId = crypto.randomUUID();
+  
   if (!isOnline()) {
+    // Log client-side errors to console in structured format
+    console.error(JSON.stringify({
+      timestamp: new Date().toISOString(),
+      level: 'ERROR',
+      message: `API request failed - offline`,
+      context: {
+        operation: 'api_request',
+        method,
+        url,
+        frontendRequestId,
+        error: 'offline'
+      },
+      requestBody: data
+    }));
     throw new Error('offline: No internet connection');
   }
 
-  const res = await fetch(url, {
-    method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
-  });
+  try {
+    // Log request start
+    console.log(JSON.stringify({
+      timestamp: new Date().toISOString(),
+      level: 'DEBUG',
+      message: `API request started: ${method} ${url}`,
+      context: {
+        operation: 'api_request_start',
+        method,
+        url,
+        frontendRequestId,
+        hasRequestBody: !!data
+      }
+    }));
 
-  await throwIfResNotOk(res);
-  return res;
+    const startTime = performance.now();
+    const res = await fetch(url, {
+      method,
+      headers: {
+        ...(data ? { "Content-Type": "application/json" } : {}),
+        // Send frontend request ID for correlation with backend logs
+        "X-Frontend-Request-Id": frontendRequestId
+      },
+      body: data ? JSON.stringify(data) : undefined,
+      credentials: "include",
+    });
+
+    const duration = performance.now() - startTime;
+
+    // Log response
+    console.log(JSON.stringify({
+      timestamp: new Date().toISOString(),
+      level: res.ok ? 'INFO' : 'ERROR',
+      message: `API request completed: ${method} ${url} ${res.status}`,
+      context: {
+        operation: 'api_request_complete',
+        method,
+        url,
+        frontendRequestId,
+        statusCode: res.status,
+        duration: Math.round(duration)
+      }
+    }));
+
+    await throwIfResNotOk(res);
+    return res;
+  } catch (error) {
+    // Log detailed error information
+    console.error(JSON.stringify({
+      timestamp: new Date().toISOString(),
+      level: 'ERROR',
+      message: `API request failed: ${method} ${url}`,
+      context: {
+        operation: 'api_request_error',
+        method,
+        url,
+        frontendRequestId
+      },
+      error: {
+        name: error instanceof Error ? error.name : 'UnknownError',
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      },
+      requestBody: data
+    }));
+    
+    throw error;
+  }
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
