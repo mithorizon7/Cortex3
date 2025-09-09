@@ -67,10 +67,12 @@ export const initializeFirebase = (): { app: FirebaseApp | null; auth: Auth | nu
   }
 };
 
-// Google Auth Provider setup
+// Google Auth Provider setup - only create if Firebase is configured
 export const googleProvider = new GoogleAuthProvider();
-googleProvider.addScope('email');
-googleProvider.addScope('profile');
+if (validateConfig()) {
+  googleProvider.addScope('email');
+  googleProvider.addScope('profile');
+}
 
 // Initialize Firebase when module loads
 const { auth: firebaseAuth } = initializeFirebase();
@@ -82,6 +84,10 @@ export const isFirebaseConfigured = (): boolean => {
 
 // Authentication utility functions
 export const signInWithGoogle = async (usePopup = true): Promise<UserCredential> => {
+  if (!firebaseAuth) {
+    throw new Error('Firebase authentication not configured');
+  }
+  
   try {
     if (usePopup) {
       return await signInWithPopup(firebaseAuth, googleProvider);
@@ -97,6 +103,10 @@ export const signInWithGoogle = async (usePopup = true): Promise<UserCredential>
 };
 
 export const handleRedirectResult = async (): Promise<UserCredential | null> => {
+  if (!firebaseAuth) {
+    return null;
+  }
+  
   try {
     const result = await getRedirectResult(firebaseAuth);
     if (result) {
@@ -110,6 +120,10 @@ export const handleRedirectResult = async (): Promise<UserCredential | null> => 
 };
 
 export const signOut = async (): Promise<void> => {
+  if (!firebaseAuth) {
+    throw new Error('Firebase authentication not configured');
+  }
+  
   try {
     await firebaseSignOut(firebaseAuth);
     console.log('User signed out successfully');
@@ -121,6 +135,11 @@ export const signOut = async (): Promise<void> => {
 
 // Auth state listener
 export const onAuthStateChange = (callback: (user: User | null) => void) => {
+  if (!firebaseAuth) {
+    // Return a no-op unsubscribe function when Firebase is not configured
+    setTimeout(() => callback(null), 0);
+    return () => {};
+  }
   return onAuthStateChanged(firebaseAuth, callback);
 };
 
