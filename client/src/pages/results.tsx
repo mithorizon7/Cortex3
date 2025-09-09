@@ -11,7 +11,7 @@ import { generatePDFReport, exportJSONResults } from "@/lib/pdf-generator";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { AlertTriangle, CheckCircle, CircleOff } from "lucide-react";
-import type { Assessment, PillarScores } from "@shared/schema";
+import type { Assessment, PillarScores, ContextProfile } from "@shared/schema";
 
 export default function ResultsPage() {
   const { toast } = useToast();
@@ -35,9 +35,9 @@ export default function ResultsPage() {
     
     try {
       const blob = await generatePDFReport({
-        contextProfile: assessment.contextProfile,
-        pillarScores: assessment.pillarScores,
-        triggeredGates: assessment.triggeredGates || [],
+        contextProfile: assessment.contextProfile as ContextProfile,
+        pillarScores: assessment.pillarScores as PillarScores,
+        triggeredGates: (assessment.triggeredGates as any[]) || [],
         completedAt: assessment.completedAt || new Date().toISOString(),
       });
       
@@ -67,9 +67,9 @@ export default function ResultsPage() {
     if (!assessment) return;
     
     exportJSONResults({
-      contextProfile: assessment.contextProfile,
-      pillarScores: assessment.pillarScores,
-      triggeredGates: assessment.triggeredGates || [],
+      contextProfile: assessment.contextProfile as ContextProfile,
+      pillarScores: assessment.pillarScores as PillarScores,
+      triggeredGates: (assessment.triggeredGates as any[]) || [],
       completedAt: assessment.completedAt || new Date().toISOString(),
     });
     
@@ -113,8 +113,8 @@ export default function ResultsPage() {
   }
 
   const pillarScores = assessment.pillarScores as PillarScores;
-  const triggeredGates = assessment.triggeredGates || [];
-  const priorities = getPriorityLevel(pillarScores, assessment.contextProfile);
+  const triggeredGates = (assessment.triggeredGates as any[]) || [];
+  const priorities = getPriorityLevel(pillarScores, assessment.contextProfile as ContextProfile);
   
   const strengths = Object.entries(pillarScores).filter(([_, score]) => score >= 2);
   const priorities3 = Object.entries(pillarScores)
@@ -136,21 +136,72 @@ export default function ResultsPage() {
           
           {/* Context Gates */}
           {triggeredGates.length > 0 && (
-            <div className="space-y-4 mb-8">
+            <div className="space-y-6 mb-8">
+              <h2 className="text-xl font-semibold">Required Context Gates</h2>
+              <p className="text-muted-foreground text-sm mb-4">
+                Based on your organizational context, these measures must be implemented before scaling AI initiatives.
+              </p>
               {triggeredGates.map((gate: any) => (
-                <div key={gate.id} className="gate-callout p-6 rounded-lg">
-                  <div className="flex items-start space-x-4">
-                    <div className="bg-amber-500 text-white p-2 rounded-full">
-                      <AlertTriangle className="w-5 h-5" />
+                <Card key={gate.id} className="gate-callout border-l-4 border-l-amber-500">
+                  <CardContent className="p-6">
+                    <div className="flex items-start space-x-4">
+                      <div className="bg-amber-500 text-white p-2 rounded-full flex-shrink-0">
+                        <AlertTriangle className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <h3 className="font-semibold text-lg mb-1">{gate.title}</h3>
+                            <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                              <span className="bg-primary text-primary-foreground px-2 py-1 rounded">
+                                {gate.pillar} Domain
+                              </span>
+                              <span>•</span>
+                              <span>Priority: High</span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-4">
+                          <div>
+                            <p className="text-sm text-muted-foreground mb-2">
+                              <strong>Why this is required:</strong> {gate.reason}
+                            </p>
+                            {gate.explain && (
+                              <div className="bg-muted/30 p-3 rounded text-xs">
+                                <strong>Based on your profile:</strong>{' '}
+                                {Object.entries(gate.explain).map(([key, value], index) => (
+                                  <span key={key}>
+                                    {index > 0 && ', '}
+                                    {key.replace(/_/g, ' ')}: {String(value)}
+                                    {typeof value === 'number' && key !== 'procurement_constraints' && key !== 'edge_operations' && '/4'}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          
+                          {gate.description && (
+                            <div>
+                              <p className="text-sm">{gate.description}</p>
+                            </div>
+                          )}
+                          
+                          {gate.actions && gate.actions.length > 0 && (
+                            <div>
+                              <h4 className="font-medium mb-2 text-sm">Recommended Actions:</h4>
+                              <ul className="text-sm space-y-1 text-muted-foreground">
+                                {gate.actions.map((action: string, index: number) => (
+                                  <li key={index}>• {action}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-lg mb-2">{gate.title}</h3>
-                      <p className="text-sm text-muted-foreground mb-3">
-                        Because {gate.reason}, implement appropriate controls before scaling.
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           )}
@@ -218,13 +269,13 @@ export default function ResultsPage() {
                     Context Considerations
                   </h3>
                   <ul className="text-sm space-y-1 text-muted-foreground">
-                    {assessment.contextProfile.regulatory_intensity >= 3 && (
+                    {(assessment.contextProfile as ContextProfile).regulatory_intensity >= 3 && (
                       <li>• High regulatory environment requires enhanced controls</li>
                     )}
-                    {assessment.contextProfile.build_readiness >= 3 && (
+                    {(assessment.contextProfile as ContextProfile).build_readiness >= 3 && (
                       <li>• Strong build readiness supports ambitious AI initiatives</li>
                     )}
-                    {assessment.contextProfile.data_sensitivity >= 3 && (
+                    {(assessment.contextProfile as ContextProfile).data_sensitivity >= 3 && (
                       <li>• Data sensitivity demands strict governance</li>
                     )}
                   </ul>
