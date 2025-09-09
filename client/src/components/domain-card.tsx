@@ -36,93 +36,77 @@ interface DomainCardProps {
 
 const DOMAIN_GUIDANCE = {
   C: {
-    whyMatters: "Prevents pilot sprawl; aligns capital and talent to the few bets that change outcomes.",
+    whyMatters: "Clarity turns AI from scattered pilots into business outcomes. When leaders publish a simple, measurable AI ambition and name a single owner with budget authority, teams stop guessing. A routine executive review creates momentum: work that moves the needle is funded and scaled; experiments that don't deliver are sunset. This alignment reduces duplicated effort, accelerates learning, and ties AI to revenue, cost, and risk.",
     whatGoodLooks: [
-      "Written AI ambition with measurable outcomes",
-      "Named accountable leader with budget authority", 
-      "Quarterly executive reviews with reallocation",
-      "Clear CoE and Business Unit responsibilities"
+      "A one‑page AI ambition linked to business outcomes and customers",
+      "A named senior owner and a clear split between CoE (enable/govern) and BUs (adopt/deliver)",
+      "Quarterly executive/board review with reallocation decisions (fund/defund)",
+      "Leaders share a common language for AI scope, risks, and value"
     ],
     howToImprove: [
-      "Refine OKRs to include specific AI metrics",
-      "Establish C-suite AI literacy program",
-      "Document reallocation decisions from reviews",
-      "Integrate AI into annual strategic planning"
+      "Progress usually starts with publishing a simple ambition (outcomes, not technologies), then clarifying who owns what between a Center of Excellence and business units. Reviews move from \"show‑and‑tell\" to decide‑and‑do—small amounts of money shift to what works, with clear rationale. Over time, AI outcomes appear in strategy documents and operating plans. In more regulated settings, leadership reviews also check that safeguards and evidence are in place."
     ]
   },
   O: {
-    whyMatters: "Operational maturity determines whether AI delivers reliable business value or becomes a liability. Poor data governance and monitoring leads to costly outages and compliance violations.",
+    whyMatters: "Stable operations and governed data are the difference between a demo and a dependable service. Monitoring, human‑in‑the‑loop where risk warrants it, and basic data hygiene prevent silent failures, surprise bills, and reputational harm.",
     whatGoodLooks: [
-      "Documented AI lifecycle with monitoring dashboards",
-      "Named data owners with searchable catalogues",
-      "Standardized intake process for new AI initiatives", 
-      "Automated quality checks and drift detection"
+      "A documented lifecycle: design → deploy → monitor → update → retire",
+      "Logging, alerts, and simple dashboards for usage, cost, latency, and failure rates",
+      "Human review/QA checkpoints where stakes are high",
+      "A searchable data catalogue with owners, lineage, quality thresholds",
+      "A lightweight value/feasibility gate for new use‑cases"
     ],
     howToImprove: [
-      "Turn on logging & alerts for existing AI systems",
-      "Publish intake template for new AI use-cases",
-      "Identify golden datasets and assign ownership",
-      "Implement HITL checkpoints for high-risk decisions"
+      "Start with monitoring what you already run (latency, cost, error rate) and add simple alerts. Introduce a two‑page intake for new ideas: value hypothesis, data sources, risk level. Designate data owners for key tables or content used by AI. Where decisions affect customers, add human approval until you have evidence that automation is safe."
     ]
   },
   R: {
-    whyMatters: "Robust risk management protects your social license to operate and ensures regulatory compliance. Proactive security prevents costly breaches and reputational damage.",
+    whyMatters: "Trust and safety make AI adoption sustainable. Stakeholders expect you to know what AI you run, the risks it carries, and how you'll respond when something goes wrong. Basic assurance practices prevent reputational damage and regulatory setbacks.",
     whatGoodLooks: [
-      "Complete AI inventory with risk assessments",
-      "Automated bias and drift monitoring",
-      "Regular security red-teaming exercises",
-      "Tested incident response procedures"
+      "An AI inventory with owners and risk levels",
+      "Scheduled checks for fairness, privacy, and model/data drift",
+      "Periodic red‑teaming for prompts/jailbreaks and data exfiltration attempts",
+      "An incident response runbook with roles and communications",
+      "Internal or third‑party review of controls (as required)"
     ],
     howToImprove: [
-      "Automate compliance reporting for efficiency",
-      "Expand red-team scenarios beyond current scope", 
-      "Share best practices with industry peers",
-      "Consider AI risk insurance options"
+      "Catalog what you already use (systems, vendors, purpose, data). Schedule basic checks for high‑impact use‑cases and test your defenses with simple adversarial prompts. Draft a one‑page IR plan: who triages, who decides, who informs customers. Regulated contexts often add annual assurance whether internal or external."
     ]
   },
   T: {
-    whyMatters: "People adoption determines AI success more than technology. Without proper skills and incentives, even the best AI tools won't drive business value.",
+    whyMatters: "Adoption is about work, not tools. People need role‑specific skills and updated workflows that show when to use AI, when to verify, and how to escalate. Stories and incentives help good behaviors spread.",
     whatGoodLooks: [
-      "Role-specific AI training programs",
-      "Updated job descriptions and SOPs",
-      "Regular sharing of AI wins and lessons",
-      "Incentives aligned with AI adoption"
+      "Clear job families with role‑based AI fluency",
+      "SOPs/SOP checklists updated to include AI tasks and checkpoints",
+      "\"Wins and lessons\" shared on a regular rhythm",
+      "Incentives that reward safe, effective use"
     ],
     howToImprove: [
-      "Expand training coverage to all AI-touching roles",
-      "Create AI success stories library",
-      "Review promotion criteria to include AI fluency",
-      "Establish AI mentorship programs"
+      "Pick two or three job families that touch customers or costly processes. Create before/after task maps and add simple guardrails (checklists, approval steps). Offer short, role‑specific training with real examples. Share what works and what fails—both teach."
     ]
   },
   E: {
-    whyMatters: "Scalable, cost-effective infrastructure prevents project delays and budget overruns. Strategic partnerships provide capabilities while avoiding vendor lock-in.",
+    whyMatters: "Partners and platform choices determine speed, cost, and flexibility. Elastic capacity keeps teams moving; portability and clear terms help you avoid lock‑in and surprises.",
     whatGoodLooks: [
-      "Elastic compute with cost monitoring and alerts",
-      "Multiple vendor relationships with exit strategies",
-      "Secure APIs for external data exchange",
-      "FinOps dashboards showing unit economics"
+      "Elastic capacity and simple FinOps visibility (unit costs, quotas)",
+      "Strategic partners that fill capability gaps",
+      "Exit/portability plans in contracts (export formats, second source)",
+      "Governed APIs and basic interoperability standards"
     ],
     howToImprove: [
-      "Implement FinOps tracking for AI spend visibility",
-      "Document exit clauses in key vendor contracts",
-      "Set up cost alerts to prevent budget surprises",
-      "Establish API standards for data interoperability"
+      "Start by measuring unit costs and watching quotas. Consolidate on a few well‑understood services with clear terms (\"no training on our data/outputs\" when needed). Draft a one‑page exit plan: how we would switch, what we'd export, and a secondary option for critical paths."
     ]
   },
   X: {
-    whyMatters: "Systematic experimentation prevents \"pilot purgatory\" and accelerates learning. Clear success/sunset criteria ensure resources flow to what works.",
+    whyMatters: "AI changes quickly. Disciplined experimentation—safe sandboxes, small budgets, explicit success and sunset criteria—increases learning velocity and prevents \"pilot purgatory.\"",
     whatGoodLooks: [
-      "Safe sandbox environment with real data",
-      "Reserved innovation budget and time",
-      "Pre-defined success metrics for pilots",
-      "Regular external scanning and competitive intelligence"
+      "A guarded sandbox with representative data and spending caps",
+      "A ring‑fenced slice of time/credits for experiments",
+      "Every pilot has success and sunset criteria and a decision date",
+      "Lightweight horizon scanning of tech, policy, and competitors"
     ],
     howToImprove: [
-      "Create safe sandbox with production-like data",
-      "Reserve 10-15% budget for exploration",
-      "Define pilot success criteria upfront",
-      "Schedule quarterly tech scanning sessions"
+      "Provide a clear on‑ramp: where to try ideas, what's allowed, and how to request data. Require a simple metric and decision date for every pilot. Run a short horizon brief quarterly to decide what to watch or ignore. Retire experiments on time so resources return to the pool."
     ]
   }
 };
