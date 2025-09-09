@@ -1,5 +1,30 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
+// Network and retry utilities
+export function isOnline() {
+  return typeof navigator !== 'undefined' ? navigator.onLine : true;
+}
+
+export function getNetworkError(error: any) {
+  if (!isOnline()) {
+    return 'offline';
+  }
+  
+  if (error?.message?.includes('fetch')) {
+    return 'network';
+  }
+  
+  if (error?.message?.includes('500')) {
+    return 'server';
+  }
+  
+  if (error?.message?.includes('429')) {
+    return 'ratelimit';
+  }
+  
+  return 'unknown';
+}
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
@@ -12,6 +37,10 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  if (!isOnline()) {
+    throw new Error('offline: No internet connection');
+  }
+
   const res = await fetch(url, {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
@@ -48,10 +77,38 @@ export const queryClient = new QueryClient({
       refetchInterval: false,
       refetchOnWindowFocus: false,
       staleTime: Infinity,
-      retry: false,
+      retry: (failureCount, error: any) => {
+        // Don't retry on 4xx errors (client errors)
+        if (error?.message?.match(/^4\d\d/)) {
+          return false;
+        }
+        
+        // Don't retry if offline 
+        if (!isOnline()) {
+          return false;
+        }
+        
+        // Retry up to 3 times for network/server errors
+        return failureCount < 3;
+      },
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     },
     mutations: {
-      retry: false,
+      retry: (failureCount, error: any) => {
+        // Don't retry mutations on 4xx errors
+        if (error?.message?.match(/^4\d\d/)) {
+          return false;
+        }
+        
+        // Don't retry if offline
+        if (!isOnline()) {
+          return false;
+        }
+        
+        // Retry mutations once for network/server errors
+        return failureCount < 1;
+      },
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
     },
   },
 });
