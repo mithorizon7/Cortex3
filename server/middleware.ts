@@ -21,6 +21,18 @@ export function requestContextMiddleware(req: Request, res: Response, next: Next
   // For now, using a header-based approach - in production this might come from JWT or session
   req.userId = req.headers['x-user-id'] as string || 'anonymous';
   
+  // Extract frontend request ID for correlation if provided
+  const frontendRequestId = req.headers['x-frontend-request-id'] as string;
+  if (frontendRequestId) {
+    logger.setContext({
+      requestId: req.requestId,
+      userId: req.userId,
+      additionalContext: {
+        frontendRequestId
+      }
+    });
+  }
+  
   // Set logger context for this request
   logger.setContext({
     requestId: req.requestId,
