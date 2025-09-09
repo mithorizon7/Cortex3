@@ -27,8 +27,24 @@ export function getNetworkError(error: any) {
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
-    const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    try {
+      const errorData = await res.json();
+      
+      // If server returns structured error with incident ID, preserve it
+      if (errorData.incidentId) {
+        const error = new Error(errorData.error || res.statusText);
+        (error as any).incidentId = errorData.incidentId;
+        (error as any).statusCode = res.status;
+        throw error;
+      }
+      
+      // Fallback to text response
+      throw new Error(errorData.error || errorData.message || res.statusText);
+    } catch (parseError) {
+      // If JSON parsing fails, fallback to text
+      const text = (await res.text()) || res.statusText;
+      throw new Error(`${res.status}: ${text}`);
+    }
   }
 }
 
@@ -104,9 +120,9 @@ export async function apiRequest(
 
     await throwIfResNotOk(res);
     return res;
-  } catch (error) {
-    // Log detailed error information
-    console.error(JSON.stringify({
+  } catch (fetchError: any) {
+    // Log client-side errors to console in structured format
+    const errorContext = {
       timestamp: new Date().toISOString(),
       level: 'ERROR',
       message: `API request failed: ${method} ${url}`,
@@ -114,17 +130,26 @@ export async function apiRequest(
         operation: 'api_request_error',
         method,
         url,
-        frontendRequestId
+        frontendRequestId,
+        error: fetchError?.message || 'unknown_error',
+        statusCode: fetchError?.status || fetchError?.statusCode,
+        incidentId: fetchError?.incidentId // Preserve incident ID from server
       },
       error: {
-        name: error instanceof Error ? error.name : 'UnknownError',
-        message: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
-      },
-      requestBody: data
-    }));
+        name: fetchError?.name,
+        message: fetchError?.message,
+        stack: fetchError?.stack
+      }
+    };
     
-    throw error;
+    // Don't log sensitive request bodies for certain endpoints
+    if (!url.includes('/assessments')) {
+      errorContext.requestBody = data;
+    }
+    
+    console.error(JSON.stringify(errorContext));
+    
+    throw fetchError;
   }
 }
 
