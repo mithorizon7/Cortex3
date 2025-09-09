@@ -3,12 +3,23 @@ import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import ProgressHeader from "@/components/progress-header";
 import { PULSE_QUESTIONS, CORTEX_PILLARS } from "@/lib/cortex";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { ChevronLeft, ChevronRight, CheckCircle, XCircle, Clock, Target } from "lucide-react";
+
+// Group questions by pillar for domain-based flow
+const DOMAIN_GROUPS = [
+  { pillar: 'C', questions: PULSE_QUESTIONS.filter(q => q.pillar === 'C') },
+  { pillar: 'O', questions: PULSE_QUESTIONS.filter(q => q.pillar === 'O') },
+  { pillar: 'R', questions: PULSE_QUESTIONS.filter(q => q.pillar === 'R') },
+  { pillar: 'T', questions: PULSE_QUESTIONS.filter(q => q.pillar === 'T') },
+  { pillar: 'E', questions: PULSE_QUESTIONS.filter(q => q.pillar === 'E') },
+  { pillar: 'X', questions: PULSE_QUESTIONS.filter(q => q.pillar === 'X') }
+];
 
 export default function PulseCheckPage() {
   const [, navigate] = useLocation();
@@ -16,7 +27,7 @@ export default function PulseCheckPage() {
   const assessmentId = window.location.pathname.split('/')[2];
   
   const [responses, setResponses] = useState<Record<string, boolean>>({});
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [currentDomain, setCurrentDomain] = useState(0);
   
   const { data: assessment, isLoading } = useQuery({
     queryKey: ['/api/assessments', assessmentId],
@@ -48,14 +59,14 @@ export default function PulseCheckPage() {
   };
 
   const handleNext = () => {
-    if (currentQuestionIndex < PULSE_QUESTIONS.length - 1) {
-      setCurrentQuestionIndex(prev => prev + 1);
+    if (currentDomain < DOMAIN_GROUPS.length - 1) {
+      setCurrentDomain(prev => prev + 1);
     }
   };
 
   const handlePrevious = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(prev => prev - 1);
+    if (currentDomain > 0) {
+      setCurrentDomain(prev => prev - 1);
     }
   };
 
@@ -63,10 +74,17 @@ export default function PulseCheckPage() {
     updatePulse.mutate(responses);
   };
 
-  const progress = ((currentQuestionIndex + 1) / PULSE_QUESTIONS.length) * 100;
-  const completedCount = Object.keys(responses).length;
-  const currentQuestion = PULSE_QUESTIONS[currentQuestionIndex];
-  const currentPillar = CORTEX_PILLARS[currentQuestion.pillar as keyof typeof CORTEX_PILLARS];
+  const currentGroup = DOMAIN_GROUPS[currentDomain];
+  const currentPillar = CORTEX_PILLARS[currentGroup.pillar as keyof typeof CORTEX_PILLARS];
+  const progress = ((currentDomain + 1) / DOMAIN_GROUPS.length) * 100;
+  const totalAnswered = Object.keys(responses).length;
+  const isLastDomain = currentDomain === DOMAIN_GROUPS.length - 1;
+  
+  // Get current domain answers
+  const currentDomainAnswers = currentGroup.questions.filter(q => 
+    responses[q.id] !== undefined
+  ).length;
+  const currentDomainTotal = currentGroup.questions.length;
 
   if (isLoading) {
     return (
@@ -104,100 +122,174 @@ export default function PulseCheckPage() {
       <ProgressHeader currentStep={2} />
       
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Pulse Check (18)</h1>
-          <p className="text-muted-foreground mb-4">
-            Answer "Yes" only if fully true today. This diagnostic covers all six CORTEX domains.
+          <div className="flex items-center justify-center space-x-2 mb-4">
+            <Target className="h-6 w-6 text-primary" />
+            <h1 className="text-3xl font-bold text-foreground">Pulse Check</h1>
+            <Clock className="h-5 w-5 text-muted-foreground" />
+          </div>
+          <p className="text-lg text-muted-foreground mb-4">
+            Answer "Yes" only if this is fully true in your organization today
           </p>
-          <div className="space-y-2">
-            <Progress value={progress} className="w-full" />
+          <div className="space-y-3">
+            <Progress value={progress} className="w-full max-w-md mx-auto" />
             <p className="text-sm text-muted-foreground">
-              Question {currentQuestionIndex + 1} of {PULSE_QUESTIONS.length} • {completedCount} answered
+              Domain {currentDomain + 1} of {DOMAIN_GROUPS.length} • {totalAnswered}/18 total answered
             </p>
           </div>
         </div>
 
-        <Card>
+        {/* Current Domain */}
+        <Card className="mb-8">
           <CardContent className="p-8">
-            <div className="mb-6">
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="bg-primary text-primary-foreground p-2 rounded-lg">
-                  <i className={`fas fa-${currentPillar.icon} text-lg`}></i>
+            {/* Domain Header */}
+            <div className="mb-8 text-center">
+              <div className="flex items-center justify-center space-x-4 mb-4">
+                <div className="bg-primary text-primary-foreground p-3 rounded-full">
+                  <span className="text-2xl font-bold">{currentGroup.pillar}</span>
                 </div>
-                <div>
-                  <h2 className="font-semibold text-lg">{currentPillar.name}</h2>
-                  <p className="text-sm text-muted-foreground">{currentPillar.description}</p>
+                <div className="text-left">
+                  <h2 className="text-2xl font-bold text-foreground">{currentPillar.name}</h2>
+                  <p className="text-base text-muted-foreground">{currentPillar.description}</p>
                 </div>
               </div>
+              <Badge variant="secondary" className="text-sm">
+                {currentDomainAnswers}/{currentDomainTotal} questions answered
+              </Badge>
             </div>
 
-            <div className="mb-8">
-              <h3 className="text-xl font-medium mb-4" data-testid={`question-${currentQuestion.id}`}>
-                {currentQuestion.id}. {currentQuestion.text}
-              </h3>
-              
-              <div className="flex items-center justify-center space-x-8">
-                <label className="flex items-center space-x-3 cursor-pointer">
-                  <Switch
-                    checked={responses[currentQuestion.id] === false}
-                    onCheckedChange={(checked) => handleResponseChange(currentQuestion.id, !checked)}
-                    data-testid={`switch-no-${currentQuestion.id}`}
-                  />
-                  <span className="text-lg font-medium text-red-600">No</span>
-                </label>
-                
-                <label className="flex items-center space-x-3 cursor-pointer">
-                  <Switch
-                    checked={responses[currentQuestion.id] === true}
-                    onCheckedChange={(checked) => handleResponseChange(currentQuestion.id, checked)}
-                    data-testid={`switch-yes-${currentQuestion.id}`}
-                  />
-                  <span className="text-lg font-medium text-green-600">Yes</span>
-                </label>
-              </div>
-              
-              {responses[currentQuestion.id] !== undefined && (
-                <div className="text-center mt-4">
-                  <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
-                    responses[currentQuestion.id] 
-                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
-                      : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                  }`}>
-                    {responses[currentQuestion.id] ? 'Yes' : 'No'}
-                  </span>
+            {/* Domain Questions */}
+            <div className="space-y-8">
+              {currentGroup.questions.map((question) => (
+                <div key={question.id} className="border border-border rounded-lg p-6 bg-card">
+                  <h3 className="text-lg font-semibold mb-4" data-testid={`question-${question.id}`}>
+                    {question.id}. {question.text}
+                  </h3>
+                  
+                  <div className="flex justify-center space-x-6">
+                    <Button
+                      variant={responses[question.id] === false ? "destructive" : "outline"}
+                      size="lg"
+                      onClick={() => handleResponseChange(question.id, false)}
+                      className="flex items-center space-x-2 min-w-[120px]"
+                      data-testid={`button-no-${question.id}`}
+                    >
+                      <XCircle className="h-5 w-5" />
+                      <span>No</span>
+                    </Button>
+                    
+                    <Button
+                      variant={responses[question.id] === true ? "default" : "outline"}
+                      size="lg"
+                      onClick={() => handleResponseChange(question.id, true)}
+                      className="flex items-center space-x-2 min-w-[120px]"
+                      data-testid={`button-yes-${question.id}`}
+                    >
+                      <CheckCircle className="h-5 w-5" />
+                      <span>Yes</span>
+                    </Button>
+                  </div>
+                  
+                  {responses[question.id] !== undefined && (
+                    <div className="text-center mt-4">
+                      <Badge 
+                        variant={responses[question.id] ? "default" : "destructive"}
+                        className="text-sm"
+                      >
+                        {responses[question.id] ? 'Yes' : 'No'}
+                      </Badge>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-
-            <div className="flex justify-between">
-              <Button 
-                variant="outline" 
-                onClick={handlePrevious}
-                disabled={currentQuestionIndex === 0}
-                data-testid="button-previous"
-              >
-                Previous
-              </Button>
-              
-              {currentQuestionIndex === PULSE_QUESTIONS.length - 1 ? (
-                <Button 
-                  onClick={handleComplete}
-                  disabled={completedCount < PULSE_QUESTIONS.length || updatePulse.isPending}
-                  data-testid="button-complete"
-                >
-                  {updatePulse.isPending ? "Completing..." : "Complete Assessment"}
-                </Button>
-              ) : (
-                <Button 
-                  onClick={handleNext}
-                  data-testid="button-next"
-                >
-                  Next
-                </Button>
-              )}
+              ))}
             </div>
           </CardContent>
         </Card>
+
+        {/* Navigation */}
+        <div className="flex justify-between items-center">
+          <Button 
+            variant="outline" 
+            onClick={handlePrevious}
+            disabled={currentDomain === 0}
+            className="flex items-center space-x-2"
+            data-testid="button-previous"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            <span>Previous Domain</span>
+          </Button>
+          
+          <div className="text-center">
+            <p className="text-sm text-muted-foreground">
+              {currentDomainAnswers}/{currentDomainTotal} domain questions • {totalAnswered}/18 total
+            </p>
+          </div>
+          
+          {isLastDomain ? (
+            <Button 
+              onClick={handleComplete}
+              disabled={totalAnswered < 18 || updatePulse.isPending}
+              size="lg"
+              className="flex items-center space-x-2"
+              data-testid="button-complete"
+            >
+              <span>{updatePulse.isPending ? "Generating Results..." : "Get My Results"}</span>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          ) : (
+            <Button 
+              onClick={handleNext}
+              size="lg"
+              className="flex items-center space-x-2"
+              data-testid="button-next"
+            >
+              <span>Next Domain</span>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+
+        {/* Domain Overview */}
+        <div className="mt-8 flex justify-center">
+          <div className="flex space-x-2">
+            {DOMAIN_GROUPS.map((group, index) => {
+              const pillar = CORTEX_PILLARS[group.pillar as keyof typeof CORTEX_PILLARS];
+              const domainAnswered = group.questions.filter(q => responses[q.id] !== undefined).length;
+              const isCompleted = domainAnswered === group.questions.length;
+              const isCurrent = index === currentDomain;
+              
+              return (
+                <div 
+                  key={group.pillar}
+                  className={`flex flex-col items-center p-3 rounded-lg border-2 transition-all ${
+                    isCurrent 
+                      ? 'border-primary bg-primary/10' 
+                      : isCompleted 
+                      ? 'border-green-500 bg-green-50 dark:bg-green-950' 
+                      : 'border-border bg-muted/30'
+                  }`}
+                >
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                    isCurrent 
+                      ? 'bg-primary text-primary-foreground'
+                      : isCompleted
+                      ? 'bg-green-500 text-white'
+                      : 'bg-muted text-muted-foreground'
+                  }`}>
+                    {group.pillar}
+                  </div>
+                  <div className="text-xs text-center mt-1 max-w-[80px]">
+                    {pillar.name.split(' ')[0]}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {domainAnswered}/3
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </main>
     </div>
   );
