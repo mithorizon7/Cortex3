@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { CORTEX_PILLARS, MATURITY_STAGES, getStageColor } from "@/lib/cortex";
-import { Star, Info, Target, Cog, Shield, Users, Network, Lightbulb } from "lucide-react";
+import { Star, Info, Target, Cog, Shield, Users, Network, Lightbulb, TrendingUp, ArrowRight } from "lucide-react";
 
 interface DomainCardProps {
   pillar: string;
@@ -9,6 +9,19 @@ interface DomainCardProps {
   priority?: number;
   contextReason?: string;
   contextGuidance?: any;
+  priorityMoves?: Array<{
+    id: string;
+    pillar: string;
+    title: string;
+    rank: number;
+    priority: number;
+    explain?: {
+      gapBoost: number;
+      profileBoost: number;
+      pillarScore: number;
+      triggeringDimensions?: string[];
+    };
+  }>;
 }
 
 const DOMAIN_GUIDANCE = {
@@ -104,7 +117,7 @@ const DOMAIN_GUIDANCE = {
   }
 };
 
-export default function DomainCard({ pillar, stage, priority, contextReason, contextGuidance }: DomainCardProps) {
+export default function DomainCard({ pillar, stage, priority, contextReason, contextGuidance, priorityMoves }: DomainCardProps) {
   const pillarInfo = CORTEX_PILLARS[pillar as keyof typeof CORTEX_PILLARS];
   const stageInfo = MATURITY_STAGES[stage];
   const guidance = contextGuidance?.[pillar] || DOMAIN_GUIDANCE[pillar as keyof typeof DOMAIN_GUIDANCE];
@@ -185,6 +198,45 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
               </p>
             )}
           </div>
+          
+          {/* Priority Moves */}
+          {priorityMoves && priorityMoves.length > 0 && (
+            <div>
+              <h4 className="font-medium mb-2 text-primary flex items-center space-x-2">
+                <TrendingUp className="h-4 w-4" />
+                <span>Top Priority Moves</span>
+              </h4>
+              <div className="space-y-2">
+                {priorityMoves.slice(0, 2).map((move) => (
+                  <div key={move.id} className="bg-primary/5 p-3 rounded-lg border border-primary/10">
+                    <div className="flex items-start justify-between mb-1">
+                      <div className="flex items-center space-x-2">
+                        <Badge variant="outline" className="text-xs">
+                          #{move.rank}
+                        </Badge>
+                        <span className="font-medium text-sm">{move.title}</span>
+                      </div>
+                      <ArrowRight className="h-3 w-3 text-muted-foreground flex-shrink-0 mt-1" />
+                    </div>
+                    
+                    {move.explain && (
+                      <div className="text-xs text-muted-foreground mt-2">
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div>Gap Impact: <span className="font-medium">+{(move.explain.gapBoost * 100).toFixed(0)}%</span></div>
+                          <div>Context Fit: <span className="font-medium">+{(move.explain.profileBoost * 100).toFixed(0)}%</span></div>
+                        </div>
+                        {move.explain.triggeringDimensions && move.explain.triggeringDimensions.length > 0 && (
+                          <p className="text-xs mt-1 text-primary/70">
+                            <strong>Why prioritized:</strong> {move.explain.triggeringDimensions.join(', ').replace(/_/g, ' ')}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

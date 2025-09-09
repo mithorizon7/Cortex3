@@ -241,6 +241,7 @@ export default function ResultsPage() {
   const pillarScores = assessment.pillarScores as PillarScores;
   const triggeredGates = (assessment.triggeredGates as any[]) || [];
   const contextProfile = assessment.contextProfile as ContextProfile;
+  const priorityMoves = (assessment as any).priorityMoves?.moves || [];
   const { insights, priorities } = generateExecutiveInsights(pillarScores, triggeredGates, contextProfile);
   
   const avgScore = Object.values(pillarScores).reduce((sum, score) => sum + score, 0) / 6;
@@ -469,11 +470,13 @@ export default function ResultsPage() {
               {Object.entries(CORTEX_PILLARS).map(([key, pillar]) => {
                 const pillarKey = key.toLowerCase();
                 const score = pillarScores[pillarKey as keyof PillarScores] || 0;
+                const pillarMoves = priorityMoves.filter((move: any) => move.pillar === key);
                 return (
                   <DomainCard 
                     key={key} 
                     pillar={key} 
                     stage={score}
+                    priorityMoves={pillarMoves}
                   />
                 );
               })}
