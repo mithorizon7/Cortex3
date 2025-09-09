@@ -11,13 +11,14 @@ import { generatePDFReport, exportJSONResults } from "@/lib/pdf-generator";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { AlertTriangle, CheckCircle, CircleOff } from "lucide-react";
+import type { Assessment, PillarScores } from "@shared/schema";
 
 export default function ResultsPage() {
   const { toast } = useToast();
   const assessmentId = window.location.pathname.split('/')[2];
   const [remindQuarterly, setRemindQuarterly] = useState(false);
   
-  const { data: assessment, isLoading } = useQuery({
+  const { data: assessment, isLoading } = useQuery<Assessment>({
     queryKey: ['/api/assessments', assessmentId],
     enabled: !!assessmentId,
   });
@@ -111,14 +112,14 @@ export default function ResultsPage() {
     completeAssessment.mutate();
   }
 
-  const pillarScores = assessment.pillarScores;
+  const pillarScores = assessment.pillarScores as PillarScores;
   const triggeredGates = assessment.triggeredGates || [];
   const priorities = getPriorityLevel(pillarScores, assessment.contextProfile);
   
   const strengths = Object.entries(pillarScores).filter(([_, score]) => score >= 2);
   const priorities3 = Object.entries(pillarScores)
     .filter(([_, score]) => score <= 1)
-    .sort(([,a], [,b]) => a - b);
+    .sort(([,a], [,b]) => (a as number) - (b as number));
 
   return (
     <div className="min-h-screen bg-background">
@@ -251,12 +252,14 @@ export default function ResultsPage() {
             {Object.entries(pillarScores)
               .sort(([pillarA, scoreA], [pillarB, scoreB]) => {
                 // Sort by score (lowest first), then alphabetically
-                if (scoreA !== scoreB) return scoreA - scoreB;
+                const scoreANum = scoreA as number;
+                const scoreBNum = scoreB as number;
+                if (scoreANum !== scoreBNum) return scoreANum - scoreBNum;
                 return pillarA.localeCompare(pillarB);
               })
               .map(([pillar, stage]) => {
                 const priority = priorities.find(p => p.pillar === pillar)?.priority || 0;
-                const contextReason = triggeredGates.length > 0 && stage <= 1 
+                const contextReason = triggeredGates.length > 0 && (stage as number) <= 1 
                   ? "Your context profile indicates higher risk requirements"
                   : undefined;
                 
@@ -264,7 +267,7 @@ export default function ResultsPage() {
                   <DomainCard
                     key={pillar}
                     pillar={pillar}
-                    stage={stage}
+                    stage={stage as number}
                     priority={priority}
                     contextReason={contextReason}
                   />
@@ -339,7 +342,7 @@ export default function ResultsPage() {
                   <label className="flex items-center space-x-2 text-sm cursor-pointer">
                     <Checkbox 
                       checked={remindQuarterly}
-                      onCheckedChange={setRemindQuarterly}
+                      onCheckedChange={(checked) => setRemindQuarterly(checked === true)}
                       data-testid="checkbox-quarterly-reminder"
                     />
                     <span>Remind me to re-take this assessment in 90 days</span>

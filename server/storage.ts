@@ -23,7 +23,11 @@ export class MemStorage implements IStorage {
     const assessment: Assessment = { 
       ...insertAssessment, 
       id,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      pulseResponses: insertAssessment.pulseResponses || null,
+      pillarScores: insertAssessment.pillarScores || null,
+      triggeredGates: insertAssessment.triggeredGates || null,
+      completedAt: insertAssessment.completedAt || null,
     };
     this.assessments.set(id, assessment);
     return assessment;
