@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +12,8 @@ import { ResultsSkeleton } from "@/components/skeleton-loader";
 import HoneycombRadar from "@/components/honeycomb-radar";
 import DomainCard from "@/components/domain-card";
 import { AppHeader } from "@/components/navigation/app-header";
+import { ValueSnapshot } from "@/components/value-overlay";
+import { initializeValueOverlay } from "@/lib/value-overlay";
 import { CORTEX_PILLARS, getPriorityLevel } from "@/lib/cortex";
 import { generatePDFReport, exportJSONResults } from "@/lib/pdf-generator";
 import { getNetworkError } from "@/lib/queryClient";
@@ -34,7 +36,7 @@ import {
   Settings,
   Lightbulb
 } from "lucide-react";
-import type { Assessment, PillarScores, ContextProfile } from "@shared/schema";
+import type { Assessment, PillarScores, ContextProfile, ValueOverlay, ValueOverlayPillar } from "@shared/schema";
 
 // Helper function to get gate thresholds for transparency
 function getGateThreshold(gateId: string, dimension: string): string | null {
@@ -145,6 +147,7 @@ export default function ResultsPage() {
   const assessmentId = window.location.pathname.split('/')[2];
   const [remindQuarterly, setRemindQuarterly] = useState(false);
   const [showDetailedView, setShowDetailedView] = useState(false);
+  const [valueOverlay, setValueOverlay] = useState<ValueOverlay | null>(null);
   
   const { data: assessment, isLoading } = useQuery<Assessment>({
     queryKey: ['/api/assessments', assessmentId],
@@ -157,6 +160,53 @@ export default function ResultsPage() {
       return response.json();
     },
   });
+
+  const updateValueOverlay = useMutation({
+    mutationFn: async (overlay: ValueOverlay) => {
+      const response = await apiRequest("PATCH", `/api/assessments/${assessmentId}`, {
+        valueOverlay: overlay,
+      });
+      return response.json();
+    },
+  });
+
+  // Initialize value overlay from assessment data or context profile
+  const initializeValueOverlayFromAssessment = useCallback((assessment: Assessment) => {
+    if (assessment.valueOverlay) {
+      setValueOverlay(assessment.valueOverlay as ValueOverlay);
+    } else if (assessment.contextProfile) {
+      const initialOverlay = initializeValueOverlay(assessment.contextProfile as ContextProfile);
+      setValueOverlay(initialOverlay);
+    }
+  }, []);
+
+  // Initialize value overlay when assessment data loads
+  React.useEffect(() => {
+    if (assessment && !valueOverlay) {
+      initializeValueOverlayFromAssessment(assessment);
+    }
+  }, [assessment, valueOverlay, initializeValueOverlayFromAssessment]);
+
+  // Handle value overlay updates
+  const handleValueOverlayUpdate = useCallback((pillar: string, updates: Partial<ValueOverlayPillar>) => {
+    setValueOverlay(prev => {
+      if (!prev) return prev;
+      
+      const currentPillarData = prev[pillar as keyof ValueOverlay];
+      const updated = {
+        ...prev,
+        [pillar]: {
+          ...currentPillarData,
+          ...updates
+        }
+      };
+      
+      // Persist to backend
+      updateValueOverlay.mutate(updated);
+      
+      return updated;
+    });
+  }, [updateValueOverlay]);
 
   const handleExportPDF = async () => {
     if (!assessment) return;
@@ -279,6 +329,12 @@ export default function ResultsPage() {
             Based on your organizational context and current capabilities, here's your personalized AI strategy.
           </p>
         </div>
+
+        {/* Value Snapshot */}
+        <ValueSnapshot 
+          valueOverlay={valueOverlay}
+          totalPillars={Object.keys(CORTEX_PILLARS).length}
+        />
 
         {/* Executive Summary */}
         <Card className="mb-8 border-2 border-primary/20">
@@ -475,11 +531,15 @@ export default function ResultsPage() {
                 const pillarKey = key.toLowerCase();
                 const score = pillarScores[pillarKey as keyof PillarScores] || 0;
                 const pillarMoves = priorityMoves.filter((move: any) => move.pillar === key);
+                const pillarValueData = valueOverlay?.[key as keyof ValueOverlay];
                 return (
                   <DomainCard 
                     key={key} 
                     pillar={key} 
                     stage={score}
+                    contextProfile={contextProfile}
+                    valueOverlay={pillarValueData}
+                    onValueOverlayUpdate={handleValueOverlayUpdate}
                     priorityMoves={pillarMoves}
                     contextGuidance={contextGuidance}
                   />

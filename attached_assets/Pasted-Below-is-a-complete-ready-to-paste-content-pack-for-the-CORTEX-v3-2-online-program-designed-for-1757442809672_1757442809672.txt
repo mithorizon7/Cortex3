@@ -1,0 +1,743 @@
+Below is a complete, ready‑to‑paste **content pack** for the CORTEX v3.2 online program designed for a **one‑off, two‑hour** executive activity. It includes on‑screen copy, domain guidance, **micro‑guides** (deep dives) for each **pillar** and each **critical requirement (gate)**, short **“how to measure”** notes for the canonical value metrics, a **glossary**, and export headings. The tone is **educational, plain‑English, non‑prescriptive**, and broadly applicable across industries.
+
+> **Developer note:** Content is organized by sections with stable **IDs/slugs** so you can wire routing and links. You can store each item as `{id, title, summary, body, tags}`. “Tags” help you conditionally surface content using the Context Profile (e.g., `regulated`, `high_sensitivity`, `edge`, `low_readiness`, `finops`).
+
+---
+
+## 1) Welcome / Onboarding
+
+**ID:** `welcome.intro`
+**Title:** Welcome to CORTEX — Your Executive AI Readiness Snapshot
+**Body:**
+CORTEX is a short, executive‑level snapshot of your organization’s AI readiness. In about **20 minutes**, you’ll complete a **Context Profile** (your operating environment) and a **Pulse Check** (your current practices). You’ll then get a clear visual readout and **practical guidance**: what matters, how it typically works, and what leaders in similar situations often do next.
+
+This is **educational, not prescriptive**. We won’t tell you to buy a specific tool or reorganize your company. Instead, we’ll explain:
+
+* What good looks like in each domain
+* Why certain safeguards (“critical requirements”) matter in some contexts
+* Simple, broadly applicable ways to improve
+
+You can complete this as a solo leader or with your team. Expect to spend **60–90 minutes** exploring the results and micro‑guides. A **downloadable brief** is available at the end.
+
+**ID:** `welcome.privacy`
+**Title:** About Your Data
+**Body:**
+We store your answers as simple numbers/flags to generate guidance. We do **not** collect sensitive personal information. Your results are yours; we don’t share them outside your organization.
+
+---
+
+## 2) Context Profile (instructions + anchors)
+
+**ID:** `context.instructions`
+**Title:** Context Profile — How We Tailor Guidance
+**Body:**
+A few quick sliders tell us about your operating environment (regulation, sensitivity, speed, scale, etc.). We use these to **tailor guidance and highlight critical requirements**. We do **not** change your scores based on context.
+
+**ID:** `context.anchors`
+**Title:** Context Sliders — Anchors
+**Body (you may render inline under each slider):**
+
+* **Regulatory intensity (0–4):** 0 none · 1 guidance · 2 some rules · 3 audited/prescriptive · 4 heavily regulated/multi‑regime
+* **Data sensitivity & residency (0–4):** 0 public · 1 internal · 2 confidential · 3 PII/trade secrets · 4 PHI/PCI + in‑region
+* **Safety/mission criticality (0–4):** 0 low harm · 1 inconvenience · 2 costly mistakes · 3 serious legal/financial · 4 safety/systemic risk
+* **Brand/PR exposure (0–4):** 0 tolerant · 1 minor · 2 meaningful · 3 major · 4 existential if wrong
+* **Market/tech clock‑speed (0–4):** 0 annual · 1 quarterly · 2 monthly · 3 weekly · 4 frontier pace
+* **Latency/edge dependence (0–4):** 0 seconds ok · 1 <1s · 2 <500ms · 3 <200ms · 4 offline/field/air‑gapped
+* **Scale/throughput (0–4):** 0 small internal · 1 department · 2 enterprise · 3 high‑traffic · 4 hyperscale
+* **Proprietary data advantage (0–4):** 0 none · 1 small · 2 moderate · 3 strong · 4 large, rights‑clear, labeled/fresh
+* **Build readiness (0–4):** 0 none · 1 early pilots · 2 basics in place · 3 mature CoE/MLOps/IR · 4 industrialized
+* **FinOps priority (0–4):** 0 low · 1 med‑low · 2 medium · 3 high · 4 strict unit budgets
+* **Procurement constraints:** Yes/No
+* **Edge operations (OT/field/robots):** Yes/No
+
+---
+
+## 3) Pulse Check (instructions)
+
+**ID:** `pulse.instructions`
+**Title:** Pulse Check — 18 Questions, 6 Domains
+**Body:**
+Answer **Yes** only if the statement is **fully true today**. The six domains are: **Clarity & Command (C)**, **Operations & Data (O)**, **Risk/Trust/Security (R)**, **Talent & Culture (T)**, **Ecosystem & Infrastructure (E)**, **Experimentation & Evolution (X)**. Each “Yes” earns a point; your domain score is 0–3.
+
+**ID:** `pulse.reminder`
+**Title:** A Note on Honesty
+**Body:**
+Treat this as a mirror, not a performance review. The most useful results come from candid answers.
+
+*(Pulse question text is the v3.2 set you already have.)*
+
+---
+
+## 4) Results Page — Headings & Educational Copy
+
+**ID:** `results.header`
+**Title:** Your Readiness Snapshot
+**Body:**
+Below is your CORTEX profile: six domains, each scored 0–3. The **honeycomb** shows where you are strong and where you have room to build. Scores reflect today’s practices, not potential.
+
+**ID:** `results.gates.header`
+**Title:** Critical Requirements for Your Context
+**Body:**
+Because of your context, some safeguards are **non‑negotiable before scale**. These aren’t bureaucratic hurdles; they prevent avoidable harm and build trust. Expand each callout to learn what it is, why it applies, and simple ways to satisfy it.
+
+**ID:** `results.educational.note`
+**Title:** How to Read the Guidance
+**Body:**
+For each domain you’ll see:
+
+* **Why this matters** — business impact in plain language
+* **What good looks like** — observable practices
+* **How it typically improves** — common pathways, options, and trade‑offs
+  Use these as teaching notes and talking points. They are **not mandates**.
+
+---
+
+## 5) Domain Cards — Educational Guidance (one card per pillar)
+
+> Each card includes Why / What Good Looks Like / How It Typically Improves / Common Pitfalls / Discussion Prompts.
+
+### 5.1 Clarity & Command (C)
+
+**ID:** `card.C.why`
+**Title:** Why this matters
+**Body:**
+Clarity turns AI from scattered pilots into business outcomes. When leaders publish a simple, measurable AI ambition and name a single owner with budget authority, teams stop guessing. A routine executive review creates momentum: work that moves the needle is funded and scaled; experiments that don’t deliver are sunset. This alignment reduces duplicated effort, accelerates learning, and ties AI to revenue, cost, and risk.
+
+**ID:** `card.C.good`
+**Title:** What good looks like
+**Body (bulleted):**
+
+* A one‑page AI ambition linked to business outcomes and customers
+* A named senior owner and a clear split between CoE (enable/govern) and BUs (adopt/deliver)
+* Quarterly executive/board review with **reallocation decisions** (fund/defund)
+* Leaders share a common language for AI scope, risks, and value
+
+**ID:** `card.C.how`
+**Title:** How it typically improves
+**Body:**
+Progress usually starts with **publishing a simple ambition** (outcomes, not technologies), then clarifying **who owns what** between a Center of Excellence and business units. Reviews move from “show‑and‑tell” to **decide‑and‑do**—small amounts of money shift to what works, with clear rationale. Over time, AI outcomes appear in strategy documents and operating plans. In more regulated settings, leadership reviews also check that safeguards and evidence are in place.
+
+**ID:** `card.C.pitfalls`
+**Title:** Common pitfalls
+**Body (bulleted):**
+
+* Vision without ownership; ownership without budget
+* Treating the CoE as a gatekeeper instead of an enabler
+* Endless exploration with no reallocation
+
+**ID:** `card.C.prompts`
+**Title:** Discussion prompts
+**Body (bulleted):**
+
+* What two business outcomes will AI influence this year?
+* Who is accountable for those outcomes and what budget do they control?
+* What will we stop doing if it doesn’t perform?
+
+---
+
+### 5.2 Operations & Data (O)
+
+**ID:** `card.O.why`
+**Title:** Why this matters
+**Body:**
+Stable operations and governed data are the difference between a demo and a dependable service. Monitoring, human‑in‑the‑loop where risk warrants it, and basic data hygiene prevent silent failures, surprise bills, and reputational harm.
+
+**ID:** `card.O.good`
+**Title:** What good looks like
+**Body (bulleted):**
+
+* A documented lifecycle: design → deploy → monitor → update → retire
+* Logging, alerts, and simple dashboards for usage, cost, latency, and failure rates
+* Human review/QA checkpoints where stakes are high
+* A searchable data catalogue with owners, lineage, quality thresholds
+* A lightweight **value/feasibility gate** for new use‑cases
+
+**ID:** `card.O.how`
+**Title:** How it typically improves
+**Body:**
+Start with **monitoring** what you already run (latency, cost, error rate) and add **simple alerts**. Introduce a **two‑page intake** for new ideas: value hypothesis, data sources, risk level. Designate **data owners** for key tables or content used by AI. Where decisions affect customers, add **human approval** until you have evidence that automation is safe.
+
+**ID:** `card.O.pitfalls`
+**Title:** Common pitfalls
+**Body (bulleted):**
+
+* Over‑engineering MLOps before any value has shipped
+* No drift or cost alerts; discovering issues from users or invoices
+* Unowned data; stale or inconsistent sources
+
+**ID:** `card.O.prompts`
+**Title:** Discussion prompts
+**Body (bulleted):**
+
+* What do we measure today on our AI services? What’s missing?
+* Which one dataset, if cleaned and owned, would unlock the most value?
+* Where should a human stay in the loop for now?
+
+---
+
+### 5.3 Risk, Trust, Security & Assurance (R)
+
+**ID:** `card.R.why`
+**Title:** Why this matters
+**Body:**
+Trust and safety make AI adoption sustainable. Stakeholders expect you to know what AI you run, the risks it carries, and how you’ll respond when something goes wrong. Basic assurance practices prevent reputational damage and regulatory setbacks.
+
+**ID:** `card.R.good`
+**Title:** What good looks like
+**Body (bulleted):**
+
+* An **AI inventory** with owners and risk levels
+* Scheduled checks for fairness, privacy, and model/data drift
+* Periodic **red‑teaming** for prompts/jailbreaks and data exfiltration attempts
+* An **incident response** runbook with roles and communications
+* Internal or third‑party review of controls (as required)
+
+**ID:** `card.R.how`
+**Title:** How it typically improves
+**Body:**
+Catalog what you already use (systems, vendors, purpose, data). Schedule **basic checks** for high‑impact use‑cases and **test your defenses** with simple adversarial prompts. Draft a **one‑page IR plan**: who triages, who decides, who informs customers. Regulated contexts often add **annual assurance** whether internal or external.
+
+**ID:** `card.R.pitfalls`
+**Title:** Common pitfalls
+**Body (bulleted):**
+
+* Policy documents without monitoring
+* Unknown owners; no one reacts when metrics drift
+* Treating red‑teaming as a one‑time event
+
+**ID:** `card.R.prompts`
+**Title:** Discussion prompts
+**Body (bulleted):**
+
+* Which AI system could create the most damage if it failed? Do we monitor it?
+* Who picks up the phone when an AI incident occurs?
+* How often do we test for bias, privacy, and jailbreaks?
+
+---
+
+### 5.4 Talent & Culture (T)
+
+**ID:** `card.T.why`
+**Title:** Why this matters
+**Body:**
+Adoption is about work, not tools. People need role‑specific skills and **updated workflows** that show when to use AI, when to verify, and how to escalate. Stories and incentives help good behaviors spread.
+
+**ID:** `card.T.good`
+**Title:** What good looks like
+**Body (bulleted):**
+
+* Clear job families with **role‑based AI fluency**
+* SOPs/SOP checklists updated to include AI tasks and checkpoints
+* “Wins and lessons” shared on a regular rhythm
+* Incentives that reward safe, effective use
+
+**ID:** `card.T.how`
+**Title:** How it typically improves
+**Body:**
+Pick two or three job families that touch customers or costly processes. Create **before/after task maps** and add simple guardrails (checklists, approval steps). Offer **short, role‑specific training** with real examples. Share what works and what fails—both teach.
+
+**ID:** `card.T.pitfalls`
+**Title:** Common pitfalls
+**Body (bulleted):**
+
+* Generic training without job redesign
+* Incentives that reward activity over outcomes
+* “One wizard” knows everything; no diffusion
+
+**ID:** `card.T.prompts`
+**Title:** Discussion prompts
+**Body (bulleted):**
+
+* Which roles will benefit most from AI in 90 days?
+* What checkpoints keep customers safe while we learn?
+* How will we recognize and reward smart usage?
+
+---
+
+### 5.5 Ecosystem & Infrastructure (E)
+
+**ID:** `card.E.why`
+**Title:** Why this matters
+**Body:**
+Partners and platform choices determine speed, cost, and flexibility. Elastic capacity keeps teams moving; portability and clear terms help you avoid lock‑in and surprises.
+
+**ID:** `card.E.good`
+**Title:** What good looks like
+**Body (bulleted):**
+
+* Elastic capacity and simple **FinOps** visibility (unit costs, quotas)
+* Strategic partners that fill capability gaps
+* **Exit/portability plans** in contracts (export formats, second source)
+* Governed APIs and basic interoperability standards
+
+**ID:** `card.E.how`
+**Title:** How it typically improves
+**Body:**
+Start by **measuring unit costs** and watching quotas. Consolidate on a few well‑understood services with clear terms (“no training on our data/outputs” when needed). Draft a **one‑page exit plan**: how we would switch, what we’d export, and a secondary option for critical paths.
+
+**ID:** `card.E.pitfalls`
+**Title:** Common pitfalls
+**Body (bulleted):**
+
+* Vendor lock‑in via proprietary formats and unclear rights
+* Quota bottlenecks; budget surprises
+* One‑off integrations that don’t scale
+
+**ID:** `card.E.prompts`
+**Title:** Discussion prompts
+**Body (bulleted):**
+
+* Which costs or quotas block us most often?
+* What contractual term would protect our data and options?
+* If our primary vendor failed tomorrow, what’s our plan?
+
+---
+
+### 5.6 Experimentation & Evolution (X)
+
+**ID:** `card.X.why`
+**Title:** Why this matters
+**Body:**
+AI changes quickly. Disciplined experimentation—safe sandboxes, small budgets, explicit success and **sunset criteria**—increases learning velocity and prevents “pilot purgatory.”
+
+**ID:** `card.X.good`
+**Title:** What good looks like
+**Body (bulleted):**
+
+* A guarded sandbox with representative data and spending caps
+* A ring‑fenced slice of time/credits for experiments
+* Every pilot has **success and sunset criteria** and a decision date
+* Lightweight horizon scanning of tech, policy, and competitors
+
+**ID:** `card.X.how`
+**Title:** How it typically improves
+**Body:**
+Provide a **clear on‑ramp**: where to try ideas, what’s allowed, and how to request data. Require a **simple metric and decision date** for every pilot. Run a short **horizon brief** quarterly to decide what to watch or ignore. Retire experiments on time so resources return to the pool.
+
+**ID:** `card.X.pitfalls`
+**Title:** Common pitfalls
+**Body (bulleted):**
+
+* Pilots with no metrics or end dates
+* Sandboxes with real data but no guardrails
+* Chasing every new model without a hypothesis
+
+**ID:** `card.X.prompts`
+**Title:** Discussion prompts
+**Body (bulleted):**
+
+* Which two experiments should we run next quarter, and why?
+* What decision will each pilot inform?
+* What will we stop if it doesn’t meet the threshold?
+
+---
+
+## 6) Micro‑Guides — Critical Requirements (Gates)
+
+> \~300–500 words each. Educational, option‑based, context‑aware. Link these from the “Critical Requirements” callouts.
+
+### 6.1 Human‑in‑the‑Loop for High‑Impact Decisions (HITL)
+
+**ID:** `gate.hitl`
+**Title:** Human‑in‑the‑Loop (HITL) — When and How to Use It
+**Body:**
+**What it is:** A human reviews, approves, or can intervene in AI‑assisted decisions where stakes are high (financial exposure, safety, legal or brand risk). HITL is not a permanent brake; it’s a **temporary guardrail** until you have evidence that automation is safe for specific tasks.
+
+**Why it matters:** Complex systems fail in unexpected ways. HITL prevents single‑point failures from harming customers or the organization while you learn how the system behaves. It also builds regulator and stakeholder confidence that you’re balancing innovation with care.
+
+**Where to apply:**
+
+* Decisions that affect people’s money, health, safety, or legal rights
+* Situations with unclear or evolving rules
+* New AI capabilities where you have limited real‑world evidence
+
+**How to implement (lightweight):**
+
+1. **Define checkpoints:** Identify specific steps where a person must review/approve (e.g., before sending customer‑facing messages or changing account status).
+2. **Document criteria:** When is human review mandatory? Use simple rules (risk level, data sensitivity, exception flags).
+3. **Design for intervention:** Provide a clear “stop/correct/escalate” path in the workflow; log every intervention to learn patterns.
+4. **Measure & taper:** Track intervention rates and error types. As quality stabilizes and evidence grows, reduce HITL to spot‑checks or exception handling.
+
+**Options by context:**
+
+* **Regulated/high‑safety:** Keep HITL longer and document reviewer qualifications.
+* **Low‑risk internal tasks:** Start with spot‑checks on samples; expand only if issues appear.
+* **Vendor tools:** Ensure you can *insert* human review before actions are finalized (e.g., draft‑mode outputs).
+
+**Pitfalls to avoid:**
+
+* “Rubber‑stamp” reviews (HITL that no one meaningfully performs)
+* No logging—losing the chance to learn from interventions
+* Keeping HITL forever out of habit after evidence supports automation
+
+**Quick checklist:** Decide where HITL applies; write short criteria; enable intervene/escalate; log and review monthly; set conditions for tapering.
+
+---
+
+### 6.2 Assurance Cadence (Fairness, Privacy, Drift, Red‑Team)
+
+**ID:** `gate.assurance`
+**Title:** AI Assurance — A Simple Cadence That Works
+**Body:**
+**What it is:** A small set of **routine checks** for high‑impact AI: fairness/privacy tests, model and data drift monitoring, and **adversarial probing** (red‑teaming). The goal is not perfection; it’s **early detection** and a documented response.
+
+**Why it matters:** AI systems change over time—inputs shift, behaviors drift, attackers adapt. A predictable cadence prevents the surprise failure nobody saw coming. In regulated settings, it also demonstrates reasonable care.
+
+**How to implement in weeks:**
+
+1. **Scope:** List the few AI systems that could materially affect customers or the business.
+2. **Fairness & privacy:** Define a couple of **observable** checks (e.g., outcome differences across groups where appropriate; presence of sensitive data in logs).
+3. **Drift monitoring:** Track a basic drift signal on inputs and outputs; alert on significant deviations.
+4. **Red‑team:** Once per quarter, attempt **prompt‑injection/jailbreaks** and data exfiltration on critical systems; document results and fixes.
+5. **Review:** Summarize findings and remediation in a short note; escalate trends at leadership reviews.
+
+**Options by context:**
+
+* **Heavily regulated:** Add third‑party or internal audit annually.
+* **Low risk:** Scale the cadence by impact (e.g., semiannual checks).
+* **Vendor services:** Ask for attestations, then **spot‑check** using your data and use‑cases.
+
+**Pitfalls:**
+
+* Running checks once and declaring victory
+* No triage or owner for failed checks
+* Over‑testing everything (focus attention on high‑impact systems)
+
+**Quick checklist:** Identify high‑impact AI; set monthly drift checks; quarterly red‑teams; assign an owner; file a one‑page summary.
+
+---
+
+### 6.3 Data Residency & Retention
+
+**ID:** `gate.residency`
+**Title:** Data Residency & Retention — Practical Guardrails
+**Body:**
+**What it is:** Rules that keep sensitive data in the right **place** (jurisdiction) and for the right **time** (retention). For AI, also decide how prompts, outputs, and logs are handled.
+
+**Why it matters:** Data flows through prompts, embeddings, caches, logs, and vendors. Residency/retention guardrails reduce legal and reputational risk and clarify vendor responsibilities.
+
+**How to implement:**
+
+1. **Classify sensitivity:** Decide which data is public, internal, confidential, or regulated (PII/PHI/PCI).
+2. **Set residency:** For sensitive data, use in‑region processing where required; confirm vendor regions.
+3. **Retention defaults:** Keep prompts/outputs/logs only as long as needed for troubleshooting and audits; set a default (e.g., 30 days) and purge automatically.
+4. **Control vendor training:** Specify in contracts whether vendors can train on your inputs/outputs—use “no” by default for sensitive contexts.
+
+**Options:**
+
+* **Buy:** Prefer vendors with explicit region support and clear data‑use terms.
+* **Build:** Keep sensitive logs segregated; anonymize and redact where feasible.
+* **Hybrid:** Route only non‑sensitive fields to external APIs; process the rest in‑house.
+
+**Pitfalls:**
+
+* Assuming logs are harmless; they often contain sensitive content
+* Retention set to “forever” by default
+* Contracts with ambiguous data‑use rights
+
+**Quick checklist:** Classify; set regional controls; configure retention; confirm vendor data‑use terms; audit quarterly.
+
+---
+
+### 6.4 Latency & Offline/Edge Fallback
+
+**ID:** `gate.latency`
+**Title:** Latency & Offline Readiness — Designing for Reality
+**Body:**
+**What it is:** Setting performance expectations (e.g., p95 latency under 200ms) and designing a fallback for degraded networks or offline scenarios.
+
+**Why it matters:** In field operations, retail, manufacturing, or customer‑facing apps, delays or outages can break the experience or halt work. Designing for “graceful degradation” keeps you useful when networks or services hiccup.
+
+**How to implement:**
+
+1. **Define SLOs:** Pick a realistic p95 latency target and uptime goal for each critical flow.
+2. **Fallback mode:** Decide what happens when the model or API is slow/unavailable—cache, simpler model, or rule‑based response.
+3. **Test it:** Include latency faults in testing; verify the fallback works and is reversible.
+4. **Monitor:** Track actual latency and fallback usage; alert when you exceed thresholds.
+
+**Options:**
+
+* **Low stakes:** Accept higher latency with clear messaging.
+* **High stakes/edge:** Use smaller local models or cached responses for core tasks.
+
+**Pitfalls:**
+
+* Designing only for ideal networks
+* No fallback defined, which forces downtime
+* Failing to test real‑world latency patterns
+
+**Quick checklist:** Set SLO; define fallback; test quarterly; monitor p95 and fallback rate.
+
+---
+
+### 6.5 Scale Hardening
+
+**ID:** `gate.scale`
+**Title:** Hardening for Scale — Before Prime Time
+**Body:**
+**What it is:** Basic preparation so your AI service holds up under traffic spikes: load tests, rate‑limit plans, and dual‑region or secondary options for critical paths.
+
+**Why it matters:** Success brings traffic—and that’s when brittle systems fail. A few simple steps prevent outages and protect customer trust.
+
+**How to implement:**
+
+1. **Load test:** Simulate realistic peak loads; measure latency/error curves.
+2. **Rate‑limit & back‑pressure:** Agree on limits and throttling behavior; protect upstream systems.
+3. **Secondary path:** For critical flows, define a backup (another region, provider, or cached result) and **test the switch**.
+4. **Operational playbook:** Who scales up? Who flips to backup? Where do we communicate status?
+
+**Pitfalls:**
+
+* Treating a successful pilot as “ready for scale”
+* No rate‑limits; upstream dependencies collapse under pressure
+* Unpracticed failover
+
+**Quick checklist:** Load test; set rate limits; test backup; write a one‑page playbook.
+
+---
+
+### 6.6 Build Readiness (Defer Heavy Build)
+
+**ID:** `gate.buildreadiness`
+**Title:** Build Carefully — Earn the Right to Go Heavy
+**Body:**
+**What it is:** If your internal pipelines, governance, and team are early, **defer heavy fine‑tuning or pretraining**. Start with off‑the‑shelf tools, APIs, and **retrieval‑augmented generation (RAG)**. Consider **light fine‑tunes** only after evidence shows a gap that RAG can’t close.
+
+**Why it matters:** Heavy builds consume time and capital and can lag behind the frontier. Most organizations get 70–90% of the value via **Buy → API → RAG → Light FT** while they mature operations.
+
+**How to implement:**
+
+1. **Baseline with off‑the‑shelf** for quick wins and learning.
+2. **RAG** to ground outputs in your content/data.
+3. **Light FT** (e.g., adapters) when consistent, fixable gaps remain.
+4. Invest in **MLOps, monitoring, and incident response** before heavy builds.
+
+**Pitfalls:**
+
+* Training a custom model without strong data advantage or readiness
+* Skipping evaluation harnesses; you can’t prove progress
+* Building for prestige rather than outcomes
+
+**Quick checklist:** Start Buy/API; add RAG; prove the gap; only then Light FT; upgrade ops in parallel.
+
+---
+
+### 6.7 Procurement & Public Sector Constraints
+
+**ID:** `gate.procurement`
+**Title:** Smart Procurement for AI — Clarity, Safety, Options
+**Body:**
+**What it is:** Align AI procurement with policy while keeping options open: clear evaluation criteria, safety requirements, data‑use terms, and portability.
+
+**Why it matters:** Good procurement accelerates adoption without locking you in or creating compliance risk.
+
+**How to implement:**
+
+1. **State outcomes & safety:** Include success criteria and minimum safeguards (e.g., no training on inputs/outputs; regional processing if required).
+2. **Evaluation basics:** Security posture, availability, cost predictability, support model.
+3. **Portability:** Export formats, data retrieval SLAs, and right to maintain a secondary option.
+4. **Pilot clauses:** Short, low‑risk pilots to test claims before committing.
+
+**Pitfalls:**
+
+* Over‑specifying tech and under‑specifying outcomes
+* Vague data terms; unclear portability
+* No path to small pilots
+
+**Quick checklist:** Outcome‑based criteria; safety clauses; portability; pilot first.
+
+---
+
+### 6.8 OT/Edge Operations
+
+**ID:** `gate.edgeops`
+**Title:** OT/Edge — Safety and Stability at the Edge
+**Body:**
+**What it is:** AI in operational technology (factories, vehicles, field devices) requires offline modes, change control, and safety interlocks.
+
+**Why it matters:** Physical systems carry higher risk and stricter change‑management needs. Edge deployments need **predictable behavior** under constraints.
+
+**How to implement:**
+
+1. **Offline plan:** Cache models/data; define what happens without connectivity.
+2. **Change control:** Test model updates in a staging environment that resembles the field.
+3. **Safety interlocks:** Hard limits or human confirmation before critical actions.
+4. **Monitoring & logs:** Collect minimal telemetry that’s useful for diagnostics without risking privacy/security.
+
+**Pitfalls:**
+
+* Treating edge like the cloud
+* Pushing untested models to field devices
+* No rollback path
+
+**Quick checklist:** Offline mode; staged rollout; interlocks; minimal, useful telemetry.
+
+---
+
+## 7) Micro‑Guides — Pillar Deep Dives (1 per domain)
+
+> \~300–500 words each. Use as “Learn more” links on each Domain Card.
+
+### 7.1 Clarity & Command — Leadership Rhythm & Operating Model
+
+**ID:** `pillar.C.deep`
+**Title:** Clarity & Command — How Leaders Turn Direction into Outcomes
+**Body:**
+A good AI ambition is short, concrete, and tied to customers or operations. Think “reduce claim cycle time by 30%” vs. “be great at AI.” Publish it and revisit it quarterly. The second ingredient is an **operating model** that clarifies **who enables** (CoE) and **who delivers** (BUs). The CoE sets standards, curates platforms, and provides guardrails. BUs pick use‑cases, own outcomes, and do the domain work.
+During reviews, resist the temptation to admire demos. Ask: What changed for customers? For costs? For risk? Allocate a little more to what works; end or refactor what doesn’t. Over time, include AI outcomes in the corporate scorecard and make leaders responsible for them. In regulated contexts, pair outcome reviews with **assurance evidence**.
+This is not bureaucracy; it’s management hygiene. Clear direction + clear owners + routine reallocation turns energy into results—and creates space for exploration where it matters.
+
+---
+
+### 7.2 Operations & Data — Lifecycle & Data Foundations
+
+**ID:** `pillar.O.deep`
+**Title:** Operations & Data — From Prototype to Production
+**Body:**
+A simple lifecycle beats an elaborate one you never use. Start with: log, alert, review. Track latency, errors, cost, and a basic drift signal. Fix obvious issues fast. Introduce a **use‑case intake** that forces a value hypothesis and a sanity check on data availability/quality.
+On data, aim for **clarity over perfection**. Name owners for critical tables or content, publish a **catalogue entry** (what it is, who owns it, how to request access), and specify **retention** and **lineage**. Where stakes are high, insert **human checkpoints** until you can prove consistent quality.
+Small, steady improvements here compound: fewer surprises, faster learning, and higher trust. When you’re ready, automate evaluations and rollback, but don’t wait for perfect pipelines to start measuring what matters.
+
+---
+
+### 7.3 Risk, Trust, Security & Assurance — Practical Safety
+
+**ID:** `pillar.R.deep`
+**Title:** Risk & Trust — Make Safety Routine, Not a Fire Drill
+**Body:**
+Start with visibility: list your AI systems and owners. For the few that carry significant risk, set **monthly checks** (fairness, privacy, drift) and a **quarterly red‑team**. You’re not aiming for zero risk; you’re building a habit of **finding and fixing**. Draft a **one‑page incident plan**—roles, severity levels, who communicates.
+Treat safety as part of operations. When checks fail, the owner triages and remediates on a timeline. Leaders review trends and unblock fixes. In regulated environments, add **periodic assurance**—internal or third‑party—to validate your controls.
+This approach is light enough to sustain and strong enough to prevent “unknown unknowns” from becoming headlines. It also educates your organization: people see issues surfaced and addressed calmly, which builds confidence to adopt AI where it makes sense.
+
+---
+
+### 7.4 Talent & Culture — Job Redesign with AI
+
+**ID:** `pillar.T.deep`
+**Title:** Talent & Culture — Redesigning Work, Not Just Training People
+**Body:**
+Training is necessary but not sufficient. Choose a **few job families** and map their tasks. Where can AI draft, summarize, or retrieve? Where must a human judge? Update **SOPs** to reflect the new flow, including approval points and escalation.
+Provide **role‑specific micro‑training** with real examples and checklists. Encourage teams to publish short “wins and lessons” so good patterns spread. Align incentives to outcomes—faster cycles, better quality—not to raw usage stats.
+This is change management in miniature: new tools, new roles, new habits. Keep it practical, celebrate progress, and remove blockers. The outcome is a workforce that uses AI **confidently and responsibly**, because the work itself has been reshaped to make that easy.
+
+---
+
+### 7.5 Ecosystem & Infrastructure — Flexibility without Lock‑In
+
+**ID:** `pillar.E.deep`
+**Title:** Ecosystem & Infrastructure — Scale Smart, Keep Options Open
+**Body:**
+Track **unit costs** (e.g., per call/tokens) and watch **quotas** so teams aren’t surprised. Consolidate on a small, supported set of services with clear terms. Write **portability** into contracts: export formats, data retrieval SLAs, and the right to keep a secondary option for critical paths.
+Avoid one‑off integrations that will be brittle later. Prefer simple **APIs** and agreed schema standards. If your context allows, build a thin **abstraction layer** that lets you switch models or vendors for the same capability.
+This isn’t about picking the “perfect” stack. It’s about knowing your costs, protecting your options, and enabling teams to move without being blocked by capacity or contractual traps.
+
+---
+
+### 7.6 Experimentation & Evolution — Sunset Logic & Scanning
+
+**ID:** `pillar.X.deep`
+**Title:** Experimentation & Evolution — Learn Fast, Decide Faster
+**Body:**
+Create a **sandbox** that’s easy to access and safe by default (redaction, caps, curated data). Require every pilot to define a simple **metric** and a **decision date** at kickoff. Decisions are “scale”, “refactor”, or “retire”—and you publish them so people see that ending experiments is normal.
+Run a lightweight **horizon scan** quarterly: what changed in models, policy, or competition? Which ideas are worth a small test, and which are noise?
+The aim is not more experiments—it’s **faster learning**. Sunset logic returns resources to the pool and keeps your portfolio focused on ideas with evidence.
+
+---
+
+## 8) “How to Measure” — Canonical Value Metrics (short notes)
+
+> Use as tooltips or small “learn more” popovers next to each default metric.
+
+**ID:** `metric.C.default` — **% strategic initiatives with explicit AI outcomes**
+**Body:**
+**Definition:** Share of enterprise initiatives that name a measurable AI impact (e.g., cycle‑time reduction, cost‑to‑serve, risk reduction).
+**How to measure:** Count initiatives in your plan; count those with explicit AI outcome metrics; divide. Review quarterly.
+**Why it helps:** Keeps AI tied to strategy and makes reallocation easier.
+
+**ID:** `metric.O.default` — **% AI use‑cases passing the value gate**
+**Body:**
+**Definition:** Share of proposed use‑cases that clear a basic value/feasibility screen.
+**How to measure:** Track proposals and approvals in a simple register.
+**Why it helps:** Encourages disciplined selection; reduces zombie pilots.
+
+**ID:** `metric.R.default` — **AI incidents MTTR (mean time to resolve)**
+**Body:**
+**Definition:** Average time from detection to resolution for AI‑related incidents.
+**How to measure:** Timestamp incidents, resolution, and severity; calculate the mean monthly.
+**Why it helps:** Focuses teams on fast, calm recovery and learning.
+
+**ID:** `metric.T.default` — **% target roles using AI weekly**
+**Body:**
+**Definition:** Adoption rate in roles you expect to benefit from AI.
+**How to measure:** Survey or system logs; count active users vs. target population.
+**Why it helps:** Tracks real usage, not just training completions.
+
+**ID:** `metric.E.default` — **Unit cost of AI (e.g., \$ per 1k tokens/call)**
+**Body:**
+**Definition:** Average cost per unit of AI work.
+**How to measure:** Divide total spend by total units for a period; trend month‑to‑month.
+**Why it helps:** Prevents budget surprises; enables smart scaling.
+
+**ID:** `metric.X.default` — **Pilot throughput**
+**Body:**
+**Definition:** Ideas → pilots → decisions per quarter.
+**How to measure:** Maintain a simple pipeline and count stage transitions.
+**Why it helps:** Shows learning velocity and portfolio discipline.
+
+---
+
+## 9) Glossary (tooltips)
+
+* **CoE (Center of Excellence):** Small team that sets standards, provides platforms, and enables others to use AI safely and effectively.
+* **BU (Business Unit):** Product line or function that owns outcomes and adopts AI in workflows.
+* **HITL (Human‑in‑the‑Loop):** Human review/approval in high‑impact AI decisions.
+* **MLOps:** Operational practices to deploy, monitor, and update models reliably.
+* **SLA/SLO/SLI:** Agreement/target/indicator for service performance (e.g., latency, uptime).
+* **Red‑teaming:** Adversarial testing (prompt‑injection, jailbreaks, data exfiltration attempts).
+* **FinOps:** Managing cloud/AI spend with unit economics and cost controls.
+* **RAG (Retrieval‑Augmented Generation):** Grounding model outputs in your own content/data.
+* **RACI:** Responsible, Accountable, Consulted, Informed—clarifies who does what.
+
+---
+
+## 10) Export — Section Headings & Boilerplate
+
+**ID:** `export.title` — **CORTEX Executive AI Readiness Snapshot**
+**ID:** `export.org` — **Organization & Date**
+**ID:** `export.context` — **Context Profile Summary**
+**ID:** `export.honeycomb` — **Readiness by Domain (0–3)**
+**ID:** `export.gates` — **Critical Requirements for Your Context**
+**ID:** `export.domains` — **Domain Guidance (Why / What Good Looks Like / How it Improves)**
+**ID:** `export.metrics` — **Value Overlay (Metrics You Selected to Track)**
+**ID:** `export.notes` — **Notes & Next Conversations**
+**Footer boilerplate:**
+“This snapshot is educational, not prescriptive. It explains how AI readiness typically works, why certain safeguards matter, and options leaders often use. Use judgment and adapt to your context.”
+
+---
+
+## 11) Optional “Facilitator Prompts” (for the 2‑hour activity)
+
+**ID:** `facilitation.flow`
+**Title:** Suggested 2‑Hour Flow
+**Body (bulleted):**
+
+* 0:00–0:10 — Introduce CORTEX and desired business outcomes
+* 0:10–0:25 — Complete Context Profile and Pulse
+* 0:25–0:35 — Read the honeycomb; identify two weakest domains
+* 0:35–1:15 — Open **Critical Requirements** and relevant **Micro‑Guides**; discuss implications
+* 1:15–1:45 — For each weak domain, read the Domain Card and Pillar Deep Dive; pick 2–3 takeaways
+* 1:45–2:00 — Add Value metrics baselines/targets (optional); export the brief
+
+---
+
+### Implementation notes for the developer
+
+* Link **Critical Requirement** callouts to the matching **Gate micro‑guide** IDs.
+* Add “Learn more” links on each **Domain Card** to the **Pillar deep dive**.
+* Surface **metric tooltips** next to default metrics.
+* Use tags to swap a sentence or example in cards when context warrants (`regulated`, `high_sensitivity`, `edge`, `low_readiness`, `finops`).
+* Keep headings consistent so the **PDF export** mirrors the on‑screen sections.
+
+---
+
+This content set equips leaders with clear explanations, credible depth, and practical next steps—**without** being prescriptive. It’s designed for a strong **one‑off session** that educates, sparks alignment, and leaves the room with a high‑quality snapshot they can share.
