@@ -10,9 +10,12 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import ProgressHeader from "@/components/progress-header";
+import OfflineBanner from "@/components/offline-banner";
+import { ErrorFallback } from "@/components/error-boundary";
+import { FormSkeleton } from "@/components/skeleton-loader";
 import { contextProfileSchema, type ContextProfile } from "@shared/schema";
 import { CONTEXT_ITEMS, CONTEXT_SCREENS } from "@/lib/cortex";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, getNetworkError } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { ChevronLeft, ChevronRight, Clock, Target } from "lucide-react";
 
@@ -49,9 +52,29 @@ export default function ContextProfilePage() {
     },
     onError: (error) => {
       console.error("Context profile error:", error);
+      const errorType = getNetworkError(error);
+      
+      let title = "Save Failed";
+      let description = "Unable to save your responses. Please try again.";
+      
+      switch (errorType) {
+        case 'offline':
+          title = "No Internet Connection";
+          description = "Please check your connection and try again when you're back online.";
+          break;
+        case 'network':
+          title = "Connection Problem";
+          description = "Unable to reach our servers. Please check your connection and try again.";
+          break;
+        case 'server':
+          title = "Server Issue";
+          description = "Our servers are experiencing issues. Please try again in a moment.";
+          break;
+      }
+      
       toast({
-        title: "Connection Error",
-        description: "Unable to save your responses. Please check your connection and try again.",
+        title,
+        description,
         variant: "destructive",
       });
     },
@@ -91,6 +114,10 @@ export default function ContextProfilePage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <OfflineBanner 
+        onRetry={() => window.location.reload()} 
+        showRetryButton={true}
+      />
       <ProgressHeader currentStep={1} />
       
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

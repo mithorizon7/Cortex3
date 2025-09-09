@@ -6,8 +6,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import ProgressHeader from "@/components/progress-header";
+import OfflineBanner from "@/components/offline-banner";
+import { ErrorFallback } from "@/components/error-boundary";
+import { QuestionSkeleton } from "@/components/skeleton-loader";
 import { PULSE_QUESTIONS, CORTEX_PILLARS } from "@/lib/cortex";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, getNetworkError } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { ChevronLeft, ChevronRight, CheckCircle, XCircle, HelpCircle, Clock, Target } from "lucide-react";
 
@@ -42,10 +45,31 @@ export default function PulseCheckPage() {
     onSuccess: () => {
       navigate(`/results/${assessmentId}`);
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Pulse check error:", error);
+      const errorType = getNetworkError(error);
+      
+      let title = "Save Failed";
+      let description = "Unable to save your responses. Please try again.";
+      
+      switch (errorType) {
+        case 'offline':
+          title = "No Internet Connection";
+          description = "Please check your connection and try again when you're back online.";
+          break;
+        case 'network':
+          title = "Connection Problem";
+          description = "Unable to reach our servers. Please check your connection and try again.";
+          break;
+        case 'server':
+          title = "Server Issue";
+          description = "Our servers are experiencing issues. Please try again in a moment.";
+          break;
+      }
+      
       toast({
-        title: "Error",
-        description: "Failed to save pulse responses. Please try again.",
+        title,
+        description,
         variant: "destructive",
       });
     },
@@ -92,11 +116,25 @@ export default function PulseCheckPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading assessment...</p>
-        </div>
+      <div className="min-h-screen bg-background">
+        <ProgressHeader currentStep={2} />
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center space-x-2 mb-4">
+              <Target className="h-6 w-6 text-primary" />
+              <h1 className="text-3xl font-bold text-foreground">Pulse Check</h1>
+              <Clock className="h-5 w-5 text-muted-foreground" />
+            </div>
+            <p className="text-lg text-muted-foreground mb-4">
+              Loading your assessment...
+            </p>
+          </div>
+          <div className="space-y-8">
+            <QuestionSkeleton />
+            <QuestionSkeleton />
+            <QuestionSkeleton />
+          </div>
+        </main>
       </div>
     );
   }
@@ -123,6 +161,10 @@ export default function PulseCheckPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <OfflineBanner 
+        onRetry={() => window.location.reload()} 
+        showRetryButton={true}
+      />
       <ProgressHeader currentStep={2} />
       
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

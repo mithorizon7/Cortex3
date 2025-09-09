@@ -6,10 +6,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import ProgressHeader from "@/components/progress-header";
+import OfflineBanner from "@/components/offline-banner";
+import { ErrorFallback } from "@/components/error-boundary";
+import { ResultsSkeleton } from "@/components/skeleton-loader";
 import HoneycombRadar from "@/components/honeycomb-radar";
 import DomainCard from "@/components/domain-card";
 import { CORTEX_PILLARS, getPriorityLevel } from "@/lib/cortex";
 import { generatePDFReport, exportJSONResults } from "@/lib/pdf-generator";
+import { getNetworkError } from "@/lib/queryClient";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -204,11 +208,11 @@ export default function ResultsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading results...</p>
-        </div>
+      <div className="min-h-screen bg-background">
+        <ProgressHeader currentStep={3} />
+        <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <ResultsSkeleton />
+        </main>
       </div>
     );
   }
@@ -243,6 +247,10 @@ export default function ResultsPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <OfflineBanner 
+        onRetry={() => window.location.reload()} 
+        showRetryButton={true}
+      />
       <ProgressHeader currentStep={3} />
       
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
