@@ -71,13 +71,12 @@ export default function HomePage() {
               Trusted by 500+ Executive Teams
             </Badge>
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-foreground mb-6">
-              CORTEX™ Executive
+              Welcome to CORTEX — Your Executive
               <br />
-              <span className="text-primary">AI Readiness</span> Assessment
+              <span className="text-primary">AI Readiness</span> Snapshot
             </h1>
             <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed">
-              A practical, executive-level framework to diagnose your AI readiness, align leadership around priorities, 
-              and improve capabilities that drive business value with safety and speed.
+              CORTEX is a short, executive-level snapshot of your organization's AI readiness. In about <strong>20 minutes</strong>, you'll complete a <strong>Context Profile</strong> (your operating environment) and a <strong>Pulse Check</strong> (your current practices). You'll then get a clear visual readout and <strong>practical guidance</strong>: what matters, how it typically works, and what leaders in similar situations often do next.
             </p>
           </div>
           
@@ -89,7 +88,7 @@ export default function HomePage() {
               data-testid="button-start-assessment"
             >
               <Clock className="h-5 w-5 mr-2" />
-              Get Your AI Strategy in 10 Minutes
+              Start Your AI Readiness Assessment
             </Button>
             <p className="text-sm text-muted-foreground text-center">
               Free • No signup required • Immediate results

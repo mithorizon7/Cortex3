@@ -34,7 +34,8 @@ import {
   Shield,
   Users,
   Settings,
-  Lightbulb
+  Lightbulb,
+  BookOpen
 } from "lucide-react";
 import type { Assessment, PillarScores, ContextProfile, ValueOverlay, ValueOverlayPillar } from "@shared/schema";
 
@@ -317,7 +318,7 @@ export default function ResultsPage() {
         <div className="text-center mb-8 sm:mb-12">
           <div className="flex items-center justify-center space-x-2 mb-4">
             <Target className="h-6 sm:h-8 w-6 sm:w-8 text-primary" />
-            <h1 className="text-2xl sm:text-4xl font-bold text-foreground">Your AI Readiness Results</h1>
+            <h1 className="text-2xl sm:text-4xl font-bold text-foreground">Your Readiness Snapshot</h1>
           </div>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mb-6">
             <Badge variant="outline" className="text-sm sm:text-lg px-3 sm:px-4 py-1 sm:py-2">
@@ -328,7 +329,7 @@ export default function ResultsPage() {
             </Badge>
           </div>
           <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
-            Based on your organizational context and current capabilities, here's your personalized AI strategy.
+            Below is your CORTEX profile: six domains, each scored 0–3. The <strong>honeycomb</strong> shows where you are strong and where you have room to build. Scores reflect today's practices, not potential.
           </p>
         </div>
 
@@ -447,12 +448,12 @@ export default function ResultsPage() {
             <CardHeader className="bg-amber-50 dark:bg-amber-950">
               <CardTitle className="flex items-center space-x-2 text-amber-800 dark:text-amber-200">
                 <Shield className="h-6 w-6" />
-                <span>Critical Requirements ({triggeredGates.length})</span>
+                <span>Critical Requirements for Your Context</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
               <p className="text-muted-foreground mb-6">
-                Based on your organizational context, these measures must be implemented before scaling AI initiatives.
+                Because of your context, some safeguards are <strong>non-negotiable before scale</strong>. These aren't bureaucratic hurdles; they prevent avoidable harm and build trust. Expand each callout to learn what it is, why it applies, and simple ways to satisfy it.
               </p>
               
               <Collapsible>
@@ -520,6 +521,38 @@ export default function ResultsPage() {
         )}
 
         {/* Detailed Analysis */}
+        {/* How to Read the Guidance */}
+        <Card className="mb-8 bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2 text-blue-900 dark:text-blue-100">
+              <BookOpen className="h-5 w-5" />
+              <span>How to Read the Guidance</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <p className="text-blue-800 dark:text-blue-200 mb-4">
+              For each domain you'll see:
+            </p>
+            <ul className="text-blue-800 dark:text-blue-200 space-y-2">
+              <li className="flex items-start space-x-2">
+                <span className="font-semibold min-w-fit">• Why this matters</span>
+                <span className="text-sm">— business impact in plain language</span>
+              </li>
+              <li className="flex items-start space-x-2">
+                <span className="font-semibold min-w-fit">• What good looks like</span>
+                <span className="text-sm">— observable practices</span>
+              </li>
+              <li className="flex items-start space-x-2">
+                <span className="font-semibold min-w-fit">• How it typically improves</span>
+                <span className="text-sm">— common pathways, options, and trade-offs</span>
+              </li>
+            </ul>
+            <p className="text-blue-800 dark:text-blue-200 mt-4 text-sm italic">
+              Use these as teaching notes and talking points. They are <strong>not mandates</strong>.
+            </p>
+          </CardContent>
+        </Card>
+
         <Collapsible open={showDetailedView} onOpenChange={setShowDetailedView}>
           <CollapsibleTrigger asChild>
             <Button variant="outline" size="lg" className="w-full mb-6">

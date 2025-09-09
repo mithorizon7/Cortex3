@@ -131,7 +131,7 @@ export default function ContextProfilePage() {
             <Clock className="h-5 w-5 text-muted-foreground" />
           </div>
           <p className="text-lg text-muted-foreground mb-4">
-            Get your personalized AI strategy in 8-10 minutes
+            A few quick sliders tell us about your operating environment (regulation, sensitivity, speed, scale, etc.). We use these to <strong>tailor guidance and highlight critical requirements</strong>. We do <strong>not</strong> change your scores based on context.
           </p>
           <div className="space-y-3">
             <Progress value={progress} className="w-full max-w-md mx-auto" />

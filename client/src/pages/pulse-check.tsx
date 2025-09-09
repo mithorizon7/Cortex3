@@ -175,11 +175,11 @@ export default function PulseCheckPage() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center space-x-2 mb-4">
             <Target className="h-6 w-6 text-primary" />
-            <h1 className="text-3xl font-bold text-foreground">Pulse Check</h1>
+            <h1 className="text-3xl font-bold text-foreground">Pulse Check — 18 Questions, 6 Domains</h1>
             <Clock className="h-5 w-5 text-muted-foreground" />
           </div>
           <p className="text-lg text-muted-foreground mb-4">
-            Answer "Yes" only if this is fully true in your organization today
+            Answer <strong>Yes</strong> only if the statement is <strong>fully true today</strong>. The six domains are: <strong>Clarity & Command (C)</strong>, <strong>Operations & Data (O)</strong>, <strong>Risk/Trust/Security (R)</strong>, <strong>Talent & Culture (T)</strong>, <strong>Ecosystem & Infrastructure (E)</strong>, <strong>Experimentation & Evolution (X)</strong>. Each "Yes" earns a point; your domain score is 0–3.
           </p>
           <div className="space-y-3">
             <Progress value={progress} className="w-full max-w-md mx-auto" />
