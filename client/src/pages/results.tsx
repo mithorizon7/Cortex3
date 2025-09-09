@@ -11,6 +11,7 @@ import { ErrorFallback } from "@/components/error-boundary";
 import { ResultsSkeleton } from "@/components/skeleton-loader";
 import HoneycombRadar from "@/components/honeycomb-radar";
 import DomainCard from "@/components/domain-card";
+import { AppHeader } from "@/components/navigation/app-header";
 import { CORTEX_PILLARS, getPriorityLevel } from "@/lib/cortex";
 import { generatePDFReport, exportJSONResults } from "@/lib/pdf-generator";
 import { getNetworkError } from "@/lib/queryClient";
@@ -247,6 +248,7 @@ export default function ResultsPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <AppHeader />
       <OfflineBanner 
         onRetry={() => window.location.reload()} 
         showRetryButton={true}

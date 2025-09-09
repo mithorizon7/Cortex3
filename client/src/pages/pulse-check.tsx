@@ -9,6 +9,7 @@ import ProgressHeader from "@/components/progress-header";
 import OfflineBanner from "@/components/offline-banner";
 import { ErrorFallback } from "@/components/error-boundary";
 import { QuestionSkeleton } from "@/components/skeleton-loader";
+import { AppHeader } from "@/components/navigation/app-header";
 import { PULSE_QUESTIONS, CORTEX_PILLARS } from "@/lib/cortex";
 import { apiRequest, getNetworkError } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -117,6 +118,7 @@ export default function PulseCheckPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
+        <AppHeader />
         <ProgressHeader currentStep={2} />
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center mb-8">
@@ -161,6 +163,7 @@ export default function PulseCheckPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <AppHeader />
       <OfflineBanner 
         onRetry={() => window.location.reload()} 
         showRetryButton={true}

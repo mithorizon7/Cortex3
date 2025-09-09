@@ -13,6 +13,7 @@ import ProgressHeader from "@/components/progress-header";
 import OfflineBanner from "@/components/offline-banner";
 import { ErrorFallback } from "@/components/error-boundary";
 import { FormSkeleton } from "@/components/skeleton-loader";
+import { AppHeader } from "@/components/navigation/app-header";
 import { contextProfileSchema, type ContextProfile } from "@shared/schema";
 import { CONTEXT_ITEMS, CONTEXT_SCREENS } from "@/lib/cortex";
 import { apiRequest, getNetworkError } from "@/lib/queryClient";
@@ -114,6 +115,7 @@ export default function ContextProfilePage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <AppHeader />
       <OfflineBanner 
         onRetry={() => window.location.reload()} 
         showRetryButton={true}
