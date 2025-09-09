@@ -85,10 +85,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const contextGuidance: any = {};
       
       // Generate context-aware guidance for each pillar
-      Object.keys(assessment.pillarScores).forEach(pillar => {
+      Object.keys(assessment.pillarScores as any).forEach(pillar => {
         contextGuidance[pillar] = generateContextAwareGuidance(
           pillar, 
-          assessment.pillarScores[pillar], 
+          (assessment.pillarScores as any)[pillar], 
           contentTags
         );
       });
@@ -573,7 +573,7 @@ function generatePriorityMoves(contextProfile: any, pillarScores: any) {
   // Get top 2 moves per weak pillar (score <= 2)
   const priorityMovesByPillar: any = {};
   Object.entries(pillarScores).forEach(([pillar, score]) => {
-    if (score <= 2) {
+    if ((score as number) <= 2) {
       const pillarMoves = sortedMoves
         .filter(m => m.pillar === pillar)
         .slice(0, 2); // Top 2 moves per pillar

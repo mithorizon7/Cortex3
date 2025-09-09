@@ -311,10 +311,10 @@ export default function ResultsPage() {
                 <div key={pillar} className="space-y-4">
                   <div className="flex items-center space-x-2 mb-4">
                     <h3 className="text-lg font-semibold">
-                      {pillar} - {CORTEX_PILLARS[pillar]?.name || pillar}
+                      {pillar} - {CORTEX_PILLARS[pillar as keyof typeof CORTEX_PILLARS]?.name || pillar}
                     </h3>
                     <span className="bg-primary text-primary-foreground px-2 py-1 rounded text-xs">
-                      Stage {pillarScores[pillar]}
+                      Stage {pillarScores[pillar as keyof typeof pillarScores]}
                     </span>
                   </div>
                   
