@@ -78,26 +78,32 @@ export function rateLimitMiddleware(req: Request, res: Response, next: NextFunct
  * Basic security headers middleware
  */
 export function securityMiddleware(req: Request, res: Response, next: NextFunction) {
-  // Basic security headers
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  
-  // Basic CSP
-  const csp = [
-    "default-src 'self'",
-    "style-src 'self' 'unsafe-inline'",
-    "script-src 'self'",
-    "img-src 'self' data: https:",
-    "connect-src 'self'",
-    "font-src 'self'",
-    "object-src 'none'",
-    "media-src 'self'",
-    "frame-src 'none'"
-  ].join('; ');
-  
-  res.setHeader('Content-Security-Policy', csp);
+  // Only apply restrictive headers in production
+  if (process.env.NODE_ENV === 'production') {
+    // Basic security headers
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    
+    // Basic CSP for production
+    const csp = [
+      "default-src 'self'",
+      "style-src 'self' 'unsafe-inline' fonts.googleapis.com",
+      "script-src 'self' 'unsafe-eval'",
+      "img-src 'self' data: https:",
+      "connect-src 'self'",
+      "font-src 'self' fonts.gstatic.com",
+      "object-src 'none'",
+      "media-src 'self'",
+      "frame-src 'none'"
+    ].join('; ');
+    
+    res.setHeader('Content-Security-Policy', csp);
+  } else {
+    // Development: minimal security headers to not interfere with dev tools
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+  }
   
   next();
 }

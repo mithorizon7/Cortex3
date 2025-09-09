@@ -42,7 +42,15 @@ router.post('/', async (req: Request, res: Response) => {
       }
     );
     
-    const status = error instanceof Error && error.message.includes('validation') 
+    // Check if it's a Zod validation error
+    const isValidationError = error instanceof Error && (
+      error.message.includes('validation') ||
+      error.name === 'ZodError' ||
+      error.message.includes('Invalid') ||
+      error.message.includes('Expected')
+    );
+    
+    const status = isValidationError 
       ? HTTP_STATUS.BAD_REQUEST 
       : HTTP_STATUS.INTERNAL_SERVER_ERROR;
       
@@ -152,7 +160,15 @@ router.patch('/:id/pulse', async (req: Request, res: Response) => {
       }
     );
     
-    const status = error instanceof Error && error.message.includes('validation') 
+    // Check if it's a Zod validation error
+    const isValidationError = error instanceof Error && (
+      error.message.includes('validation') ||
+      error.name === 'ZodError' ||
+      error.message.includes('Invalid') ||
+      error.message.includes('Expected')
+    );
+    
+    const status = isValidationError 
       ? HTTP_STATUS.BAD_REQUEST 
       : HTTP_STATUS.INTERNAL_SERVER_ERROR;
       
