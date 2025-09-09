@@ -53,8 +53,35 @@ export class AssessmentService {
   }
   
   /**
-   * Update assessment with pulse responses
+   * Update assessment data (e.g., value overlay)
    */
+  async updateAssessmentData(assessmentId: string, data: any): Promise<Assessment | null> {
+    const updateData: any = {};
+    
+    if (data.valueOverlay) {
+      updateData.valueOverlay = data.valueOverlay;
+    }
+    
+    const assessment = await storage.updateAssessment(assessmentId, updateData);
+    
+    if (!assessment) {
+      logger.warn('Cannot update assessment data - assessment not found', {
+        additionalContext: { assessmentId }
+      });
+      return null;
+    }
+    
+    logger.info('Assessment data updated', {
+      additionalContext: {
+        assessmentId,
+        hasValueOverlay: !!data.valueOverlay,
+        operation: 'update_assessment_data'
+      }
+    });
+    
+    return assessment;
+  }
+
   async updatePulseResponses(
     assessmentId: string, 
     pulseResponses: unknown

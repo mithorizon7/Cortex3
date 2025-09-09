@@ -181,6 +181,70 @@ router.patch('/:id/pulse', async (req: Request, res: Response) => {
 });
 
 /**
+ * Update assessment data (e.g., value overlay)
+ */
+router.patch('/:id', async (req: Request, res: Response) => {
+  const incidentId = generateIncidentId();
+  const assessmentId = req.params.id;
+  
+  try {
+    logger.info('Updating assessment data', {
+      additionalContext: {
+        operation: 'update_assessment_data',
+        assessmentId,
+        incidentId,
+        hasValueOverlay: !!req.body.valueOverlay
+      }
+    });
+    
+    const assessment = await assessmentService.updateAssessmentData(
+      assessmentId,
+      req.body
+    );
+    
+    if (!assessment) {
+      return res.status(HTTP_STATUS.NOT_FOUND)
+        .json(createUserError(USER_ERROR_MESSAGES.NOT_FOUND, incidentId, HTTP_STATUS.NOT_FOUND));
+    }
+    
+    res.json(assessment);
+    
+  } catch (error) {
+    logger.error(
+      'Failed to update assessment data',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        requestBody: req.body,
+        functionArgs: { id: assessmentId },
+        additionalContext: {
+          operation: 'update_assessment_data_error',
+          requestId: req.requestId,
+          userId: req.userId,
+          incidentId
+        }
+      }
+    );
+    
+    const isValidationError = error instanceof Error && (
+      error.message.includes('validation') ||
+      error.name === 'ZodError' ||
+      error.message.includes('Invalid') ||
+      error.message.includes('Expected')
+    );
+    
+    const status = isValidationError 
+      ? HTTP_STATUS.BAD_REQUEST 
+      : HTTP_STATUS.INTERNAL_SERVER_ERROR;
+      
+    const userMessage = status === HTTP_STATUS.BAD_REQUEST 
+      ? USER_ERROR_MESSAGES.VALIDATION_ERROR
+      : USER_ERROR_MESSAGES.SERVER_ERROR;
+    
+    res.status(status).json(createUserError(userMessage, incidentId, status));
+  }
+});
+
+/**
  * Complete assessment and generate final results
  */
 router.patch('/:id/complete', async (req: Request, res: Response) => {
