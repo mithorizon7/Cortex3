@@ -12,27 +12,27 @@ export const CORTEX_PILLARS = {
 export const PULSE_QUESTIONS = [
   { id: 'C1', pillar: 'C', text: 'Top leadership has approved a written AI ambition with measurable business outcomes.' },
   { id: 'C2', pillar: 'C', text: 'One senior leader owns AI success and CoE↔BU roles are clear.' },
-  { id: 'C3', pillar: 'C', text: 'AI progress is reviewed on a set cadence and leads to resource reallocation (fund/defund) decisions.' },
+  { id: 'C3', pillar: 'C', text: 'AI progress is reviewed on a defined cadence (at least twice per year) and results in resource reallocation (fund/defund) decisions.' },
   
-  { id: 'O1', pillar: 'O', text: 'All AI solutions you operate or consume follow a documented lifecycle with performance logging and HITL/QA where needed.' },
-  { id: 'O2', pillar: 'O', text: 'Key data/prompts have documented owners, lineage, and quality standards in an accessible catalogue.' },
-  { id: 'O3', pillar: 'O', text: 'Every new AI idea—build or buy—clears a standardized value/feasibility gate before major spend.' },
+  { id: 'O1', pillar: 'O', text: 'All AI solutions you operate or consume follow a documented lifecycle with performance logging, alerts for issues/drift, and HITL/QA where risk warrants.' },
+  { id: 'O2', pillar: 'O', text: 'Key data or prompts feeding those solutions have documented owners, lineage, and quality standards in an accessible catalogue/register.' },
+  { id: 'O3', pillar: 'O', text: 'Every new AI idea—build or buy—passes a standardized value/feasibility gate before major spend or effort.' },
   
-  { id: 'R1', pillar: 'R', text: 'A living inventory lists each AI system/service with risk level and named risk owner.' },
-  { id: 'R2', pillar: 'R', text: 'High-impact AI undergoes scheduled fairness/privacy/drift checks and periodic security red-teaming.' },
-  { id: 'R3', pillar: 'R', text: 'AI controls have been reviewed (internal or external) in ≤12 months, and an incident response & communication plan exists.' },
+  { id: 'R1', pillar: 'R', text: 'A living inventory lists each AI system or vendor service with risk level and a named risk owner.' },
+  { id: 'R2', pillar: 'R', text: 'High‑impact AI undergoes scheduled fairness, privacy, and performance checks and periodic security red‑teaming.' },
+  { id: 'R3', pillar: 'R', text: 'AI controls have been reviewed (internal audit or third‑party assurance) within the last 12 months, and an incident response & communications plan exists.' },
   
-  { id: 'T1', pillar: 'T', text: 'There\'s a written plan to attract, develop, and retain the AI skills strategy requires.' },
-  { id: 'T2', pillar: 'T', text: 'Most AI-touching roles completed role-appropriate training and tasks have been redesigned to use AI safely/productively.' },
-  { id: 'T3', pillar: 'T', text: 'AI wins, failures, and lessons are shared company-wide on a regular rhythm with incentives to adopt.' },
+  { id: 'T1', pillar: 'T', text: 'A written plan exists to attract, develop, and retain the AI‑related skills the strategy requires.' },
+  { id: 'T2', pillar: 'T', text: 'Most AI‑touching roles completed role‑appropriate training in the last 12 months and tasks have been redesigned to use AI safely/productively.' },
+  { id: 'T3', pillar: 'T', text: 'AI wins, failures, and lessons are shared organization‑wide on a regular rhythm, with incentives that reward safe, effective adoption.' },
   
-  { id: 'E1', pillar: 'E', text: 'Compute/licence/API capacity scales to demand and is cost-monitored (FinOps) so projects aren\'t delayed or derailed by spend.' },
+  { id: 'E1', pillar: 'E', text: 'Compute/licence/API capacity scales to demand, and FinOps visibility prevents delays or budget surprises.' },
   { id: 'E2', pillar: 'E', text: 'You maintain strategic model/tool/data partners and documented exit/portability plans to avoid lock-in.' },
-  { id: 'E3', pillar: 'E', text: 'Data exchange with external parties occurs only via governed, auditable, interoperable mechanisms (secure APIs, clean rooms).' },
+  { id: 'E3', pillar: 'E', text: 'Data exchanged with external parties flows only through governed, auditable, interoperable mechanisms (e.g., secure APIs, clean rooms).' },
   
-  { id: 'X1', pillar: 'X', text: 'Business teams have a safe sandbox with representative data and a structured practice of external scanning.' },
-  { id: 'X2', pillar: 'X', text: 'A defined slice of budget/time/credits is reserved each year for exploratory/high-uncertainty AI work.' },
-  { id: 'X3', pillar: 'X', text: 'All AI pilots include success and sunset criteria; non-performers are consistently retired or redirected on schedule.' },
+  { id: 'X1', pillar: 'X', text: 'Business teams have access to a safe sandbox with representative data and a structured practice of external scanning.' },
+  { id: 'X2', pillar: 'X', text: 'A defined slice of budget/time/credits is reserved each year for exploratory or high‑uncertainty AI work.' },
+  { id: 'X3', pillar: 'X', text: 'All AI pilots include explicit success and sunset criteria; non‑performers are consistently retired or redirected on schedule.' },
 ];
 
 // Conversational Context Profile - Executive-friendly flow
