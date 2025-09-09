@@ -114,6 +114,7 @@ export default function ResultsPage() {
 
   const pillarScores = assessment.pillarScores as PillarScores;
   const triggeredGates = (assessment.triggeredGates as any[]) || [];
+  const priorityMoves = (assessment.priorityMoves as any) || {};
   const priorities = getPriorityLevel(pillarScores, assessment.contextProfile as ContextProfile);
   
   const strengths = Object.entries(pillarScores).filter(([_, score]) => score >= 2);
@@ -294,6 +295,83 @@ export default function ResultsPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Priority Moves Section */}
+        {Object.keys(priorityMoves).length > 0 && (
+          <section className="mb-12">
+            <h2 className="text-2xl font-semibold mb-4">Your Next 2 Moves</h2>
+            <p className="text-muted-foreground mb-8">
+              Based on your context profile and current maturity levels, these are your highest-priority actions for AI advancement.
+            </p>
+            
+            <div className="space-y-8">
+              {Object.entries(priorityMoves).map(([pillar, moves]: [string, any]) => (
+                <div key={pillar} className="space-y-4">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <h3 className="text-lg font-semibold">
+                      {pillar} - {CORTEX_PILLARS[pillar]?.name || pillar}
+                    </h3>
+                    <span className="bg-primary text-primary-foreground px-2 py-1 rounded text-xs">
+                      Stage {pillarScores[pillar]}
+                    </span>
+                  </div>
+                  
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {moves.map((move: any, index: number) => (
+                      <Card key={move.id} className="border-l-4 border-l-blue-500">
+                        <CardContent className="p-6">
+                          <div className="space-y-4">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-2 mb-2">
+                                  <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded">
+                                    #{index + 1} Priority
+                                  </span>
+                                  <span className="text-xs text-muted-foreground">
+                                    Score: {move.priority.toFixed(2)}
+                                  </span>
+                                </div>
+                                <h4 className="font-medium mb-2">{move.title}</h4>
+                                <p className="text-sm text-muted-foreground mb-3">
+                                  {move.description}
+                                </p>
+                              </div>
+                            </div>
+                            
+                            {/* Priority Explanation */}
+                            {move.explain && Object.keys(move.explain.context_boosts).length > 0 && (
+                              <div className="bg-blue-50 p-3 rounded text-xs">
+                                <strong>Prioritized because:</strong>{' '}
+                                {Object.entries(move.explain.context_boosts).map(([key, boost], index) => (
+                                  <span key={key}>
+                                    {index > 0 && ', '}
+                                    {key.replace(/_/g, ' ')}: +{Number(boost).toFixed(2)}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                            
+                            {/* Action Steps */}
+                            {move.actions && move.actions.length > 0 && (
+                              <div>
+                                <h5 className="font-medium mb-2 text-sm">Key Actions:</h5>
+                                <ul className="text-xs space-y-1 text-muted-foreground">
+                                  {move.actions.slice(0, 3).map((action: string, actionIndex: number) => (
+                                    <li key={actionIndex}>• {action}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Domain Cards */}
         <section className="mb-12">

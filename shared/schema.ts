@@ -9,6 +9,7 @@ export const assessments = pgTable("assessments", {
   pulseResponses: jsonb("pulse_responses"),
   pillarScores: jsonb("pillar_scores"),
   triggeredGates: jsonb("triggered_gates"),
+  priorityMoves: jsonb("priority_moves"),
   completedAt: text("completed_at"),
   createdAt: text("created_at").default(sql`now()`),
 });
