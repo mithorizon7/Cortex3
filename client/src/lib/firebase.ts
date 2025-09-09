@@ -1,0 +1,150 @@
+import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
+import { 
+  getAuth, 
+  Auth, 
+  GoogleAuthProvider, 
+  signInWithRedirect,
+  signInWithPopup,
+  getRedirectResult,
+  signOut as firebaseSignOut,
+  onAuthStateChanged,
+  User,
+  AuthError,
+  UserCredential
+} from 'firebase/auth';
+
+// Firebase configuration with environment variables
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebasestorage.app`,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+};
+
+// Validate required environment variables
+const validateConfig = () => {
+  const requiredVars = [
+    'VITE_FIREBASE_API_KEY',
+    'VITE_FIREBASE_PROJECT_ID', 
+    'VITE_FIREBASE_APP_ID'
+  ];
+  
+  const missing = requiredVars.filter(varName => !import.meta.env[varName]);
+  
+  if (missing.length > 0) {
+    const errorMessage = `Missing required Firebase environment variables: ${missing.join(', ')}`;
+    console.warn(errorMessage);
+    return false;
+  }
+  return true;
+};
+
+// Initialize Firebase app (singleton pattern)
+let app: FirebaseApp;
+let auth: Auth;
+
+export const initializeFirebase = (): { app: FirebaseApp | null; auth: Auth | null } => {
+  try {
+    if (!validateConfig()) {
+      console.warn('Firebase not configured - authentication will be disabled');
+      return { app: null, auth: null };
+    }
+    
+    // Only initialize if not already initialized
+    if (!getApps().length) {
+      app = initializeApp(firebaseConfig);
+    } else {
+      app = getApps()[0];
+    }
+    
+    auth = getAuth(app);
+    
+    return { app, auth };
+  } catch (error) {
+    console.error('Firebase initialization failed:', error);
+    return { app: null, auth: null };
+  }
+};
+
+// Google Auth Provider setup
+export const googleProvider = new GoogleAuthProvider();
+googleProvider.addScope('email');
+googleProvider.addScope('profile');
+
+// Initialize Firebase when module loads
+const { auth: firebaseAuth } = initializeFirebase();
+
+// Check if Firebase is configured
+export const isFirebaseConfigured = (): boolean => {
+  return firebaseAuth !== null;
+};
+
+// Authentication utility functions
+export const signInWithGoogle = async (usePopup = true): Promise<UserCredential> => {
+  try {
+    if (usePopup) {
+      return await signInWithPopup(firebaseAuth, googleProvider);
+    } else {
+      await signInWithRedirect(firebaseAuth, googleProvider);
+      // For redirect, we need to handle the result elsewhere
+      throw new Error('Redirect initiated - result will be available after redirect');
+    }
+  } catch (error) {
+    console.error('Google sign-in failed:', error);
+    throw error;
+  }
+};
+
+export const handleRedirectResult = async (): Promise<UserCredential | null> => {
+  try {
+    const result = await getRedirectResult(firebaseAuth);
+    if (result) {
+      console.log('User signed in via redirect:', result.user.email);
+    }
+    return result;
+  } catch (error) {
+    console.error('Redirect result handling failed:', error);
+    throw error;
+  }
+};
+
+export const signOut = async (): Promise<void> => {
+  try {
+    await firebaseSignOut(firebaseAuth);
+    console.log('User signed out successfully');
+  } catch (error) {
+    console.error('Sign out failed:', error);
+    throw error;
+  }
+};
+
+// Auth state listener
+export const onAuthStateChange = (callback: (user: User | null) => void) => {
+  return onAuthStateChanged(firebaseAuth, callback);
+};
+
+// Error message utilities
+export const getAuthErrorMessage = (error: AuthError): string => {
+  switch (error.code) {
+    case 'auth/popup-blocked':
+      return 'Sign-in popup was blocked. Please allow popups and try again.';
+    case 'auth/popup-closed-by-user':
+      return 'Sign-in was cancelled. Please try again.';
+    case 'auth/cancelled-popup-request':
+      return 'Another sign-in attempt is in progress. Please wait.';
+    case 'auth/network-request-failed':
+      return 'Network error. Please check your connection and try again.';
+    case 'auth/too-many-requests':
+      return 'Too many sign-in attempts. Please try again later.';
+    case 'auth/user-disabled':
+      return 'This account has been disabled. Please contact support.';
+    case 'auth/operation-not-allowed':
+      return 'Google sign-in is not enabled. Please contact support.';
+    default:
+      return 'Sign-in failed. Please try again.';
+  }
+};
+
+export { firebaseAuth as auth };
+export type { User, AuthError, UserCredential };
