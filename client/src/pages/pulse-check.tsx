@@ -304,7 +304,7 @@ export default function PulseCheckPage() {
 
         {/* Domain Overview */}
         <div className="mt-8 flex justify-center">
-          <div className="flex space-x-2">
+          <div className="flex space-x-1 sm:space-x-2">
             {DOMAIN_GROUPS.map((group, index) => {
               const pillar = CORTEX_PILLARS[group.pillar as keyof typeof CORTEX_PILLARS];
               const domainAnswered = group.questions.filter(q => responses[q.id] !== undefined).length;
@@ -314,7 +314,7 @@ export default function PulseCheckPage() {
               return (
                 <div 
                   key={group.pillar}
-                  className={`flex flex-col items-center p-3 rounded-lg border-2 transition-all ${
+                  className={`flex flex-col items-center p-2 sm:p-3 rounded-lg border-2 transition-all ${
                     isCurrent 
                       ? 'border-primary bg-primary/10' 
                       : isCompleted 

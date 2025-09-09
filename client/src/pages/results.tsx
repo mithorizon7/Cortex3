@@ -247,33 +247,33 @@ export default function ResultsPage() {
       
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Executive Header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-8 sm:mb-12">
           <div className="flex items-center justify-center space-x-2 mb-4">
-            <Target className="h-8 w-8 text-primary" />
-            <h1 className="text-4xl font-bold text-foreground">Your AI Readiness Results</h1>
+            <Target className="h-6 sm:h-8 w-6 sm:w-8 text-primary" />
+            <h1 className="text-2xl sm:text-4xl font-bold text-foreground">Your AI Readiness Results</h1>
           </div>
-          <div className="flex items-center justify-center space-x-4 mb-6">
-            <Badge variant="outline" className="text-lg px-4 py-2">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mb-6">
+            <Badge variant="outline" className="text-sm sm:text-lg px-3 sm:px-4 py-1 sm:py-2">
               Overall Maturity: {maturityLevel}
             </Badge>
-            <Badge variant="secondary" className="text-lg px-4 py-2">
+            <Badge variant="secondary" className="text-sm sm:text-lg px-3 sm:px-4 py-1 sm:py-2">
               {triggeredGates.length} Critical Requirements
             </Badge>
           </div>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
             Based on your organizational context and current capabilities, here's your personalized AI strategy.
           </p>
         </div>
 
         {/* Executive Summary */}
         <Card className="mb-8 border-2 border-primary/20">
-          <CardHeader className="bg-primary/5">
+          <CardHeader className="bg-primary/5 p-4 sm:p-6">
             <CardTitle className="flex items-center space-x-2">
-              <Zap className="h-6 w-6 text-primary" />
-              <span className="text-2xl">Executive Summary</span>
+              <Zap className="h-5 sm:h-6 w-5 sm:w-6 text-primary" />
+              <span className="text-xl sm:text-2xl">Executive Summary</span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-8">
+          <CardContent className="p-4 sm:p-8">
             <div className="grid lg:grid-cols-2 gap-8">
               {/* Key Insights */}
               <div>
