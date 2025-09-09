@@ -217,6 +217,7 @@ export default function ResultsPage() {
         pillarScores: assessment.pillarScores as PillarScores,
         triggeredGates: (assessment.triggeredGates as any[]) || [],
         priorityMoves: (assessment as any).priorityMoves || null,
+        valueOverlay: valueOverlay,
         completedAt: assessment.completedAt || new Date().toISOString(),
       });
       
@@ -250,6 +251,7 @@ export default function ResultsPage() {
       pillarScores: assessment.pillarScores as PillarScores,
       triggeredGates: (assessment.triggeredGates as any[]) || [],
       priorityMoves: (assessment as any).priorityMoves || null,
+      valueOverlay: valueOverlay,
       completedAt: assessment.completedAt || new Date().toISOString(),
     });
     

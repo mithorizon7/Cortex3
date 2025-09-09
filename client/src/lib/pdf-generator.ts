@@ -3,6 +3,7 @@ export interface AssessmentResults {
   pillarScores: any;
   triggeredGates: any[];
   priorityMoves?: any;
+  valueOverlay?: any;
   completedAt: string;
 }
 
@@ -37,6 +38,16 @@ ${results.priorityMoves?.moves ? results.priorityMoves.moves.map((move: any) => 
 Priority Score: ${move.priority.toFixed(3)}
 ${move.explain ? `Gap Impact: +${(move.explain.gapBoost * 100).toFixed(0)}%, Context Fit: +${(move.explain.profileBoost * 100).toFixed(0)}%` : ''}
 `).join('\n') : 'No priority moves available'}
+
+VALUE METRICS
+=============
+${results.valueOverlay ? Object.entries(results.valueOverlay).map(([pillar, data]: [string, any]) => `
+${pillar} Domain: ${data.name}
+Unit: ${data.unit}
+Cadence: ${data.cadence}
+${data.baseline !== null ? `Baseline: ${data.baseline}` : 'Baseline: Not set'}
+${data.target !== null ? `Target: ${data.target}` : 'Target: Not set'}
+`).join('') : 'No value metrics selected'}
 
 CONTEXT PROFILE
 ===============
