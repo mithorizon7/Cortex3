@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import ProgressHeader from "@/components/progress-header";
 import HoneycombRadar from "@/components/honeycomb-radar";
 import DomainCard from "@/components/domain-card";
@@ -10,7 +12,23 @@ import { CORTEX_PILLARS, getPriorityLevel } from "@/lib/cortex";
 import { generatePDFReport, exportJSONResults } from "@/lib/pdf-generator";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { AlertTriangle, CheckCircle, CircleOff } from "lucide-react";
+import { 
+  AlertTriangle, 
+  CheckCircle, 
+  CircleOff, 
+  Target, 
+  TrendingUp, 
+  Clock, 
+  ChevronDown,
+  ChevronRight,
+  ArrowRight,
+  Star,
+  Zap,
+  Shield,
+  Users,
+  Settings,
+  Lightbulb
+} from "lucide-react";
 import type { Assessment, PillarScores, ContextProfile } from "@shared/schema";
 
 // Helper function to get gate thresholds for transparency
@@ -46,10 +64,82 @@ function getGateThreshold(gateId: string, dimension: string): string | null {
   return thresholds[gateId]?.[dimension] || null;
 }
 
+// Generate executive insights based on assessment data
+function generateExecutiveInsights(pillarScores: PillarScores, gates: any[], contextProfile: any) {
+  const insights = [];
+  const priorities = [];
+  
+  // Analyze overall maturity
+  const avgScore = Object.values(pillarScores).reduce((sum, score) => sum + score, 0) / 6;
+  const weakestPillars = Object.entries(pillarScores)
+    .sort(([,a], [,b]) => a - b)
+    .slice(0, 2);
+  
+  if (avgScore < 1.5) {
+    insights.push({
+      type: 'foundation',
+      title: 'Focus on AI Readiness Foundations',
+      description: 'Your organization needs foundational AI capabilities before scaling initiatives.',
+      action: 'Invest in data infrastructure, governance, and talent development first.'
+    });
+    priorities.push('Build foundational AI capabilities');
+  } else if (avgScore < 2.5) {
+    insights.push({
+      type: 'development',
+      title: 'Develop Systematic AI Practices',
+      description: 'You have basic capabilities but need systematic approaches to scale effectively.',
+      action: 'Establish AI governance, standardize processes, and expand pilot programs.'
+    });
+    priorities.push('Systematize AI development practices');
+  } else {
+    insights.push({
+      type: 'optimization',
+      title: 'Optimize and Scale AI Operations',
+      description: 'Strong AI foundations enable focus on optimization and strategic scaling.',
+      action: 'Enhance monitoring, expand use cases, and drive competitive advantage through AI.'
+    });
+    priorities.push('Optimize existing AI systems for scale');
+  }
+
+  // Critical gates insight
+  if (gates.length > 0) {
+    insights.push({
+      type: 'compliance',
+      title: `${gates.length} Critical Requirements Must Be Addressed`,
+      description: 'Your risk profile requires specific measures before AI scaling.',
+      action: `Prioritize ${gates[0]?.title} and related compliance requirements.`
+    });
+    priorities.push('Address critical compliance requirements');
+  } else {
+    insights.push({
+      type: 'acceleration',
+      title: 'Clear to Accelerate AI Adoption',
+      description: 'No major compliance blockers - focus on capability development.',
+      action: 'Accelerate AI initiatives while maintaining good governance practices.'
+    });
+  }
+
+  // Weak areas insight  
+  const [weakestName] = weakestPillars;
+  const pillarName = CORTEX_PILLARS[weakestName[0].toUpperCase() as keyof typeof CORTEX_PILLARS]?.name;
+  if (pillarName) {
+    insights.push({
+      type: 'improvement',
+      title: `Strengthen ${pillarName}`,
+      description: 'This is your biggest opportunity for AI capability improvement.',
+      action: `Invest in ${pillarName.toLowerCase()} capabilities to unlock broader AI value.`
+    });
+    priorities.push(`Strengthen ${pillarName}`);
+  }
+
+  return { insights: insights.slice(0, 3), priorities: priorities.slice(0, 3) };
+}
+
 export default function ResultsPage() {
   const { toast } = useToast();
   const assessmentId = window.location.pathname.split('/')[2];
   const [remindQuarterly, setRemindQuarterly] = useState(false);
+  const [showDetailedView, setShowDetailedView] = useState(false);
   
   const { data: assessment, isLoading } = useQuery<Assessment>({
     queryKey: ['/api/assessments', assessmentId],
@@ -123,16 +213,19 @@ export default function ResultsPage() {
     );
   }
 
-  if (!assessment || !assessment.pillarScores) {
+  if (!assessment) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="w-full max-w-md mx-4">
           <CardContent className="pt-6">
             <div className="text-center">
-              <h1 className="text-2xl font-bold text-foreground mb-2">Results Not Ready</h1>
+              <h1 className="text-2xl font-bold text-foreground mb-2">Assessment Not Found</h1>
               <p className="text-muted-foreground mb-4">
-                Please complete the pulse check first to see your results.
+                The assessment you're looking for doesn't exist or has been removed.
               </p>
+              <Button onClick={() => window.location.href = "/"} data-testid="button-start-new">
+                Start New Assessment
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -140,395 +233,267 @@ export default function ResultsPage() {
     );
   }
 
-  // Complete assessment if not already done
-  if (!assessment.triggeredGates) {
-    completeAssessment.mutate();
-  }
-
   const pillarScores = assessment.pillarScores as PillarScores;
   const triggeredGates = (assessment.triggeredGates as any[]) || [];
-  const priorityMoves = (assessment.priorityMoves as any) || {};
-  const contextGuidance = (assessment.contextGuidance as any) || {};
-  const contentTags = (assessment.contentTags as any[]) || [];
-  const priorities = getPriorityLevel(pillarScores, assessment.contextProfile as ContextProfile);
+  const contextProfile = assessment.contextProfile as ContextProfile;
+  const { insights, priorities } = generateExecutiveInsights(pillarScores, triggeredGates, contextProfile);
   
-  const strengths = Object.entries(pillarScores).filter(([_, score]) => score >= 2);
-  const priorities3 = Object.entries(pillarScores)
-    .filter(([_, score]) => score <= 1)
-    .sort(([,a], [,b]) => (a as number) - (b as number));
+  const avgScore = Object.values(pillarScores).reduce((sum, score) => sum + score, 0) / 6;
+  const maturityLevel = avgScore < 1 ? 'Nascent' : avgScore < 2 ? 'Emerging' : avgScore < 3 ? 'Integrated' : 'Leading';
 
   return (
     <div className="min-h-screen bg-background">
-      <ProgressHeader currentStep={3} onExport={handleExportPDF} />
+      <ProgressHeader currentStep={3} />
       
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <section className="mb-12">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
-            Your AI Readiness Assessment Results
-          </h1>
-          <p className="text-muted-foreground mb-8">
-            Based on your context profile and pulse responses, here are your personalized insights and recommendations.
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Executive Header */}
+        <div className="text-center mb-12">
+          <div className="flex items-center justify-center space-x-2 mb-4">
+            <Target className="h-8 w-8 text-primary" />
+            <h1 className="text-4xl font-bold text-foreground">Your AI Readiness Results</h1>
+          </div>
+          <div className="flex items-center justify-center space-x-4 mb-6">
+            <Badge variant="outline" className="text-lg px-4 py-2">
+              Overall Maturity: {maturityLevel}
+            </Badge>
+            <Badge variant="secondary" className="text-lg px-4 py-2">
+              {triggeredGates.length} Critical Requirements
+            </Badge>
+          </div>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Based on your organizational context and current capabilities, here's your personalized AI strategy.
           </p>
-          
-          {/* Context Gates */}
-          {triggeredGates.length > 0 && (
-            <div className="space-y-6 mb-8">
-              <h2 className="text-xl font-semibold">Required Context Gates</h2>
-              <p className="text-muted-foreground text-sm mb-4">
-                Based on your organizational context, these measures must be implemented before scaling AI initiatives.
-              </p>
-              {triggeredGates.map((gate: any) => (
-                <Card key={gate.id} className="gate-callout border-l-4 border-l-amber-500">
-                  <CardContent className="p-6">
-                    <div className="flex items-start space-x-4">
-                      <div className="bg-amber-500 text-white p-2 rounded-full flex-shrink-0">
-                        <AlertTriangle className="w-5 h-5" />
+        </div>
+
+        {/* Executive Summary */}
+        <Card className="mb-8 border-2 border-primary/20">
+          <CardHeader className="bg-primary/5">
+            <CardTitle className="flex items-center space-x-2">
+              <Zap className="h-6 w-6 text-primary" />
+              <span className="text-2xl">Executive Summary</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-8">
+            <div className="grid lg:grid-cols-2 gap-8">
+              {/* Key Insights */}
+              <div>
+                <h3 className="text-xl font-semibold mb-6 flex items-center space-x-2">
+                  <Lightbulb className="h-5 w-5 text-yellow-500" />
+                  <span>Key Insights</span>
+                </h3>
+                <div className="space-y-4">
+                  {insights.map((insight, index) => (
+                    <div key={index} className="border-l-4 border-primary pl-4">
+                      <h4 className="font-semibold text-lg mb-2">{insight.title}</h4>
+                      <p className="text-muted-foreground mb-2">{insight.description}</p>
+                      <p className="text-sm font-medium text-primary">{insight.action}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Next 90 Days */}
+              <div>
+                <h3 className="text-xl font-semibold mb-6 flex items-center space-x-2">
+                  <Clock className="h-5 w-5 text-blue-500" />
+                  <span>Your Next 90 Days</span>
+                </h3>
+                <div className="space-y-4">
+                  {priorities.map((priority, index) => (
+                    <div key={index} className="flex items-start space-x-3 p-4 bg-muted/50 rounded-lg">
+                      <div className="bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm">
+                        {index + 1}
                       </div>
                       <div className="flex-1">
-                        <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <h3 className="font-semibold text-lg mb-1">{gate.title}</h3>
-                            <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                              <span className="bg-primary text-primary-foreground px-2 py-1 rounded">
-                                {gate.pillar} Domain
-                              </span>
-                              <span>•</span>
-                              <span>Priority: High</span>
-                            </div>
+                        <p className="font-medium">{priority}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="mt-6 pt-6 border-t border-border">
+                  <Button size="lg" className="w-full" onClick={handleExportPDF}>
+                    <ArrowRight className="h-5 w-5 mr-2" />
+                    Get Detailed Action Plan
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Visual Scorecard */}
+        <div className="grid lg:grid-cols-2 gap-8 mb-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <TrendingUp className="h-5 w-5" />
+                <span>CORTEX Maturity Radar</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex justify-center p-6">
+              <HoneycombRadar pillarScores={pillarScores} size={300} />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Domain Breakdown</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {Object.entries(pillarScores).map(([pillar, score]) => {
+                const pillarInfo = CORTEX_PILLARS[pillar.toUpperCase() as keyof typeof CORTEX_PILLARS];
+                if (!pillarInfo) return null;
+                
+                const percentage = (score / 3) * 100;
+                
+                return (
+                  <div key={pillar} className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">{pillarInfo.name}</span>
+                      <Badge variant={score < 1.5 ? "destructive" : score < 2.5 ? "secondary" : "default"}>
+                        {score < 1 ? 'Nascent' : score < 2 ? 'Emerging' : score < 3 ? 'Integrated' : 'Leading'}
+                      </Badge>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-2">
+                      <div 
+                        className="bg-primary h-2 rounded-full transition-all duration-500" 
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Critical Requirements */}
+        {triggeredGates.length > 0 && (
+          <Card className="mb-8 border-amber-500/50">
+            <CardHeader className="bg-amber-50 dark:bg-amber-950">
+              <CardTitle className="flex items-center space-x-2 text-amber-800 dark:text-amber-200">
+                <Shield className="h-6 w-6" />
+                <span>Critical Requirements ({triggeredGates.length})</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <p className="text-muted-foreground mb-6">
+                Based on your organizational context, these measures must be implemented before scaling AI initiatives.
+              </p>
+              
+              <Collapsible>
+                <CollapsibleTrigger asChild>
+                  <Button variant="outline" className="mb-4">
+                    <ChevronDown className="h-4 w-4 mr-2" />
+                    View Requirements Details
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-4">
+                  {triggeredGates.map((gate: any) => (
+                    <Card key={gate.id} className="border-l-4 border-l-amber-500">
+                      <CardContent className="p-6">
+                        <div className="flex items-start space-x-4">
+                          <div className="bg-amber-500 text-white p-2 rounded-full flex-shrink-0">
+                            <AlertTriangle className="w-5 h-5" />
                           </div>
-                        </div>
-                        
-                        <div className="space-y-4">
-                          <div>
-                            <p className="text-sm text-muted-foreground mb-2">
-                              <strong>Why this is required:</strong> {gate.reason}
-                            </p>
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-lg mb-1">{gate.title}</h3>
+                            <p className="text-sm text-muted-foreground mb-4">{gate.reason}</p>
+                            
                             {gate.explain && (
-                              <div className="bg-amber-50 dark:bg-amber-950 p-3 rounded text-xs">
+                              <div className="bg-amber-50 dark:bg-amber-950 p-3 rounded text-xs mb-4">
                                 <div className="space-y-2">
-                                  <div>
-                                    <strong>Why this gate was triggered:</strong>
-                                  </div>
+                                  <div><strong>Why this gate was triggered:</strong></div>
                                   {Object.entries(gate.explain).map(([key, value]) => {
-                                    const isBoolean = typeof value === 'boolean';
-                                    const isNumber = typeof value === 'number';
                                     const threshold = getGateThreshold(gate.id, key);
-                                    
                                     return (
                                       <div key={key} className="flex justify-between items-center">
                                         <span>{key.replace(/_/g, ' ')}: </span>
                                         <span className="font-medium">
-                                          {isBoolean ? (value ? 'Yes' : 'No') : String(value)}
-                                          {isNumber && !isBoolean && '/4'}
+                                          {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value)}
+                                          {typeof value === 'number' && '/4'}
                                           {threshold && ` (requires ${threshold})`}
                                         </span>
                                       </div>
                                     );
                                   })}
-                                  <div className="text-xs text-muted-foreground pt-2 border-t">
-                                    This gate ensures your AI scaling aligns with your risk profile.
-                                  </div>
                                 </div>
                               </div>
                             )}
-                          </div>
-                          
-                          {gate.description && (
-                            <div>
-                              <p className="text-sm">{gate.description}</p>
-                            </div>
-                          )}
-                          
-                          {gate.actions && gate.actions.length > 0 && (
-                            <div>
-                              <h4 className="font-medium mb-2 text-sm">Recommended Actions:</h4>
-                              <ul className="text-sm space-y-1 text-muted-foreground">
-                                {gate.actions.map((action: string, index: number) => (
-                                  <li key={index}>• {action}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* Main Results Layout */}
-        <div className="grid lg:grid-cols-2 gap-8 mb-12">
-          {/* Honeycomb Radar */}
-          <Card>
-            <CardContent className="p-6">
-              <HoneycombRadar pillarScores={pillarScores} />
-            </CardContent>
-          </Card>
-          
-          {/* Key Insights */}
-          <Card>
-            <CardContent className="p-6">
-              <h2 className="text-2xl font-semibold mb-6">Key Insights</h2>
-              
-              <div className="space-y-6">
-                {/* Strengths */}
-                {strengths.length > 0 && (
-                  <div>
-                    <h3 className="font-medium text-green-700 mb-2 flex items-center">
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      Strengths
-                    </h3>
-                    <ul className="text-sm space-y-1 text-muted-foreground">
-                      {strengths.map(([pillar, score]) => {
-                        const pillarInfo = CORTEX_PILLARS[pillar as keyof typeof CORTEX_PILLARS];
-                        return (
-                          <li key={pillar}>
-                            • <strong>{pillarInfo.name}:</strong> Leading practices established
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                )}
-                
-                {/* Priority Areas */}
-                {priorities3.length > 0 && (
-                  <div>
-                    <h3 className="font-medium text-amber-700 mb-2 flex items-center">
-                      <AlertTriangle className="w-4 h-4 mr-2" />
-                      Priority Areas
-                    </h3>
-                    <ul className="text-sm space-y-1 text-muted-foreground">
-                      {priorities3.slice(0, 3).map(([pillar, score]) => {
-                        const pillarInfo = CORTEX_PILLARS[pillar as keyof typeof CORTEX_PILLARS];
-                        return (
-                          <li key={pillar}>
-                            • <strong>{pillarInfo.name}:</strong> Requires immediate attention
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                )}
-                
-                {/* Context Considerations */}
-                <div>
-                  <h3 className="font-medium text-blue-700 mb-2 flex items-center">
-                    <CircleOff className="w-4 h-4 mr-2" />
-                    Context Considerations
-                  </h3>
-                  <ul className="text-sm space-y-1 text-muted-foreground">
-                    {(assessment.contextProfile as ContextProfile).regulatory_intensity >= 3 && (
-                      <li>• High regulatory environment requires enhanced controls</li>
-                    )}
-                    {(assessment.contextProfile as ContextProfile).build_readiness >= 3 && (
-                      <li>• Strong build readiness supports ambitious AI initiatives</li>
-                    )}
-                    {(assessment.contextProfile as ContextProfile).data_sensitivity >= 3 && (
-                      <li>• Data sensitivity demands strict governance</li>
-                    )}
-                  </ul>
-                </div>
-              </div>
-              
-              {/* Reflection Prompts */}
-              <div className="mt-6 pt-6 border-t border-border">
-                <h3 className="font-medium mb-3">Reflection Questions</h3>
-                <div className="space-y-2 text-sm text-muted-foreground">
-                  <p>• What surprised you most about these results?</p>
-                  <p>• Which two domains feel most important for your near-term priorities?</p>
-                  <p>• How do these insights align with your current AI strategy?</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Priority Moves Section */}
-        {Object.keys(priorityMoves).length > 0 && (
-          <section className="mb-12">
-            <h2 className="text-2xl font-semibold mb-4">Your Next 2 Moves</h2>
-            <p className="text-muted-foreground mb-8">
-              Based on your context profile and current maturity levels, these are your highest-priority actions for AI advancement.
-            </p>
-            
-            <div className="space-y-8">
-              {Object.entries(priorityMoves).map(([pillar, moves]: [string, any]) => (
-                <div key={pillar} className="space-y-4">
-                  <div className="flex items-center space-x-2 mb-4">
-                    <h3 className="text-lg font-semibold">
-                      {pillar} - {CORTEX_PILLARS[pillar as keyof typeof CORTEX_PILLARS]?.name || pillar}
-                    </h3>
-                    <span className="bg-primary text-primary-foreground px-2 py-1 rounded text-xs">
-                      Stage {pillarScores[pillar as keyof typeof pillarScores]}
-                    </span>
-                  </div>
-                  
-                  <div className="grid md:grid-cols-2 gap-4">
-                    {moves.map((move: any, index: number) => (
-                      <Card key={move.id} className="border-l-4 border-l-blue-500">
-                        <CardContent className="p-6">
-                          <div className="space-y-4">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <div className="flex items-center space-x-2 mb-2">
-                                  <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded">
-                                    #{index + 1} Priority
-                                  </span>
-                                  <span className="text-xs text-muted-foreground">
-                                    Score: {move.priority.toFixed(2)}
-                                  </span>
-                                </div>
-                                <h4 className="font-medium mb-2">{move.title}</h4>
-                                <p className="text-sm text-muted-foreground mb-3">
-                                  {move.description}
-                                </p>
-                              </div>
-                            </div>
                             
-                            {/* Priority Explanation */}
-                            {move.explain && Object.keys(move.explain.context_boosts).length > 0 && (
-                              <div className="bg-blue-50 p-3 rounded text-xs">
-                                <strong>Prioritized because:</strong>{' '}
-                                {Object.entries(move.explain.context_boosts).map(([key, boost], index) => (
-                                  <span key={key}>
-                                    {index > 0 && ', '}
-                                    {key.replace(/_/g, ' ')}: +{Number(boost).toFixed(2)}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                            
-                            {/* Action Steps */}
-                            {move.actions && move.actions.length > 0 && (
+                            {gate.actions && gate.actions.length > 0 && (
                               <div>
-                                <h5 className="font-medium mb-2 text-sm">Key Actions:</h5>
-                                <ul className="text-xs space-y-1 text-muted-foreground">
-                                  {move.actions.slice(0, 3).map((action: string, actionIndex: number) => (
-                                    <li key={actionIndex}>• {action}</li>
+                                <h4 className="font-medium mb-2 text-sm">Recommended Actions:</h4>
+                                <ul className="text-sm space-y-1 text-muted-foreground">
+                                  {gate.actions.map((action: string, index: number) => (
+                                    <li key={index} className="flex items-start space-x-2">
+                                      <ChevronRight className="h-3 w-3 mt-0.5 text-amber-500 flex-shrink-0" />
+                                      <span>{action}</span>
+                                    </li>
                                   ))}
                                 </ul>
                               </div>
                             )}
                           </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </CollapsibleContent>
+              </Collapsible>
+            </CardContent>
+          </Card>
         )}
 
-        {/* Domain Cards */}
-        <section className="mb-12">
-          <h2 className="text-2xl font-semibold mb-8">Domain-Specific Guidance</h2>
-          
-          <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {Object.entries(pillarScores)
-              .sort(([pillarA, scoreA], [pillarB, scoreB]) => {
-                // Sort by score (lowest first), then alphabetically
-                const scoreANum = scoreA as number;
-                const scoreBNum = scoreB as number;
-                if (scoreANum !== scoreBNum) return scoreANum - scoreBNum;
-                return pillarA.localeCompare(pillarB);
-              })
-              .map(([pillar, stage]) => {
-                const priority = priorities.find(p => p.pillar === pillar)?.priority || 0;
-                const contextReason = triggeredGates.length > 0 && (stage as number) <= 1 
-                  ? "Your context profile indicates higher risk requirements"
-                  : undefined;
-                
+        {/* Detailed Analysis */}
+        <Collapsible open={showDetailedView} onOpenChange={setShowDetailedView}>
+          <CollapsibleTrigger asChild>
+            <Button variant="outline" size="lg" className="w-full mb-6">
+              <ChevronDown className={`h-4 w-4 mr-2 transition-transform ${showDetailedView ? 'rotate-180' : ''}`} />
+              {showDetailedView ? 'Hide' : 'Show'} Detailed Domain Analysis
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="grid lg:grid-cols-2 gap-6 mb-8">
+              {Object.entries(CORTEX_PILLARS).map(([key, pillar]) => {
+                const pillarKey = key.toLowerCase();
+                const score = pillarScores[pillarKey as keyof PillarScores] || 0;
                 return (
-                  <DomainCard
-                    key={pillar}
-                    pillar={pillar}
-                    stage={stage as number}
-                    priority={priority}
-                    contextReason={contextReason}
-                    contextGuidance={contextGuidance}
+                  <DomainCard 
+                    key={key} 
+                    pillar={key} 
+                    score={score}
+                    contextProfile={contextProfile}
                   />
                 );
               })}
-          </div>
-        </section>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
 
-        {/* Export and Next Steps */}
+        {/* Actions */}
         <Card>
-          <CardContent className="p-8">
-            <div className="grid md:grid-cols-2 gap-8">
-              <div>
-                <h2 className="text-2xl font-semibold mb-4">Export Your Results</h2>
-                <p className="text-muted-foreground mb-6">
-                  Download your complete assessment including context profile, radar visualization, 
-                  domain guidance, and prioritized recommendations.
-                </p>
-                
-                <div className="flex flex-wrap gap-3">
-                  <Button 
-                    onClick={handleExportPDF}
-                    data-testid="button-export-pdf"
-                  >
-                    <i className="fas fa-file-pdf mr-2"></i>
-                    Download PDF Report
-                  </Button>
-                  <Button 
-                    variant="secondary"
-                    onClick={handleExportJSON}
-                    data-testid="button-export-json"
-                  >
-                    <i className="fas fa-code mr-2"></i>
-                    Export JSON Data
-                  </Button>
-                </div>
+          <CardContent className="p-6">
+            <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 sm:space-x-4">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="quarterly-reminder"
+                  checked={remindQuarterly}
+                  onCheckedChange={setRemindQuarterly}
+                />
+                <label htmlFor="quarterly-reminder" className="text-sm">
+                  Email me quarterly AI readiness updates
+                </label>
               </div>
               
-              <div>
-                <h2 className="text-2xl font-semibold mb-4">Next Steps</h2>
-                <div className="space-y-4">
-                  <div className="flex items-start space-x-3">
-                    <div className="bg-primary text-primary-foreground p-1 rounded text-sm font-medium min-w-[24px] text-center">1</div>
-                    <div>
-                      <p className="font-medium">Focus on Priority Domains</p>
-                      <p className="text-sm text-muted-foreground">
-                        Start with the lowest-scoring domains first
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <div className="bg-primary text-primary-foreground p-1 rounded text-sm font-medium min-w-[24px] text-center">2</div>
-                    <div>
-                      <p className="font-medium">Implement Required Gates</p>
-                      <p className="text-sm text-muted-foreground">
-                        Address any triggered context gates before scaling
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <div className="bg-primary text-primary-foreground p-1 rounded text-sm font-medium min-w-[24px] text-center">3</div>
-                    <div>
-                      <p className="font-medium">Schedule Quarterly Review</p>
-                      <p className="text-sm text-muted-foreground">
-                        Re-assess in 90 days to track progress
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="mt-6 pt-4 border-t border-border">
-                  <label className="flex items-center space-x-2 text-sm cursor-pointer">
-                    <Checkbox 
-                      checked={remindQuarterly}
-                      onCheckedChange={(checked) => setRemindQuarterly(checked === true)}
-                      data-testid="checkbox-quarterly-reminder"
-                    />
-                    <span>Remind me to re-take this assessment in 90 days</span>
-                  </label>
-                </div>
+              <div className="flex space-x-3">
+                <Button variant="outline" onClick={handleExportJSON}>
+                  Export Data
+                </Button>
+                <Button onClick={handleExportPDF}>
+                  Download Report
+                </Button>
               </div>
             </div>
           </CardContent>
