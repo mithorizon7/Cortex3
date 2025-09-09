@@ -189,7 +189,7 @@ export async function withErrorHandling<T>(
     
     logger.debug(`Completed operation: ${operation}`, {
       operation,
-      duration,
+      additionalContext: { duration },
       ...context
     });
     

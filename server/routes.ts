@@ -1,110 +1,404 @@
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { contextProfileSchema, pulseResponsesSchema, pillarScoresSchema } from "@shared/schema";
 import { z } from "zod";
+import { logger, withErrorHandling } from "./logger";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
   // Create new assessment
-  app.post("/api/assessments", async (req, res) => {
-    try {
-      const { contextProfile } = req.body;
-      const validatedProfile = contextProfileSchema.parse(contextProfile);
-      
-      const assessment = await storage.createAssessment({
-        contextProfile: validatedProfile,
-        pulseResponses: null,
-        pillarScores: null,
-        triggeredGates: null,
-        completedAt: null,
+  app.post("/api/assessments", async (req: Request, res: Response) => {
+    await withErrorHandling(
+      'POST /api/assessments',
+      async () => {
+        const { contextProfile } = req.body;
+        
+        logger.info('Creating new assessment', {
+          additionalContext: {
+            operation: 'create_assessment',
+            hasContextProfile: !!contextProfile
+          }
+        });
+        
+        // Validate input
+        let validatedProfile;
+        try {
+          validatedProfile = contextProfileSchema.parse(contextProfile);
+        } catch (validationError) {
+          logger.error(
+            'Context profile validation failed',
+            validationError instanceof Error ? validationError : new Error(String(validationError)),
+            {
+              requestBody: req.body,
+              functionArgs: { contextProfile },
+              additionalContext: {
+                operation: 'validate_context_profile',
+                requestId: req.requestId,
+                userId: req.userId
+              }
+            }
+          );
+          return res.status(400).json({ 
+            error: "Invalid context profile data", 
+            requestId: req.requestId 
+          });
+        }
+        
+        const assessment = await storage.createAssessment({
+          contextProfile: validatedProfile,
+          pulseResponses: null,
+          pillarScores: null,
+          triggeredGates: null,
+          priorityMoves: null,
+          contentTags: null,
+          contextGuidance: null,
+          completedAt: null,
+        });
+        
+        logger.info('Assessment created successfully', {
+          additionalContext: {
+            assessmentId: assessment.id,
+            operation: 'create_assessment_success'
+          }
+        });
+        
+        res.json(assessment);
+      },
+      {
+        requestBody: req.body,
+        userId: req.userId,
+        requestId: req.requestId
+      }
+    ).catch((error) => {
+      // This is for unexpected errors that weren't handled above
+      logger.error(
+        'Unexpected error creating assessment',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          requestBody: req.body,
+          additionalContext: {
+            operation: 'create_assessment_unexpected',
+            requestId: req.requestId,
+            userId: req.userId
+          }
+        }
+      );
+      res.status(500).json({ 
+        error: "Failed to create assessment", 
+        requestId: req.requestId 
       });
-      
-      res.json(assessment);
-    } catch (error) {
-      res.status(400).json({ error: "Invalid context profile data" });
-    }
+    });
   });
 
   // Get assessment
-  app.get("/api/assessments/:id", async (req, res) => {
-    try {
-      const assessment = await storage.getAssessment(req.params.id);
-      if (!assessment) {
-        return res.status(404).json({ error: "Assessment not found" });
+  app.get("/api/assessments/:id", async (req: Request, res: Response) => {
+    await withErrorHandling(
+      'GET /api/assessments/:id',
+      async () => {
+        const assessmentId = req.params.id;
+        
+        logger.info('Fetching assessment', {
+          additionalContext: {
+            operation: 'get_assessment',
+            assessmentId
+          }
+        });
+        
+        const assessment = await storage.getAssessment(assessmentId);
+        if (!assessment) {
+          logger.warn('Assessment not found', {
+            additionalContext: {
+              assessmentId,
+              operation: 'get_assessment_not_found'
+            }
+          });
+          return res.status(404).json({ 
+            error: "Assessment not found", 
+            requestId: req.requestId 
+          });
+        }
+        
+        logger.info('Assessment retrieved successfully', {
+          additionalContext: {
+            assessmentId,
+            operation: 'get_assessment_success',
+            hasCompletedAt: !!assessment.completedAt
+          }
+        });
+        
+        res.json(assessment);
+      },
+      {
+        functionArgs: { id: req.params.id },
+        userId: req.userId,
+        requestId: req.requestId
       }
-      res.json(assessment);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch assessment" });
-    }
+    ).catch((error) => {
+      logger.error(
+        'Unexpected error fetching assessment',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          functionArgs: { id: req.params.id },
+          additionalContext: {
+            operation: 'get_assessment_unexpected',
+            requestId: req.requestId,
+            userId: req.userId
+          }
+        }
+      );
+      res.status(500).json({ 
+        error: "Failed to fetch assessment", 
+        requestId: req.requestId 
+      });
+    });
   });
 
   // Update assessment with pulse responses
-  app.patch("/api/assessments/:id/pulse", async (req, res) => {
-    try {
-      const { pulseResponses } = req.body;
-      const validatedResponses = pulseResponsesSchema.parse(pulseResponses);
-      
-      // Calculate pillar scores from pulse responses
-      const pillarScores = calculatePillarScores(validatedResponses);
-      
-      const assessment = await storage.updateAssessment(req.params.id, {
-        pulseResponses: validatedResponses,
-        pillarScores,
-      });
-      
-      if (!assessment) {
-        return res.status(404).json({ error: "Assessment not found" });
+  app.patch("/api/assessments/:id/pulse", async (req: Request, res: Response) => {
+    await withErrorHandling(
+      'PATCH /api/assessments/:id/pulse',
+      async () => {
+        const assessmentId = req.params.id;
+        const { pulseResponses } = req.body;
+        
+        logger.info('Updating assessment with pulse responses', {
+          additionalContext: {
+            operation: 'update_pulse_responses',
+            assessmentId,
+            responseCount: pulseResponses ? Object.keys(pulseResponses).length : 0
+          }
+        });
+        
+        // Validate pulse responses
+        let validatedResponses;
+        try {
+          validatedResponses = pulseResponsesSchema.parse(pulseResponses);
+        } catch (validationError) {
+          logger.error(
+            'Pulse responses validation failed',
+            validationError instanceof Error ? validationError : new Error(String(validationError)),
+            {
+              requestBody: req.body,
+              functionArgs: { id: assessmentId, pulseResponses },
+              additionalContext: {
+                operation: 'validate_pulse_responses',
+                requestId: req.requestId,
+                userId: req.userId
+              }
+            }
+          );
+          return res.status(400).json({ 
+            error: "Invalid pulse response data", 
+            requestId: req.requestId 
+          });
+        }
+        
+        // Calculate pillar scores from pulse responses
+        const pillarScores = calculatePillarScores(validatedResponses);
+        
+        logger.debug('Calculated pillar scores', {
+          additionalContext: {
+            pillarScores,
+            operation: 'calculate_pillar_scores',
+            assessmentId
+          }
+        });
+        
+        const assessment = await storage.updateAssessment(assessmentId, {
+          pulseResponses: validatedResponses,
+          pillarScores,
+        });
+        
+        if (!assessment) {
+          logger.warn('Cannot update pulse - assessment not found', {
+            additionalContext: {
+              assessmentId,
+              operation: 'update_pulse_not_found'
+            }
+          });
+          return res.status(404).json({ 
+            error: "Assessment not found", 
+            requestId: req.requestId 
+          });
+        }
+        
+        logger.info('Assessment updated with pulse responses', {
+          additionalContext: {
+            assessmentId,
+            operation: 'update_pulse_success',
+            pillarScores
+          }
+        });
+        
+        res.json(assessment);
+      },
+      {
+        functionArgs: { id: req.params.id, pulseResponses: req.body.pulseResponses },
+        requestBody: req.body,
+        userId: req.userId,
+        requestId: req.requestId
       }
-      
-      res.json(assessment);
-    } catch (error) {
-      res.status(400).json({ error: "Invalid pulse response data" });
-    }
+    ).catch((error) => {
+      logger.error(
+        'Unexpected error updating pulse responses',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          requestBody: req.body,
+          functionArgs: { id: req.params.id },
+          additionalContext: {
+            operation: 'update_pulse_unexpected',
+            requestId: req.requestId,
+            userId: req.userId
+          }
+        }
+      );
+      res.status(500).json({ 
+        error: "Failed to update pulse responses", 
+        requestId: req.requestId 
+      });
+    });
   });
 
   // Complete assessment and trigger gates
-  app.patch("/api/assessments/:id/complete", async (req, res) => {
-    try {
-      const assessment = await storage.getAssessment(req.params.id);
-      if (!assessment) {
-        return res.status(404).json({ error: "Assessment not found" });
+  app.patch("/api/assessments/:id/complete", async (req: Request, res: Response) => {
+    await withErrorHandling(
+      'PATCH /api/assessments/:id/complete',
+      async () => {
+        const assessmentId = req.params.id;
+        
+        logger.info('Completing assessment and evaluating gates', {
+          additionalContext: {
+            operation: 'complete_assessment',
+            assessmentId
+          }
+        });
+        
+        const assessment = await storage.getAssessment(assessmentId);
+        if (!assessment) {
+          logger.warn('Cannot complete - assessment not found', {
+            additionalContext: {
+              assessmentId,
+              operation: 'complete_assessment_not_found'
+            }
+          });
+          return res.status(404).json({ 
+            error: "Assessment not found", 
+            requestId: req.requestId 
+          });
+        }
+
+        if (!assessment.pillarScores) {
+          logger.error('Cannot complete assessment - missing pillar scores', new Error('Pillar scores required for completion'), {
+            additionalContext: {
+              assessmentId,
+              operation: 'complete_assessment_missing_scores'
+            }
+          });
+          return res.status(400).json({ 
+            error: "Assessment must have pulse responses before completion", 
+            requestId: req.requestId 
+          });
+        }
+
+        try {
+          // Evaluate context gates and priority moves
+          logger.debug('Evaluating context gates', {
+            additionalContext: {
+              operation: 'evaluate_context_gates',
+              assessmentId
+            }
+          });
+          
+          const triggeredGates = evaluateContextGates(
+            assessment.contextProfile,
+            assessment.pillarScores
+          );
+          
+          logger.debug('Generating priority moves', {
+            additionalContext: {
+              operation: 'generate_priority_moves',
+              assessmentId,
+              gateCount: triggeredGates.length
+            }
+          });
+          
+          const priorityMoves = generatePriorityMoves(
+            assessment.contextProfile,
+            assessment.pillarScores
+          );
+          
+          const contentTags = generateContentTags(assessment.contextProfile);
+          const contextGuidance: any = {};
+          
+          // Generate context-aware guidance for each pillar
+          Object.keys(assessment.pillarScores as any).forEach(pillar => {
+            contextGuidance[pillar] = generateContextAwareGuidance(
+              pillar, 
+              (assessment.pillarScores as any)[pillar], 
+              contentTags
+            );
+          });
+
+          const completed = await storage.updateAssessment(assessmentId, {
+            triggeredGates,
+            priorityMoves,
+            contentTags,
+            contextGuidance,
+            completedAt: new Date().toISOString(),
+          });
+
+          logger.info('Assessment completed successfully', {
+            additionalContext: {
+              assessmentId,
+              operation: 'complete_assessment_success',
+              gateCount: triggeredGates.length,
+              priorityMoveCount: Object.keys(priorityMoves).length,
+              contentTagCount: contentTags.length
+            }
+          });
+
+          res.json(completed);
+          
+        } catch (evaluationError) {
+          logger.error(
+            'Error during gates/priority evaluation',
+            evaluationError instanceof Error ? evaluationError : new Error(String(evaluationError)),
+            {
+              additionalContext: {
+                operation: 'evaluate_gates_priority_error',
+                assessmentId,
+                requestId: req.requestId,
+                userId: req.userId
+              }
+            }
+          );
+          throw evaluationError; // Re-throw to be caught by outer error handler
+        }
+      },
+      {
+        functionArgs: { id: req.params.id },
+        userId: req.userId,
+        requestId: req.requestId
       }
-
-      // Evaluate context gates and priority moves
-      const triggeredGates = evaluateContextGates(
-        assessment.contextProfile,
-        assessment.pillarScores
+    ).catch((error) => {
+      logger.error(
+        'Unexpected error completing assessment',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          functionArgs: { id: req.params.id },
+          additionalContext: {
+            operation: 'complete_assessment_unexpected',
+            requestId: req.requestId,
+            userId: req.userId
+          }
+        }
       );
-      const priorityMoves = generatePriorityMoves(
-        assessment.contextProfile,
-        assessment.pillarScores
-      );
-      
-      const contentTags = generateContentTags(assessment.contextProfile);
-      const contextGuidance: any = {};
-      
-      // Generate context-aware guidance for each pillar
-      Object.keys(assessment.pillarScores as any).forEach(pillar => {
-        contextGuidance[pillar] = generateContextAwareGuidance(
-          pillar, 
-          (assessment.pillarScores as any)[pillar], 
-          contentTags
-        );
+      res.status(500).json({ 
+        error: "Failed to complete assessment", 
+        requestId: req.requestId 
       });
-
-      const completed = await storage.updateAssessment(req.params.id, {
-        triggeredGates,
-        priorityMoves,
-        contentTags,
-        contextGuidance,
-        completedAt: new Date().toISOString(),
-      });
-
-      res.json(completed);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to complete assessment" });
-    }
+    });
   });
 
   const httpServer = createServer(app);
