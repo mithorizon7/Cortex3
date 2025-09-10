@@ -279,7 +279,7 @@ export default function ResultsPage() {
         <Card className="w-full max-w-md mx-4">
           <CardContent className="pt-6">
             <div className="text-center">
-              <h1 className="text-2xl font-bold text-foreground mb-2">Assessment Not Found</h1>
+              <h1 className="text-2xl font-bold text-foreground mb-2 font-display">Assessment Not Found</h1>
               <p className="text-muted-foreground mb-4">
                 The assessment you're looking for doesn't exist or has been removed.
               </p>
@@ -318,7 +318,7 @@ export default function ResultsPage() {
         <div className="text-center mb-8 sm:mb-12">
           <div className="flex items-center justify-center space-x-2 mb-4">
             <Target className="h-6 sm:h-8 w-6 sm:w-8 text-primary" />
-            <h1 className="text-2xl sm:text-4xl font-bold text-foreground">Your Readiness Snapshot</h1>
+            <h1 className="text-2xl sm:text-4xl font-display font-bold text-foreground">Your Readiness Snapshot</h1>
           </div>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mb-6">
             <Badge variant="outline" className="text-sm sm:text-lg px-3 sm:px-4 py-1 sm:py-2">
@@ -328,7 +328,7 @@ export default function ResultsPage() {
               {triggeredGates.length} Critical Requirements
             </Badge>
           </div>
-          <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto font-ui">
             Below is your CORTEX profile: six domains, each scored 0–3. The <strong>honeycomb</strong> shows where you are strong and where you have room to build. Scores reflect today's practices, not potential.
           </p>
         </div>
@@ -344,23 +344,23 @@ export default function ResultsPage() {
           <CardHeader className="bg-primary/5 p-4 sm:p-6">
             <CardTitle className="flex items-center space-x-2">
               <Zap className="h-5 sm:h-6 w-5 sm:w-6 text-primary" />
-              <span className="text-xl sm:text-2xl">Executive Summary</span>
+              <span className="text-xl sm:text-2xl font-display">Executive Summary</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 sm:p-8">
             <div className="grid lg:grid-cols-2 gap-8">
               {/* Key Insights */}
               <div>
-                <h3 className="text-xl font-semibold mb-6 flex items-center space-x-2">
-                  <Lightbulb className="h-5 w-5 text-yellow-500" />
+                <h3 className="text-xl font-display font-semibold mb-6 flex items-center space-x-2">
+                  <Lightbulb className="h-5 w-5 text-info" />
                   <span>Key Insights</span>
                 </h3>
                 <div className="space-y-4">
                   {insights.map((insight, index) => (
                     <div key={index} className="border-l-4 border-primary pl-4">
-                      <h4 className="font-semibold text-lg mb-2">{insight.title}</h4>
-                      <p className="text-muted-foreground mb-2">{insight.description}</p>
-                      <p className="text-sm font-medium text-primary">{insight.action}</p>
+                      <h4 className="font-semibold text-lg mb-2 font-ui">{insight.title}</h4>
+                      <p className="text-muted-foreground mb-2 font-ui">{insight.description}</p>
+                      <p className="text-sm font-medium text-primary font-ui">{insight.action}</p>
                     </div>
                   ))}
                 </div>
@@ -368,8 +368,8 @@ export default function ResultsPage() {
 
               {/* Next 90 Days */}
               <div>
-                <h3 className="text-xl font-semibold mb-6 flex items-center space-x-2">
-                  <Clock className="h-5 w-5 text-blue-500" />
+                <h3 className="text-xl font-display font-semibold mb-6 flex items-center space-x-2">
+                  <Clock className="h-5 w-5 text-info" />
                   <span>Your Next 90 Days</span>
                 </h3>
                 <div className="space-y-4">
@@ -379,7 +379,7 @@ export default function ResultsPage() {
                         {index + 1}
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium">{priority}</p>
+                        <p className="font-medium font-ui">{priority}</p>
                       </div>
                     </div>
                   ))}
@@ -402,7 +402,7 @@ export default function ResultsPage() {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <TrendingUp className="h-5 w-5" />
-                <span>CORTEX Maturity Radar</span>
+                <span className="font-display">CORTEX Maturity Radar</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="flex justify-center p-6">
@@ -412,7 +412,7 @@ export default function ResultsPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Domain Breakdown</CardTitle>
+              <CardTitle className="font-display">Domain Breakdown</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {Object.entries(pillarScores).map(([pillar, score]) => {
@@ -424,7 +424,7 @@ export default function ResultsPage() {
                 return (
                   <div key={pillar} className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="font-medium">{pillarInfo.name}</span>
+                      <span className="font-medium font-ui">{pillarInfo.name}</span>
                       <Badge variant={score < 1.5 ? "destructive" : score < 2.5 ? "secondary" : "default"}>
                         {score < 1 ? 'Nascent' : score < 2 ? 'Emerging' : score < 3 ? 'Integrated' : 'Leading'}
                       </Badge>
@@ -444,15 +444,15 @@ export default function ResultsPage() {
 
         {/* Critical Requirements */}
         {triggeredGates.length > 0 && (
-          <Card className="mb-8 border-amber-500/50">
-            <CardHeader className="bg-amber-50 dark:bg-amber-950">
-              <CardTitle className="flex items-center space-x-2 text-amber-800 dark:text-amber-200">
+          <Card className="mb-8 border-warning/50">
+            <CardHeader className="bg-warning/10">
+              <CardTitle className="flex items-center space-x-2 text-warning-foreground font-display">
                 <Shield className="h-6 w-6" />
                 <span>Critical Requirements for Your Context</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
-              <p className="text-muted-foreground mb-6">
+              <p className="text-muted-foreground mb-6 font-ui">
                 Because of your context, some safeguards are <strong>non-negotiable before scale</strong>. These aren't bureaucratic hurdles; they prevent avoidable harm and build trust. Expand each callout to learn what it is, why it applies, and simple ways to satisfy it.
               </p>
               
@@ -465,18 +465,18 @@ export default function ResultsPage() {
                 </CollapsibleTrigger>
                 <CollapsibleContent className="space-y-4">
                   {triggeredGates.map((gate: any) => (
-                    <Card key={gate.id} className="border-l-4 border-l-amber-500">
+                    <Card key={gate.id} className="border-l-4 border-l-warning">
                       <CardContent className="p-6">
                         <div className="flex items-start space-x-4">
-                          <div className="bg-amber-500 text-white p-2 rounded-full flex-shrink-0">
+                          <div className="bg-warning text-warning-foreground p-2 rounded-full flex-shrink-0">
                             <AlertTriangle className="w-5 h-5" />
                           </div>
                           <div className="flex-1">
-                            <h3 className="font-semibold text-lg mb-1">{gate.title}</h3>
-                            <p className="text-sm text-muted-foreground mb-4">{gate.reason}</p>
+                            <h3 className="font-semibold text-lg mb-1 font-ui">{gate.title}</h3>
+                            <p className="text-sm text-muted-foreground mb-4 font-ui">{gate.reason}</p>
                             
                             {gate.explain && (
-                              <div className="bg-amber-50 dark:bg-amber-950 p-3 rounded text-xs mb-4">
+                              <div className="bg-warning/10 p-3 rounded text-xs mb-4">
                                 <div className="space-y-2">
                                   <div><strong>Why this gate was triggered:</strong></div>
                                   {Object.entries(gate.explain).map(([key, value]) => {
@@ -498,11 +498,11 @@ export default function ResultsPage() {
                             
                             {gate.actions && gate.actions.length > 0 && (
                               <div>
-                                <h4 className="font-medium mb-2 text-sm">Recommended Actions:</h4>
-                                <ul className="text-sm space-y-1 text-muted-foreground">
+                                <h4 className="font-medium mb-2 text-sm font-ui">Recommended Actions:</h4>
+                                <ul className="text-sm space-y-1 text-muted-foreground font-ui">
                                   {gate.actions.map((action: string, index: number) => (
                                     <li key={index} className="flex items-start space-x-2">
-                                      <ChevronRight className="h-3 w-3 mt-0.5 text-amber-500 flex-shrink-0" />
+                                      <ChevronRight className="h-3 w-3 mt-0.5 text-warning flex-shrink-0" />
                                       <span>{action}</span>
                                     </li>
                                   ))}
@@ -522,18 +522,18 @@ export default function ResultsPage() {
 
         {/* Detailed Analysis */}
         {/* How to Read the Guidance */}
-        <Card className="mb-8 bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+        <Card className="mb-8 bg-info/10 border-info/20">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2 text-blue-900 dark:text-blue-100">
+            <CardTitle className="flex items-center space-x-2 text-info-foreground font-display">
               <BookOpen className="h-5 w-5" />
               <span>How to Read the Guidance</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-            <p className="text-blue-800 dark:text-blue-200 mb-4">
+            <p className="text-info-foreground mb-4 font-ui">
               For each domain you'll see:
             </p>
-            <ul className="text-blue-800 dark:text-blue-200 space-y-2">
+            <ul className="text-info-foreground space-y-2 font-ui">
               <li className="flex items-start space-x-2">
                 <span className="font-semibold min-w-fit">• Why this matters</span>
                 <span className="text-sm">— business impact in plain language</span>
@@ -547,7 +547,7 @@ export default function ResultsPage() {
                 <span className="text-sm">— common pathways, options, and trade-offs</span>
               </li>
             </ul>
-            <p className="text-blue-800 dark:text-blue-200 mt-4 text-sm italic">
+            <p className="text-info-foreground mt-4 text-sm italic font-ui">
               Use these as teaching notes and talking points. They are <strong>not mandates</strong>.
             </p>
           </CardContent>

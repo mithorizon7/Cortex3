@@ -10,6 +10,15 @@ import { Star, Info, Target, Cog, Shield, Users, Network, Lightbulb, TrendingUp,
 import { useState } from "react";
 import type { ValueOverlay, ValueOverlayPillar, ContextProfile } from "@shared/schema";
 
+// Local types for guides with optional steps
+interface GuideStep {
+  order: number;
+  title: string;
+  timeframe?: string;
+}
+
+type GuideWithSteps = import("@/lib/micro-guides").MicroGuide & { steps?: GuideStep[] };
+
 interface DomainCardProps {
   pillar: string;
   stage: number;
@@ -181,7 +190,7 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
   const pillarGuides = getMicroGuidesByPillar(pillar);
   const contextTags = contextGuidance?.contentTags || [];
   const contextGuides = getMicroGuidesByTags(contextTags);
-  const relevantGuides = [...pillarGuides, ...contextGuides].slice(0, 2); // Show top 2 most relevant
+  const relevantGuides = ([...pillarGuides, ...contextGuides].slice(0, 2)) as GuideWithSteps[]; // Show top 2 most relevant
   
   // Handle Value Overlay
   const selectedMetric = valueOverlay ? getMetricById(valueOverlay.metric_id) : (contextProfile ? getMetricById(getContextAwareDefaults(contextProfile)[pillar]) : getDefaultMetricForPillar(pillar));
@@ -235,8 +244,8 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
             {pillar === 'X' && <Lightbulb className="h-5 w-5" />}
           </div>
           <div>
-            <h3 className="font-semibold text-lg">{pillarInfo.name}</h3>
-            <p className="text-sm text-muted-foreground">
+            <h3 className="font-semibold text-lg font-display">{pillarInfo.name}</h3>
+            <p className="text-sm text-muted-foreground font-ui">
               Stage {stage} - {stageInfo.name}
             </p>
           </div>
@@ -245,7 +254,7 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
         {/* Value Overlay Section */}
         {selectedMetric && (
           <div className="border-t pt-4 mb-4">
-            <h4 className="font-medium mb-2 text-primary flex items-center space-x-2">
+            <h4 className="font-medium mb-2 text-primary flex items-center space-x-2 font-display">
               <TrendingUp className="h-4 w-4" />
               <span>Value Overlay</span>
             </h4>
@@ -278,15 +287,15 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
         
         <div className="space-y-4">
           <div>
-            <h4 className="font-medium mb-2 text-primary">Why This Matters</h4>
-            <p className="text-sm text-muted-foreground">
+            <h4 className="font-medium mb-2 text-primary font-display">Why This Matters</h4>
+            <p className="text-sm text-muted-foreground font-ui">
               {guidance.why_it_matters || guidance.whyMatters}
             </p>
           </div>
           
           <div>
-            <h4 className="font-medium mb-2 text-primary">What Good Looks Like</h4>
-            <ul className="text-sm text-muted-foreground space-y-1">
+            <h4 className="font-medium mb-2 text-primary font-display">What Good Looks Like</h4>
+            <ul className="text-sm text-muted-foreground space-y-1 font-ui">
               {(guidance.what_good_looks_like || guidance.whatGoodLooks || []).map((item: string, index: number) => (
                 <li key={index}>• {item}</li>
               ))}
@@ -294,8 +303,8 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
           </div>
           
           <div>
-            <h4 className="font-medium mb-2 text-primary">How to Improve</h4>
-            <ul className="text-sm text-muted-foreground space-y-1">
+            <h4 className="font-medium mb-2 text-primary font-display">How to Improve</h4>
+            <ul className="text-sm text-muted-foreground space-y-1 font-ui">
               {(guidance.how_to_improve || guidance.howToImprove || []).map((item: string, index: number) => (
                 <li key={index}>• <strong>{item.split(' ')[0]} {item.split(' ')[1]}</strong> {item.split(' ').slice(2).join(' ')}</li>
               ))}
@@ -303,14 +312,14 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
             
             {/* Context-specific priority note */}
             {guidance.priority_note && (
-              <p className="text-xs text-blue-700 mt-2 bg-blue-50 dark:bg-blue-950 p-2 rounded">
+              <p className="text-xs text-info-foreground mt-2 bg-info/10 p-2 rounded font-ui">
                 <Star className="h-4 w-4 mr-1" />
                 <strong>Context Priority:</strong> {guidance.priority_note}
               </p>
             )}
             
             {contextReason && (
-              <p className="text-xs text-amber-700 mt-2 bg-amber-50 dark:bg-amber-950 p-2 rounded">
+              <p className="text-xs text-warning-foreground mt-2 bg-warning/10 p-2 rounded font-ui">
                 <Info className="h-4 w-4 mr-1" />
                 <strong>Because:</strong> {contextReason}
               </p>
@@ -320,8 +329,8 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
           {/* Common Pitfalls */}
           {(guidance.common_pitfalls || guidance.commonPitfalls) && (
             <div>
-              <h4 className="font-medium mb-2 text-primary">Common Pitfalls</h4>
-              <ul className="text-sm text-muted-foreground space-y-1">
+              <h4 className="font-medium mb-2 text-primary font-display">Common Pitfalls</h4>
+              <ul className="text-sm text-muted-foreground space-y-1 font-ui">
                 {(guidance.common_pitfalls || guidance.commonPitfalls || []).map((item: string, index: number) => (
                   <li key={index}>• {item}</li>
                 ))}
@@ -332,8 +341,8 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
           {/* Discussion Prompts */}
           {(guidance.discussion_prompts || guidance.discussionPrompts) && (
             <div>
-              <h4 className="font-medium mb-2 text-primary">Discussion Prompts</h4>
-              <ul className="text-sm text-muted-foreground space-y-1">
+              <h4 className="font-medium mb-2 text-primary font-display">Discussion Prompts</h4>
+              <ul className="text-sm text-muted-foreground space-y-1 font-ui">
                 {(guidance.discussion_prompts || guidance.discussionPrompts || []).map((item: string, index: number) => (
                   <li key={index}>• {item}</li>
                 ))}
@@ -344,7 +353,7 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
           {/* Priority Moves */}
           {priorityMoves && priorityMoves.length > 0 && (
             <div>
-              <h4 className="font-medium mb-2 text-primary flex items-center space-x-2">
+              <h4 className="font-medium mb-2 text-primary flex items-center space-x-2 font-display">
                 <TrendingUp className="h-4 w-4" />
                 <span>Top Priority Moves</span>
               </h4>
@@ -356,7 +365,7 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
                         <Badge variant="outline" className="text-xs">
                           #{move.rank}
                         </Badge>
-                        <span className="font-medium text-sm">{move.title}</span>
+                        <span className="font-medium text-sm font-ui">{move.title}</span>
                       </div>
                       <ArrowRight className="h-3 w-3 text-muted-foreground flex-shrink-0 mt-1" />
                     </div>
@@ -398,12 +407,12 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
                     <div className="flex items-start justify-between mb-2">
                       <h5 className="font-medium text-sm">{guide.title}</h5>
                       <Badge variant="outline" className="text-xs">
-                        {guide.steps.length} steps
+                        {guide.steps?.length ? `${guide.steps.length} steps` : 'Guide'}
                       </Badge>
                     </div>
                     <p className="text-xs text-muted-foreground mb-2">{guide.overview}</p>
                     
-                    {guide.steps.slice(0, 2).map((step) => (
+                    {guide.steps?.slice(0, 2).map((step: GuideStep) => (
                       <div key={step.order} className="flex items-start space-x-2 text-xs mb-1">
                         <div className="bg-primary text-primary-foreground rounded-full w-4 h-4 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
                           {step.order}
@@ -415,7 +424,7 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
                       </div>
                     ))}
                     
-                    {guide.steps.length > 2 && (
+                    {guide.steps && guide.steps.length > 2 && (
                       <p className="text-xs text-muted-foreground mt-1">
                         +{guide.steps.length - 2} more steps...
                       </p>
