@@ -67,9 +67,9 @@ export async function apiRequest(
         method,
         url,
         frontendRequestId,
-        error: 'offline'
-      },
-      requestBody: data
+        error: 'offline',
+        hasRequestBody: !!data
+      }
     }));
     throw new Error('offline: No internet connection');
   }
@@ -115,10 +115,8 @@ export async function apiRequest(
       }
     };
     
-    // Don't log sensitive request bodies for certain endpoints
-    if (!url.includes('/assessments') && data) {
-      (errorContext as any).requestBody = data;
-    }
+    // Never log request bodies in production to prevent sensitive data exposure
+    // Only log non-sensitive metadata for debugging
     
     console.error(JSON.stringify(errorContext));
     

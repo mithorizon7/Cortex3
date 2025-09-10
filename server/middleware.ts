@@ -68,7 +68,16 @@ export function requestContextMiddleware(req: Request, res: Response, next: Next
 }
 
 export function errorHandlerMiddleware(err: any, req: Request, res: Response, next: NextFunction) {
-  const status = err.status || err.statusCode || HTTP_STATUS.INTERNAL_SERVER_ERROR;
+  // Detect Zod validation errors and set appropriate status
+  let status = err.status || err.statusCode;
+  
+  // Handle Zod validation errors with proper 422 status
+  if (err.name === 'ZodError' || (err.issues && Array.isArray(err.issues))) {
+    status = HTTP_STATUS.UNPROCESSABLE_ENTITY;
+  } else if (!status) {
+    status = HTTP_STATUS.INTERNAL_SERVER_ERROR;
+  }
+  
   const incidentId = generateIncidentId();
   
   // Log the error with full technical details and incident ID
