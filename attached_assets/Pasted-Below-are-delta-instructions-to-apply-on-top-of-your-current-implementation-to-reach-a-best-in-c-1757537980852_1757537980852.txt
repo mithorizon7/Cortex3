@@ -1,0 +1,379 @@
+Below are **delta instructions** to apply on top of your current implementation to reach a best‑in‑class, MIT‑credible result. They’re ordered by **impact vs. effort** and mapped to concrete edits (files, classes, tokens). I’ve kept this strictly design‑only and developer‑ready.
+
+---
+
+## A) Brand‑critical corrections (apply first)
+
+### A1. Set the primary/accent to the **official MIT palette**
+
+Update your CSS color tokens so the UI reads unmistakably “MIT.”
+
+**Edit:** `client/src/index.css`
+
+```css
+/* Light */
+:root{
+  /* Core neutrals */
+  --background: 0 0% 100%;
+  --foreground: 220 10% 12%;
+  --border: 213 15% 88%;
+
+  /* Surfaces */
+  --card: 0 0% 100%;
+  --card-foreground: var(--foreground);
+  --card-border: var(--border);
+  --popover: 0 0% 100%;
+  --popover-foreground: var(--foreground);
+  --popover-border: var(--border);
+
+  /* Official brand */
+  --primary: 350 100% 22.94%;  /* MIT Red #750014 */
+  --primary-foreground: 0 0% 100%;
+  --primary-border: hsl(350 100% 22.94% / .24);
+
+  --accent: 219.91 100% 54.90%; /* MIT Blue #1966FF (expanded palette) */
+  --accent-foreground: 0 0% 100%;
+  --accent-border: hsl(219.91 100% 54.90% / .24);
+
+  /* Secondary / muted */
+  --secondary: 220 30% 96.08%;  /* Light Gray 1 #F2F4F8 */
+  --secondary-foreground: 220 10% 20%;
+  --secondary-border: 213.33 15.25% 88.43%; /* Light Gray 2 #DDE1E6 */
+
+  --muted: 220 30% 96.08%;
+  --muted-foreground: 208.42 8.92% 58.24%;  /* Silver Gray #8B959E */
+
+  /* Semantic */
+  --destructive: 356.17 100% 53.92%; /* Bright Red #FF1423 */
+  --destructive-foreground: 0 0% 100%;
+
+  /* Focus ring */
+  --ring: 219.91 100% 54.90%; /* accent blue */
+}
+
+/* Dark */
+.dark{
+  --background: 220 15% 10%;
+  --foreground: 0 0% 100%;
+  --border: 220 12% 22%;
+
+  --card: 220 16% 12%;
+  --card-foreground: var(--foreground);
+  --card-border: var(--border);
+
+  --popover: 220 16% 12%;
+  --popover-foreground: var(--foreground);
+  --popover-border: var(--border);
+
+  /* lighten brand tones on dark for contrast */
+  --primary: 350 85% 46%;
+  --accent: 220 100% 62%;
+
+  --secondary: 220 12% 18%;
+  --secondary-foreground: 0 0% 100%;
+
+  --muted: 220 12% 16%;
+  --muted-foreground: 220 10% 70%;
+  --destructive: 356.17 100% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --ring: 220 100% 62%;
+}
+```
+
+*Rationale:* MIT’s **core** is MIT Red `#750014` + Silver Gray/black/white; use blue from the **expanded** palette for focus/data viz. This ensures color credibility without inventing hues. ([brand.mit.edu][1])
+
+---
+
+### A2. Use **Neue Haas Grotesk** for headings/UI (with fallbacks)
+
+If you have access to MIT’s font kit, load **NHG** for headings and UI; keep **Inter** as fallback; keep **IBM Plex Mono** for data.
+
+**Edit:** `client/index.html` (example; replace with your Adobe Fonts kit)
+
+```html
+<link rel="stylesheet" href="https://use.typekit.net/XXXXXXX.css">
+```
+
+**Edit:** `tailwind.config.ts`
+
+```ts
+extend: {
+  fontFamily: {
+    display: ['"Neue Haas Grotesk Display","Neue Haas Grotesk Text"', 'Inter', 'system-ui', 'sans-serif'],
+    sans: ['"Neue Haas Grotesk Text"', 'Inter', 'system-ui', 'sans-serif'],
+    mono: ['"IBM Plex Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace']
+  }
+}
+```
+
+**Apply:** swap headings to `font-display` and tighten tracking (e.g., `tracking-tight`) across Hero H1/H2, section titles, Results headers.
+
+*Rationale:* NHG is MIT’s primary typeface; it’s the official, modernist voice of the Institute. ([brand.mit.edu][2])
+
+---
+
+### A3. Header & footer marks (official only) + color rules
+
+1. Replace the ad‑hoc icon+wordmark with an **official MIT / Open Learning / Horizon** lock‑up (SVG) in the header.
+2. Add the corresponding mark in the footer with © and required links (Privacy, Accessibility).
+3. Follow color rules: use the **supplied colorways** on neutral backgrounds; red‑on‑red is a special approved variant; avoid inventing other color‑on‑color uses. **Do not build custom lock‑ups.**
+
+**Edit:** `client/src/components/navigation/app-header.tsx`
+
+```tsx
+{/* Left side */}
+<a href="/" className="flex items-center gap-3">
+  <img src="/brand/mit-horizon-lockup.svg" alt="MIT Horizon" className="h-6 sm:h-7" />
+  <span className="sr-only">MIT Horizon — CORTEX</span>
+</a>
+```
+
+*Rationale:* Use official marks/lock‑ups and the prescribed colorways; don’t typeset the full Institute name yourself or create new configurations. ([brand.mit.edu][3])
+
+---
+
+## B) Visual identity upgrades (high impact, low risk)
+
+### B1. Hero identity: **faint honeycomb watermark** + single‑accent discipline
+
+Keep the neutral hero surface but add a subtle identity texture that echoes the honeycomb radar.
+
+**Add:** `public/img/hex.svg` (very light stroke)
+
+```svg
+<svg xmlns="http://www.w3.org/2000/svg" width="60" height="52" viewBox="0 0 60 52" fill="none" stroke="#000" stroke-opacity=".05" stroke-width="1">
+  <!-- simple hex grid -->
+  <defs>
+    <pattern id="hex" width="60" height="52" patternUnits="userSpaceOnUse" patternTransform="translate(0,0)">
+      <path d="M15 1 L45 1 L60 26 L45 51 L15 51 L0 26 Z"/>
+    </pattern>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#hex)"/>
+</svg>
+```
+
+**Edit:** `client/src/pages/home.tsx` (hero section wrapper)
+
+```tsx
+<section className="relative bg-background">
+  <div aria-hidden className="pointer-events-none absolute inset-0 [mask-image:linear-gradient(to_bottom,rgba(0,0,0,.9),rgba(0,0,0,.2))]">
+    <div className="absolute inset-0 bg-[url('/img/hex.svg')] bg-[length:180px_156px] opacity-40 dark:opacity-25"></div>
+  </div>
+  {/* ...hero content... */}
+</section>
+```
+
+**Discipline:** keep **one highlight**—use `text-primary` for the single emphasized span in the H1 and the primary CTA; keep other UI chrome neutral. (MIT schools recommend a single highlight color per application.) ([MIT Sloan][4])
+
+---
+
+### B2. Section rhythm: alternate neutrals the MIT way
+
+Apply subtle alternation for long scroll readability.
+
+* Use **white** for core narrative sections.
+* Use **Light Gray 1** `#F2F4F8` as the alternate background (e.g., for “Sound Familiar?” and “How It Works”).
+
+**Example:**
+
+```tsx
+<section className="bg-white">…</section>
+<section className="bg-[#F2F4F8]">…</section>
+```
+
+*Rationale:* This matches MIT’s neutral‑first posture and keeps the primary red for decisions/CTAs. ([brand.mit.edu][1])
+
+---
+
+### B3. Cards & icons: elevation and brand‑safe colors
+
+* Add subtle elevation and **border‑intensify on hover** across informational cards (challenges, benefits, results domain cards).
+
+```tsx
+<Card className="rounded-xl border border-card-border shadow-sm transition hover:shadow-md hover:border-primary/30">
+  …
+</Card>
+```
+
+* Replace broad **green** UI checks with either **brand red** (for emphasis) or **foreground** black where “green = positive” is not essential. Keep **amber** for warnings/info strips only.
+
+*Rationale:* MIT red pairs well with blue; avoid large areas of green/purple alongside red—reserve them for tiny data accents at most. ([brand.mit.edu][1])
+
+---
+
+## C) Data‑viz polish for the honeycomb
+
+### C1. Area + markers + legend (brand‑aligned)
+
+Inside your radar/honeycomb component:
+
+```ts
+// colors aligned to MIT core/expanded (markers/legend only)
+export const PILLAR_COLORS = {
+  C: 'var(--primary)',           // C – keep brand red for the label/dot
+  O: '#1966FF',                  // Blue
+  R: '#99EBFF',                  // Light blue
+  T: '#FFEB00',                  // Yellow
+  E: '#40464C',                  // Dark gray
+  X: '#8B959E'                   // Silver gray
+} as const;
+```
+
+* **Polygon fill:** semi‑transparent primary `hsl(var(--primary) / .18)` with a 1px `--card` stroke.
+* **Grid lines:** `stroke-border` (already neutral).
+* **Legend:** add a small row “C O R T E X” with colored dots and `text-xs text-muted-foreground`.
+
+*Rationale:* Keep the area unmistakably “brand” while using cool/warm neutrals for markers—clean, accessible contrast next to red. ([brand.mit.edu][1])
+
+---
+
+### C2. Chart motion (guarded, tasteful)
+
+Add a draw‑in animation to the polygon and a fade‑in to markers, respecting reduced motion.
+
+```tsx
+// in Radar.tsx
+const pathRef = useRef<SVGPathElement>(null);
+useEffect(() => {
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (prefersReduced || !pathRef.current) return;
+  const len = pathRef.current.getTotalLength();
+  pathRef.current.style.strokeDasharray = `${len}`;
+  pathRef.current.style.strokeDashoffset = `${len}`;
+  requestAnimationFrame(() => {
+    pathRef.current!.style.transition = 'stroke-dashoffset 900ms cubic-bezier(.2,.8,.2,1)';
+    pathRef.current!.style.strokeDashoffset = '0';
+  });
+}, []);
+```
+
+*Rationale:* Subtle, purpose‑built motion signals innovation without gimmicks; must respect `prefers-reduced-motion`. ([brand.mit.edu][1])
+
+---
+
+## D) Micro‑interactions & states
+
+### D1. Count‑up stats in the hero
+
+Animate “500+ teams” / “78% improved ROI” when entering viewport.
+
+```tsx
+function useCountUp(target: number, dur = 1200) {
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    let raf: number, start = performance.now();
+    const tick = (t: number) => {
+      const k = Math.min(1, (t - start)/dur);
+      setN(Math.round(target * (1 - Math.pow(1 - k, 3)))); // ease-out
+      if (k < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, dur]);
+  return n;
+}
+```
+
+Wire this up only after an IntersectionObserver marks the stat as visible; **skip** if reduced‑motion.
+
+### D2. Focus rings & keyboard affordances
+
+Confirm all interactive elements (buttons, links, chips, inputs) have a visible ring:
+
+```tsx
+className="focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] focus-visible:ring-offset-2"
+```
+
+*Rationale:* Meets AA and feels precise. ([brand.mit.edu][1])
+
+---
+
+## E) Results page narrative & “gates” callouts
+
+### E1. Gates = prominent, scannable banners
+
+Render any “non‑negotiable” callouts above the radar as stacked banners:
+
+```tsx
+<div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900 flex items-start gap-3">
+  <IconAlertTriangle className="mt-0.5 h-5 w-5" />
+  <div>
+    <p className="font-medium">Data governance gap blocks AI deployment</p>
+    <p className="text-sm opacity-90">Address X before scaling Y; see checklist →</p>
+  </div>
+</div>
+```
+
+Keep amber for warnings; link to the relevant domain card anchor.
+
+### E2. Domain cards = two‑tier structure
+
+Standardize each domain card:
+
+* **Header stack:** “Why it matters” → “What good looks like” (use `font-display` for subtitles).
+* **Actions strip:** Value Overlay chip + “How to measure” + Priority (mono font for numbers).
+
+**Component head:**
+
+```tsx
+<h3 className="font-display text-xl tracking-tight">Clarity & Command</h3>
+```
+
+This increases scan quality for executive readers.
+
+---
+
+## F) Header/footer content & compliance
+
+* **Header:** Keep sticky glass; ensure logo usage follows MIT’s rules (approved lock‑up only; no custom typeset “Massachusetts Institute of Technology”). ([brand.mit.edu][5])
+* **Footer:** Add ©, organization name, and mandatory links (Privacy / Accessibility). If you ever place the MIT logo on a colored panel, stick to the approved colorways; “red‑on‑red” is a specific, allowed variant (don’t improvise other color‑on‑color combos). ([brand.mit.edu][6])
+
+---
+
+## G) Imagery guidelines (if/when you add photography)
+
+* Prefer **people‑centric** imagery over buildings; treat with subtle overlays to protect contrast for text.
+* Keep imagery desaturated/neutral; let **MIT Red** carry accents and CTAs.
+* Ensure rights/clearance for any partner logos or photos you display.
+
+*Reference for “one highlight color” discipline and people‑first imagery comes from MIT Sloan’s guidance—sensible to apply here too.* ([MIT Sloan][4])
+
+---
+
+## H) QA checklist (blockers before release)
+
+1. **Contrast:** Verify AA (4.5:1) for all text/states in light & dark. ([brand.mit.edu][1])
+2. **Focus:** Every interactive has a **visible** focus ring (accent blue).
+3. **Reduced motion:** All animations disabled under `prefers-reduced-motion`.
+4. **Logo rules:** Only official marks/lock‑ups; approved colorways; no DIY wordmarks. ([brand.mit.edu][3])
+5. **Honeycomb legibility:** Grid/labels readable on both themes; polygon fill not overpowering; legend present.
+
+---
+
+## Developer “to‑do” summary (copy/paste into your issue tracker)
+
+* [ ] Swap brand tokens to **MIT Red / MIT Blue / MIT neutrals** (see A1). ([brand.mit.edu][1])
+* [ ] Load **Neue Haas Grotesk**; set `font-display`/`font-sans`; retag headings (A2). ([brand.mit.edu][2])
+* [ ] Replace header/footer marks with **official lock‑ups**; add required links; enforce color rules (A3, F). ([brand.mit.edu][3])
+* [ ] Add **honeycomb watermark** to hero; keep single‑accent discipline (B1). ([MIT Sloan][4])
+* [ ] Alternate section backgrounds with **Light Gray 1** for scroll rhythm (B2). ([brand.mit.edu][1])
+* [ ] Elevate cards; unify icon colors (avoid broad green/purple); keep amber for warnings (B3). ([brand.mit.edu][1])
+* [ ] Align honeycomb data‑viz colors; add legend; set polygon fill to brand red @ 18% (C1). ([brand.mit.edu][1])
+* [ ] Add **draw‑in** animation to radar + **count‑up** stats; guard with reduced‑motion (C2, D1).
+* [ ] Implement **gates** banners and **two‑tier** domain cards (E1–E2).
+* [ ] Run full **accessibility QA** (H).
+
+---
+
+**Confidence:**
+
+* **High (9/10)** that these deltas will materially improve brand fidelity and executive polish while staying within your current component system.
+* **High (9/10)** on palette/typography/mark guidance (sourced from MIT brand pages). ([brand.mit.edu][1])
+* **Medium‑high (8/10)** on the exact hex‑to‑HSL conversions for dark‑mode contrast—verify visually on your target displays and tweak L% ±2–4 if needed.
+
+[1]: https://brand.mit.edu/color?utm_source=chatgpt.com "Color - MIT Brand Guide"
+[2]: https://brand.mit.edu/typography?utm_source=chatgpt.com "Typography - MIT Brand Guide"
+[3]: https://brand.mit.edu/logos-marks?utm_source=chatgpt.com "Logos & Marks"
+[4]: https://mitsloan.mit.edu/brand-guidelines/color-typography-photography?utm_source=chatgpt.com "Color, Typography, Photography | Brand Guidelines"
+[5]: https://brand.mit.edu/applying-brand/do-dont?utm_source=chatgpt.com "Do/Don't | MIT Brand Guide"
+[6]: https://brand.mit.edu/logos-marks/mit-logo?utm_source=chatgpt.com "MIT Logo"

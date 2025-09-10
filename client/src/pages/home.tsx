@@ -120,7 +120,11 @@ export default function HomePage() {
       </div>
 
       {/* Hero Section - Above the fold */}
-      <section className="mx-auto max-w-6xl px-6 py-14 md:py-20 grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+      <section className="relative bg-background">
+        <div aria-hidden className="pointer-events-none absolute inset-0 [mask-image:linear-gradient(to_bottom,rgba(0,0,0,.9),rgba(0,0,0,.2))]">
+          <div className="absolute inset-0 bg-[url('/img/hex.svg')] bg-[length:180px_156px] opacity-40 dark:opacity-25"></div>
+        </div>
+        <div className="relative mx-auto max-w-6xl px-6 py-14 md:py-20 grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
         <div className="space-y-6">
           <h1 className="text-3xl md:text-4xl font-semibold tracking-tight" data-testid="text-main-title">
             CORTEX™ — Executive AI‑Readiness Snapshot
@@ -159,13 +163,15 @@ export default function HomePage() {
             >
               Begin Assessment
             </Button>
-            <button 
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors" 
+            <Button 
+              variant="ghost"
+              size="sm"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors p-0 h-auto" 
               onClick={() => setMethodologyOpen(true)}
               data-testid="button-view-methodology"
             >
               View methodology
-            </button>
+            </Button>
           </div>
 
           <div className="text-xs text-muted-foreground" data-testid="text-time-estimate">
@@ -194,14 +200,15 @@ export default function HomePage() {
             </div>
           </div>
         </div>
+        </div>
       </section>
 
       {/* Below the fold - Reassurance cards */}
-      <section className="py-16 px-6 bg-muted/30">
+      <section className="py-16 px-6 bg-muted/20">
         <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
           
           {/* What you'll get today */}
-          <Card data-testid="card-what-youll-get">
+          <Card className="hover-elevate transition-colors duration-200" data-testid="card-what-youll-get">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <FileText className="h-5 w-5 text-primary" />
@@ -232,7 +239,7 @@ export default function HomePage() {
           </Card>
 
           {/* Your data & privacy */}
-          <Card data-testid="card-data-privacy">
+          <Card className="hover-elevate transition-colors duration-200" data-testid="card-data-privacy">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Shield className="h-5 w-5 text-primary" />
@@ -260,7 +267,7 @@ export default function HomePage() {
           </Card>
 
           {/* How this will be used */}
-          <Card data-testid="card-how-used">
+          <Card className="hover-elevate transition-colors duration-200" data-testid="card-how-used">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Users className="h-5 w-5 text-primary" />
@@ -290,7 +297,7 @@ export default function HomePage() {
       </section>
 
       {/* Facilitator note */}
-      <section className="py-8 px-6">
+      <section className="py-8 px-6 bg-background">
         <div className="max-w-4xl mx-auto">
           <div className="bg-muted/50 border border-border rounded-md p-4">
             <h4 className="text-sm font-medium mb-2">Facilitator Note</h4>
@@ -303,7 +310,7 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border py-8 px-6">
+      <footer className="border-t border-border py-8 px-6 bg-muted/10">
         <div className="max-w-6xl mx-auto text-center">
           <p className="text-sm text-muted-foreground">
             CORTEX™ v3.2 Executive AI-Readiness Program • Built for C-suite leaders and senior executives
