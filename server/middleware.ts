@@ -25,20 +25,12 @@ export function requestContextMiddleware(req: Request, res: Response, next: Next
   
   // Extract frontend request ID for correlation if provided
   const frontendRequestId = req.headers['x-frontend-request-id'] as string;
-  if (frontendRequestId) {
-    logger.setContext({
-      requestId: req.requestId,
-      userId: req.userId,
-      additionalContext: {
-        frontendRequestId
-      }
-    });
-  }
   
-  // Set logger context for this request
+  // Set logger context for this request (preserve frontendRequestId if available)
   logger.setContext({
     requestId: req.requestId,
-    userId: req.userId
+    userId: req.userId,
+    additionalContext: frontendRequestId ? { frontendRequestId } : undefined
   });
 
   // Override res.json to capture response bodies for logging
@@ -53,11 +45,16 @@ export function requestContextMiddleware(req: Request, res: Response, next: Next
   // Log request completion
   res.on('finish', () => {
     const duration = Date.now() - req.startTime;
-    const shouldLogBody = req.path.startsWith('/api') && req.method !== 'GET';
+    // SECURITY: Never log request/response bodies in production to prevent sensitive data exposure
+    // Only log metadata for debugging
+    const isDevMode = process.env.NODE_ENV === 'development';
+    const shouldLogBody = isDevMode && req.path.startsWith('/api') && req.method !== 'GET';
     
     logger.logRequest(req.method, req.path, res.statusCode, duration, {
       requestBody: shouldLogBody ? req.body : undefined,
-      responseBody: res.statusCode >= 400 ? capturedResponse : undefined
+      responseBody: shouldLogBody && res.statusCode >= 400 ? capturedResponse : undefined,
+      hasRequestBody: !!req.body,
+      hasResponseBody: !!capturedResponse
     });
     
     // Clear context after request
@@ -81,11 +78,15 @@ export function errorHandlerMiddleware(err: any, req: Request, res: Response, ne
   const incidentId = generateIncidentId();
   
   // Log the error with full technical details and incident ID
+  // SECURITY: Never log request bodies to prevent sensitive data exposure in production
+  const isDevMode = process.env.NODE_ENV === 'development';
+  
   logger.error(
     `Unhandled error in request: ${req.method} ${req.path}`,
     err instanceof Error ? err : new Error(String(err)),
     {
-      requestBody: req.body,
+      requestBody: isDevMode ? req.body : undefined,
+      hasRequestBody: !!req.body,
       additionalContext: {
         operation: 'request_handler',
         requestId: req.requestId,
