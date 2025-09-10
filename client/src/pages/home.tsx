@@ -61,69 +61,76 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/10">
       <AppHeader />
       {/* Hero Section */}
-      <section className="relative py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto text-center">
-          <div className="mb-8">
-            <Badge variant="secondary" className="text-sm px-4 py-2 mb-6">
-              Trusted by 500+ Executive Teams
+      <section className="relative py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-transparent via-muted/5 to-muted/15">
+        <div className="max-w-5xl mx-auto text-center">
+          <div className="mb-10">
+            <Badge variant="outline" className="font-ui text-sm px-6 py-2 mb-8 border-muted-foreground/20 bg-background/80 backdrop-blur-sm">
+              <span className="text-muted-foreground">Trusted by</span>
+              <span className="font-semibold text-foreground mx-1">500+</span>
+              <span className="text-muted-foreground">Executive Teams</span>
             </Badge>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-foreground mb-6">
-              Welcome to CORTEX — Your Executive
+            <h1 className="font-headline text-4xl sm:text-5xl md:text-7xl font-bold text-foreground mb-8 leading-tight tracking-tight">
+              CORTEX™
               <br />
-              <span className="text-primary">AI Readiness</span> Snapshot
+              <span className="text-primary font-semibold">Executive AI Readiness</span>
+              <br />
+              <span className="text-2xl sm:text-3xl md:text-4xl font-medium text-muted-foreground">Assessment</span>
             </h1>
-            <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed">
-              CORTEX is a short, executive-level snapshot of your organization's AI readiness. In about <strong>20 minutes</strong>, you'll complete a <strong>Context Profile</strong> (your operating environment) and a <strong>Pulse Check</strong> (your current practices). You'll then get a clear visual readout and <strong>practical guidance</strong>: what matters, how it typically works, and what leaders in similar situations often do next.
+            <p className="font-ui text-lg sm:text-xl text-muted-foreground mb-8 max-w-4xl mx-auto leading-relaxed">
+              A rigorous, executive-level assessment of your organization's AI readiness. Complete a <span className="font-semibold text-foreground">Context Profile</span> and <span className="font-semibold text-foreground">Pulse Check</span> in 10 minutes to receive evidence-based guidance on AI strategy and implementation priorities.
             </p>
           </div>
 
-          {/* Privacy Statement */}
-          <div className="max-w-2xl mx-auto mb-8 p-4 bg-muted/30 rounded-lg border">
-            <h3 className="text-lg font-semibold mb-2 text-foreground">About Your Data</h3>
-            <p className="text-sm text-muted-foreground">
-              We store your answers as simple numbers/flags to generate guidance. We do <strong>not</strong> collect sensitive personal information. Your results are yours; we don't share them outside your organization.
-            </p>
-          </div>
-
-          <div className="space-y-4 mb-8">
-            <p className="text-base text-muted-foreground text-center max-w-2xl mx-auto">
-              This is <strong>educational, not prescriptive</strong>. We won't tell you to buy a specific tool or reorganize your company. Instead, we'll explain:
-            </p>
-            <ul className="text-sm text-muted-foreground max-w-xl mx-auto space-y-2">
-              <li className="flex items-start space-x-2">
-                <span className="text-primary">•</span>
-                <span>What good looks like in each domain</span>
-              </li>
-              <li className="flex items-start space-x-2">
-                <span className="text-primary">•</span>
-                <span>Why certain safeguards ("critical requirements") matter in some contexts</span>
-              </li>
-              <li className="flex items-start space-x-2">
-                <span className="text-primary">•</span>
-                <span>Simple, broadly applicable ways to improve</span>
-              </li>
-            </ul>
-            <p className="text-sm text-muted-foreground text-center max-w-2xl mx-auto">
-              You can complete this as a solo leader or with your team. Expect to spend <strong>60–90 minutes</strong> exploring the results and micro‑guides. A <strong>downloadable brief</strong> is available at the end.
-            </p>
+          {/* Data Privacy Statement */}
+          <div className="max-w-3xl mx-auto mb-10 p-6 bg-card border border-border/50 rounded-md">
+            <h3 className="font-headline text-lg font-semibold mb-3 text-foreground">Assessment Standards</h3>
+            <div className="grid md:grid-cols-2 gap-6 text-sm">
+              <div>
+                <p className="font-ui text-muted-foreground mb-3">
+                  <span className="font-semibold text-foreground">Educational Framework:</span> Evidence-based guidance without vendor recommendations or prescriptive mandates.
+                </p>
+                <p className="font-ui text-muted-foreground">
+                  <span className="font-semibold text-foreground">Data Privacy:</span> Responses stored as aggregated metrics; no sensitive organizational data collected or shared.
+                </p>
+              </div>
+              <div>
+                <p className="font-ui text-muted-foreground mb-3">
+                  <span className="font-semibold text-foreground">Completion Time:</span> 10-minute assessment plus 60-90 minutes for results exploration.
+                </p>
+                <p className="font-ui text-muted-foreground">
+                  <span className="font-semibold text-foreground">Documentation:</span> Comprehensive downloadable analysis and implementation guidance provided.
+                </p>
+              </div>
+            </div>
           </div>
           
-          <div className="flex flex-col gap-4 justify-center items-center mb-12">
+          <div className="flex flex-col gap-6 justify-center items-center mb-16">
             <Button 
               size="lg" 
               onClick={startAssessment}
-              className="text-base sm:text-lg px-6 sm:px-8 py-4 sm:py-6 w-full sm:w-auto h-14 sm:h-auto"
+              className="font-ui"
               data-testid="button-start-assessment"
             >
-              <Clock className="h-5 w-5 mr-2" />
-              Start Your AI Readiness Assessment
+              Begin Assessment
+              <ArrowRight className="h-5 w-5 ml-2" />
             </Button>
-            <p className="text-sm text-muted-foreground text-center">
-              Free • No signup required • Immediate results
-            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-sm text-muted-foreground">
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="h-4 w-4 text-accent" />
+                <span className="font-ui">Immediate Analysis</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="h-4 w-4 text-accent" />
+                <span className="font-ui">No Registration Required</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="h-4 w-4 text-accent" />
+                <span className="font-ui">Confidential Assessment</span>
+              </div>
+            </div>
           </div>
 
           {/* Social Proof Stats */}
@@ -152,10 +159,10 @@ export default function HomePage() {
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {EXECUTIVE_CHALLENGES.map((challenge, index) => (
-              <Card key={index} className="border-l-4 border-l-amber-500">
+              <Card key={index} className="bg-card border border-border/50">
                 <CardContent className="p-6">
                   <div className="flex items-start space-x-3">
-                    <AlertTriangle className="h-5 w-5 text-amber-500 mt-1 flex-shrink-0" />
+                    <AlertTriangle className="h-5 w-5 text-warning mt-1 flex-shrink-0" />
                     <p className="text-sm font-medium">{challenge}</p>
                   </div>
                 </CardContent>
@@ -284,7 +291,7 @@ export default function HomePage() {
             <Button 
               size="lg" 
               onClick={startAssessment}
-              className="text-lg sm:text-xl px-8 sm:px-12 py-6 w-full sm:w-auto"
+              className="font-ui"
               data-testid="button-start-assessment-cta"
             >
               <Zap className="h-5 w-5 mr-2" />
@@ -294,15 +301,15 @@ export default function HomePage() {
             
             <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-6 text-sm text-muted-foreground">
               <div className="flex items-center space-x-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
+                <CheckCircle className="h-4 w-4 text-accent" />
                 <span>100% Free</span>
               </div>
               <div className="flex items-center space-x-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
+                <CheckCircle className="h-4 w-4 text-accent" />
                 <span>No Signup Required</span>
               </div>
               <div className="flex items-center space-x-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
+                <CheckCircle className="h-4 w-4 text-accent" />
                 <span>Immediate Results</span>
               </div>
             </div>
