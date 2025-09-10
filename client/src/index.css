@@ -16,35 +16,58 @@
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
 
-  --background: 210 40% 98%;
-  --foreground: 222.2 84% 4.9%;
-  --border: 214.3 31.8% 91.4%;
+  /* Core neutrals */
+  --background: 0 0% 100%;
+  --foreground: 220 10% 12%;
+  --border: 220 14% 91%;
+
+  /* Surfaces */
   --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
-  --card-border: 214.3 31.8% 91.4%;
+  --card-foreground: var(--foreground);
+  --card-border: var(--border);
   --sidebar: 0 0% 100%;
-  --sidebar-foreground: 222.2 84% 4.9%;
-  --sidebar-border: 214.3 31.8% 91.4%;
-  --sidebar-primary: 221.2 83.2% 53.3%;
-  --sidebar-primary-foreground: 210 40% 98%;
-  --sidebar-accent: 210 40% 96%;
-  --sidebar-accent-foreground: 222.2 84% 4.9%;
-  --sidebar-ring: 221.2 83.2% 53.3%;
+  --sidebar-foreground: var(--foreground);
+  --sidebar-border: var(--border);
+  --sidebar-primary: 350 64% 36%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 220 14% 96%;
+  --sidebar-accent-foreground: 220 10% 20%;
+  --sidebar-ring: 220 72% 48%;
   --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
-  --popover-border: 214.3 31.8% 91.4%;
-  --primary: 221.2 83.2% 53.3%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96%;
-  --secondary-foreground: 222.2 84% 4.9%;
-  --muted: 210 40% 96%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  --accent: 210 40% 96%;
-  --accent-foreground: 222.2 84% 4.9%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 221.2 83.2% 53.3%;
+  --popover-foreground: var(--foreground);
+  --popover-border: var(--border);
+
+  /* Primary (Cardinal) & accent (Tech Blue) */
+  --primary: 350 64% 36%;
+  --primary-foreground: 0 0% 100%;
+
+  --accent: 220 72% 48%;
+  --accent-foreground: 0 0% 100%;
+
+  /* Secondary / muted */
+  --secondary: 220 14% 96%;
+  --secondary-foreground: 220 10% 20%;
+
+  --muted: 220 14% 96%;
+  --muted-foreground: 220 9% 40%;
+
+  /* Semantic */
+  --destructive: 0 70% 46%;
+  --destructive-foreground: 0 0% 100%;
+
+  --success: 160 45% 34%;
+  --success-foreground: 0 0% 100%;
+
+  --warning: 25 80% 45%;
+  --warning-foreground: 0 0% 100%;
+  --warning-light: 42 90% 88%;
+  --warning-lighter: 42 90% 78%;
+
+  --info: 42 90% 48%;
+  --info-foreground: 220 10% 12%;
+
+  --input: var(--border);
+  --ring: 220 72% 48%;
   --chart-1: 12 76% 61%;
   --chart-2: 173 58% 39%;
   --chart-3: 197 37% 24%;
@@ -107,35 +130,58 @@
   --elevate-1: rgba(255,255,255, .04);
   --elevate-2: rgba(255,255,255, .09);
 
-  --background: 222.2 84% 4.9%;
-  --foreground: 210 40% 98%;
-  --border: 217.2 32.6% 17.5%;
-  --card: 222.2 84% 4.9%;
-  --card-foreground: 210 40% 98%;
-  --card-border: 217.2 32.6% 17.5%;
-  --sidebar: 222.2 84% 4.9%;
-  --sidebar-foreground: 210 40% 98%;
-  --sidebar-border: 217.2 32.6% 17.5%;
-  --sidebar-primary: 210 40% 98%;
-  --sidebar-primary-foreground: 222.2 84% 4.9%;
-  --sidebar-accent: 217.2 32.6% 17.5%;
-  --sidebar-accent-foreground: 210 40% 98%;
-  --sidebar-ring: 212.7 26.8% 83.9%;
-  --popover: 222.2 84% 4.9%;
-  --popover-foreground: 210 40% 98%;
-  --popover-border: 217.2 32.6% 17.5%;
-  --primary: 210 40% 98%;
-  --primary-foreground: 222.2 84% 4.9%;
-  --secondary: 217.2 32.6% 17.5%;
-  --secondary-foreground: 210 40% 98%;
-  --muted: 217.2 32.6% 17.5%;
-  --muted-foreground: 215 20.2% 65.1%;
-  --accent: 217.2 32.6% 17.5%;
-  --accent-foreground: 210 40% 98%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 210 40% 98%;
-  --input: 217.2 32.6% 17.5%;
-  --ring: 212.7 26.8% 83.9%;
+  /* Core neutrals */
+  --background: 220 15% 10%;
+  --foreground: 0 0% 100%;
+  --border: 220 12% 22%;
+
+  /* Surfaces */
+  --card: 220 16% 12%;
+  --card-foreground: var(--foreground);
+  --card-border: var(--border);
+  --sidebar: 220 16% 12%;
+  --sidebar-foreground: var(--foreground);
+  --sidebar-border: var(--border);
+  --sidebar-primary: 350 65% 55%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 220 12% 18%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-ring: 220 72% 62%;
+  --popover: 220 16% 12%;
+  --popover-foreground: var(--foreground);
+  --popover-border: var(--border);
+
+  /* Primary (Cardinal) & accent (Tech Blue) */
+  --primary: 350 65% 55%;
+  --primary-foreground: 0 0% 100%;
+
+  --accent: 220 72% 62%;
+  --accent-foreground: 0 0% 100%;
+
+  /* Secondary / muted */
+  --secondary: 220 12% 18%;
+  --secondary-foreground: 0 0% 100%;
+
+  --muted: 220 12% 16%;
+  --muted-foreground: 220 10% 70%;
+
+  /* Semantic */
+  --destructive: 0 70% 56%;
+  --destructive-foreground: 0 0% 100%;
+
+  --success: 160 50% 45%;
+  --success-foreground: 0 0% 100%;
+
+  --warning: 25 85% 55%;
+  --warning-foreground: 220 15% 10%;
+  --warning-light: 42 80% 25%;
+  --warning-lighter: 42 70% 20%;
+
+  --info: 42 85% 58%;
+  --info-foreground: 220 15% 10%;
+
+  --input: var(--border);
+  --ring: 220 72% 62%;
   --chart-1: 220 70% 50%;
   --chart-2: 160 60% 45%;
   --chart-3: 30 80% 55%;
@@ -275,7 +321,13 @@
 
   /* Custom styles for CORTEX application */
   .slider-track {
-    background: linear-gradient(to right, #ef4444 0%, #f97316 25%, #eab308 50%, #22c55e 75%, #10b981 100%);
+    background: linear-gradient(to right, 
+      hsl(var(--destructive)) 0%, 
+      hsl(var(--warning)) 25%, 
+      hsl(var(--info)) 50%, 
+      hsl(var(--success)) 75%, 
+      hsl(var(--accent)) 100%
+    );
   }
   
   .honeycomb-hex {
@@ -294,8 +346,11 @@
   }
   
   .gate-callout {
-    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-    border-left: 4px solid #d97706;
+    background: linear-gradient(135deg, 
+      hsl(var(--warning-light)) 0%, 
+      hsl(var(--warning-lighter)) 100%
+    );
+    border-left: 4px solid hsl(var(--warning));
   }
   
   .step-indicator {
@@ -308,7 +363,7 @@
   }
   
   .step-indicator.completed {
-    background: #10b981;
-    color: white;
+    background: hsl(var(--success));
+    color: hsl(var(--success-foreground));
   }
 }

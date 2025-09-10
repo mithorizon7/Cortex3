@@ -1,0 +1,345 @@
+Below is a complete, design‑only upgrade for your CORTEX™ site—built to read as MIT‑credible (rigor, clarity, restraint) and innovation‑forward (precision, energy, motion). It keeps your current routes, components, and logic intact and gives your developer an explicit implementation plan that maps 1:1 to the repo.
+
+⸻
+
+0) Snapshot of the current front‑end stack (so we design to it)
+	•	Framework & tooling: React + Vite + TypeScript; Wouter for routes; TanStack Query; shadcn/ui on Radix primitives; Tailwind with CSS variables; dark mode via class.  ￼
+	•	Theme infra: Tailwind colors are bound to CSS custom properties (e.g., --primary, --card); border radii custom (9 / 6 / 3 px).  ￼
+	•	Fonts loaded today: Inter plus a large set (Space Grotesk, Playfair Display, Source Serif 4, Roboto, IBM Plex, JetBrains Mono, etc.) in index.html; Inter is also imported in index.css. We’ll standardize to a lean, purposeful subset (see §2).  ￼  ￼  ￼
+	•	UI elements of note:
+	•	AppHeader (sticky, glass with border), ghost nav buttons, Lucide icons.  ￼  ￼
+	•	Home hero already uses a center grid, “Trusted by” badge, and gradient background.  ￼
+	•	Stepper (ProgressHeader) and step badges with class‑driven active/completed states.  ￼  ￼
+	•	Cards are shadcn cards; we’ll refine surface, density, and elevation.  ￼
+	•	Honeycomb radar already implements equal‑area rings and a hex grid (great foundation).  ￼  ￼
+	•	Domain Cards + Value Overlay are present; we’ll style chips, inputs, and tooltips consistently.  ￼  ￼
+
+This plan does not change functionality—only the visual system and styles that sit atop your existing components.
+
+⸻
+
+1) Brand North Star (MIT‑credible + innovation energy)
+
+Attributes: Precise, serious, minimal, technical elegance, measurable impact.
+Design translation:
+	•	High contrast neutrals, generous whitespace, tight grid discipline.
+	•	A single Cardinal primary with small doses of Tech Blue for data viz & focus states.
+	•	Space Grotesk for headlines (engineering character & excellent numerals), Inter for UI text, IBM Plex Mono for metrics/code.
+	•	Subtle, purposeful motion, never cute.
+	•	Data viz language that visually encodes “progress toward maturity” (rings, spokes, pillar hues) with accessible contrast.
+
+⸻
+
+2) Visual Identity System (tokens first)
+
+2.1 Color tokens (HSL values to drop into your existing CSS variables)
+
+Replace the current defaults in client/src/index.css :root and .dark with the following. This preserves your Tailwind binding (colors read from CSS variables).  ￼  ￼
+
+Light theme – :root
+
+:root {
+  /* Core neutrals */
+  --background: 0 0% 100%;
+  --foreground: 220 10% 12%;
+  --border: 220 14% 91%;
+
+  /* Surfaces */
+  --card: 0 0% 100%;
+  --card-foreground: var(--foreground);
+  --card-border: var(--border);
+  --popover: 0 0% 100%;
+  --popover-foreground: var(--foreground);
+  --popover-border: var(--border);
+
+  /* Primary (Cardinal) & accent (Tech Blue) */
+  --primary: 350 64% 36%;            /* cardinal */
+  --primary-foreground: 0 0% 100%;
+  --primary-border: hsl(350 64% 36% / 0.24);
+
+  --accent: 220 72% 48%;             /* tech blue */
+  --accent-foreground: 0 0% 100%;
+  --accent-border: hsl(220 72% 48% / 0.24);
+
+  /* Secondary / muted */
+  --secondary: 220 14% 96%;
+  --secondary-foreground: 220 10% 20%;
+  --secondary-border: hsl(220 14% 85% / 1);
+
+  --muted: 220 14% 96%;
+  --muted-foreground: 220 9% 40%;
+  --muted-border: var(--border);
+
+  /* Semantic */
+  --destructive: 0 70% 46%;
+  --destructive-foreground: 0 0% 100%;
+  --destructive-border: hsl(0 70% 46% / 0.24);
+
+  /* Focus ring */
+  --ring: 220 72% 48%;
+
+  /* Elevation overlays (unchanged mechanism) */
+  --elevate-1: rgba(0,0,0,.03);
+  --elevate-2: rgba(0,0,0,.08);
+}
+
+Dark theme – .dark
+
+.dark {
+  --background: 220 15% 10%;
+  --foreground: 0 0% 100%;
+  --border: 220 12% 22%;
+
+  --card: 220 16% 12%;
+  --card-foreground: var(--foreground);
+  --card-border: var(--border);
+
+  --popover: 220 16% 12%;
+  --popover-foreground: var(--foreground);
+  --popover-border: var(--border);
+
+  --primary: 350 65% 55%;
+  --primary-foreground: 0 0% 100%;
+  --primary-border: hsl(350 65% 55% / 0.32);
+
+  --accent: 220 72% 62%;
+  --accent-foreground: 0 0% 8%;
+  --accent-border: hsl(220 72% 62% / 0.32);
+
+  --secondary: 220 12% 18%;
+  --secondary-foreground: 0 0% 100%;
+  --secondary-border: hsl(220 12% 28%);
+
+  --muted: 220 12% 16%;
+  --muted-foreground: 220 10% 70%;
+  --muted-border: var(--border);
+
+  --destructive: 0 70% 56%;
+  --destructive-foreground: 0 0% 100%;
+  --destructive-border: hsl(0 70% 56% / 0.32);
+
+  --ring: 220 72% 62%;
+}
+
+Why this matters: Your Tailwind theme already reads from these CSS variables (e.g., colors.primary.DEFAULT → hsl(var(--primary))), so this is a surgical palette swap that instantly updates Buttons, Badges, Cards, etc., without touching component code.  ￼
+
+Pillar accents (optional): keep primary (Cardinal) for CTAs; map pillars to desaturated, professional hues for charts/chips only:
+	•	C — 350 64% 36% (Cardinal)
+	•	O — 200 60% 38%
+	•	R — 25 80% 45%
+	•	T — 160 45% 34%
+	•	E — 260 45% 42%
+	•	X — 42 90% 48%
+
+We’ll use these in honeycomb nodes/labels and tiny chips; the UI chrome stays neutral.
+
+⸻
+
+2.2 Typography
+
+You already load multiple families; we’ll standardize to three (all already present), then set Tailwind families.  ￼
+	•	Display / Headings: Space Grotesk (bold/semibold).
+	•	UI & Body: Inter (400/500/600).
+	•	Mono / Data: IBM Plex Mono (regular/medium).
+
+Add to tailwind.config.ts (extend block):
+
+extend: {
+  fontFamily: {
+    display: ['"Space Grotesk"', 'Inter', 'system-ui', 'sans-serif'],
+    sans: ['Inter', 'system-ui', 'sans-serif'],
+    mono: ['"IBM Plex Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace']
+  },
+  /* (existing extend stays) */
+}
+
+￼
+
+Usage examples
+	•	Page H1/H2: className="font-display tracking-tight"
+	•	Body text: default font-sans (already global via index.css import).  ￼
+
+⸻
+
+2.3 Spacing, density, and radius
+	•	Keep your radii (9/6/3) for brand signature; they’re already defined. Use rounded-xl on major cards to feel premium.  ￼  ￼
+	•	Set default page gutters consistently: container mx-auto px-4 sm:px-6 lg:px-8 and max widths:
+	•	Marketing/hero: max-w-6xl (already used)  ￼
+	•	App flows (profile/pulse/results): max-w-7xl (already used in stepper container)  ￼
+	•	Adopt a 4px spacing scale (already implicit across Tailwind). Use space-y-6 / space-y-8 as standard vertical rhythm for sections.
+
+⸻
+
+2.4 Motion & states
+
+You already have .hover-elevate helpers and stepper transitions; keep that system and tighten durations.  ￼
+	•	Hover: 120–160 ms, ease‑out; subtle shadow via overlay (--elevate-1).
+	•	Active/press: 80 ms, ease‑in to --elevate-2.
+	•	Focus: Always visible ring: ring-2 ring-accent ring-offset-2.
+	•	Accordion & toasts: continue using tailwindcss-animate (already configured).  ￼
+
+⸻
+
+3) Page‑level styling guidelines (no functional changes)
+
+3.1 Global AppHeader
+	•	Keep sticky glass with border (existing). Swap brand mark to a typographic wordmark in Space Grotesk (bold), colored text-foreground. Limit color accents to icon dot/underline only.
+	•	Ensure button hit areas ≥38px—your h-14 on the primary CTA is good for hero; keep nav at h-10.  ￼
+
+Implementation nits:
+	•	In app-header.tsx, change the wordmark span to className="hidden font-display font-bold sm:inline-block tracking-tight" and remove hard‑coded text-primary from the Brain icon on desktop (use neutral unless hovered).  ￼
+
+3.2 Home (marketing) hero
+	•	Replace current blue‑tinted gradient with neutral background; allow the Cardinal primary to carry the visual weight in the H1 accent and CTA. The existing structure is sound (badge → H1 → supporting copy → CTA).  ￼
+	•	Badge: variant="secondary", uppercase tracking-wide text-[11px] for institutional tone.
+	•	H1:
+
+<h1 className="font-display text-5xl sm:text-6xl md:text-7xl font-semibold leading-[1.02]">
+  CORTEX™ Executive <span className="text-primary">AI Readiness</span> Assessment
+</h1>
+
+
+	•	CTA: solid primary; secondary “See a sample report” link‑style button (ghost + underline on hover).
+
+3.3 Assessment flow (Context → Pulse → Results)
+	•	ProgressHeader: keep layout; swap indicator styling to neutral rings with primary fill for active and success green for completed (you already do this; colors will update via tokens). Ensure labels are text-sm text-muted-foreground except active which is text-foreground.  ￼
+	•	Pillar chips on the Pulse screen: they already reflect current/completed with borders and backgrounds; your new tokens will make them feel more premium (no code change).  ￼  ￼
+	•	Buttons (“Yes/No/Unsure”): keep the variants; the new palette will harmonize destructive/secondary/outline instantly.  ￼
+
+3.4 Results
+	•	Honeycomb Radar
+	•	Keep equal‑area rings and hex grid (already implemented). Use muted grid (stroke-border) and label each pillar with the pillar accent color on node markers only.  ￼  ￼
+	•	Add a small legend row: C O R T E X colored dots + labels (text-xs text-muted-foreground).
+	•	Domain Cards
+	•	Standardize to a two‑tier card: header stack (Why it matters → What good looks like) with space-y-4, then an Actions strip (Value Overlay chip, How to measure, Priority).
+	•	Use hover-elevate on each card; border‑intensify on hover (border-primary/30).  ￼
+	•	Value Overlay
+	•	Use the mono font for numeric inputs/targets and present baseline → target with thin separators. Tooltips via Radix hover‑card/popover remain (already in stack).  ￼  ￼  ￼
+
+⸻
+
+4) Component design rules (shadcn/ui conventions preserved)
+
+Buttons
+	•	Primary: bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-accent.
+	•	Secondary: bg-secondary border-secondary-border hover:bg-secondary/80.
+	•	Ghost: text‑only with subtle underline on hover for links; avoid ghost for primary CTAs in marketing contexts.
+	•	Destructive: tokens already apply; keep to confirmation flows only.
+(These map directly through your existing shadcn variants.)  ￼
+
+Cards
+	•	Default card: rounded-xl border border-card-border bg-card shadow-sm hover-elevate (already your default). Add data-[state=open]:shadow-md for interactive cards.  ￼
+
+Badges & Chips
+	•	Use secondary for informational and primary for emphasis (counts, highlights). Pillar label chips use pillar accent backgrounds at 10% tint with 100% text for accessibility.
+
+Forms & Inputs
+	•	Inputs keep neutral borders; focus ring uses accent. Maintain :disabled opacity and cursor-not-allowed per shadcn.
+
+Tables (if/when shown)
+	•	Use prose-sm for explanatory text; font-mono for numeric columns; column headers in text-muted-foreground.
+
+⸻
+
+5) Data visualization design (honeycomb, rings, snapshots)
+
+Your CSS already contains classes for radar grid and hex; we keep these and apply the new palette:  ￼
+	•	Grid lines: stroke-border (already).
+	•	Rings: 3 equal‑area rings remain; opacity: .8 so plotted fills sit on top clearly.  ￼
+	•	Node markers: small filled circles in pillar accent with a 1px stroke of --card.
+	•	Fill/area: use semi‑transparent primary (Cardinal at ~0.18 alpha) for the maturity polygon; hover reveals values per pillar via tooltip (existing BarChart3 toggle remains).  ￼
+
+⸻
+
+6) Accessibility (AA+)
+	•	Contrast: Primary on background ≥ 4.5:1 (chosen values meet this in both themes).
+	•	Focus visibility: Always ringed (accent), including on icon buttons and chips.
+	•	Motion: Respect prefers-reduced-motion; disable hover overlays and transitions when set.
+	•	Type size floor: Body ≥ 16px; small meta ≥ 13px (only for quiet meta).
+
+⸻
+
+7) Content tone (microcopy—still visual first)
+	•	Headlines: outcomes‑forward (“Diagnose readiness. Align leadership. Ship value—safely.”)
+	•	Button labels: verbs + outcome (“Start Pulse Check”, “Export Results”)—you already have clean labels.  ￼
+	•	Stats badges: keep grayscale, no marketing color explosions.
+
+⸻
+
+8) Developer Implementation Plan (concrete, file‑mapped)
+
+Step 1 — Palette swap (tokens only)
+	1.	Edit client/src/index.css: replace the :root and .dark color variable blocks with §2.1 values. Keep elevate overlays and existing comments.  ￼
+	2.	No Tailwind rebuild beyond normal dev—your color mapping is dynamic through CSS vars.  ￼
+
+Step 2 — Typography standardization
+	1.	Confirm Space Grotesk, Inter, IBM Plex Mono are present in index.html. They are already included in the multi‑family link; no new CDN call needed.  ￼
+	2.	Add fontFamily extension in tailwind.config.ts (see §2.2).  ￼
+	3.	Swap headings to font-display where relevant:
+	•	Home hero H1 (in client/src/pages/home.tsx).  ￼
+	•	Section titles (Results, Domain Cards headers).  ￼
+
+Step 3 — AppHeader refinements
+	1.	In client/src/components/navigation/app-header.tsx, change the wordmark span to font-display font-bold tracking-tight. Consider removing text-primary from the Brain icon to keep header neutral until hover.  ￼
+
+Step 4 — Hero neutralization
+	1.	In home.tsx, change the outer section bg from bg-gradient-to-b from-background to-muted/20 to simply bg-background for a crisp institutional feel; keep the layout intact.  ￼
+	2.	Ensure the H1 uses font-display and the CTA uses variant="default" (primary). Stats badge stays variant="secondary".
+
+Step 5 — Stepper and chips
+	1.	Keep ProgressHeader logic; new tokens will restyle automatically. No code changes required unless you want to add tracking-tight to the “Executive AI Readiness Assessment” label.  ￼
+	2.	Pillar chips in Pulse view: no code change; tokens adjust state colors.  ￼
+
+Step 6 — Honeycomb radar polish
+	1.	Use pillar accent colors for labels/markers: add a small mapping object in honeycomb-radar.tsx and apply as fill for markers; keep polygon fill as semi‑transparent primary. Don’t change math or layout.  ￼
+
+Step 7 — Cards & elevation
+	1.	Add hover-elevate to prominent cards (DomainCard, Results callouts) to leverage your existing overlay system.  ￼
+	2.	Keep borders; the new --card-border improves presence without heavy shadows.  ￼
+
+Step 8 — Focus states
+	1.	In shared button/input components, ensure focus classes include ring-2 ring-accent ring-offset-2 (most shadcn inputs already do via tokens; verify input, select, radio-group).  ￼
+
+Step 9 — Value Overlay UI pass
+	1.	Apply font-mono to numeric fields and % units for better scannability. Tooltips and dialogs already exist via Radix shadcn (HoverCard/Popover).  ￼  ￼  ￼
+
+Step 10 — QA
+	•	Verify dark mode (toggle .dark on the root element).
+	•	Check contrast for all button states on both themes.
+	•	Confirm radar is legible on dark backgrounds (grid lines maintain contrast).  ￼
+
+⸻
+
+9) What not to change (guardrails)
+	•	No route or flow changes (/context-profile → /pulse-check/:id → /results/:id remain).  ￼
+	•	No alteration of scoring or gates; this is purely visual. (CORTEX logic remains as implemented.)  ￼
+
+⸻
+
+10) Quick answers you may get from stakeholders (pre‑emptive)
+	•	Will this feel “MIT” without an official guide? Yes—restraint, grid discipline, high‑contrast neutrals, and a single authoritative primary hue read as established and serious. The palette and type system are professional and already loaded in the repo.  ￼
+	•	Does this break exports or the PDF look? No; your typography and colors will cascade. Keep headings consistent so on‑screen sections mirror exports (already noted in your internal “Implementation notes”).  ￼
+	•	How risky is this to ship? Low—nearly all changes are token swaps and utility classes. Components remain shadcn‑compliant.  ￼
+
+⸻
+
+11) One‑page “Design Bill of Materials” (for your developer)
+	•	Tokens: :root + .dark color vars; Tailwind fontFamily extension.  ￼  ￼
+	•	Type: Use font-display on H1/H2/H3; keep body as font-sans.  ￼
+	•	Header: Wordmark in Space Grotesk, neutral icon until hover.  ￼
+	•	Hero: Neutral surface; primary accent in H1 span + CTA; secondary badge.  ￼
+	•	Stepper: Existing classes; new tokens update it.  ￼
+	•	Pulse chips: No code change; tokens handle states.  ￼
+	•	Cards: Add hover-elevate where appropriate; keep borders.  ￼  ￼
+	•	Radar: Keep equal‑area rings; add small legend and pillar‑accent markers.  ￼
+	•	Value overlay: font-mono for metrics; keep existing dialogs/tooltips.  ￼  ￼
+
+⸻
+
+Final note on brand posture
+
+The result is confident and calm (MIT‑credible) with carefully rationed color and motion that highlight decisions, not decoration. Executives will feel the institutional quality while still reading “cutting‑edge”. The entire plan lands via token and class changes, minimizing risk and rework.
+
+⸻
+
+Confidence: High on the repo‑accurate stack & component references and on the feasibility of this token‑first visual upgrade (grounded in the files cited). Medium‑high on the exact color HSLs (chosen for accessibility and tone; easy to tweak to taste). If you want, I can also supply an alternate “Cool Neutral” primary variant to A/B next to Cardinal.
