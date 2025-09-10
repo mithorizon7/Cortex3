@@ -77,6 +77,15 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Skip to main content - accessibility */}
+      <a 
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:shadow-lg"
+        data-testid="skip-to-content"
+      >
+        Skip to main content
+      </a>
+      
       <AppHeader />
       
       {/* MIT Identity Strip */}
@@ -120,8 +129,8 @@ export default function HomePage() {
       </div>
 
       {/* Hero Section - Above the fold */}
-      <section className="relative bg-background">
-        <div aria-hidden className="pointer-events-none absolute inset-0 [mask-image:linear-gradient(to_bottom,rgba(0,0,0,.9),rgba(0,0,0,.2))]">
+      <section id="main-content" className="relative bg-background">
+        <div aria-hidden className="pointer-events-none absolute inset-0 [mask-image:linear-gradient(to_bottom,rgba(0,0,0,.9),rgba(0,0,0,.2))] [-webkit-mask-image:linear-gradient(to_bottom,rgba(0,0,0,.9),rgba(0,0,0,.2))] [mask-repeat:no-repeat] [-webkit-mask-repeat:no-repeat]">
           <div className="absolute inset-0 bg-[url('/img/hex.svg')] bg-[length:180px_156px] opacity-40 dark:opacity-25"></div>
         </div>
         <div className="relative mx-auto max-w-6xl px-6 py-14 md:py-20 grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
