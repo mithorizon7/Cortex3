@@ -1,0 +1,246 @@
+Absolutely—let’s replace the current “marketing landing page” with a calm, authoritative **Executive Onboarding** front page that sets expectations, builds trust, and moves leaders directly into the CORTEX workflow. Below is a complete design + copy package you can hand to the developer. It **does not** change functionality or routing; it only re-styles and rewrites the home screen to reflect an already‑paid, MIT‑led executive experience.
+
+---
+
+## Front Page Redesign — Executive Onboarding (Non‑Marketing)
+
+### Design Goals (what this page must communicate)
+
+1. **You’re in the right room.** This is an MIT‑run, high‑trust, executive‑level exercise—no selling, no hype.
+2. **What will happen.** In \~15 minutes you’ll complete a short context profile and a pulse check, then receive an actionable snapshot.
+3. **How we’ll use results.** For today’s workshop; exportable; not a compliance score; no benchmarking claims.
+4. **How we treat your data.** Minimal collection; no PII; secure; you control the export.
+5. **Start with confidence.** One primary action: **Begin**.
+
+### Information Architecture (single screen; no scroll-jacking)
+
+**Above the fold**
+
+* MIT identity strip (subtle)
+* Title + succinct purpose statement
+* Three-step overview with time/cadence
+* Primary action button (Begin)
+* Secondary: “View methodology” and “Glossary”
+
+**Below the fold (optional content that reassures)**
+
+* “What you’ll get today” (snapshot card with key deliverables)
+* “Your data & privacy” (plain-language assurances)
+* “How we’ll use this in the session” (expectations)
+* Small “Facilitator note” if you’re running a guided session
+
+---
+
+## Content (ready-to-paste copy)
+
+### Page Title & Purpose
+
+**CORTEX™ — Executive AI‑Readiness Snapshot**
+**A focused, two‑step assessment to align leadership and surface your next best moves.**
+This session is designed for decision‑makers. You’ll complete a brief context profile and an 18‑question pulse check. Your results produce a clear view across six domains—Clarity, Operations, Risk, Talent, Ecosystem, and Experimentation—followed by concise guidance and an export you can share.
+
+### Three-Step Overview (compact, above the fold)
+
+**Step 1 — Context (4–5 minutes)**
+A short profile of your operating environment (e.g., regulation, data sensitivity, pace). This does **not** change your scores; it only tailors guidance and flags non‑negotiables.
+
+**Step 2 — Pulse Check (6–8 minutes)**
+18 binary questions across the six CORTEX pillars. Answer **Yes** only if it’s fully true today.
+
+**Step 3 — Results (5–10 minutes)**
+A honeycomb snapshot of maturity (0–3 per pillar), context “gates” to heed before scaling, and practical guidance you can use immediately. Export as PDF/JSON.
+
+### Primary Action
+
+**\[ Begin Assessment ]**
+(Subtext: \~15 minutes total · No PII collected)
+
+### Secondary Links (right-aligned or beneath the button)
+
+* **View methodology** → opens a drawer/modal with a one‑page explainer (what CORTEX measures, what it doesn’t)
+* **Glossary** → HITL, CoE, RACI, SLA, etc.
+
+---
+
+### What You’ll Get Today (card, below the fold)
+
+**Your CORTEX Snapshot**
+
+* A **honeycomb maturity view** across six executive domains
+* **Context “gates”** (non‑negotiables) if you operate in higher‑risk settings
+* **Guidance cards** per domain: why it matters, what good looks like, how to improve
+* **Export** (PDF/JSON) — suitable for the executive team or board materials
+
+*(No vendor pitching; no benchmarks unless a cohort study is explicitly enabled.)*
+
+### Your Data & Privacy (card, below the fold)
+
+* We collect **only** small integers/booleans (no free‑text PII).
+* Results are **yours**: export/download is available at the end.
+* If you provided an organization name, it appears only on your export.
+* Optional cohort comparisons are disabled by default.
+
+### How This Will Be Used in Today’s Session (card, below the fold)
+
+* We’ll use your results to **focus discussion** on the weakest domains.
+* “Gates” ensure we don’t scale with blind spots (e.g., safety, compliance).
+* We’ll highlight **two moves** most likely to raise value in the next quarter.
+* No one is graded. This is a **snapshot**, not a compliance score.
+
+### Facilitator Note (small, muted)
+
+If you are completing this on behalf of a team, gather input from: your technology lead, a risk/assurance contact, and one business unit owner. You can amend answers during the discussion.
+
+---
+
+## Visual & Interaction Design (applies to the home page only)
+
+### Tone & Layout
+
+* **Minimal, academic, confident.** Neutral background, disciplined grid, generous white space.
+* **No marketing cards** (logos, “trusted by” banners, growth slogans).
+* One **primary** action; secondary actions are text links or quiet buttons.
+* **Dark mode** follows the same structure with guarded contrast.
+
+### Components & Placement (map to your repo)
+
+* **App Header** (`client/src/components/navigation/app-header.tsx`)
+
+  * Replace any sales language with a thin identity strip:
+
+    * Left: CORTEX wordmark + “MIT Open Learning” text lockup
+    * Right: a very subtle “Help” icon (opens glossary)
+
+* **Home Page Shell** (`client/src/pages/home.tsx`)
+
+  * Replace hero with a **two-column** above‑the‑fold:
+
+    * **Left (copy column):** Title, purpose, three-step overview, actions
+    * **Right (visual column):** Static honeycomb motif (muted), not animated
+  * Below the fold: three horizontal cards (“What you’ll get,” “Your data & privacy,” “How this will be used”) with consistent density
+
+* **Buttons** (`@/components/ui/button.tsx`)
+
+  * Primary cardinal; secondary ghost.
+  * Motion: 150ms ease; slight scale (1.01) on hover.
+
+* **Cards** (`@/components/ui/card.tsx`)
+
+  * Increased padding (`p-6 md:p-8`), border subtle (`border-border`), shadow none/light.
+  * Title (`text-xl font-medium`), body (`text-sm text-muted-foreground`), bullet spacing (`space-y-2`).
+
+### Tailwind Class Sketch (for the hero)
+
+```jsx
+<section className="mx-auto max-w-6xl px-6 py-14 md:py-20 grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+  <div className="space-y-6">
+    <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
+      CORTEX™ — Executive AI‑Readiness Snapshot
+    </h1>
+    <p className="text-base text-muted-foreground">
+      A focused, two‑step assessment to align leadership and surface your next best moves.
+    </p>
+
+    <ol className="space-y-4">
+      <li>
+        <div className="font-medium">Step 1 — Context (4–5 minutes)</div>
+        <div className="text-sm text-muted-foreground">
+          A short profile of your operating environment. Tailors guidance; does not change scores.
+        </div>
+      </li>
+      <li>
+        <div className="font-medium">Step 2 — Pulse Check (6–8 minutes)</div>
+        <div className="text-sm text-muted-foreground">
+          18 binary questions across six pillars. Answer “Yes” only if fully true today.
+        </div>
+      </li>
+      <li>
+        <div className="font-medium">Step 3 — Results (5–10 minutes)</div>
+        <div className="text-sm text-muted-foreground">
+          Honeycomb snapshot, context gates, and practical guidance. Export as PDF/JSON.
+        </div>
+      </li>
+    </ol>
+
+    <div className="flex items-center gap-4 pt-2">
+      <a href="/context" className="inline-flex">
+        <Button size="lg" className="px-6">Begin Assessment</Button>
+      </a>
+      <a href="/glossary" className="text-sm text-muted-foreground hover:text-foreground">
+        Glossary
+      </a>
+      <button className="text-sm text-muted-foreground hover:text-foreground" 
+              onClick={openMethodology}>
+        View methodology
+      </button>
+    </div>
+
+    <div className="text-xs text-muted-foreground">
+      ~15 minutes total · No PII collected
+    </div>
+  </div>
+
+  <div className="relative hidden md:block">
+    {/* Static honeycomb figure or muted SVG */}
+    <div className="aspect-[4/3] rounded-md border border-border bg-gradient-to-b from-muted to-transparent" />
+  </div>
+</section>
+```
+
+### Micro‑interactions
+
+* Subtle button hover (scale 1.01, 150ms).
+* Card titles reveal a faint underline on hover.
+* “View methodology” opens a side drawer (Radix `Dialog` or `Sheet`) with the one‑page explainer.
+* Respect reduced‑motion preferences.
+
+### Accessibility
+
+* Accessible headings and landmarks.
+* High contrast for all text (WCAG AA).
+* Links and buttons have visible focus states (accent blue outline).
+* Provide alt text for the honeycomb motif (“Decorative preview of the six‑pillar maturity view”).
+
+---
+
+## Methodology Drawer (one‑page explainer content)
+
+**CORTEX in one page**
+
+* **What it measures:** Six executive domains (Clarity, Operations, Risk, Talent, Ecosystem, Experimentation).
+* **How scoring works:** Each pillar is 0–3 based on three binary statements.
+* **What the context profile does:** Tailors guidance and flags non‑negotiables (“gates”) in higher‑risk environments; **never** changes your scores.
+* **What you should expect today:** A snapshot to align leadership on where to focus next, plus an export you can share.
+* **What it is not:** Not a compliance rating, not a vendor evaluation.
+* **How to interpret “gates”:** They are prerequisites (e.g., human‑in‑the‑loop for safety‑critical use‑cases) to satisfy before scaling.
+
+---
+
+## Developer Implementation Checklist (home page only)
+
+1. **Replace marketing hero** in `client/src/pages/home.tsx` with the structure above.
+
+   * Use `Card` for the three reassurance sections below the fold.
+   * Keep route for **Begin** → `/context` (existing flow).
+2. **Add Methodology Drawer** using `@/components/ui/sheet` or `dialog`.
+
+   * Content as supplied above; no dynamic data needed.
+3. **Remove/disable any “Trusted By / Logos / CTA to book”** sections.
+4. **Header:** adjust `AppHeader` to a slim identity bar (no marketing nav).
+5. **Dark mode:** ensure tokens from your design system are applied (no additional styles needed beyond variables).
+6. **QA:** Verify tab order, focus states, and mobile layout (the visual honeycomb block can collapse under the hero copy on small screens).
+7. **Copy centralization:** Put strings in a small constants file for future i18n.
+
+---
+
+## Why this works for your audience
+
+* **Non-pushy:** No selling; respects attention; concise.
+* **Credible and calm:** Reads like a briefing, not a promo.
+* **Actionable:** Sets clear expectations; makes the single “Begin” action obvious.
+* **Consistent with program logic:** Mirrors the CORTEX flow (Context → Pulse → Results) without revealing implementation details or over‑promising.
+* **On-brand for MIT:** Precision, restraint, quality.
+
+---
+
+If you want, I can also provide the exact JSX replacement for `home.tsx` with your shadcn imports and tailwind classes, but the structure above should be enough to implement quickly without touching any backend or assessment logic.&#x20;
