@@ -12,7 +12,7 @@ export const AppHeader: React.FC = () => {
           <Link href="/">
             <Button variant="ghost" className="mr-6 flex items-center space-x-2" data-testid="nav-home">
               <Brain className="h-6 w-6 text-primary" />
-              <span className="hidden font-bold sm:inline-block">
+              <span className="hidden font-headline text-lg font-semibold tracking-tight text-foreground sm:inline-block">
                 CORTEX™
               </span>
             </Button>
@@ -24,20 +24,20 @@ export const AppHeader: React.FC = () => {
             <Link href="/">
               <Button variant="ghost" className="inline-flex items-center space-x-2 md:hidden" data-testid="nav-home-mobile">
                 <Brain className="h-5 w-5 text-primary" />
-                <span className="font-bold">CORTEX™</span>
+                <span className="font-headline font-semibold tracking-tight text-foreground">CORTEX™</span>
               </Button>
             </Link>
           </div>
           
           <nav className="hidden md:flex items-center space-x-1">
             <Link href="/">
-              <Button variant="ghost" size="sm" data-testid="nav-home-desktop">
+              <Button variant="ghost" size="sm" className="font-ui font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-home-desktop">
                 <Home className="h-4 w-4 mr-2" />
                 Home
               </Button>
             </Link>
             <Link href="/context-profile">
-              <Button variant="ghost" size="sm" data-testid="nav-assessment">
+              <Button variant="ghost" size="sm" className="font-ui font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-assessment">
                 <BarChart3 className="h-4 w-4 mr-2" />
                 Assessment
               </Button>
