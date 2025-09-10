@@ -92,7 +92,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     handleRedirectResult()
       .then((result) => {
         if (result) {
-          console.log('Successfully signed in via redirect');
         }
       })
       .catch((error) => {
@@ -105,16 +104,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(user);
       setLoading(false);
       
-      // Log authentication events for monitoring
-      if (user) {
-        console.log('User authenticated:', {
-          uid: user.uid,
-          email: user.email,
-          displayName: user.displayName
-        });
-      } else {
-        console.log('User signed out');
-      }
     });
 
     return () => {

@@ -110,7 +110,6 @@ export const handleRedirectResult = async (): Promise<UserCredential | null> => 
   try {
     const result = await getRedirectResult(firebaseAuth);
     if (result) {
-      console.log('User signed in via redirect:', result.user.email);
     }
     return result;
   } catch (error) {
@@ -126,7 +125,6 @@ export const signOut = async (): Promise<void> => {
   
   try {
     await firebaseSignOut(firebaseAuth);
-    console.log('User signed out successfully');
   } catch (error) {
     console.error('Sign out failed:', error);
     throw error;

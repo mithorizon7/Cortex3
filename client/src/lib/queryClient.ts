@@ -75,19 +75,6 @@ export async function apiRequest(
   }
 
   try {
-    // Log request start
-    console.log(JSON.stringify({
-      timestamp: new Date().toISOString(),
-      level: 'DEBUG',
-      message: `API request started: ${method} ${url}`,
-      context: {
-        operation: 'api_request_start',
-        method,
-        url,
-        frontendRequestId,
-        hasRequestBody: !!data
-      }
-    }));
 
     const startTime = performance.now();
     const res = await fetch(url, {
@@ -103,20 +90,6 @@ export async function apiRequest(
 
     const duration = performance.now() - startTime;
 
-    // Log response
-    console.log(JSON.stringify({
-      timestamp: new Date().toISOString(),
-      level: res.ok ? 'INFO' : 'ERROR',
-      message: `API request completed: ${method} ${url} ${res.status}`,
-      context: {
-        operation: 'api_request_complete',
-        method,
-        url,
-        frontendRequestId,
-        statusCode: res.status,
-        duration: Math.round(duration)
-      }
-    }));
 
     await throwIfResNotOk(res);
     return res;
