@@ -12,6 +12,7 @@ import { QuestionSkeleton } from "@/components/skeleton-loader";
 import { AppHeader } from "@/components/navigation/app-header";
 import { PULSE_QUESTIONS, CORTEX_PILLARS } from "@/lib/cortex";
 import { apiRequest, getNetworkError } from "@/lib/queryClient";
+import { getEnhancedErrorMessage } from "@/lib/error-utils";
 import { useToast } from "@/hooks/use-toast";
 import { ChevronLeft, ChevronRight, CheckCircle, XCircle, HelpCircle, Clock, Target } from "lucide-react";
 
@@ -68,9 +69,12 @@ export default function PulseCheckPage() {
           break;
       }
       
+      // Enhance error message with incident ID if available
+      const enhancedError = getEnhancedErrorMessage(error, title, description);
+      
       toast({
-        title,
-        description,
+        title: enhancedError.title,
+        description: enhancedError.description,
         variant: "destructive",
       });
     },

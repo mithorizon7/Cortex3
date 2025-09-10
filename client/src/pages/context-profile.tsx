@@ -17,6 +17,7 @@ import { AppHeader } from "@/components/navigation/app-header";
 import { contextProfileSchema, type ContextProfile } from "@shared/schema";
 import { CONTEXT_ITEMS, CONTEXT_SCREENS } from "@/lib/cortex";
 import { apiRequest, getNetworkError } from "@/lib/queryClient";
+import { getEnhancedErrorMessage } from "@/lib/error-utils";
 import { useToast } from "@/hooks/use-toast";
 import { ChevronLeft, ChevronRight, Clock, Target } from "lucide-react";
 
@@ -73,9 +74,12 @@ export default function ContextProfilePage() {
           break;
       }
       
+      // Enhance error message with incident ID if available
+      const enhancedError = getEnhancedErrorMessage(error, title, description);
+      
       toast({
-        title,
-        description,
+        title: enhancedError.title,
+        description: enhancedError.description,
         variant: "destructive",
       });
     },
