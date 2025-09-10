@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { logger, generateRequestId } from './logger';
 import { generateIncidentId, createUserError, sanitizeErrorForUser } from './utils/incident';
+import { DatabaseError } from './utils/database-errors';
 import { USER_ERROR_MESSAGES, HTTP_STATUS } from './constants';
 
 // Extend Express Request type to include our custom properties
@@ -65,13 +66,20 @@ export function requestContextMiddleware(req: Request, res: Response, next: Next
 }
 
 export function errorHandlerMiddleware(err: any, req: Request, res: Response, next: NextFunction) {
-  // Detect Zod validation errors and set appropriate status
+  // Detect and handle different error types with appropriate status codes
   let status = err.status || err.statusCode;
+  let userMessage: string;
   
+  // Handle database errors with specific status codes and messages
+  if (err instanceof DatabaseError) {
+    status = err.statusCode;
+    userMessage = err.userMessage;
+  }
   // Handle Zod validation errors with proper 422 status
-  if (err.name === 'ZodError' || (err.issues && Array.isArray(err.issues))) {
+  else if (err.name === 'ZodError' || (err.issues && Array.isArray(err.issues))) {
     status = HTTP_STATUS.UNPROCESSABLE_ENTITY;
-  } else if (!status) {
+  } 
+  else if (!status) {
     status = HTTP_STATUS.INTERNAL_SERVER_ERROR;
   }
   
@@ -100,18 +108,18 @@ export function errorHandlerMiddleware(err: any, req: Request, res: Response, ne
   );
 
   // Create user-friendly error response with incident ID
-  let userMessage: string;
-  
-  if (status >= 500) {
-    userMessage = USER_ERROR_MESSAGES.SERVER_ERROR;
-  } else if (status === HTTP_STATUS.NOT_FOUND) {
-    userMessage = USER_ERROR_MESSAGES.NOT_FOUND;
-  } else if (status === HTTP_STATUS.BAD_REQUEST || status === HTTP_STATUS.UNPROCESSABLE_ENTITY) {
-    userMessage = USER_ERROR_MESSAGES.VALIDATION_ERROR;
-  } else if (status === HTTP_STATUS.TOO_MANY_REQUESTS) {
-    userMessage = USER_ERROR_MESSAGES.RATE_LIMIT_ERROR;
-  } else {
-    userMessage = sanitizeErrorForUser(err);
+  if (!userMessage) {
+    if (status >= 500) {
+      userMessage = USER_ERROR_MESSAGES.SERVER_ERROR;
+    } else if (status === HTTP_STATUS.NOT_FOUND) {
+      userMessage = USER_ERROR_MESSAGES.NOT_FOUND;
+    } else if (status === HTTP_STATUS.BAD_REQUEST || status === HTTP_STATUS.UNPROCESSABLE_ENTITY) {
+      userMessage = USER_ERROR_MESSAGES.VALIDATION_ERROR;
+    } else if (status === HTTP_STATUS.TOO_MANY_REQUESTS) {
+      userMessage = USER_ERROR_MESSAGES.RATE_LIMIT_ERROR;
+    } else {
+      userMessage = sanitizeErrorForUser(err);
+    }
   }
 
   // Return user-friendly error with incident ID

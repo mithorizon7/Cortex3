@@ -1,6 +1,7 @@
 import { type Assessment, type InsertAssessment, assessments } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { logger, withErrorHandling } from "./logger";
+import { withDatabaseErrorHandling } from "./utils/database-errors";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 
@@ -12,7 +13,7 @@ export interface IStorage {
 
 export class DatabaseStorage implements IStorage {
   async getAssessment(id: string): Promise<Assessment | null> {
-    return withErrorHandling(
+    return withDatabaseErrorHandling(
       'getAssessment',
       async () => {
         const [assessment] = await db.select().from(assessments).where(eq(assessments.id, id));
@@ -34,7 +35,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createAssessment(insertAssessment: InsertAssessment): Promise<Assessment> {
-    return withErrorHandling(
+    return withDatabaseErrorHandling(
       'createAssessment',
       async () => {
         const [assessment] = await db
@@ -56,7 +57,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateAssessment(id: string, updates: Partial<InsertAssessment>): Promise<Assessment | null> {
-    return withErrorHandling(
+    return withDatabaseErrorHandling(
       'updateAssessment',
       async () => {
         const [updated] = await db
