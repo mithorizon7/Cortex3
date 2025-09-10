@@ -124,10 +124,10 @@ export default function PulseCheckPage() {
           <div className="text-center mb-8">
             <div className="flex items-center justify-center space-x-2 mb-4">
               <Target className="h-6 w-6 text-primary" />
-              <h1 className="text-3xl font-bold text-foreground">Pulse Check</h1>
+              <h1 className="text-3xl font-display font-bold text-foreground">Pulse Check</h1>
               <Clock className="h-5 w-5 text-muted-foreground" />
             </div>
-            <p className="text-lg text-muted-foreground mb-4">
+            <p className="text-lg text-muted-foreground mb-4 font-ui">
               Loading your assessment...
             </p>
           </div>
@@ -175,21 +175,21 @@ export default function PulseCheckPage() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center space-x-2 mb-4">
             <Target className="h-6 w-6 text-primary" />
-            <h1 className="text-3xl font-bold text-foreground">Pulse Check — 18 Questions, 6 Domains</h1>
+            <h1 className="text-3xl font-display font-bold text-foreground">Pulse Check — 18 Questions, 6 Domains</h1>
             <Clock className="h-5 w-5 text-muted-foreground" />
           </div>
-          <p className="text-lg text-muted-foreground mb-4">
+          <p className="text-lg text-muted-foreground mb-4 font-ui">
             Answer <strong>Yes</strong> only if the statement is <strong>fully true today</strong>. The six domains are: <strong>Clarity & Command (C)</strong>, <strong>Operations & Data (O)</strong>, <strong>Risk/Trust/Security (R)</strong>, <strong>Talent & Culture (T)</strong>, <strong>Ecosystem & Infrastructure (E)</strong>, <strong>Experimentation & Evolution (X)</strong>. Each "Yes" earns a point; your domain score is 0–3.
           </p>
-          <div className="max-w-xl mx-auto mb-6 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
-            <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">A Note on Honesty</h3>
-            <p className="text-sm text-blue-800 dark:text-blue-200">
+          <div className="max-w-xl mx-auto mb-6 p-4 bg-info/10 rounded-lg border border-info/20">
+            <h3 className="font-semibold text-info-foreground mb-2 font-ui">A Note on Honesty</h3>
+            <p className="text-sm text-info-foreground/80 font-ui">
               Treat this as a mirror, not a performance review. The most useful results come from candid answers.
             </p>
           </div>
           <div className="space-y-3">
             <Progress value={progress} className="w-full max-w-md mx-auto" />
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground font-ui">
               Domain {currentDomain + 1} of {DOMAIN_GROUPS.length} • {totalAnswered}/18 total answered
             </p>
           </div>
@@ -205,11 +205,11 @@ export default function PulseCheckPage() {
                   <span className="text-2xl font-bold">{currentGroup.pillar}</span>
                 </div>
                 <div className="text-left">
-                  <h2 className="text-xl sm:text-2xl font-bold text-foreground">
+                  <h2 className="text-xl sm:text-2xl font-display font-bold text-foreground">
                     <span className="sm:hidden">{currentPillar.name.split(' ')[0]}</span>
                     <span className="hidden sm:inline">{currentPillar.name}</span>
                   </h2>
-                  <p className="text-sm sm:text-base text-muted-foreground">{currentPillar.description}</p>
+                  <p className="text-sm sm:text-base text-muted-foreground font-ui">{currentPillar.description}</p>
                 </div>
               </div>
               <Badge variant="secondary" className="text-sm">
@@ -221,7 +221,7 @@ export default function PulseCheckPage() {
             <div className="space-y-8">
               {currentGroup.questions.map((question) => (
                 <div key={question.id} className="border border-border rounded-lg p-4 sm:p-6 bg-card">
-                  <h3 className="text-base sm:text-lg font-semibold mb-6" data-testid={`question-${question.id}`}>
+                  <h3 className="text-base sm:text-lg font-ui font-semibold mb-6" data-testid={`question-${question.id}`}>
                     {question.id}. {question.text}
                   </h3>
                   
@@ -230,7 +230,7 @@ export default function PulseCheckPage() {
                       variant={responses[question.id] === false ? "destructive" : "outline"}
                       size="lg"
                       onClick={() => handleResponseChange(question.id, false)}
-                      className="flex items-center justify-center space-x-2 min-w-[100px] h-12 sm:h-auto"
+                      className="flex items-center justify-center space-x-2 min-w-[100px] font-ui"
                       data-testid={`button-no-${question.id}`}
                     >
                       <XCircle className="h-5 w-5" />
@@ -241,7 +241,7 @@ export default function PulseCheckPage() {
                       variant={responses[question.id] === null ? "secondary" : "outline"}
                       size="lg"
                       onClick={() => handleResponseChange(question.id, null)}
-                      className="flex items-center justify-center space-x-2 min-w-[100px] h-12 sm:h-auto"
+                      className="flex items-center justify-center space-x-2 min-w-[100px] font-ui"
                       data-testid={`button-unsure-${question.id}`}
                     >
                       <HelpCircle className="h-5 w-5" />
@@ -252,7 +252,7 @@ export default function PulseCheckPage() {
                       variant={responses[question.id] === true ? "default" : "outline"}
                       size="lg"
                       onClick={() => handleResponseChange(question.id, true)}
-                      className="flex items-center justify-center space-x-2 min-w-[100px] h-12 sm:h-auto"
+                      className="flex items-center justify-center space-x-2 min-w-[100px] font-ui"
                       data-testid={`button-yes-${question.id}`}
                     >
                       <CheckCircle className="h-5 w-5" />
@@ -283,7 +283,7 @@ export default function PulseCheckPage() {
               variant="outline" 
               onClick={handlePrevious}
               disabled={currentDomain === 0}
-              className="flex items-center space-x-2 h-12 sm:h-auto"
+              className="flex items-center space-x-2 font-ui"
               data-testid="button-previous"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -292,7 +292,7 @@ export default function PulseCheckPage() {
             </Button>
             
             <div className="text-center sm:hidden">
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground font-ui">
                 {currentDomainAnswers}/{currentDomainTotal} • {totalAnswered}/18 total
               </p>
             </div>
@@ -302,7 +302,7 @@ export default function PulseCheckPage() {
                 onClick={handleComplete}
                 disabled={totalAnswered < 18 || updatePulse.isPending}
                 size="lg"
-                className="flex items-center space-x-2 sm:hidden h-12"
+                className="flex items-center space-x-2 sm:hidden font-ui"
                 data-testid="button-complete-mobile"
               >
                 <span>{updatePulse.isPending ? "Generating..." : "Get Results"}</span>
@@ -312,7 +312,7 @@ export default function PulseCheckPage() {
               <Button 
                 onClick={handleNext}
                 size="lg"
-                className="flex items-center space-x-2 sm:hidden h-12"
+                className="flex items-center space-x-2 sm:hidden font-ui"
                 data-testid="button-next-mobile"
               >
                 <span>Next</span>

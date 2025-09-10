@@ -127,15 +127,15 @@ export default function ContextProfilePage() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center space-x-2 mb-4">
             <Target className="h-6 w-6 text-primary" />
-            <h1 className="text-3xl font-bold text-foreground">AI Readiness Assessment</h1>
+            <h1 className="text-3xl font-display font-bold text-foreground">AI Readiness Assessment</h1>
             <Clock className="h-5 w-5 text-muted-foreground" />
           </div>
-          <p className="text-lg text-muted-foreground mb-4">
+          <p className="text-lg text-muted-foreground mb-4 font-ui">
             A few quick sliders tell us about your operating environment (regulation, sensitivity, speed, scale, etc.). We use these to <strong>tailor guidance and highlight critical requirements</strong>. We do <strong>not</strong> change your scores based on context.
           </p>
           <div className="space-y-3">
             <Progress value={progress} className="w-full max-w-md mx-auto" />
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground font-ui">
               Step {currentScreen + 1} of {CONTEXT_SCREENS.length} • {currentScreenAnswers}/{currentScreenTotal} answered
             </p>
           </div>
@@ -145,8 +145,8 @@ export default function ContextProfilePage() {
         <Card className="mb-8">
           <CardContent className="p-4 sm:p-8">
             <div className="mb-6 sm:mb-8">
-              <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">{currentScreenData.title}</h2>
-              <p className="text-base sm:text-lg text-muted-foreground">{currentScreenData.subtitle}</p>
+              <h2 className="text-xl sm:text-2xl font-display font-bold text-foreground mb-2">{currentScreenData.title}</h2>
+              <p className="text-base sm:text-lg text-muted-foreground font-ui">{currentScreenData.subtitle}</p>
             </div>
 
             <Form {...form}>
@@ -162,23 +162,23 @@ export default function ContextProfilePage() {
                       name={item.key as keyof ContextProfile}
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-lg sm:text-xl font-semibold text-foreground">
+                          <FormLabel className="text-lg sm:text-xl font-ui font-semibold text-foreground">
                             {item.label}
                           </FormLabel>
-                          <p className="text-sm sm:text-base text-muted-foreground mb-4">
+                          <p className="text-sm sm:text-base text-muted-foreground mb-4 font-ui">
                             {item.description}
                           </p>
                           
                           {/* Show examples upfront */}
                           {item.examples && (
-                            <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
-                              <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
+                            <div className="mb-6 p-4 bg-info/10 rounded-lg border border-info/20">
+                              <p className="text-sm font-medium text-info-foreground mb-2 font-ui">
                                 Examples by level:
                               </p>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs text-blue-800 dark:text-blue-200">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs text-info-foreground/80 font-ui">
                                 {item.examples.map((example, idx) => (
                                   <div key={idx} className="flex items-center space-x-2">
-                                    <span className="bg-blue-200 dark:bg-blue-800 px-2 py-1 rounded font-medium">
+                                    <span className="bg-info/20 px-2 py-1 rounded font-medium font-mono text-info-foreground">
                                       {idx}
                                     </span>
                                     <span>{example}</span>
@@ -226,11 +226,11 @@ export default function ContextProfilePage() {
                                 </div>
 
                                 {item.anchors && (
-                                  <div className="p-4 bg-amber-50 dark:bg-amber-950 rounded-lg">
-                                    <p className="text-sm font-medium text-amber-900 dark:text-amber-100 mb-2">
+                                  <div className="p-4 bg-warning/10 rounded-lg border border-warning/20">
+                                    <p className="text-sm font-medium text-warning-foreground mb-2 font-ui">
                                       What this level means:
                                     </p>
-                                    <p className="text-sm text-amber-800 dark:text-amber-200">
+                                    <p className="text-sm text-warning-foreground/80 font-ui">
                                       {item.anchors[field.value as number]}
                                     </p>
                                   </div>
@@ -277,7 +277,7 @@ export default function ContextProfilePage() {
               variant="outline" 
               onClick={handlePrevious}
               disabled={currentScreen === 0}
-              className="flex items-center space-x-2 h-12 sm:h-auto"
+              className="flex items-center space-x-2 font-ui"
               data-testid="button-previous"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -285,7 +285,7 @@ export default function ContextProfilePage() {
             </Button>
             
             <div className="text-center sm:hidden">
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground font-ui">
                 {currentScreenAnswers} of {currentScreenTotal} answered
               </p>
             </div>
@@ -295,7 +295,7 @@ export default function ContextProfilePage() {
                 onClick={form.handleSubmit(onSubmit)}
                 disabled={createAssessment.isPending}
                 size="lg"
-                className="flex items-center space-x-2 sm:hidden h-12"
+                className="flex items-center space-x-2 sm:hidden font-ui"
                 data-testid="button-start-pulse-check-mobile"
               >
                 <span>{createAssessment.isPending ? "Starting..." : "Start Check"}</span>
@@ -305,7 +305,7 @@ export default function ContextProfilePage() {
               <Button 
                 onClick={handleNext}
                 size="lg"
-                className="flex items-center space-x-2 sm:hidden h-12"
+                className="flex items-center space-x-2 sm:hidden font-ui"
                 data-testid="button-next-mobile"
               >
                 <span>Next</span>

@@ -19,10 +19,10 @@ export default function ProgressHeader({ currentStep, onExport }: ProgressHeader
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-4">
-            <div className="bg-primary text-primary-foreground px-3 py-1 rounded-md font-bold text-lg">
+            <div className="bg-primary text-primary-foreground px-3 py-1 rounded-md font-display font-bold text-lg">
               CORTEX™
             </div>
-            <span className="text-muted-foreground text-sm">Executive AI Readiness Assessment</span>
+            <span className="text-muted-foreground text-sm font-ui">Executive AI Readiness Assessment</span>
           </div>
           
           {/* Progress Indicator */}
