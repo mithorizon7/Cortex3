@@ -163,7 +163,7 @@ export function ExecutiveCortexHero({
                 patternUnits="userSpaceOnUse"
                 width="48"
                 height="41.5692"
-                patternTransform="translate(0,0)"
+                patternTransform="scale(1.25) translate(0,0)"
               >
                 <polygon
                   points="24,4 44,15.7846 44,33.7846 24,45.5692 4,33.7846 4,15.7846"
@@ -203,6 +203,12 @@ export function ExecutiveCortexHero({
                 <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.35" />
               </linearGradient>
 
+              {/* Badge rim gradient for separation */}
+              <linearGradient id={`badge-rim-${uid}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="hsl(var(--foreground))" stopOpacity="0.2" />
+                <stop offset="100%" stopColor="hsl(var(--muted-foreground))" stopOpacity="0.05" />
+              </linearGradient>
+
               {/* Soft glow */}
               <filter id={`soft-${uid}`} x="-30%" y="-30%" width="160%" height="160%">
                 <feGaussianBlur stdDeviation="1.25" result="b" />
@@ -222,12 +228,12 @@ export function ExecutiveCortexHero({
               </filter>
             </defs>
 
-            {/* Subtle hex background */}
-            <g opacity="0.08" mask={`url(#fadeMask-${uid})`}>
+            {/* Subtle hex background - dialed back */}
+            <g opacity="0.04" mask={`url(#fadeMask-${uid})`}>
               <rect width={VB} height={VB} fill={`url(#hex-${uid})`} />
             </g>
 
-            {/* Concentric rings (measured, not busy) */}
+            {/* Concentric rings (measured, not busy) - crisper */}
             <g>
               {RINGS.map((r, i) => (
                 <circle
@@ -237,7 +243,9 @@ export function ExecutiveCortexHero({
                   r={r}
                   fill="none"
                   stroke={`url(#ring-${uid})`}
-                  strokeWidth={i === RINGS.length - 1 ? 1.25 : 1}
+                  strokeWidth={i === RINGS.length - 1 ? 1.5 : 1}
+                  vectorEffect="non-scaling-stroke"
+                  shapeRendering="geometricPrecision"
                   opacity={i === 0 ? 0.6 : i === 1 ? 0.45 : 0.35}
                 />
               ))}
@@ -261,22 +269,57 @@ export function ExecutiveCortexHero({
               })}
             </g>
 
-            {/* Readiness polygon (data-driven) */}
-            <g filter={`url(#glow-${uid})`}>
+            {/* Readiness polygon (data-driven) - crisper with glass edge */}
+            <g>
               <polygon
                 points={polygonPoints}
                 fill="hsl(var(--primary) / 0.12)"
                 stroke={`url(#poly-${uid})`}
                 strokeWidth="2"
+                vectorEffect="non-scaling-stroke"
+                shapeRendering="geometricPrecision"
               />
-              {/* Halo */}
+              {/* Glass edge inner highlight */}
               <polygon
                 points={polygonPoints}
                 fill="none"
-                stroke="hsl(var(--primary) / 0.45)"
-                strokeWidth="8"
-                opacity="0.15"
+                stroke="white"
+                strokeOpacity="0.12"
+                strokeWidth="0.6"
+                vectorEffect="non-scaling-stroke"
               />
+              {/* Subtle outer halo */}
+              <polygon
+                points={polygonPoints}
+                fill="none"
+                stroke="hsl(var(--primary) / 0.35)"
+                strokeWidth="6"
+                opacity="0.12"
+                filter={`url(#soft-${uid})`}
+              />
+            </g>
+
+            {/* Ring scale labels (tiny, at top for clarity) */}
+            <g aria-hidden="true">
+              {[1, 2, 3].map((n, idx) => {
+                const r = RINGS[idx];
+                return (
+                  <text
+                    key={n}
+                    x={C}
+                    y={C - r - 8}
+                    textAnchor="middle"
+                    className="text-[10px] font-medium"
+                    style={{ 
+                      fill: "hsl(var(--muted-foreground))", 
+                      opacity: 0.6,
+                      letterSpacing: "0.5px"
+                    }}
+                  >
+                    {n}
+                  </text>
+                );
+              })}
             </g>
 
             {/* Nodes for C O R T E X */}
@@ -287,16 +330,16 @@ export function ExecutiveCortexHero({
 
               return (
                 <g key={`${p.key}-${i}`}>
-                  {/* subtle pulse to imply "live" */}
+                  {/* subtle pulse to imply "live" - slower and trimmed */}
                   <circle
                     cx={pos.x}
                     cy={pos.y}
                     r="26"
-                    className="animate-[pulse_5.5s_ease-in-out_infinite] motion-reduce:animate-none"
+                    className="animate-[pulse_7s_ease-in-out_infinite] motion-reduce:animate-none"
                     fill={color}
-                    fillOpacity="0.10"
+                    fillOpacity="0.08"
                     stroke={color}
-                    strokeWidth="1.75"
+                    strokeWidth="1.5"
                     style={{ filter: `url(#soft-${uid})` }}
                   />
                   <circle
@@ -325,28 +368,37 @@ export function ExecutiveCortexHero({
               );
             })}
 
-            {/* Center badge */}
+            {/* Center badge - strengthened */}
             <g>
               <circle
                 cx={C}
                 cy={C}
-                r="36"
+                r="40"
                 fill={`url(#center-${uid})`}
                 stroke="hsl(var(--primary))"
                 strokeWidth="1.5"
                 opacity="0.95"
                 style={{ filter: `url(#soft-${uid})` }}
               />
+              {/* Micro-gradient rim for separation */}
+              <circle
+                cx={C}
+                cy={C}
+                r="40"
+                fill="none"
+                stroke={`url(#badge-rim-${uid})`}
+                strokeWidth="1"
+                opacity="0.4"
+              />
               <text
                 x={C}
                 y={C + 6}
                 textAnchor="middle"
-                className="text-sm font-bold"
+                className="text-base font-bold"
                 style={{
                   fontFamily: "var(--font-heading)",
-                  letterSpacing: "1px",
-                  fill: "hsl(var(--primary))",
-                  filter: `url(#soft-${uid})`,
+                  letterSpacing: "0.75px",
+                  fill: "hsl(var(--foreground))",
                 }}
               >
                 CORTEX

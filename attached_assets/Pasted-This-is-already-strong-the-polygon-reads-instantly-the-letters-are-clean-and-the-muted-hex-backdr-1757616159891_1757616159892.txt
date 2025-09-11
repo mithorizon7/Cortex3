@@ -1,0 +1,165 @@
+This is already strong: the polygon reads instantly, the letters are clean, and the muted hex backdrop feels premium. For a hero, though, I’d tune a few things to make it **crisper, clearer, and more executive**—without getting busy.
+
+## Quick wins (high impact, low effort)
+
+1. **Sharpen the polygon & rings (reduce blur)**
+
+   * Right now the Gaussian blur softens edges enough that it looks slightly out-of-focus on Retina.
+   * Remove/reduce filter on the polygon stroke and add `vectorEffect="non-scaling-stroke"` and `shapeRendering="geometricPrecision"` to keep lines crisp at any size.
+   * Drop polygon fill to \~10–12% and keep stroke at \~2px with a subtle inner highlight (0.4px white at 12% opacity) for a “glass edge”.
+
+2. **Dial back the hex pattern**
+
+   * Lower opacity a touch (e.g., from \~0.07 to \~0.03–0.04) and increase pattern scale by \~20–30% to avoid moiré at large sizes.
+   * Keep the center mask you’re using, but feather it a bit more so the texture doesn’t compete with the data in the focal area.
+
+3. **Clarify the scale**
+
+   * Add **tiny tick labels** for the rings (e.g., “1 • 2 • 3”) at the top or upper-left only—single placement avoids clutter but instantly tells viewers what the area means.
+   * Keep ticks ultra-subtle: 10–20% opacity, 9–10px type.
+
+4. **Lock color semantics**
+
+   * Treat **grey = undeveloped**, **amber = developing**, **green = strong**. Your screenshot mostly follows that—good.
+   * Ensure the greys for “R” and “X” still meet contrast (WCAG 4.5:1) against the background; if not, bump lightness contrast slightly or add a faint inner ring.
+
+5. **Strengthen the center badge**
+
+   * Increase the center “CORTEX” badge by \~10–12% and tighten letter-spacing very slightly. It should read as a seal, not a label.
+   * Consider a micro-gradient rim (1px) to separate it from the polygon when the polygon passes close by.
+
+6. **Reduce ambient glow on nodes**
+
+   * The node halos look good but can bloom on some displays. Trim outer halo opacity \~15–20% and slow the pulse to \~6–8s to feel “alive” without drawing the eye away from the polygon.
+
+## Optional (tasteful) upgrades
+
+1. **Hover/Focus detail, not motion**
+
+   * On node hover/focus: thicken that spoke + highlight the polygon edge between this node and its neighbors; show the full pillar name in a clean tooltip (“Culture”, “Operations”, etc.).
+   * Keep transitions very slow (\~200–300ms, ease-out) to feel deliberate.
+
+2. **Mini progress “donut” on each node (sub-scores)**
+
+   * If you have sub-dimensions per pillar, a 270° mini arc (thin, 1–1.25px) around the node can show depth without clutter. Only visible on hover to keep the hero clean.
+
+3. **Load animation**
+
+   * Animate the polygon area from the center to the final levels over 600–800ms with a single ease; no bouncing. It communicates “measured growth” and looks premium.
+
+4. **Copy cue under the graphic**
+
+   * One 1-line caption in muted text: *“Composite example shown • Live scores update from your executive diagnostic.”*
+   * This prevents the hero from being misread as *their* score.
+
+## Concrete tweaks (drop-in snippets)
+
+**Crisper polygon & rings**
+
+```jsx
+<g>
+  {RINGS.map((r,i)=>(
+    <circle
+      key={r}
+      cx={C}
+      cy={C}
+      r={r}
+      fill="none"
+      stroke={`url(#ring-${uid})`}
+      strokeWidth={i===RINGS.length-1?1.5:1}
+      vectorEffect="non-scaling-stroke"
+      shapeRendering="geometricPrecision"
+      opacity={i===0?0.6:i===1?0.45:0.35}
+    />
+  ))}
+</g>
+
+<g>
+  <polygon
+    points={polygonPoints}
+    fill="hsl(var(--primary)/0.12)"
+    stroke={`url(#poly-${uid})`}
+    strokeWidth="2"
+    vectorEffect="non-scaling-stroke"
+    shapeRendering="geometricPrecision"
+    style={{ filter: "none" }} // remove heavy blur
+  />
+  {/* 1px inner highlight for glass edge */}
+  <polygon
+    points={polygonPoints}
+    fill="none"
+    stroke="white"
+    strokeOpacity="0.12"
+    strokeWidth="0.6"
+    vectorEffect="non-scaling-stroke"
+  />
+</g>
+```
+
+**Subtler hex pattern**
+
+```jsx
+<g opacity="0.04" mask={`url(#fadeMask-${uid})`}>
+  <rect width={VB} height={VB} fill={`url(#hex-${uid})`} />
+</g>
+```
+
+**Ring scale labels (single placement, tiny)**
+
+```jsx
+{/* Place at top ring, slightly inward */}
+<g aria-hidden="true">
+  {[1,2,3].map((n,idx)=>{
+    const r = RINGS[idx];
+    return (
+      <text
+        key={n}
+        x={C}
+        y={C - r - 6}
+        textAnchor="middle"
+        className="text-[10px] font-medium"
+        style={{ fill: "hsl(var(--muted-foreground))", opacity: 0.6 }}
+      >
+        {n}
+      </text>
+    );
+  })}
+</g>
+```
+
+**Node halos trimmed & slow pulse**
+
+```jsx
+<circle
+  cx={pos.x}
+  cy={pos.y}
+  r="26"
+  className="animate-[pulse_7s_ease-in-out_infinite] motion-reduce:animate-none"
+  fill={color}
+  fillOpacity="0.08"       // was ~0.10
+  stroke={color}
+  strokeWidth="1.5"
+  style={{ filter: `url(#soft-${uid})` }}
+/>
+```
+
+**Accessibility & performance touches**
+
+* Add `aria-describedby` to tie the hero to a short caption.
+* Ensure all strokes use `vectorEffect="non-scaling-stroke"` for crispness.
+* Prefer CSS for any long-running animations; keep SVG filters minimal to stay GPU-light.
+* Provide a static `<picture>` fallback (`.webp` @2x) for very small screens.
+
+---
+
+## Verdict
+
+* **Keep**: the overall composition, the polygon-first read, the subtle background texture, and your color semantics (grey/amber/green).
+* **Tighten**: blur/softness, background texture strength, and add minimal scale labels.
+* **Optional flourish**: on-hover pillar details and a calm load-in animation.
+
+### Confidence
+
+* **High** on the visual/UX tweaks improving executive readability and polish.
+* **High** that the crisping and pattern adjustments will look better on Retina and avoid moiré.
+* **Medium** on adding sub-score donuts—great if you have data, but optional for launch.
