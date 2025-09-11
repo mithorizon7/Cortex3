@@ -348,7 +348,7 @@ export default function ResultsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 sm:p-8">
-            <div className="grid lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
               {/* Key Insights */}
               <div>
                 <h3 className="text-xl font-display font-semibold mb-6 flex items-center space-x-2">
@@ -374,8 +374,8 @@ export default function ResultsPage() {
                 </h3>
                 <div className="space-y-4">
                   {priorities.map((priority, index) => (
-                    <div key={index} className="flex items-start space-x-3 p-4 bg-muted/50 rounded-lg">
-                      <div className="bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm">
+                    <div key={index} className="flex items-start space-x-3 p-4 sm:p-4 bg-muted/50 rounded-lg">
+                      <div className="bg-primary text-primary-foreground rounded-full w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center font-bold text-base sm:text-sm">
                         {index + 1}
                       </div>
                       <div className="flex-1">
@@ -397,15 +397,15 @@ export default function ResultsPage() {
         </Card>
 
         {/* Visual Scorecard */}
-        <div className="grid lg:grid-cols-2 gap-8 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 mb-6 sm:mb-8">
           <Card>
-            <CardHeader>
+            <CardHeader className="p-4 sm:p-6">
               <CardTitle className="flex items-center space-x-2">
                 <TrendingUp className="h-5 w-5" />
-                <span className="font-display">CORTEX Maturity Radar</span>
+                <span className="font-display text-lg sm:text-xl">CORTEX Maturity Radar</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex justify-center p-6">
+            <CardContent className="flex justify-center p-4 sm:p-6">
               <HoneycombRadar pillarScores={pillarScores} />
             </CardContent>
           </Card>
