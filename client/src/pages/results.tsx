@@ -9,7 +9,7 @@ import ProgressHeader from "@/components/progress-header";
 import OfflineBanner from "@/components/offline-banner";
 import { ErrorFallback } from "@/components/error-boundary";
 import { ResultsSkeleton } from "@/components/skeleton-loader";
-import HoneycombRadar from "@/components/honeycomb-radar";
+import { ExecutiveCortexHero } from "@/components/executive-cortex-hero";
 import DomainCard from "@/components/domain-card";
 import { AppHeader } from "@/components/navigation/app-header";
 import { ValueSnapshot } from "@/components/value-overlay";
@@ -406,7 +406,7 @@ export default function ResultsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="flex justify-center p-4 sm:p-6">
-              <HoneycombRadar pillarScores={pillarScores} />
+              <ExecutiveCortexHero pillarScores={pillarScores} />
             </CardContent>
           </Card>
 
