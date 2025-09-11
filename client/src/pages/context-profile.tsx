@@ -146,8 +146,8 @@ export default function ContextProfilePage() {
         </div>
 
         {/* Current Screen */}
-        <Card className="mb-8">
-          <CardContent className="p-4 sm:p-8">
+        <Card className="mb-6 sm:mb-8">
+          <CardContent className="p-6 sm:p-8">
             <div className="mb-6 sm:mb-8">
               <h2 className="text-xl sm:text-2xl font-display font-bold text-foreground mb-2">{currentScreenData.title}</h2>
               <p className="text-base sm:text-lg text-muted-foreground font-ui">{currentScreenData.subtitle}</p>
@@ -195,7 +195,7 @@ export default function ContextProfilePage() {
                           <FormControl>
                             {item.type === 'slider' ? (
                               <div className="space-y-6">
-                                <div className="px-4">
+                                <div className="px-2 sm:px-4">
                                   <Slider
                                     min={0}
                                     max={4}
@@ -217,12 +217,12 @@ export default function ContextProfilePage() {
                                 </div>
                                 
                                 <div className="text-center">
-                                  <div className="inline-flex items-center space-x-3 bg-muted p-4 rounded-lg">
-                                    <span className="text-lg font-bold text-primary">
+                                  <div className="inline-flex items-center space-x-3 bg-muted p-5 sm:p-4 rounded-lg">
+                                    <span className="text-xl sm:text-lg font-bold text-primary">
                                       {field.value}/4
                                     </span>
                                     {item.labels && (
-                                      <span className="text-base font-medium">
+                                      <span className="text-lg sm:text-base font-medium">
                                         {item.labels[field.value as number]}
                                       </span>
                                     )}
@@ -243,20 +243,20 @@ export default function ContextProfilePage() {
                             ) : (
                               <div>
                                 {item.examples && (
-                                  <div className="mb-4 p-3 bg-muted rounded-lg">
+                                  <div className="mb-6 sm:mb-4 p-4 sm:p-3 bg-muted rounded-lg">
                                     <p className="text-sm font-medium mb-2">This typically includes:</p>
                                     <div className="text-sm text-muted-foreground">
                                       {item.examples.join(' • ')}
                                     </div>
                                   </div>
                                 )}
-                                <div className="flex items-center space-x-4 p-4 bg-muted/50 rounded-lg">
+                                <div className="flex items-center space-x-5 sm:space-x-4 p-6 sm:p-4 bg-muted/50 rounded-lg">
                                   <Switch
                                     checked={field.value as boolean}
                                     onCheckedChange={field.onChange}
                                     data-testid={`switch-${item.key}`}
                                   />
-                                  <span className="text-lg font-medium">
+                                  <span className="text-xl sm:text-lg font-medium">
                                     {field.value ? 'Yes' : 'No'}
                                   </span>
                                 </div>
@@ -289,7 +289,7 @@ export default function ContextProfilePage() {
             </Button>
             
             <div className="text-center sm:hidden">
-              <p className="text-xs text-muted-foreground font-ui">
+              <p className="text-sm text-muted-foreground font-ui">
                 {currentScreenAnswers} of {currentScreenTotal} answered
               </p>
             </div>

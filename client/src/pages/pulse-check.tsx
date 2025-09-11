@@ -200,8 +200,8 @@ export default function PulseCheckPage() {
         </div>
 
         {/* Current Domain */}
-        <Card className="mb-8">
-          <CardContent className="p-4 sm:p-8">
+        <Card className="mb-6 sm:mb-8">
+          <CardContent className="p-6 sm:p-8">
             {/* Domain Header */}
             <div className="mb-8 text-center">
               <div className="flex items-center justify-center space-x-4 mb-4">
@@ -224,17 +224,17 @@ export default function PulseCheckPage() {
             {/* Domain Questions */}
             <div className="space-y-8">
               {currentGroup.questions.map((question) => (
-                <div key={question.id} className="border border-border rounded-lg p-4 sm:p-6 bg-card">
-                  <h3 className="text-base sm:text-lg font-ui font-semibold mb-6" data-testid={`question-${question.id}`}>
+                <div key={question.id} className="border border-border rounded-lg p-6 sm:p-6 bg-card">
+                  <h3 className="text-lg sm:text-lg font-ui font-semibold mb-6" data-testid={`question-${question.id}`}>
                     {question.id}. {question.text}
                   </h3>
                   
-                  <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 sm:space-x-4">
+                  <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-4 sm:space-x-4">
                     <Button
                       variant={responses[question.id] === false ? "destructive" : "outline"}
                       size="lg"
                       onClick={() => handleResponseChange(question.id, false)}
-                      className="flex items-center justify-center space-x-2 min-w-[100px] font-ui"
+                      className="flex items-center justify-center space-x-2 min-w-[120px] sm:min-w-[100px] font-ui"
                       data-testid={`button-no-${question.id}`}
                     >
                       <XCircle className="h-5 w-5" />
@@ -245,7 +245,7 @@ export default function PulseCheckPage() {
                       variant={responses[question.id] === null ? "secondary" : "outline"}
                       size="lg"
                       onClick={() => handleResponseChange(question.id, null)}
-                      className="flex items-center justify-center space-x-2 min-w-[100px] font-ui"
+                      className="flex items-center justify-center space-x-2 min-w-[120px] sm:min-w-[100px] font-ui"
                       data-testid={`button-unsure-${question.id}`}
                     >
                       <HelpCircle className="h-5 w-5" />
@@ -256,7 +256,7 @@ export default function PulseCheckPage() {
                       variant={responses[question.id] === true ? "default" : "outline"}
                       size="lg"
                       onClick={() => handleResponseChange(question.id, true)}
-                      className="flex items-center justify-center space-x-2 min-w-[100px] font-ui"
+                      className="flex items-center justify-center space-x-2 min-w-[120px] sm:min-w-[100px] font-ui"
                       data-testid={`button-yes-${question.id}`}
                     >
                       <CheckCircle className="h-5 w-5" />
