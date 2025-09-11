@@ -189,23 +189,135 @@ export default function HomePage() {
         </div>
 
         <div className="relative hidden md:block">
-          {/* Static honeycomb motif */}
+          {/* Executive CORTEX Preview */}
           <div 
-            className="aspect-[4/3] rounded-md border border-border bg-gradient-to-b from-muted to-transparent flex items-center justify-center"
+            className="aspect-[4/3] rounded-xl border border-border/50 bg-gradient-to-br from-background via-muted/20 to-primary/5 flex items-center justify-center overflow-hidden shadow-lg"
             data-testid="visual-honeycomb-preview"
           >
-            <div className="text-center space-y-2">
-              <div className="grid grid-cols-3 gap-2 max-w-[200px] mx-auto">
-                {["C", "O", "R", "T", "E", "X"].map((letter, index) => (
-                  <div 
-                    key={letter} 
-                    className="w-12 h-12 bg-primary/10 border border-primary/20 rounded-full flex items-center justify-center text-sm font-semibold text-primary"
-                  >
-                    {letter}
-                  </div>
-                ))}
+            <div className="relative">
+              {/* Background hex pattern */}
+              <div className="absolute inset-0 opacity-10">
+                <svg viewBox="0 0 400 320" className="w-full h-full">
+                  <defs>
+                    <pattern id="hexPattern" patternUnits="userSpaceOnUse" width="40" height="35">
+                      <polygon points="20,5 35,15 35,30 20,35 5,30 5,15" fill="none" stroke="currentColor" strokeWidth="0.5" opacity="0.3"/>
+                    </pattern>
+                  </defs>
+                  <rect width="100%" height="100%" fill="url(#hexPattern)"/>
+                </svg>
               </div>
-              <p className="text-xs text-muted-foreground">Decorative preview of the six-pillar maturity view</p>
+              
+              {/* Premium honeycomb radar preview */}
+              <div className="relative">
+                <svg viewBox="0 0 300 300" className="w-72 h-72 drop-shadow-sm">
+                  <defs>
+                    <linearGradient id="centerGradient" cx="50%" cy="50%">
+                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.15"/>
+                      <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.05"/>
+                    </linearGradient>
+                    <filter id="pillarGlow">
+                      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                      <feMerge> 
+                        <feMergeNode in="coloredBlur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                      </feMerge>
+                    </filter>
+                  </defs>
+                  
+                  {/* Background rings */}
+                  <g className="opacity-30">
+                    <circle cx="150" cy="150" r="30" fill="none" stroke="hsl(var(--border))" strokeWidth="1"/>
+                    <circle cx="150" cy="150" r="60" fill="none" stroke="hsl(var(--border))" strokeWidth="1"/>
+                    <circle cx="150" cy="150" r="90" fill="none" stroke="hsl(var(--border))" strokeWidth="1"/>
+                  </g>
+                  
+                  {/* Spoke lines */}
+                  <g className="opacity-20">
+                    {[0, 1, 2, 3, 4, 5].map((i) => {
+                      const angle = (i * Math.PI) / 3 - Math.PI / 2;
+                      const x = 150 + 90 * Math.cos(angle);
+                      const y = 150 + 90 * Math.sin(angle);
+                      return (
+                        <line key={i} x1="150" y1="150" x2={x} y2={y} stroke="hsl(var(--border))" strokeWidth="1"/>
+                      );
+                    })}
+                  </g>
+                  
+                  {/* Pillar indicators with premium styling */}
+                  {["C", "O", "R", "T", "E", "X"].map((letter, index) => {
+                    const angle = (index * Math.PI) / 3 - Math.PI / 2;
+                    const radius = 70; // Position on middle ring
+                    const x = 150 + radius * Math.cos(angle);
+                    const y = 150 + radius * Math.sin(angle);
+                    
+                    // Staggered maturity levels for visual interest
+                    const maturityLevels = [2, 3, 1, 3, 2, 1];
+                    const maturity = maturityLevels[index];
+                    const colors = ['#94a3b8', '#f59e0b', '#10b981']; // Different stages
+                    const pilllarColor = colors[maturity - 1];
+                    
+                    return (
+                      <g key={letter}>
+                        {/* Outer ring */}
+                        <circle 
+                          cx={x} 
+                          cy={y} 
+                          r="18" 
+                          fill={pilllarColor} 
+                          fillOpacity="0.15" 
+                          stroke={pilllarColor} 
+                          strokeWidth="1.5"
+                          className="animate-pulse"
+                          style={{animationDuration: `${2 + index * 0.3}s`}}
+                        />
+                        {/* Inner core */}
+                        <circle 
+                          cx={x} 
+                          cy={y} 
+                          r="12" 
+                          fill={pilllarColor} 
+                          fillOpacity="0.3" 
+                          filter="url(#pillarGlow)"
+                        />
+                        {/* Letter */}
+                        <text 
+                          x={x} 
+                          y={y + 4} 
+                          textAnchor="middle" 
+                          className="text-sm font-bold fill-foreground"
+                          style={{filter: 'url(#pillarGlow)'}}
+                        >
+                          {letter}
+                        </text>
+                      </g>
+                    );
+                  })}
+                  
+                  {/* Center logo with premium styling */}
+                  <circle cx="150" cy="150" r="25" fill="url(#centerGradient)" stroke="hsl(var(--primary))" strokeWidth="1" opacity="0.8"/>
+                  <text 
+                    x="150" 
+                    y="155" 
+                    textAnchor="middle" 
+                    className="text-xs font-bold fill-primary"
+                    style={{letterSpacing: '0.5px'}}
+                  >
+                    CORTEX
+                  </text>
+                </svg>
+                
+                {/* Floating badges for added sophistication */}
+                <div className="absolute -top-2 -right-2">
+                  <div className="bg-primary/10 border border-primary/20 rounded-full px-3 py-1 text-xs font-medium text-primary backdrop-blur-sm">
+                    6 Domains
+                  </div>
+                </div>
+                <div className="absolute -bottom-2 -left-2">
+                  <div className="bg-accent/10 border border-accent/20 rounded-full px-3 py-1 text-xs font-medium text-accent-foreground backdrop-blur-sm">
+                    18 Questions
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
