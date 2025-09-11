@@ -191,101 +191,132 @@ export default function HomePage() {
         <div className="relative hidden md:block">
           {/* Executive CORTEX Preview */}
           <div 
-            className="aspect-[4/3] rounded-xl border border-border/50 bg-gradient-to-br from-background via-muted/20 to-primary/5 flex items-center justify-center overflow-hidden shadow-lg"
+            className="aspect-[4/3] rounded-2xl border border-border/30 bg-gradient-to-br from-background via-muted/30 to-primary/8 flex items-center justify-center overflow-hidden shadow-2xl backdrop-blur-sm"
             data-testid="visual-honeycomb-preview"
           >
-            <div className="relative">
-              {/* Background hex pattern */}
-              <div className="absolute inset-0 opacity-10">
-                <svg viewBox="0 0 400 320" className="w-full h-full">
+            <div className="relative w-full h-full flex items-center justify-center">
+              {/* Enhanced background hex pattern */}
+              <div className="absolute inset-0 opacity-[0.07]">
+                <svg viewBox="0 0 500 400" className="w-full h-full">
                   <defs>
-                    <pattern id="hexPattern" patternUnits="userSpaceOnUse" width="40" height="35">
-                      <polygon points="20,5 35,15 35,30 20,35 5,30 5,15" fill="none" stroke="currentColor" strokeWidth="0.5" opacity="0.3"/>
+                    <pattern id="hexPattern" patternUnits="userSpaceOnUse" width="45" height="39">
+                      <polygon points="22.5,6 39,17 39,33 22.5,39 6,33 6,17" fill="none" stroke="currentColor" strokeWidth="0.8" opacity="0.4"/>
                     </pattern>
+                    <radialGradient id="patternFade" cx="50%" cy="50%">
+                      <stop offset="0%" stopOpacity="0"/>
+                      <stop offset="40%" stopOpacity="1"/>
+                      <stop offset="100%" stopOpacity="0.2"/>
+                    </radialGradient>
                   </defs>
-                  <rect width="100%" height="100%" fill="url(#hexPattern)"/>
+                  <rect width="100%" height="100%" fill="url(#hexPattern)" mask="url(#patternFade)"/>
                 </svg>
               </div>
               
-              {/* Premium honeycomb radar preview */}
+              {/* Premium honeycomb radar preview - much larger */}
               <div className="relative">
-                <svg viewBox="0 0 300 300" className="w-72 h-72 drop-shadow-sm">
+                <svg viewBox="0 0 400 400" className="w-[22rem] h-[22rem] drop-shadow-xl">
                   <defs>
                     <linearGradient id="centerGradient" cx="50%" cy="50%">
-                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.15"/>
-                      <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.05"/>
+                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.25"/>
+                      <stop offset="70%" stopColor="hsl(var(--primary))" stopOpacity="0.12"/>
+                      <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.03"/>
                     </linearGradient>
-                    <filter id="pillarGlow">
-                      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                    <filter id="pillarGlow" x="-50%" y="-50%" width="200%" height="200%">
+                      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
                       <feMerge> 
                         <feMergeNode in="coloredBlur"/>
                         <feMergeNode in="SourceGraphic"/>
                       </feMerge>
                     </filter>
+                    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+                      <feGaussianBlur stdDeviation="1.5" result="softBlur"/>
+                      <feMerge>
+                        <feMergeNode in="softBlur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                      </feMerge>
+                    </filter>
+                    <linearGradient id="ringGradient" cx="50%" cy="50%">
+                      <stop offset="0%" stopColor="hsl(var(--border))" stopOpacity="0.6"/>
+                      <stop offset="100%" stopColor="hsl(var(--border))" stopOpacity="0.2"/>
+                    </linearGradient>
                   </defs>
                   
-                  {/* Background rings */}
-                  <g className="opacity-30">
-                    <circle cx="150" cy="150" r="30" fill="none" stroke="hsl(var(--border))" strokeWidth="1"/>
-                    <circle cx="150" cy="150" r="60" fill="none" stroke="hsl(var(--border))" strokeWidth="1"/>
-                    <circle cx="150" cy="150" r="90" fill="none" stroke="hsl(var(--border))" strokeWidth="1"/>
+                  {/* Enhanced background rings with gradients */}
+                  <g>
+                    <circle cx="200" cy="200" r="40" fill="none" stroke="url(#ringGradient)" strokeWidth="1.5"/>
+                    <circle cx="200" cy="200" r="80" fill="none" stroke="url(#ringGradient)" strokeWidth="1.2"/>
+                    <circle cx="200" cy="200" r="120" fill="none" stroke="url(#ringGradient)" strokeWidth="1"/>
                   </g>
                   
-                  {/* Spoke lines */}
-                  <g className="opacity-20">
+                  {/* Enhanced spoke lines */}
+                  <g opacity="0.3">
                     {[0, 1, 2, 3, 4, 5].map((i) => {
                       const angle = (i * Math.PI) / 3 - Math.PI / 2;
-                      const x = 150 + 90 * Math.cos(angle);
-                      const y = 150 + 90 * Math.sin(angle);
+                      const x = 200 + 120 * Math.cos(angle);
+                      const y = 200 + 120 * Math.sin(angle);
                       return (
-                        <line key={i} x1="150" y1="150" x2={x} y2={y} stroke="hsl(var(--border))" strokeWidth="1"/>
+                        <line 
+                          key={i} 
+                          x1="200" 
+                          y1="200" 
+                          x2={x} 
+                          y2={y} 
+                          stroke="url(#ringGradient)" 
+                          strokeWidth="1"
+                          filter="url(#softGlow)"
+                        />
                       );
                     })}
                   </g>
                   
-                  {/* Pillar indicators with premium styling */}
+                  {/* Premium pillar indicators - larger and more refined */}
                   {["C", "O", "R", "T", "E", "X"].map((letter, index) => {
                     const angle = (index * Math.PI) / 3 - Math.PI / 2;
-                    const radius = 70; // Position on middle ring
-                    const x = 150 + radius * Math.cos(angle);
-                    const y = 150 + radius * Math.sin(angle);
+                    const radius = 92; // Position optimized for larger size
+                    const x = 200 + radius * Math.cos(angle);
+                    const y = 200 + radius * Math.sin(angle);
                     
-                    // Staggered maturity levels for visual interest
+                    // Enhanced maturity levels with sophisticated colors
                     const maturityLevels = [2, 3, 1, 3, 2, 1];
                     const maturity = maturityLevels[index];
-                    const colors = ['#94a3b8', '#f59e0b', '#10b981']; // Different stages
+                    const colors = ['hsl(220, 15%, 60%)', 'hsl(38, 92%, 50%)', 'hsl(158, 64%, 52%)']; 
                     const pilllarColor = colors[maturity - 1];
                     
                     return (
                       <g key={letter}>
-                        {/* Outer ring */}
+                        {/* Enhanced outer ring with breathing effect */}
                         <circle 
                           cx={x} 
                           cy={y} 
-                          r="18" 
+                          r="24" 
                           fill={pilllarColor} 
-                          fillOpacity="0.15" 
+                          fillOpacity="0.12" 
                           stroke={pilllarColor} 
-                          strokeWidth="1.5"
+                          strokeWidth="2"
+                          filter="url(#softGlow)"
                           className="animate-pulse"
-                          style={{animationDuration: `${2 + index * 0.3}s`}}
+                          style={{animationDuration: `${3 + index * 0.4}s`}}
                         />
-                        {/* Inner core */}
+                        {/* Enhanced inner core */}
                         <circle 
                           cx={x} 
                           cy={y} 
-                          r="12" 
+                          r="16" 
                           fill={pilllarColor} 
-                          fillOpacity="0.3" 
+                          fillOpacity="0.25" 
                           filter="url(#pillarGlow)"
                         />
-                        {/* Letter */}
+                        {/* Premium letter styling */}
                         <text 
                           x={x} 
-                          y={y + 4} 
+                          y={y + 6} 
                           textAnchor="middle" 
-                          className="text-sm font-bold fill-foreground"
-                          style={{filter: 'url(#pillarGlow)'}}
+                          className="text-base font-bold fill-foreground"
+                          style={{
+                            filter: 'url(#pillarGlow)', 
+                            letterSpacing: '0.5px',
+                            fontFamily: 'var(--font-heading)'
+                          }}
                         >
                           {letter}
                         </text>
@@ -293,30 +324,31 @@ export default function HomePage() {
                     );
                   })}
                   
-                  {/* Center logo with premium styling */}
-                  <circle cx="150" cy="150" r="25" fill="url(#centerGradient)" stroke="hsl(var(--primary))" strokeWidth="1" opacity="0.8"/>
+                  {/* Enhanced center logo with premium styling */}
+                  <circle 
+                    cx="200" 
+                    cy="200" 
+                    r="32" 
+                    fill="url(#centerGradient)" 
+                    stroke="hsl(var(--primary))" 
+                    strokeWidth="1.5" 
+                    opacity="0.9"
+                    filter="url(#softGlow)"
+                  />
                   <text 
-                    x="150" 
-                    y="155" 
+                    x="200" 
+                    y="207" 
                     textAnchor="middle" 
-                    className="text-xs font-bold fill-primary"
-                    style={{letterSpacing: '0.5px'}}
+                    className="text-sm font-bold fill-primary"
+                    style={{
+                      letterSpacing: '1px',
+                      fontFamily: 'var(--font-heading)',
+                      filter: 'url(#softGlow)'
+                    }}
                   >
                     CORTEX
                   </text>
                 </svg>
-                
-                {/* Floating badges for added sophistication */}
-                <div className="absolute -top-2 -right-2">
-                  <div className="bg-primary/10 border border-primary/20 rounded-full px-3 py-1 text-xs font-medium text-primary backdrop-blur-sm">
-                    6 Domains
-                  </div>
-                </div>
-                <div className="absolute -bottom-2 -left-2">
-                  <div className="bg-accent/10 border border-accent/20 rounded-full px-3 py-1 text-xs font-medium text-accent-foreground backdrop-blur-sm">
-                    18 Questions
-                  </div>
-                </div>
               </div>
             </div>
           </div>
