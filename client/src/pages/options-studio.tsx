@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +19,8 @@ export default function OptionsStudio() {
   const [currentSection, setCurrentSection] = useState<"intro" | "misconceptions" | "situation" | "explore" | "reflection" | "export">("intro");
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
   const [compareMode, setCompareMode] = useState(false);
+  const [selectedOptionDetail, setSelectedOptionDetail] = useState<string | null>(null);
+  const [showCompareDialog, setShowCompareDialog] = useState(false);
   const [contextProfile, setContextProfile] = useState<ContextProfile | undefined>();
   
   const {
@@ -274,6 +276,7 @@ export default function OptionsStudio() {
             }
           } else {
             viewOption(option.id);
+            setSelectedOptionDetail(option.id);
           }
         }}
         data-testid={`card-option-${option.id}`}
@@ -285,6 +288,14 @@ export default function OptionsStudio() {
               <Checkbox 
                 checked={isSelected}
                 disabled={!isSelected && selectedOptions.length >= 2}
+                onCheckedChange={(checked) => {
+                  if (checked && selectedOptions.length < 2) {
+                    setSelectedOptions(prev => [...prev, option.id]);
+                  } else if (!checked) {
+                    setSelectedOptions(prev => prev.filter(id => id !== option.id));
+                  }
+                }}
+                onClick={(e) => e.stopPropagation()}
                 data-testid={`checkbox-compare-${option.id}`}
               />
             )}
@@ -375,15 +386,16 @@ export default function OptionsStudio() {
           )}
         </div>
 
-        {compareMode && selectedOptions.length === 2 && (
+        {compareMode && (
           <Button 
             onClick={() => {
               compareOptions(selectedOptions);
-              // Would open comparison dialog
+              setShowCompareDialog(true);
             }}
+            disabled={selectedOptions.length !== 2}
             data-testid="button-compare-selected"
           >
-            Compare Selected Options
+            Compare Selected Options {selectedOptions.length > 0 && `(${selectedOptions.length}/2)`}
           </Button>
         )}
       </div>
@@ -393,6 +405,444 @@ export default function OptionsStudio() {
       </div>
     </section>
   );
+
+  const renderOptionDetailDialog = () => {
+    const selectedOption = selectedOptionDetail ? enrichedOptionCards.find(card => card.id === selectedOptionDetail) : null;
+    if (!selectedOption) return null;
+
+    return (
+      <Dialog open={!!selectedOptionDetail} onOpenChange={() => setSelectedOptionDetail(null)}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto" data-testid="dialog-option-detail">
+          <DialogHeader>
+            <DialogTitle className="text-xl" data-testid={`dialog-title-${selectedOption.id}`}>{selectedOption.title}</DialogTitle>
+            <DialogDescription className="text-base" data-testid={`dialog-description-${selectedOption.id}`}>{selectedOption.what}</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            {/* Lens Badges */}
+            <div className="space-y-2">
+              <h4 className="font-semibold" data-testid={`seven-lenses-title-${selectedOption.id}`}>Seven Lenses Assessment</h4>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2" data-testid={`seven-lenses-grid-${selectedOption.id}`}>
+                {Object.entries(selectedOption.axes).map(([lens, value]) => (
+                  <div key={lens} className="flex items-center justify-between p-2 bg-muted/30 rounded">
+                    <span className="text-sm">{LENS_LABELS[lens as keyof typeof LENS_LABELS]}</span>
+                    <Badge variant="secondary">{value}/4</Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Timeline Meters */}
+            <div className="space-y-2">
+              <h4 className="font-semibold">Timeline & Effort</h4>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center">
+                  <div className="text-xs text-muted-foreground">Speed to Value</div>
+                  <div className="flex justify-center items-center gap-1" data-testid={`timeline-speed-${selectedOption.id}`}>
+                    {Array.from({ length: 4 }, (_, i) => (
+                      <div
+                        key={i}
+                        className={`w-3 h-3 rounded-full ${
+                          i < selectedOption.timelineMeters.speed
+                            ? "bg-green-500"
+                            : "bg-gray-200 dark:bg-gray-700"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-xs text-muted-foreground">Build Effort</div>
+                  <div className="flex justify-center items-center gap-1" data-testid={`timeline-build-${selectedOption.id}`}>
+                    {Array.from({ length: 4 }, (_, i) => (
+                      <div
+                        key={i}
+                        className={`w-3 h-3 rounded-full ${
+                          i < selectedOption.timelineMeters.buildEffort
+                            ? "bg-orange-500"
+                            : "bg-gray-200 dark:bg-gray-700"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-xs text-muted-foreground">Ops Burden</div>
+                  <div className="flex justify-center items-center gap-1" data-testid={`timeline-ops-${selectedOption.id}`}>
+                    {Array.from({ length: 4 }, (_, i) => (
+                      <div
+                        key={i}
+                        className={`w-3 h-3 rounded-full ${
+                          i < selectedOption.timelineMeters.ops
+                            ? "bg-red-500"
+                            : "bg-gray-200 dark:bg-gray-700"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Best For & Not Ideal */}
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <h4 className="font-semibold text-green-600">✓ Best for:</h4>
+                <ul className="space-y-1">
+                  {selectedOption.bestFor.map((item, idx) => (
+                    <li key={idx} className="text-sm">• {item}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className="space-y-2">
+                <h4 className="font-semibold text-orange-600">⚠ Not ideal when:</h4>
+                <ul className="space-y-1">
+                  {selectedOption.notIdeal.map((item, idx) => (
+                    <li key={idx} className="text-sm">• {item}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            {/* Prerequisites */}
+            <div className="space-y-2">
+              <h4 className="font-semibold">Prerequisites</h4>
+              <ul className="space-y-1">
+                {selectedOption.prerequisites.map((item, idx) => (
+                  <li key={idx} className="text-sm">• {item}</li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Data Needs */}
+            <div className="space-y-2">
+              <h4 className="font-semibold">Data Needs</h4>
+              <p className="text-sm text-muted-foreground">{selectedOption.dataNeeds}</p>
+            </div>
+
+            {/* Risks & Safety */}
+            <div className="space-y-2">
+              <h4 className="font-semibold text-red-600">Risks & Safety</h4>
+              <ul className="space-y-1">
+                {selectedOption.risks.map((item, idx) => (
+                  <li key={idx} className="text-sm">• {item}</li>
+                ))}
+              </ul>
+            </div>
+
+            {/* KPIs */}
+            <div className="space-y-2">
+              <h4 className="font-semibold">Key Performance Indicators</h4>
+              <ul className="space-y-1">
+                {selectedOption.kpis.map((item, idx) => (
+                  <li key={idx} className="text-sm">• {item}</li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Myth vs Reality */}
+            <div className="space-y-2 p-4 bg-muted/20 rounded-lg">
+              <h4 className="font-semibold">Myth vs Reality</h4>
+              <div className="space-y-2">
+                <p className="text-sm">
+                  <span className="font-medium text-red-600">Myth:</span> {selectedOption.myth.claim}
+                </p>
+                <p className="text-sm">
+                  <span className="font-medium text-green-600">Reality:</span> {selectedOption.myth.truth}
+                </p>
+              </div>
+            </div>
+
+            {/* Cautions */}
+            {selectedOption.cautions && selectedOption.cautions.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="font-semibold">Contextual Considerations</h4>
+                <div className="flex flex-wrap gap-2">
+                  {selectedOption.cautions.map((caution) => (
+                    <Badge key={caution} variant="outline" className="text-orange-600 border-orange-200">
+                      <Info className="w-3 h-3 mr-1" />
+                      {CAUTION_MESSAGES[caution as keyof typeof CAUTION_MESSAGES]}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  };
+
+  const renderSevenLensesRadar = (options: OptionCard[]) => {
+    const lensKeys = Object.keys(LENS_LABELS) as Array<keyof typeof LENS_LABELS>;
+    const angleStep = (2 * Math.PI) / lensKeys.length;
+    const radius = 80;
+    const centerX = 100;
+    const centerY = 100;
+
+    // Memoize expensive polar coordinate calculations
+    const { optionPaths, gridLines, axisLines } = useMemo(() => {
+      // Generate points for each option
+    const optionPaths = options.map((option, optionIndex) => {
+      const points = lensKeys.map((lens, index) => {
+        const angle = index * angleStep - Math.PI / 2; // Start from top
+        const value = option.axes[lens] / 4; // Normalize to 0-1
+        const x = centerX + Math.cos(angle) * radius * value;
+        const y = centerY + Math.sin(angle) * radius * value;
+        return `${x},${y}`;
+      }).join(' ');
+      
+      const colors = ['hsl(220, 70%, 50%)', 'hsl(160, 70%, 50%)'];
+      const fillColors = ['hsl(220, 70%, 50%, 0.15)', 'hsl(160, 70%, 50%, 0.15)'];
+      
+      return (
+        <g key={optionIndex}>
+          <polygon
+            points={points}
+            fill={fillColors[optionIndex]}
+            stroke={colors[optionIndex]}
+            strokeWidth="2"
+            strokeLinejoin="round"
+          />
+          {lensKeys.map((lens, index) => {
+            const angle = index * angleStep - Math.PI / 2;
+            const value = option.axes[lens] / 4;
+            const x = centerX + Math.cos(angle) * radius * value;
+            const y = centerY + Math.sin(angle) * radius * value;
+            return (
+              <circle
+                key={index}
+                cx={x}
+                cy={y}
+                r="3"
+                fill={colors[optionIndex]}
+              />
+            );
+          })}
+        </g>
+      );
+    });
+
+    // Grid lines
+    const gridLines = [1, 2, 3, 4].map(level => {
+      const points = lensKeys.map((_, index) => {
+        const angle = index * angleStep - Math.PI / 2;
+        const x = centerX + Math.cos(angle) * radius * (level / 4);
+        const y = centerY + Math.sin(angle) * radius * (level / 4);
+        return `${x},${y}`;
+      }).join(' ');
+      
+      return (
+        <polygon
+          key={level}
+          points={points}
+          fill="none"
+          stroke="hsl(var(--muted-foreground))"
+          strokeWidth="1"
+          opacity="0.3"
+        />
+      );
+    });
+
+    // Axis lines and labels
+    const axisLines = lensKeys.map((lens, index) => {
+      const angle = index * angleStep - Math.PI / 2;
+      const x2 = centerX + Math.cos(angle) * radius;
+      const y2 = centerY + Math.sin(angle) * radius;
+      const labelX = centerX + Math.cos(angle) * (radius + 20);
+      const labelY = centerY + Math.sin(angle) * (radius + 20);
+      
+      return (
+        <g key={index}>
+          <line
+            x1={centerX}
+            y1={centerY}
+            x2={x2}
+            y2={y2}
+            stroke="hsl(var(--muted-foreground))"
+            strokeWidth="1"
+            opacity="0.5"
+          />
+          <text
+            x={labelX}
+            y={labelY}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontSize="10"
+            fill="hsl(var(--foreground))"
+            className="text-xs"
+          >
+            {LENS_LABELS[lens].split(' ')[0]}
+          </text>
+        </g>
+      );
+    });
+
+    return { optionPaths, gridLines, axisLines };
+    }, [options, lensKeys, angleStep, radius, centerX, centerY]);
+
+    return (
+      <div className="flex justify-center">
+        <svg width="240" height="240" viewBox="0 0 200 200">
+          {gridLines}
+          {axisLines}
+          {optionPaths}
+        </svg>
+      </div>
+    );
+  };
+
+  const renderCompareDialog = () => {
+    if (!showCompareDialog || selectedOptions.length !== 2) return null;
+
+    const compareOptionsData = selectedOptions.map(id => 
+      enrichedOptionCards.find(card => card.id === id)!
+    );
+
+    return (
+      <Dialog open={showCompareDialog} onOpenChange={setShowCompareDialog}>
+        <DialogContent className="max-w-5xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Compare AI Solution Options</DialogTitle>
+            <DialogDescription>
+              Side-by-side comparison of {compareOptionsData[0].title} vs {compareOptionsData[1].title}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            {/* Seven Lenses Radar Chart */}
+            <div className="space-y-4">
+              <h4 className="font-semibold text-center">Seven Lenses Comparison</h4>
+              {renderSevenLensesRadar(compareOptionsData)}
+              
+              {/* Legend */}
+              <div className="flex justify-center gap-6">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-blue-500 rounded"></div>
+                  <span className="text-sm">{compareOptionsData[0].title}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-green-500 rounded"></div>
+                  <span className="text-sm">{compareOptionsData[1].title}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Side-by-Side Comparison */}
+            <div className="grid md:grid-cols-2 gap-6">
+              {compareOptionsData.map((option, index) => (
+                <div key={option.id} className="space-y-4">
+                  <div className="text-center p-4 bg-muted/30 rounded-lg">
+                    <h3 className="font-semibold text-lg">{option.title}</h3>
+                    <p className="text-sm text-muted-foreground mt-1">{option.what}</p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div>
+                      <h4 className="font-medium text-green-600 text-sm">✓ Best for:</h4>
+                      <ul className="text-xs space-y-1 mt-1">
+                        {option.bestFor.map((item, idx) => (
+                          <li key={idx}>• {item}</li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div>
+                      <h4 className="font-medium text-orange-600 text-sm">⚠ Not ideal when:</h4>
+                      <ul className="text-xs space-y-1 mt-1">
+                        {option.notIdeal.map((item, idx) => (
+                          <li key={idx}>• {item}</li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div>
+                      <h4 className="font-medium text-sm">Timeline:</h4>
+                      <div className="grid grid-cols-3 gap-2 mt-1">
+                        <div className="text-center">
+                          <div className="text-xs text-muted-foreground">Speed</div>
+                          <div className="flex justify-center items-center gap-0.5" data-testid={`compare-timeline-speed-${option.id}`}>
+                            {Array.from({ length: 4 }, (_, i) => (
+                              <div
+                                key={i}
+                                className={`w-2 h-2 rounded-full ${
+                                  i < option.timelineMeters.speed
+                                    ? "bg-green-500"
+                                    : "bg-gray-300 dark:bg-gray-600"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-xs text-muted-foreground">Build</div>
+                          <div className="flex justify-center items-center gap-0.5" data-testid={`compare-timeline-build-${option.id}`}>
+                            {Array.from({ length: 4 }, (_, i) => (
+                              <div
+                                key={i}
+                                className={`w-2 h-2 rounded-full ${
+                                  i < option.timelineMeters.buildEffort
+                                    ? "bg-orange-500"
+                                    : "bg-gray-300 dark:bg-gray-600"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-xs text-muted-foreground">Ops</div>
+                          <div className="flex justify-center items-center gap-0.5" data-testid={`compare-timeline-ops-${option.id}`}>
+                            {Array.from({ length: 4 }, (_, i) => (
+                              <div
+                                key={i}
+                                className={`w-2 h-2 rounded-full ${
+                                  i < option.timelineMeters.ops
+                                    ? "bg-red-500"
+                                    : "bg-gray-300 dark:bg-gray-600"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="font-medium text-sm">Key Risks:</h4>
+                      <ul className="text-xs space-y-1 mt-1">
+                        {option.risks.slice(0, 3).map((item, idx) => (
+                          <li key={idx}>• {item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Key Trade-offs Summary */}
+            <div className="p-4 bg-muted/20 rounded-lg">
+              <h4 className="font-semibold mb-2">Key Trade-offs in Your Context</h4>
+              <div className="text-sm space-y-1">
+                {session.goals?.includes('speed') && (
+                  <p>• <span className="font-medium">Speed Priority:</span> Consider the timeline differences between these options</p>
+                )}
+                {session.goals?.includes('compliance') && (
+                  <p>• <span className="font-medium">Compliance Focus:</span> Review risk profiles and assurance requirements</p>
+                )}
+                {contextProfile?.regulatory_intensity && contextProfile.regulatory_intensity >= 3 && (
+                  <p>• <span className="font-medium">Regulatory Environment:</span> Both options require HITL + assurance before scale</p>
+                )}
+                {contextProfile?.build_readiness && contextProfile.build_readiness <= 1 && (
+                  <p>• <span className="font-medium">Build Readiness:</span> Consider operational complexity differences</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  };
 
   const renderReflectionSection = () => (
     <section id="reflection" className="space-y-6">
@@ -534,6 +984,8 @@ export default function OptionsStudio() {
         {renderReflectionSection()}
         {renderExportSection()}
       </div>
+      {renderOptionDetailDialog()}
+      {renderCompareDialog()}
     </div>
   );
 }
