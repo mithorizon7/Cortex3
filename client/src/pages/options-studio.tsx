@@ -58,6 +58,53 @@ export default function OptionsStudio() {
     document.getElementById(section)?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const handleExportPDF = async () => {
+    try {
+      const { generateOptionsStudioPDF } = await import("@/lib/pdf-generator");
+      await generateOptionsStudioPDF({
+        session,
+        contextProfile,
+        enrichedOptionCards,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error("PDF export failed:", error);
+      alert("PDF export failed. Please try again.");
+    }
+  };
+
+  const handleExportJSON = () => {
+    try {
+      const exportData = {
+        optionsStudioSession: session,
+        contextProfile,
+        optionsViewed: session.optionsViewed.map(id => 
+          enrichedOptionCards.find(card => card.id === id)
+        ),
+        misconceptionsResults: session.misconceptionsAnswered,
+        reflections: session.reflections,
+        personalization: personalization,
+        exportedAt: new Date().toISOString(),
+        version: "options-studio-1.0"
+      };
+      
+      const dataStr = JSON.stringify(exportData, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `options-studio-summary-${Date.now()}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("JSON export failed:", error);
+      alert("JSON export failed. Please try again.");
+    }
+  };
+
   const renderIntroSection = () => (
     <section id="intro" className="space-y-8">
       <div className="text-center space-y-4">
@@ -965,10 +1012,23 @@ export default function OptionsStudio() {
         </CardContent>
       </Card>
 
-      <div className="text-center">
-        <Button size="lg" data-testid="button-download-summary">
+      <div className="text-center space-x-4">
+        <Button 
+          size="lg" 
+          onClick={handleExportPDF}
+          data-testid="button-download-pdf"
+        >
           <Download className="mr-2 h-5 w-5" />
-          Download Your Options Studio Summary
+          Download PDF Summary
+        </Button>
+        <Button 
+          size="lg" 
+          variant="outline"
+          onClick={handleExportJSON}
+          data-testid="button-download-json"
+        >
+          <Download className="mr-2 h-5 w-5" />
+          Download JSON Data
         </Button>
       </div>
     </section>
