@@ -37,7 +37,7 @@ import {
   Star
 } from "lucide-react";
 import type { Assessment, ContextProfile, ExtendedOptionCard } from "@shared/schema";
-import { extendMisconceptionQuestion } from "@shared/schema";
+import { extendMisconceptionQuestion, extendOptionCard } from "@shared/schema";
 import { OPTION_CARDS, MISCONCEPTION_QUESTIONS, LENS_LABELS } from "@shared/options-studio-data";
 import { handleExportPDF, handleExportJSON } from "@/lib/pdf-generator";
 
@@ -65,7 +65,7 @@ const LENS_ICONS = {
 };
 
 interface OptionCardProps {
-  option: OptionCard;
+  option: ExtendedOptionCard;
   isSelected: boolean;
   onToggleSelect: () => void;
   emphasizedLenses: string[];
@@ -264,7 +264,7 @@ function OptionsStudioPageContent() {
 
   // Get personalized data based on context profile
   const contextProfile = assessment?.contextProfile;
-  const personalizedCards = contextProfile ? getPersonalizedCards(contextProfile) : OPTION_CARDS;
+  const personalizedCards = contextProfile ? getPersonalizedCards(contextProfile) : OPTION_CARDS.map(card => extendOptionCard(card));
   const cautionMessages = contextProfile ? getCautionMessages(contextProfile) : [];
   const emphasizedLenses = contextProfile ? getEmphasizedLenses(contextProfile) : [];
 
