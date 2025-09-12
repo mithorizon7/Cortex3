@@ -3,8 +3,9 @@ import type {
   OptionsStudioSession, 
   ContextProfile, 
   OptionCard, 
-  LensValues 
+  ExtendedOptionCard
 } from '@shared/schema';
+import { extendOptionCard } from '@shared/schema';
 import { 
   OPTION_CARDS, 
   MISCONCEPTION_QUESTIONS, 
@@ -30,7 +31,7 @@ export interface UseOptionsStudioReturn {
   markCompleted: () => void;
   
   // Personalization Logic
-  getPersonalizedCards: (contextProfile: ContextProfile) => OptionCard[];
+  getPersonalizedCards: (contextProfile: ContextProfile) => ExtendedOptionCard[];
   getCautionMessages: (contextProfile: ContextProfile) => string[];
   getEmphasizedLenses: (contextProfile: ContextProfile) => string[];
   
@@ -40,7 +41,7 @@ export interface UseOptionsStudioReturn {
   
   // Computed Values
   sessionProgress: number;
-  availableOptions: OptionCard[];
+  availableOptions: ExtendedOptionCard[];
   misconceptionQuestions: typeof MISCONCEPTION_QUESTIONS;
 }
 
@@ -94,8 +95,9 @@ export function useOptionsStudio(): UseOptionsStudioReturn {
   }, []);
 
   // Personalization Logic
-  const getPersonalizedCards = useCallback((contextProfile: ContextProfile): OptionCard[] => {
-    const cards = [...OPTION_CARDS];
+  const getPersonalizedCards = useCallback((contextProfile: ContextProfile): ExtendedOptionCard[] => {
+    // Convert to extended cards with UI properties
+    const cards = OPTION_CARDS.map(card => extendOptionCard(card));
     
     // Sort cards based on context profile relevance
     return cards.sort((a, b) => {
@@ -182,7 +184,7 @@ export function useOptionsStudio(): UseOptionsStudioReturn {
     }
     
     // Remove duplicates and return
-    return [...new Set(emphasized)];
+    return Array.from(new Set(emphasized));
   }, []);
 
   // Export Functions
@@ -221,7 +223,7 @@ export function useOptionsStudio(): UseOptionsStudioReturn {
     return (completedSteps / totalSteps) * 100;
   }, [useCase, goals, misconceptionResponses, comparedOptions, reflectionPrompts]);
 
-  const availableOptions = useMemo(() => OPTION_CARDS, []);
+  const availableOptions = useMemo(() => OPTION_CARDS.map(card => extendOptionCard(card)), []);
   const misconceptionQuestions = useMemo(() => MISCONCEPTION_QUESTIONS, []);
 
   return {
@@ -258,74 +260,74 @@ export function useOptionsStudio(): UseOptionsStudioReturn {
 }
 
 // Helper function to calculate card relevance based on context profile
-function calculateCardRelevance(card: OptionCard, profile: ContextProfile): number {
+function calculateCardRelevance(card: ExtendedOptionCard, profile: ContextProfile): number {
   let score = 0;
   const lensValues = card.lensValues;
   
   // High regulatory intensity favors lower risk solutions
   if (profile.regulatory_intensity >= 3) {
-    score += (6 - lensValues.Risk) * 2; // Inverse scoring for risk
+    score += (6 - lensValues.riskLoad) * 2; // Inverse scoring for risk
   }
   
   // High data sensitivity favors solutions with good data leverage but low risk
   if (profile.data_sensitivity >= 3) {
-    score += lensValues.Data * 1.5;
-    score += (6 - lensValues.Risk) * 1.5;
+    score += lensValues.dataLeverage * 1.5;
+    score += (6 - lensValues.riskLoad) * 1.5;
   }
   
   // High safety criticality heavily penalizes risky solutions
   if (profile.safety_criticality >= 3) {
-    score += (6 - lensValues.Risk) * 3;
-    score += (6 - lensValues.Ops) * 1.5; // Lower operational burden preferred
+    score += (6 - lensValues.riskLoad) * 3;
+    score += (6 - lensValues.opsBurden) * 1.5; // Lower operational burden preferred
   }
   
   // High brand exposure favors reliable, low-risk solutions
   if (profile.brand_exposure >= 3) {
-    score += (6 - lensValues.Risk) * 2;
+    score += (6 - lensValues.riskLoad) * 2;
   }
   
   // High clock speed favors fast implementation
   if (profile.clock_speed >= 3) {
-    score += lensValues.Speed * 2;
+    score += lensValues.speed * 2;
   }
   
   // Low latency needs fast solutions
   if (profile.latency_edge >= 3) {
-    score += lensValues.Speed * 1.5;
+    score += lensValues.speed * 1.5;
   }
   
   // High scale throughput considerations
   if (profile.scale_throughput >= 3) {
-    score += (6 - lensValues.Ops) * 1.5; // Lower operational burden
-    score += (6 - lensValues.Cost) * 1; // Consider cost implications
+    score += (6 - lensValues.opsBurden) * 1.5; // Lower operational burden
+    score += (6 - lensValues.costShape) * 1; // Consider cost implications
   }
   
   // High data advantage favors solutions that can leverage data
   if (profile.data_advantage >= 3) {
-    score += lensValues.Data * 2;
+    score += lensValues.dataLeverage * 2;
   }
   
   // Low build readiness favors ready solutions with low customization needs
   if (profile.build_readiness <= 1) {
-    score += lensValues.Speed * 2;
-    score += (6 - lensValues.Custom) * 1.5; // Less customization preferred
-    score += (6 - lensValues.Ops) * 1.5; // Lower operational burden
+    score += lensValues.speed * 2;
+    score += (6 - lensValues.control) * 1.5; // Less customization preferred
+    score += (6 - lensValues.opsBurden) * 1.5; // Lower operational burden
   }
   
   // High finops priority considers cost heavily
   if (profile.finops_priority >= 3) {
-    score += (6 - lensValues.Cost) * 2.5;
+    score += (6 - lensValues.costShape) * 2.5;
   }
   
   // Procurement constraints favor portable solutions
   if (profile.procurement_constraints) {
-    score += (6 - lensValues.Lock) * 2;
+    score += lensValues.portability * 2;
   }
   
   // Edge operations favor low operational burden and speed
   if (profile.edge_operations) {
-    score += (6 - lensValues.Ops) * 2;
-    score += lensValues.Speed * 1.5;
+    score += (6 - lensValues.opsBurden) * 2;
+    score += lensValues.speed * 1.5;
   }
   
   // Category preferences based on build readiness

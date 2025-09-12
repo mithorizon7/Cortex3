@@ -13,462 +13,505 @@ export const LENS_LABELS = [
 
 // 9 Option Cards for AI implementation approaches
 export const OPTION_CARDS: OptionCard[] = [
-  // READY SOLUTIONS
+  // 1. Off-the-Shelf AI Apps
   {
-    id: "off-shelf-ai",
-    title: "Off-the-Shelf AI Apps",
-    shortDescription: "Ready-to-use AI applications like ChatGPT, Notion AI, or GitHub Copilot",
-    fullDescription: "Consumer and enterprise AI applications that require no setup or technical implementation. These tools offer immediate productivity gains with minimal learning curve and zero infrastructure requirements.",
-    pros: [
-      "Immediate availability with no setup time",
-      "No technical expertise required",
-      "Continuously updated with latest AI advances",
-      "Low cost of entry",
-      "Proven reliability and performance"
-    ],
-    cons: [
-      "Limited customization options",
-      "No access to your proprietary data",
-      "Potential vendor dependency",
-      "Generic outputs not tailored to your domain",
-      "Data privacy concerns with third-party tools"
-    ],
+    id: "off_the_shelf_apps",
+    title: "Off-the-Shelf AI Apps (copilots, vertical SaaS)",
+    what: "Ready-made AI inside productivity or line-of-business tools.",
     bestFor: [
-      "Quick productivity wins for knowledge workers",
-      "Organizations testing AI value before larger investments",
-      "Use cases where generic AI capabilities are sufficient",
-      "Teams without technical AI expertise"
+      "Fast productivity uplift and drafting",
+      "Low-risk internal tasks and experimentation",
+      "Broad enablement across roles"
     ],
-    examples: [
-      "ChatGPT for content creation and analysis",
-      "GitHub Copilot for code assistance",
-      "Notion AI for document enhancement",
-      "Grammarly for writing improvement"
+    notIdeal: [
+      "Deep domain reasoning or custom UX is needed",
+      "Strict residency or bespoke security controls required"
     ],
-    category: "ready",
-    lensValues: {
-      Speed: 5,
-      Custom: 2,
-      Data: 1,
-      Risk: 2,
-      Ops: 1,
-      Lock: 4,
-      Cost: 2
-    }
+    prerequisites: [
+      "Usage policy and guardrails",
+      "Onboarding guides and examples",
+      "Basic monitoring of adoption/incidents"
+    ],
+    timelineMeters: {
+      speed: 4,
+      buildEffort: 1,
+      ops: 1
+    },
+    dataNeeds: "None beyond typical app content; avoid sensitive data unless enterprise terms cover it.",
+    risks: [
+      "Vendor terms and data-use defaults",
+      "Prompt hygiene; misrouting sensitive content",
+      "Shadow usage without enablement"
+    ],
+    kpis: [
+      "Adoption in target roles",
+      "Time saved per task / rework rate"
+    ],
+    myth: {
+      claim: "Off-the-shelf is toy-grade.",
+      truth: "Often the fastest ROI and a strong baseline."
+    },
+    axes: {
+      speed: 4,
+      control: 1,
+      dataLeverage: 1,
+      riskLoad: 1,
+      opsBurden: 1,
+      portability: 2,
+      costShape: 3
+    },
+    cautions: ["high_sensitivity", "regulated"]
   },
+
+  // 2. API Orchestration
   {
-    id: "api-orchestration",
-    title: "API Orchestration",
-    shortDescription: "Workflow automation using OpenAI, Claude, or other LLM APIs",
-    fullDescription: "Building custom workflows that orchestrate multiple AI API calls to create sophisticated automation. This approach combines the power of leading AI models with your business logic to create tailored solutions.",
-    pros: [
-      "Access to cutting-edge AI models",
-      "Moderate customization through prompt engineering",
-      "Scalable infrastructure handled by providers",
-      "Rapid prototyping and iteration",
-      "Integration with existing business systems"
-    ],
-    cons: [
-      "Ongoing API costs that scale with usage",
-      "Limited control over model behavior",
-      "Dependency on external service availability",
-      "Data leaves your infrastructure",
-      "Rate limiting and quotas"
-    ],
+    id: "api_orchestration",
+    title: "API Orchestration & Prompt Libraries (no training)",
+    what: "Call foundation model APIs from your systems; reusable prompts; function calling.",
     bestFor: [
-      "Automating complex business processes",
-      "Applications requiring high-quality language understanding",
-      "Prototyping AI features before larger investments",
-      "Teams with software development capabilities"
+      "Integrating AI into existing apps and workflows",
+      "Controlled logging/costs with simple evals",
+      "Tool use (formatting, extraction, enrichment)"
     ],
-    examples: [
-      "Customer service chatbots with OpenAI GPT-4",
-      "Document processing workflows with Claude",
-      "Content generation pipelines",
-      "Automated research and analysis tools"
+    notIdeal: [
+      "Outputs must be grounded in proprietary knowledge (use RAG)"
     ],
-    category: "ready",
-    lensValues: {
-      Speed: 4,
-      Custom: 3,
-      Data: 2,
-      Risk: 3,
-      Ops: 2,
-      Lock: 3,
-      Cost: 3
-    }
+    prerequisites: [
+      "Basic dev capacity; logging/alerts",
+      "Token budgeting/quotas",
+      "Evaluation harness for prompts"
+    ],
+    timelineMeters: {
+      speed: 3,
+      buildEffort: 2,
+      ops: 2
+    },
+    dataNeeds: "Operational inputs only; no training corpus.",
+    risks: [
+      "Rate limits/quotas; spend spikes",
+      "PII handling in prompts/logs",
+      "Model version drift without tests"
+    ],
+    kpis: [
+      "Cost per call; p95 latency",
+      "Success rate per use-case"
+    ],
+    myth: {
+      claim: "Prompting is guesswork.",
+      truth: "Templates + evals make it engineering, not magic."
+    },
+    axes: {
+      speed: 3,
+      control: 2,
+      dataLeverage: 2,
+      riskLoad: 2,
+      opsBurden: 2,
+      portability: 3,
+      costShape: 3
+    },
+    cautions: ["regulated", "high_sensitivity"]
   },
+
+  // 3. RAG
   {
-    id: "rag-system",
-    title: "RAG (Retrieval-Augmented Generation)",
-    shortDescription: "Vector databases combined with LLMs for intelligent document and data retrieval",
-    fullDescription: "A hybrid approach that combines your proprietary documents and data with large language models. Vector databases store your content as embeddings, allowing AI to retrieve relevant context and generate informed responses based on your specific knowledge base.",
-    pros: [
-      "Leverages your proprietary knowledge and documents",
-      "More accurate responses grounded in your data",
-      "Customizable retrieval and ranking strategies",
-      "Relatively quick to implement with existing tools",
-      "Can update knowledge base without retraining models"
-    ],
-    cons: [
-      "Requires careful data preparation and chunking",
-      "Quality depends heavily on document quality",
-      "Complex optimization of retrieval parameters",
-      "Ongoing maintenance of vector databases",
-      "May hallucinate when retrieval is insufficient"
-    ],
+    id: "rag",
+    title: "Retrieval-Augmented Generation (RAG)",
+    what: "The model retrieves your own content as context before generating an answer.",
     bestFor: [
-      "Knowledge management and Q&A systems",
-      "Technical documentation and support",
-      "Research and analysis applications",
-      "Organizations with substantial document libraries"
+      "Policies/FAQs; internal knowledge assistance",
+      "Domain Q&A and search + summarization"
     ],
-    examples: [
-      "Internal knowledge base chatbots",
-      "Technical documentation assistants",
-      "Legal document analysis systems",
-      "Research paper summarization tools"
+    notIdeal: [
+      "You need new capabilities not present in base model (consider fine-tune)"
     ],
-    category: "ready",
-    lensValues: {
-      Speed: 3,
-      Custom: 4,
-      Data: 4,
-      Risk: 3,
-      Ops: 3,
-      Lock: 3,
-      Cost: 3
-    }
+    prerequisites: [
+      "Curated corpus; indexing & chunking strategy",
+      "Access controls mirrored in retrieval",
+      "Retrieval/e2e evals (precision/recall; factuality)"
+    ],
+    timelineMeters: {
+      speed: 3,
+      buildEffort: 3,
+      ops: 3
+    },
+    dataNeeds: "Rights-clear documents; refresh cadence for updates.",
+    risks: [
+      "Data leakage in indices",
+      "Stale or conflicting content",
+      "Over-trust without citations"
+    ],
+    kpis: [
+      "Retrieval precision/recall",
+      "Answer factuality / citation coverage"
+    ],
+    myth: {
+      claim: "RAG removes hallucinations.",
+      truth: "It reduces them when retrieval is good; still verify."
+    },
+    axes: {
+      speed: 3,
+      control: 3,
+      dataLeverage: 4,
+      riskLoad: 3,
+      opsBurden: 3,
+      portability: 3,
+      costShape: 3
+    },
+    cautions: ["high_sensitivity", "regulated"]
   },
-  // BUILD SOLUTIONS
+
+  // 4. Agentic Workflows
   {
-    id: "agentic-workflows",
-    title: "Agentic Workflows",
-    shortDescription: "Multi-step AI agents that can plan, execute, and adapt their approach",
-    fullDescription: "Sophisticated AI systems that can break down complex tasks into steps, use tools and APIs, and adapt their approach based on results. These agents can autonomously navigate multi-step processes and handle complex decision-making scenarios.",
-    pros: [
-      "Handles complex, multi-step processes autonomously",
-      "Can adapt strategy based on intermediate results",
-      "Integrates with multiple tools and data sources",
-      "Highly customizable behavior and decision logic",
-      "Potential for significant automation of knowledge work"
-    ],
-    cons: [
-      "Complex architecture requiring significant development",
-      "Difficult to predict and control agent behavior",
-      "Higher computational and API costs",
-      "Requires extensive testing and validation",
-      "May require human oversight and intervention"
-    ],
+    id: "agents",
+    title: "Agentic Workflows & Orchestrators",
+    what: "Multi-step LLM workflows that call tools/APIs, plan subtasks, and verify steps.",
     bestFor: [
-      "Complex business process automation",
-      "Research and analysis tasks requiring multiple steps",
-      "Customer service scenarios with varied workflows",
-      "Applications where adaptability is crucial"
+      "Complex processes (intake → classify → retrieve → draft → QA)",
+      "Operations triage, case handling, multi-tool flows"
     ],
-    examples: [
-      "Automated market research agents",
-      "Multi-step customer onboarding systems",
-      "Intelligent project management assistants",
-      "Automated compliance checking workflows"
+    notIdeal: [
+      "Tasks must be fully deterministic with strict audit trails"
     ],
-    category: "build",
-    lensValues: {
-      Speed: 2,
-      Custom: 5,
-      Data: 4,
-      Risk: 4,
-      Ops: 4,
-      Lock: 4,
-      Cost: 4
-    }
+    prerequisites: [
+      "Stable tool APIs and schemas",
+      "Step-wise evals and guardrails",
+      "Incident runbook; kill-switches"
+    ],
+    timelineMeters: {
+      speed: 2,
+      buildEffort: 3,
+      ops: 3
+    },
+    dataNeeds: "Tool schemas; optional RAG for knowledge.",
+    risks: [
+      "Cascading failures across steps",
+      "Prompt-injection via tools/data",
+      "Harder debugging without tracing"
+    ],
+    kpis: [
+      "End-to-end success rate",
+      "Intervention rate / step accuracy"
+    ],
+    myth: {
+      claim: "Agents are autonomous.",
+      truth: "Effective agents are structured workflows, not free roam."
+    },
+    axes: {
+      speed: 2,
+      control: 4,
+      dataLeverage: 3,
+      riskLoad: 4,
+      opsBurden: 3,
+      portability: 2,
+      costShape: 2
+    },
+    cautions: ["regulated", "high_sensitivity", "low_readiness"]
   },
+
+  // 5. Light Fine-Tuning
   {
-    id: "light-fine-tuning",
-    title: "Light Fine-Tuning",
-    shortDescription: "Parameter-efficient training methods like LoRA or prompt tuning",
-    fullDescription: "Advanced techniques that adapt pre-trained models to your specific use case without full retraining. Methods like LoRA (Low-Rank Adaptation) modify only a small subset of model parameters, making customization more efficient and cost-effective.",
-    pros: [
-      "Highly customized model behavior for your domain",
-      "More efficient than full fine-tuning",
-      "Can achieve superior performance on specific tasks",
-      "Retains general model capabilities",
-      "Relatively lower computational requirements"
-    ],
-    cons: [
-      "Requires machine learning expertise",
-      "Need substantial labeled training data",
-      "Complex optimization and hyperparameter tuning",
-      "Longer development cycles",
-      "Risk of overfitting to training data"
-    ],
+    id: "light_ft",
+    title: "Light Fine-Tuning (LoRA / adapters)",
+    what: "Small, targeted updates so a model matches style, format, or narrow domain behaviors.",
     bestFor: [
-      "Domain-specific applications with unique terminology",
-      "Tasks requiring specialized knowledge",
-      "Applications where generic models perform poorly",
-      "Organizations with ML expertise and training data"
+      "Consistent formatting and tone/brand",
+      "Routine, structured outputs"
     ],
-    examples: [
-      "Medical diagnosis assistants trained on clinical data",
-      "Legal document analysis for specific jurisdictions",
-      "Financial analysis tools for specialized markets",
-      "Technical support bots for specific products"
+    notIdeal: [
+      "You lack labeled examples",
+      "You need factual grounding (use RAG)"
     ],
-    category: "build",
-    lensValues: {
-      Speed: 2,
-      Custom: 4,
-      Data: 5,
-      Risk: 4,
-      Ops: 3,
-      Lock: 3,
-      Cost: 4
-    }
+    prerequisites: [
+      "Labeled examples; eval harness",
+      "Rollout/rollback plan",
+      "IP/rights for training data"
+    ],
+    timelineMeters: {
+      speed: 2,
+      buildEffort: 3,
+      ops: 3
+    },
+    dataNeeds: "Rights-clear, high-quality examples; continuous curation.",
+    risks: [
+      "Overfitting; model/weights drift",
+      "Maintenance as base models evolve",
+      "Legal/IP questions on data"
+    ],
+    kpis: [
+      "Exact match / rubric scores",
+      "Editing time reduction"
+    ],
+    myth: {
+      claim: "Fine-tuning fixes hallucinations.",
+      truth: "Often better for style/format; ground facts with RAG."
+    },
+    axes: {
+      speed: 2,
+      control: 3,
+      dataLeverage: 2,
+      riskLoad: 3,
+      opsBurden: 3,
+      portability: 2,
+      costShape: 2
+    },
+    cautions: ["low_readiness", "high_sensitivity", "regulated"]
   },
+
+  // 6. Heavy Fine-Tuning
   {
-    id: "heavy-fine-tuning",
-    title: "Heavy Fine-Tuning",
-    shortDescription: "Full model training and retraining on your specific datasets",
-    fullDescription: "Comprehensive model training that adjusts all parameters of a foundation model using your proprietary data. This approach offers maximum customization but requires significant computational resources and machine learning expertise.",
-    pros: [
-      "Maximum control over model behavior and capabilities",
-      "Can achieve best-in-class performance for specific domains",
-      "Complete customization of model responses and style",
-      "Potential for breakthrough performance on niche tasks",
-      "Full intellectual property ownership of the fine-tuned model"
-    ],
-    cons: [
-      "Extremely resource-intensive and expensive",
-      "Requires world-class ML engineering capabilities",
-      "Very long development and training cycles",
-      "High risk of training instability and failures",
-      "Ongoing maintenance and retraining needs"
-    ],
+    id: "heavy_ft",
+    title: "Heavy Fine-Tuning / Domain Model",
+    what: "Extensive training to adapt a base model for a specific domain/task.",
     bestFor: [
-      "Mission-critical applications requiring maximum performance",
-      "Highly specialized domains with unique requirements",
-      "Organizations with substantial ML resources and expertise",
-      "Applications where competitive advantage depends on AI superiority"
+      "Specialized reasoning or non-English domains",
+      "Strict latency/size constraints via smaller models"
     ],
-    examples: [
-      "Proprietary trading algorithms for financial markets",
-      "Advanced medical imaging analysis systems",
-      "Specialized scientific research applications",
-      "Custom language models for unique domains"
+    notIdeal: [
+      "Limited clean, labeled datasets",
+      "Immature MLOps/governance/IR"
     ],
-    category: "build",
-    lensValues: {
-      Speed: 1,
-      Custom: 5,
-      Data: 5,
-      Risk: 5,
-      Ops: 5,
-      Lock: 4,
-      Cost: 5
-    }
+    prerequisites: [
+      "Significant labeled data; ML team",
+      "Safety testing; governance; IR plan",
+      "Sustained budget and roadmap"
+    ],
+    timelineMeters: {
+      speed: 1,
+      buildEffort: 4,
+      ops: 4
+    },
+    dataNeeds: "Large, high-signal, rights-clear datasets; ongoing refresh.",
+    risks: [
+      "High cost; obsolescence vs frontier",
+      "Compliance review overhead",
+      "Vendor/model architecture lock-in"
+    ],
+    kpis: [
+      "Task accuracy vs baseline",
+      "Stability under drift; unit economics"
+    ],
+    myth: {
+      claim: "We need our own model to compete.",
+      truth: "Only if differentiation + data + readiness all align."
+    },
+    axes: {
+      speed: 1,
+      control: 4,
+      dataLeverage: 4,
+      riskLoad: 4,
+      opsBurden: 4,
+      portability: 1,
+      costShape: 1
+    },
+    cautions: ["low_readiness", "regulated", "high_sensitivity"]
   },
-  // CUSTOM SOLUTIONS
+
+  // 7. Private Hosting
   {
-    id: "private-hosting",
-    title: "Private Hosting",
-    shortDescription: "On-premise model deployment for maximum security and control",
-    fullDescription: "Deploying AI models entirely within your own infrastructure, ensuring complete data privacy and security. This approach gives you full control over the AI pipeline while meeting the strictest compliance and security requirements.",
-    pros: [
-      "Complete data privacy and security control",
-      "No external dependencies or vendor lock-in",
-      "Meets strictest compliance requirements",
-      "Customizable infrastructure and deployment",
-      "Predictable costs independent of usage volume"
-    ],
-    cons: [
-      "Extremely high infrastructure and maintenance costs",
-      "Requires deep technical expertise across the stack",
-      "Limited access to latest model innovations",
-      "Complex scaling and performance optimization",
-      "Significant ongoing operational overhead"
-    ],
+    id: "private_hosting",
+    title: "Private Hosting / VPC",
+    what: "Run models in your controlled environment for privacy, control, or SLAs.",
     bestFor: [
-      "Highly regulated industries (finance, healthcare, defense)",
-      "Applications processing extremely sensitive data",
-      "Organizations with strict data sovereignty requirements",
-      "Large enterprises with existing ML infrastructure"
+      "Sensitive data; isolation needs",
+      "Custom SLAs and network policies"
     ],
-    examples: [
-      "Banking fraud detection systems",
-      "Healthcare patient data analysis",
-      "Government intelligence applications",
-      "Enterprise document processing with IP protection"
+    notIdeal: [
+      "Limited infra/ops capacity",
+      "Need frontier capabilities updated frequently"
     ],
-    category: "custom",
-    lensValues: {
-      Speed: 1,
-      Custom: 4,
-      Data: 3,
-      Risk: 1,
-      Ops: 5,
-      Lock: 1,
-      Cost: 5
-    }
+    prerequisites: [
+      "Infra budget; MLOps; security posture",
+      "Monitoring, patching, upgrades"
+    ],
+    timelineMeters: {
+      speed: 2,
+      buildEffort: 3,
+      ops: 4
+    },
+    dataNeeds: "None to host; more if tuning/training.",
+    risks: [
+      "Patch/upgrade debt",
+      "Availability/latency obligations shift to you",
+      "Under-provisioned failover"
+    ],
+    kpis: [
+      "Uptime and p95 latency",
+      "Security incidents; capacity headroom"
+    ],
+    myth: {
+      claim: "On-prem is automatically safer.",
+      truth: "Safety = process & controls; hosting shifts responsibility to you."
+    },
+    axes: {
+      speed: 2,
+      control: 3,
+      dataLeverage: 2,
+      riskLoad: 3,
+      opsBurden: 4,
+      portability: 3,
+      costShape: 2
+    },
+    cautions: ["high_sensitivity", "regulated", "edge"]
   },
+
+  // 8. Edge Small Models
   {
-    id: "edge-models",
-    title: "Small Models at Edge",
-    shortDescription: "Lightweight AI models running locally on devices or edge infrastructure",
-    fullDescription: "Deploying smaller, efficient AI models directly on user devices or edge computing infrastructure. This approach prioritizes speed, privacy, and offline capability over maximum AI sophistication.",
-    pros: [
-      "Ultra-low latency with local processing",
-      "Complete data privacy with no external transmission",
-      "Works offline without internet connectivity",
-      "No ongoing API or cloud costs",
-      "Highly scalable across distributed devices"
-    ],
-    cons: [
-      "Limited model capabilities compared to large models",
-      "Complex deployment and update management",
-      "Device compatibility and performance constraints",
-      "Requires optimization for different hardware platforms",
-      "May need sophisticated model compression techniques"
-    ],
+    id: "edge_small_models",
+    title: "Small Models at the Edge",
+    what: "Deploy compact models on devices/near data for latency, privacy, or offline use.",
     bestFor: [
-      "Real-time applications requiring instant responses",
-      "Mobile and IoT applications with connectivity constraints",
-      "Privacy-sensitive consumer applications",
-      "Applications with high volume and cost sensitivity"
+      "Field ops, manufacturing, retail POS",
+      "Low-latency or intermittent connectivity"
     ],
-    examples: [
-      "Mobile keyboard autocomplete and suggestions",
-      "Real-time video analysis for security cameras",
-      "Offline voice assistants for smart speakers",
-      "Edge-based quality control in manufacturing"
+    notIdeal: [
+      "Need frontier model capabilities updated weekly"
     ],
-    category: "custom",
-    lensValues: {
-      Speed: 3,
-      Custom: 3,
-      Data: 2,
-      Risk: 1,
-      Ops: 4,
-      Lock: 1,
-      Cost: 3
-    }
+    prerequisites: [
+      "Model/runtime selection; OTA update plan",
+      "Telemetry and rollback strategy"
+    ],
+    timelineMeters: {
+      speed: 2,
+      buildEffort: 3,
+      ops: 4
+    },
+    dataNeeds: "Optional on-device tuning; minimize sensitive capture.",
+    risks: [
+      "Fleet inconsistency; upgrade debt",
+      "Physical access risks",
+      "Debugging without full logs"
+    ],
+    kpis: [
+      "p95 latency; offline success rate",
+      "Update failure rate / rollback count"
+    ],
+    myth: {
+      claim: "Edge is less safe.",
+      truth: "Different safety: more control, more patch discipline."
+    },
+    axes: {
+      speed: 2,
+      control: 3,
+      dataLeverage: 2,
+      riskLoad: 3,
+      opsBurden: 4,
+      portability: 2,
+      costShape: 2
+    },
+    cautions: ["edge", "regulated"]
   },
+
+  // 9. Classical ML, Rules & RPA
   {
-    id: "classical-ml",
-    title: "Classical ML",
-    shortDescription: "Traditional machine learning algorithms optimized for specific tasks",
-    fullDescription: "Proven machine learning techniques including decision trees, neural networks, and statistical models that are specifically designed and optimized for particular use cases. While not using the latest AI advances, these approaches offer reliability, interpretability, and efficiency.",
-    pros: [
-      "Highly interpretable and explainable results",
-      "Proven reliability and predictable behavior",
-      "Lower computational requirements and costs",
-      "Complete control over feature engineering",
-      "Well-understood debugging and optimization techniques"
-    ],
-    cons: [
-      "Limited to narrow, specific use cases",
-      "Requires extensive manual feature engineering",
-      "Cannot handle complex natural language or generative tasks",
-      "May require multiple models for different aspects",
-      "Less adaptable to changing requirements"
-    ],
+    id: "classical_ml_rules_rpa",
+    title: "Classical ML, Rules & RPA",
+    what: "Regression/classifiers, rule engines, extract/transform, and automation of deterministic tasks.",
     bestFor: [
-      "Structured data analysis and prediction tasks",
-      "Applications requiring explainable decisions",
-      "High-volume, low-latency prediction scenarios",
-      "Organizations with traditional ML expertise"
+      "Structured, repeatable decisions",
+      "Forms processing; validations; deterministic checks"
     ],
-    examples: [
-      "Credit scoring and risk assessment models",
-      "Recommendation systems for e-commerce",
-      "Predictive maintenance for industrial equipment",
-      "Fraud detection for financial transactions"
+    notIdeal: [
+      "Open-ended generation or multimodal reasoning"
     ],
-    category: "custom",
-    lensValues: {
-      Speed: 2,
-      Custom: 5,
-      Data: 5,
-      Risk: 2,
-      Ops: 3,
-      Lock: 1,
-      Cost: 2
-    }
+    prerequisites: [
+      "Process mapping; data schema; feature engineering"
+    ],
+    timelineMeters: {
+      speed: 3,
+      buildEffort: 2,
+      ops: 2
+    },
+    dataNeeds: "Labeled/tabular data for ML; rules specs for RPA.",
+    risks: [
+      "Brittle rules; process drift",
+      "Blind spots without monitoring"
+    ],
+    kpis: [
+      "Precision/recall or F1 (ML)",
+      "Straight-through-processing rate; exception volume"
+    ],
+    myth: {
+      claim: "LLMs replace earlier techniques.",
+      truth: "Hybrid systems win: rules/ML for structure + LLMs for judgment."
+    },
+    axes: {
+      speed: 3,
+      control: 3,
+      dataLeverage: 3,
+      riskLoad: 2,
+      opsBurden: 2,
+      portability: 4,
+      costShape: 3
+    },
+    cautions: []
   }
 ];
 
-// 5 Misconception Questions for AI implementation understanding
+// 6 Misconception Questions from reference document
 export const MISCONCEPTION_QUESTIONS: MisconceptionQuestion[] = [
   {
-    id: "fine-tuning-always-better",
-    question: "Fine-tuning an AI model on your data always produces better results than using a general-purpose model",
+    id: "mc_fix_hallu",
+    statement: "Fine-tuning fixes hallucinations.",
     correctAnswer: false,
-    explanation: "Fine-tuning can actually hurt performance if you don't have enough high-quality training data or if the base model already handles your use case well. Many applications achieve excellent results with prompt engineering and RAG systems using general-purpose models."
+    explanation: "Fine-tuning is best for style/format/domain behavior; use RAG for factual grounding.",
+    links: ["light_ft", "rag"]
   },
   {
-    id: "more-data-always-better", 
-    question: "More training data always leads to better AI model performance",
+    id: "mc_need_own_model",
+    statement: "We need our own model to be competitive.",
     correctAnswer: false,
-    explanation: "Data quality matters more than quantity. Poor quality, biased, or irrelevant data can actually degrade model performance. Additionally, models can overfit to large datasets, and there are often diminishing returns beyond a certain data size."
+    explanation: "Most value comes from Buy → API → RAG; consider heavy tuning only if differentiation, data, and readiness align.",
+    links: ["off_the_shelf_apps", "api_orchestration", "heavy_ft"]
   },
   {
-    id: "ai-eliminates-human-oversight",
-    question: "Advanced AI systems eliminate the need for human oversight and validation",
+    id: "mc_onprem_safer",
+    statement: "On-prem/private hosting is automatically safer.",
     correctAnswer: false,
-    explanation: "Even the most sophisticated AI systems require human oversight, especially for critical decisions. AI can hallucinate, make biased decisions, or fail in edge cases. Human-in-the-loop systems typically perform better than fully automated ones for complex tasks."
+    explanation: "Safety depends on process and controls; private hosting shifts responsibility to you.",
+    links: ["private_hosting"]
   },
   {
-    id: "open-source-always-cheaper",
-    question: "Using open-source AI models is always more cost-effective than commercial APIs",
+    id: "mc_rag_perfect_kb",
+    statement: "RAG requires a perfect knowledge base to work.",
     correctAnswer: false,
-    explanation: "While open-source models have no licensing fees, they require significant infrastructure, maintenance, and expertise costs. For many use cases, especially with moderate usage volumes, commercial APIs provide better total cost of ownership."
+    explanation: "Start with curated high-value content, iterate, and measure retrieval quality.",
+    links: ["rag"]
   },
   {
-    id: "latest-model-always-best",
-    question: "The newest, largest AI model is always the best choice for any application",
+    id: "mc_llm_replaces_ml",
+    statement: "LLMs replace classical ML and rules.",
     correctAnswer: false,
-    explanation: "Newer models often have higher costs, latency, and complexity. Smaller, specialized models frequently outperform larger general models on specific tasks while being more efficient. The best model depends on your specific requirements, constraints, and use case."
+    explanation: "Hybrid systems win—rules/ML for structure; LLMs for judgment/ambiguity.",
+    links: ["classical_ml_rules_rpa"]
+  },
+  {
+    id: "mc_prompt_guess",
+    statement: "Prompting is guesswork.",
+    correctAnswer: false,
+    explanation: "Templates, eval harnesses, and telemetry turn prompting into an engineering discipline.",
+    links: ["api_orchestration"]
   }
 ];
 
-// Caution Messages based on Context Profile conditions
+// Context-Based Caution Messages (simplified for new schema)
 export const CAUTION_MESSAGES: Record<string, (profile: ContextProfile) => string | null> = {
   highRegulatoryIntensity: (profile: ContextProfile) => 
     profile.regulatory_intensity >= 3 
-      ? "High regulatory environment detected. Consider solutions with strong compliance features, audit trails, and data governance capabilities."
+      ? "Because your profile indicates higher regulation/safety, add HITL and an assurance cadence before scale."
       : null,
       
   highDataSensitivity: (profile: ContextProfile) =>
     profile.data_sensitivity >= 3
-      ? "Sensitive data handling required. Prioritize solutions with strong encryption, access controls, and consider on-premise deployment options."
-      : null,
-      
-  highSafetyCriticality: (profile: ContextProfile) =>
-    profile.safety_criticality >= 3
-      ? "Safety-critical application detected. Ensure robust testing, human oversight, and fail-safe mechanisms in your AI implementation."
-      : null,
-      
-  highBrandExposure: (profile: ContextProfile) =>
-    profile.brand_exposure >= 3
-      ? "High brand visibility application. Consider solutions with proven reliability and implement thorough content moderation and quality controls."
+      ? "Your context suggests sensitive data—apply residency/retention controls and confirm vendor data-use terms."
       : null,
       
   lowBuildReadiness: (profile: ContextProfile) =>
     profile.build_readiness <= 1
-      ? "Limited technical readiness detected. Focus on ready-to-use solutions or consider building internal AI capabilities before custom development."
-      : null,
-      
-  procurementConstraints: (profile: ContextProfile) =>
-    profile.procurement_constraints
-      ? "Procurement constraints may limit vendor options. Consider open-source solutions or approved vendor lists when selecting AI tools."
+      ? "Build later—start with Buy/API/RAG while operations and governance mature."
       : null,
       
   edgeOperations: (profile: ContextProfile) =>
     profile.edge_operations
-      ? "Edge computing requirements detected. Consider lightweight models, offline capabilities, and distributed deployment strategies."
-      : null,
-      
-  highScaleRequirements: (profile: ContextProfile) =>
-    profile.scale_throughput >= 4
-      ? "High-scale requirements demand careful architecture planning. Consider solutions that can handle your throughput needs and scale efficiently."
+      ? "Design for offline/latency; set fallbacks and update/rollback plans."
       : null
 };

@@ -150,6 +150,49 @@ export const optionCardSchema = z.object({
   cautions: z.array(z.enum(['regulated', 'high_sensitivity', 'low_readiness', 'edge'])).optional(),
 });
 
+// Extended option card for UI with computed properties
+export interface ExtendedOptionCard extends z.infer<typeof optionCardSchema> {
+  lensValues: LensPositions;
+  category: string;
+  shortDescription: string;
+  fullDescription: string;
+  pros: string[];
+  cons: string[];
+  examples: string[];
+  question?: string; // For misconception questions
+}
+
+// Helper function to categorize options by readiness level
+export function categorizeByReadiness(option: z.infer<typeof optionCardSchema>): string {
+  // Categorize based on speed and build effort from timelineMeters
+  const { speed, buildEffort } = option.timelineMeters;
+  if (speed >= 3 && buildEffort <= 2) return 'ready';
+  if (buildEffort >= 3) return 'build';
+  return 'custom';
+}
+
+// Helper function to extend option card with UI properties
+export function extendOptionCard(card: z.infer<typeof optionCardSchema>): ExtendedOptionCard {
+  return {
+    ...card,
+    lensValues: card.axes,
+    category: categorizeByReadiness(card),
+    shortDescription: card.what,
+    fullDescription: card.what,
+    pros: card.bestFor,
+    cons: card.notIdeal,
+    examples: [],
+  };
+}
+
+// Helper function to extend misconception question with UI properties
+export function extendMisconceptionQuestion(question: z.infer<typeof misconceptionQuestionSchema>): z.infer<typeof misconceptionQuestionSchema> & { question: string } {
+  return {
+    ...question,
+    question: question.statement,
+  };
+}
+
 export const misconceptionQuestionSchema = z.object({
   id: z.string(),
   statement: z.string(),                         // The misconception statement
@@ -161,17 +204,26 @@ export const misconceptionQuestionSchema = z.object({
 export const optionsStudioSessionSchema = z.object({
   useCase: z.string(),
   goals: z.array(z.string()),
-  misconceptionResponses: z.record(z.string(), z.boolean()),  // misconception ID -> user answer
-  comparedOptions: z.array(z.string()),          // Option IDs that were compared
-  viewedOptions: z.array(z.string()),            // Option IDs that were viewed
-  reflectionAnswers: z.record(z.string(), z.string()),       // reflection prompt ID -> user answer
+  misconceptionResponses: z.record(z.string(), z.boolean()),
+  comparedOptions: z.array(z.string()),
+  reflectionPrompts: z.array(z.string()),
   completed: z.boolean(),
   completedAt: z.string().optional(),
 });
 
 export type LensPositions = z.infer<typeof lensPositionsSchema>;
+export type LensValues = LensPositions; // Alias for backwards compatibility
 export type TimelineMeters = z.infer<typeof timelineMetersSchema>;
 export type Myth = z.infer<typeof mythSchema>;
 export type OptionCard = z.infer<typeof optionCardSchema>;
 export type MisconceptionQuestion = z.infer<typeof misconceptionQuestionSchema>;
 export type OptionsStudioSession = z.infer<typeof optionsStudioSessionSchema>;
+
+// Validation function for runtime checking
+export function validateOptionCards(cards: unknown): OptionCard[] {
+  return z.array(optionCardSchema).parse(cards);
+}
+
+export function validateMisconceptionQuestions(questions: unknown): MisconceptionQuestion[] {
+  return z.array(misconceptionQuestionSchema).parse(questions);
+}

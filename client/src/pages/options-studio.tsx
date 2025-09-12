@@ -36,7 +36,8 @@ import {
   Info,
   Star
 } from "lucide-react";
-import type { Assessment, ContextProfile, OptionCard } from "@shared/schema";
+import type { Assessment, ContextProfile, ExtendedOptionCard } from "@shared/schema";
+import { extendMisconceptionQuestion } from "@shared/schema";
 import { OPTION_CARDS, MISCONCEPTION_QUESTIONS, LENS_LABELS } from "@shared/options-studio-data";
 import { handleExportPDF, handleExportJSON } from "@/lib/pdf-generator";
 
@@ -512,7 +513,7 @@ function OptionsStudioPageContent() {
                           </Badge>
                           <div className="flex-1">
                             <p className="font-medium mb-3" data-testid={`text-question-${question.id}`}>
-                              {question.question}
+                              {extendMisconceptionQuestion(question).question}
                             </p>
                             
                             <div className="flex gap-4 mb-3">

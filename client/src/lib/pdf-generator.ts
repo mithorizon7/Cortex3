@@ -332,3 +332,300 @@ export function exportJSONResults(results: AssessmentResults): void {
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 }
+
+// Options Studio Export Functions
+export interface OptionsStudioData {
+  useCase: string;
+  goals: string[];
+  misconceptionResponses: Record<string, boolean>;
+  comparedOptions: string[];
+  reflectionResponse1: string;
+  reflectionResponse2: string;
+  selectedOptions: any[];
+  emphasizedLenses: string[];
+  contextProfile: ContextProfile;
+  assessmentId?: string;
+}
+
+export async function handleExportPDF(sessionData: OptionsStudioData, assessmentId: string): Promise<void> {
+  try {
+    // Validate required data
+    if (!sessionData || !sessionData.contextProfile || !assessmentId) {
+      throw new Error('Missing required data for PDF generation');
+    }
+
+    // Attempt to load jsPDF
+    let jsPDF;
+    try {
+      const jsPDFModule = await import('jspdf');
+      jsPDF = jsPDFModule.jsPDF;
+      
+      if (!jsPDF) {
+        throw new Error('jsPDF not available');
+      }
+    } catch (importError) {
+      console.error('Failed to import jsPDF:', importError);
+      throw new Error('PDF library failed to load. Please try refreshing the page or contact support if this persists.');
+    }
+
+    // Create new PDF document
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 20;
+    const contentWidth = pageWidth - (margin * 2);
+    const maxY = pageHeight - 30;
+    
+    let currentY = margin;
+
+    // Brand Colors
+    const primaryColor = '#1a1a1a';
+    const accentColor = '#6366f1';
+    const lightGray = '#f3f4f6';
+
+    // Header
+    doc.setFillColor(primaryColor);
+    doc.rect(0, 0, pageWidth, 35, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(24);
+    doc.setFont('helvetica', 'bold');
+    doc.text('CORTEX™', margin, 20);
+    
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Options Studio Report', margin, 28);
+    
+    // Date and Assessment ID
+    doc.setFontSize(10);
+    const dateText = `Generated: ${new Date().toLocaleDateString()}`;
+    const idText = `Assessment ID: ${assessmentId}`;
+    doc.text(dateText, pageWidth - margin - doc.getTextWidth(dateText), 20);
+    doc.text(idText, pageWidth - margin - doc.getTextWidth(idText), 28);
+    
+    currentY = 50;
+    doc.setTextColor(primaryColor);
+
+    // Helper function for page breaks
+    const checkPageOverflow = (additionalHeight: number) => {
+      if (currentY + additionalHeight > maxY) {
+        doc.addPage();
+        currentY = margin;
+        return true;
+      }
+      return false;
+    };
+
+    // Use Case Section
+    if (sessionData.useCase) {
+      checkPageOverflow(25);
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(accentColor);
+      doc.text('USE CASE', margin, currentY);
+      currentY += 10;
+      
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(primaryColor);
+      const useCaseLines = doc.splitTextToSize(sessionData.useCase, contentWidth);
+      useCaseLines.forEach((line: string) => {
+        checkPageOverflow(6);
+        doc.text(line, margin, currentY);
+        currentY += 5;
+      });
+      currentY += 10;
+    }
+
+    // Goals Section
+    if (sessionData.goals.length > 0) {
+      checkPageOverflow(20);
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(accentColor);
+      doc.text('SELECTED GOALS', margin, currentY);
+      currentY += 10;
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(primaryColor);
+      sessionData.goals.forEach(goal => {
+        checkPageOverflow(6);
+        doc.text(`• ${goal}`, margin + 5, currentY);
+        currentY += 5;
+      });
+      currentY += 10;
+    }
+
+    // Selected Options Section
+    if (sessionData.selectedOptions.length > 0) {
+      checkPageOverflow(25);
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(accentColor);
+      doc.text('COMPARED OPTIONS', margin, currentY);
+      currentY += 10;
+      
+      sessionData.selectedOptions.forEach((option, index) => {
+        checkPageOverflow(30);
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(primaryColor);
+        doc.text(`${index + 1}. ${option.title}`, margin, currentY);
+        currentY += 6;
+        
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        const descLines = doc.splitTextToSize(option.shortDescription, contentWidth - 10);
+        descLines.forEach((line: string) => {
+          checkPageOverflow(5);
+          doc.text(line, margin + 5, currentY);
+          currentY += 4;
+        });
+        currentY += 8;
+      });
+    }
+
+    // Emphasized Lenses
+    if (sessionData.emphasizedLenses.length > 0) {
+      checkPageOverflow(20);
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(accentColor);
+      doc.text('EMPHASIZED LENSES FOR YOUR CONTEXT', margin, currentY);
+      currentY += 10;
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(primaryColor);
+      sessionData.emphasizedLenses.forEach(lens => {
+        checkPageOverflow(6);
+        doc.text(`• ${lens}`, margin + 5, currentY);
+        currentY += 5;
+      });
+      currentY += 10;
+    }
+
+    // Reflection Responses
+    if (sessionData.reflectionResponse1 || sessionData.reflectionResponse2) {
+      checkPageOverflow(25);
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(accentColor);
+      doc.text('STRATEGIC REFLECTIONS', margin, currentY);
+      currentY += 10;
+      
+      if (sessionData.reflectionResponse1) {
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(primaryColor);
+        doc.text('Key Trade-offs:', margin, currentY);
+        currentY += 6;
+        
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        const reflection1Lines = doc.splitTextToSize(sessionData.reflectionResponse1, contentWidth - 10);
+        reflection1Lines.forEach((line: string) => {
+          checkPageOverflow(5);
+          doc.text(line, margin + 5, currentY);
+          currentY += 4;
+        });
+        currentY += 8;
+      }
+      
+      if (sessionData.reflectionResponse2) {
+        checkPageOverflow(15);
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(primaryColor);
+        doc.text('Next Steps:', margin, currentY);
+        currentY += 6;
+        
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        const reflection2Lines = doc.splitTextToSize(sessionData.reflectionResponse2, contentWidth - 10);
+        reflection2Lines.forEach((line: string) => {
+          checkPageOverflow(5);
+          doc.text(line, margin + 5, currentY);
+          currentY += 4;
+        });
+        currentY += 8;
+      }
+    }
+
+    // Footer
+    const footerY = pageHeight - 15;
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor('#888888');
+    doc.text('© 2024 CORTEX™ Executive AI Readiness Program - Options Studio', margin, footerY);
+
+    // Generate and download PDF
+    const pdfBlob = doc.output('blob');
+    
+    if (!pdfBlob || pdfBlob.size === 0) {
+      throw new Error('Failed to generate PDF: Empty or invalid PDF blob');
+    }
+    
+    const url = URL.createObjectURL(pdfBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `cortex-options-studio-${assessmentId}.pdf`;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    
+    // Trigger download
+    link.click();
+    
+    // Cleanup
+    setTimeout(() => {
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }, 100);
+
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message.includes('jsPDF') || error.message.includes('PDF library')) {
+        throw new Error(`${error.message} Please check your internet connection and try again.`);
+      } else if (error.message.includes('Missing required data')) {
+        throw new Error(`${error.message} Please complete the Options Studio session and try again.`);
+      } else {
+        throw new Error(`PDF generation failed: ${error.message}. If this problem persists, please contact support.`);
+      }
+    } else {
+      throw new Error('PDF generation failed: An unexpected error occurred. Please try again or contact support if this persists.');
+    }
+  }
+}
+
+export function handleExportJSON(sessionData: OptionsStudioData): void {
+  try {
+    const exportData = {
+      ...sessionData,
+      exportedAt: new Date().toISOString(),
+      version: '1.0'
+    };
+    
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `cortex-options-studio-${sessionData.assessmentId || Date.now()}.json`;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    
+    // Trigger download
+    link.click();
+    
+    // Cleanup
+    setTimeout(() => {
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }, 100);
+    
+  } catch (error) {
+    throw new Error('Failed to export JSON data. Please try again.');
+  }
+}
