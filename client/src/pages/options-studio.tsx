@@ -160,6 +160,74 @@ function OptionCardComponent({ option, isSelected, onToggleSelect, emphasizedLen
             </span>
           ))}
         </div>
+
+        {/* Timeline Meters */}
+        <div className="grid grid-cols-3 gap-2 mb-3 p-2 bg-muted/30 rounded-md">
+          <div className="text-center">
+            <div className="text-xs text-muted-foreground mb-1">Speed</div>
+            <div className="flex justify-center">
+              {[1, 2, 3, 4].map(i => (
+                <div 
+                  key={i} 
+                  className={`w-2 h-2 rounded-full mx-0.5 ${
+                    i <= option.timelineMeters.speed ? 'bg-green-500' : 'bg-muted'
+                  }`} 
+                />
+              ))}
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-xs text-muted-foreground mb-1">Build</div>
+            <div className="flex justify-center">
+              {[1, 2, 3, 4].map(i => (
+                <div 
+                  key={i} 
+                  className={`w-2 h-2 rounded-full mx-0.5 ${
+                    i <= option.timelineMeters.buildEffort ? 'bg-orange-500' : 'bg-muted'
+                  }`} 
+                />
+              ))}
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-xs text-muted-foreground mb-1">Ops</div>
+            <div className="flex justify-center">
+              {[1, 2, 3, 4].map(i => (
+                <div 
+                  key={i} 
+                  className={`w-2 h-2 rounded-full mx-0.5 ${
+                    i <= option.timelineMeters.ops ? 'bg-blue-500' : 'bg-muted'
+                  }`} 
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Caution Chips */}
+        {option.cautions && option.cautions.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-3">
+            {option.cautions.map((caution) => {
+              const cautionConfig = {
+                regulated: { label: 'Regulated', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' },
+                high_sensitivity: { label: 'High Sensitivity', color: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' },
+                low_readiness: { label: 'Build Later', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' },
+                edge: { label: 'Edge/Offline', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' }
+              };
+              const config = cautionConfig[caution as keyof typeof cautionConfig];
+              return config ? (
+                <Badge 
+                  key={caution}
+                  variant="secondary"
+                  className={`text-xs px-2 py-1 ${config.color}`}
+                  data-testid={`badge-caution-${caution}-${option.id}`}
+                >
+                  {config.label}
+                </Badge>
+              ) : null;
+            })}
+          </div>
+        )}
       </CardHeader>
 
       <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
@@ -327,7 +395,7 @@ function OptionsStudioPageContent() {
   // Progress calculation
   const sections = [
     { name: "Intro", completed: true },
-    { name: "Misconceptions", completed: Object.keys(misconceptionResponses).length === 5 },
+    { name: "Misconceptions", completed: Object.keys(misconceptionResponses).length === 6 },
     { name: "Situation", completed: useCase.length > 0 && goals.length > 0 },
     { name: "Options", completed: comparedOptions.length >= 2 },
     { name: "Reflection", completed: reflectionResponse1.length > 0 && reflectionResponse2.length > 0 }
