@@ -48,9 +48,23 @@ export function ExecutiveCortexHero({
   const VB = 512; // square viewBox (crisp on HiDPI)
   const C = VB / 2; // center
   const RINGS = [86, 144, 202]; // background rings
-  const NODE_ORBIT = 180; // where the CORTEX letters sit
   const MIN_R = 88; // spider polygon min
   const MAX_R = 206; // spider polygon max
+
+  // Outer ring geometry for precise badge positioning
+  const OUTER_RING_INDEX = RINGS.length - 1;
+  const OUTER_RING_R = RINGS[OUTER_RING_INDEX];
+  const OUTER_RING_STROKE = 1.8; // Keep in sync with stroke used when drawing the outer ring
+  
+  // Badge circle dimensions
+  const NODE_PULSE_R = 26;   // outer, animated ring around the letter
+  const NODE_CORE_R = 17.5; // inner filled circle
+  
+  // Zero means perfect kiss. Use +1 to leave a 1px air gap if needed
+  const TOUCH_GAP = 0;
+  
+  // Place badge centers so the inner edge of the pulse circle touches the ring
+  const NODE_ORBIT = OUTER_RING_R + OUTER_RING_STROKE / 2 + NODE_PULSE_R + TOUCH_GAP;
 
   // 6 rays at 60° steps, starting at -90° (top)
   const angles = actualPillars.map((_, i) => (i * Math.PI) / 3 - Math.PI / 2);
