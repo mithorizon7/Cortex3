@@ -1,0 +1,403 @@
+Below is the Options Studio — Content Reference (v1.0) you can hand directly to developers.
+It’s compact, uniform, and ready to seed into your components. Each Option Card is a small, self‑contained object with consistent fields, so the UI can render summaries, drawers, comparisons, and exports without additional copy work.
+
+⸻
+
+A) Data Schema (TypeScript shape)
+
+export type LensPositions = {
+  speed: 0|1|2|3|4;
+  control: 0|1|2|3|4;          // Customization & Control
+  dataLeverage: 0|1|2|3|4;
+  riskLoad: 0|1|2|3|4;         // Governance & Assurance effort
+  opsBurden: 0|1|2|3|4;        // People/process to run it
+  portability: 0|1|2|3|4;      // Ease of switching
+  costShape: 0|1|2|3|4;        // 0=heavy fixed, 4=mostly variable/throttleable
+};
+
+export type OptionCard = {
+  id: string;
+  title: string;
+  what: string;
+  bestFor: string[];           // 3–5 bullets
+  notIdeal: string[];          // 2–4 bullets
+  prerequisites: string[];     // 3–5 bullets
+  timelineMeters: { speed: 0|1|2|3|4; buildEffort: 0|1|2|3|4; ops: 0|1|2|3|4 };
+  dataNeeds: string;           // 1–2 sentences
+  risks: string[];             // 3–5 bullets
+  kpis: string[];              // 2–3 bullets
+  myth: { claim: string; truth: string };
+  axes: LensPositions;
+  cautions?: ('regulated'|'high_sensitivity'|'low_readiness'|'edge')[];
+};
+
+
+⸻
+
+B) Seven Lenses — Anchor Definitions (for consistency)
+	•	Speed‑to‑Value (speed): 0=months+; 2=weeks; 4=days.
+	•	Customization & Control (control): 0=out‑of‑box; 4=deeply tailored workflows/models.
+	•	Data Leverage (dataLeverage): 0=doesn’t use your data; 4=strong use of proprietary knowledge/data.
+	•	Risk & Compliance Load (riskLoad): 0=minimal extra controls; 4=heavy assurance & governance.
+	•	Operational Burden (opsBurden): 0=near zero ops; 4=dedicated team/process.
+	•	Portability & Lock‑in (portability): 0=hard to switch; 4=easy to swap/migrate.
+	•	Cost Shape (costShape): 0=large fixed/CapEx; 4=primarily variable, throttleable OpEx.
+
+⸻
+
+C) Context‑Based Cautions (client‑side, no scoring)
+
+Show small chips on affected cards when profile flags are present:
+	•	regulated / high‑safety: “HITL + assurance required before scale.”
+	•	high_sensitivity: “Data residency/retention & vendor data‑use terms apply.”
+	•	low_readiness: “Build later: start with Buy/API/RAG patterns.”
+	•	edge (latency/offline): “Design for offline/latency; define fallback.”
+
+⸻
+
+D) Option Cards — Canonical Content (9)
+
+All copy below is final and can be pasted into a JSON seed. Keep bullets short.
+
+1) off_the_shelf_apps
+
+Title: Off‑the‑Shelf AI Apps (copilots, vertical SaaS)
+What: Ready‑made AI inside productivity or line‑of‑business tools.
+	•	Best for
+	•	Fast productivity uplift and drafting
+	•	Low‑risk internal tasks and experimentation
+	•	Broad enablement across roles
+	•	Not ideal when
+	•	Deep domain reasoning or custom UX is needed
+	•	Strict residency or bespoke security controls required
+	•	Prerequisites
+	•	Usage policy and guardrails
+	•	Onboarding guides and examples
+	•	Basic monitoring of adoption/incidents
+	•	Timeline meters: { speed: 4, buildEffort: 1, ops: 1 }
+	•	Data needs: None beyond typical app content; avoid sensitive data unless enterprise terms cover it.
+	•	Risks
+	•	Vendor terms and data‑use defaults
+	•	Prompt hygiene; misrouting sensitive content
+	•	“Shadow usage” without enablement
+	•	KPIs
+	•	Adoption in target roles
+	•	Time saved per task / rework rate
+	•	Myth → Truth
+	•	“Off‑the‑shelf is toy‑grade.” → Often the fastest ROI and a strong baseline.
+	•	Axes: { speed:4, control:1, dataLeverage:1, riskLoad:1, opsBurden:1, portability:2, costShape:3 }
+	•	Cautions: ['high_sensitivity','regulated']
+
+⸻
+
+2) api_orchestration
+
+Title: API Orchestration & Prompt Libraries (no training)
+What: Call foundation model APIs from your systems; reusable prompts; function calling.
+	•	Best for
+	•	Integrating AI into existing apps and workflows
+	•	Controlled logging/costs with simple evals
+	•	Tool use (formatting, extraction, enrichment)
+	•	Not ideal when
+	•	Outputs must be grounded in proprietary knowledge (use RAG)
+	•	Prerequisites
+	•	Basic dev capacity; logging/alerts
+	•	Token budgeting/quotas
+	•	Evaluation harness for prompts
+	•	Timeline meters: { speed:3, buildEffort:2, ops:2 }
+	•	Data needs: Operational inputs only; no training corpus.
+	•	Risks
+	•	Rate limits/quotas; spend spikes
+	•	PII handling in prompts/logs
+	•	Model version drift without tests
+	•	KPIs
+	•	Cost per call; p95 latency
+	•	Success rate per use‑case
+	•	Myth → Truth
+	•	“Prompting is guesswork.” → Templates + evals make it engineering, not magic.
+	•	Axes: { speed:3, control:2, dataLeverage:2, riskLoad:2, opsBurden:2, portability:3, costShape:3 }
+	•	Cautions: ['regulated','high_sensitivity']
+
+⸻
+
+3) rag
+
+Title: Retrieval‑Augmented Generation (RAG)
+What: The model retrieves your own content as context before generating an answer.
+	•	Best for
+	•	Policies/FAQs; internal knowledge assistance
+	•	Domain Q&A and search + summarization
+	•	Not ideal when
+	•	You need new capabilities not present in base model (consider fine‑tune)
+	•	Prerequisites
+	•	Curated corpus; indexing & chunking strategy
+	•	Access controls mirrored in retrieval
+	•	Retrieval/e2e evals (precision/recall; factuality)
+	•	Timeline meters: { speed:3, buildEffort:3, ops:3 }
+	•	Data needs: Rights‑clear documents; refresh cadence for updates.
+	•	Risks
+	•	Data leakage in indices
+	•	Stale or conflicting content
+	•	Over‑trust without citations
+	•	KPIs
+	•	Retrieval precision/recall
+	•	Answer factuality / citation coverage
+	•	Myth → Truth
+	•	“RAG removes hallucinations.” → It reduces them when retrieval is good; still verify.
+	•	Axes: { speed:3, control:3, dataLeverage:4, riskLoad:3, opsBurden:3, portability:3, costShape:3 }
+	•	Cautions: ['high_sensitivity','regulated']
+
+⸻
+
+4) agents
+
+Title: Agentic Workflows & Orchestrators
+What: Multi‑step LLM workflows that call tools/APIs, plan subtasks, and verify steps.
+	•	Best for
+	•	Complex processes (intake → classify → retrieve → draft → QA)
+	•	Operations triage, case handling, multi‑tool flows
+	•	Not ideal when
+	•	Tasks must be fully deterministic with strict audit trails
+	•	Prerequisites
+	•	Stable tool APIs and schemas
+	•	Step‑wise evals and guardrails
+	•	Incident runbook; kill‑switches
+	•	Timeline meters: { speed:2, buildEffort:3, ops:3 }
+	•	Data needs: Tool schemas; optional RAG for knowledge.
+	•	Risks
+	•	Cascading failures across steps
+	•	Prompt‑injection via tools/data
+	•	Harder debugging without tracing
+	•	KPIs
+	•	End‑to‑end success rate
+	•	Intervention rate / step accuracy
+	•	Myth → Truth
+	•	“Agents are autonomous.” → Effective agents are structured workflows, not free roam.
+	•	Axes: { speed:2, control:4, dataLeverage:3, riskLoad:4, opsBurden:3, portability:2, costShape:2 }
+	•	Cautions: ['regulated','high_sensitivity','low_readiness']
+
+⸻
+
+5) light_ft
+
+Title: Light Fine‑Tuning (LoRA / adapters)
+What: Small, targeted updates so a model matches style, format, or narrow domain behaviors.
+	•	Best for
+	•	Consistent formatting and tone/brand
+	•	Routine, structured outputs
+	•	Not ideal when
+	•	You lack labeled examples
+	•	You need factual grounding (use RAG)
+	•	Prerequisites
+	•	Labeled examples; eval harness
+	•	Rollout/rollback plan
+	•	IP/rights for training data
+	•	Timeline meters: { speed:2, buildEffort:3, ops:3 }
+	•	Data needs: Rights‑clear, high‑quality examples; continuous curation.
+	•	Risks
+	•	Overfitting; model/weights drift
+	•	Maintenance as base models evolve
+	•	Legal/IP questions on data
+	•	KPIs
+	•	Exact match / rubric scores
+	•	Editing time reduction
+	•	Myth → Truth
+	•	“Fine‑tuning fixes hallucinations.” → Often better for style/format; ground facts with RAG.
+	•	Axes: { speed:2, control:3, dataLeverage:2, riskLoad:3, opsBurden:3, portability:2, costShape:2 }
+	•	Cautions: ['low_readiness','high_sensitivity','regulated']
+
+⸻
+
+6) heavy_ft
+
+Title: Heavy Fine‑Tuning / Domain Model
+What: Extensive training to adapt a base model for a specific domain/task.
+	•	Best for
+	•	Specialized reasoning or non‑English domains
+	•	Strict latency/size constraints via smaller models
+	•	Not ideal when
+	•	Limited clean, labeled datasets
+	•	Immature MLOps/governance/IR
+	•	Prerequisites
+	•	Significant labeled data; ML team
+	•	Safety testing; governance; IR plan
+	•	Sustained budget and roadmap
+	•	Timeline meters: { speed:1, buildEffort:4, ops:4 }
+	•	Data needs: Large, high‑signal, rights‑clear datasets; ongoing refresh.
+	•	Risks
+	•	High cost; obsolescence vs frontier
+	•	Compliance review overhead
+	•	Vendor/model architecture lock‑in
+	•	KPIs
+	•	Task accuracy vs baseline
+	•	Stability under drift; unit economics
+	•	Myth → Truth
+	•	“We need our own model to compete.” → Only if differentiation + data + readiness all align.
+	•	Axes: { speed:1, control:4, dataLeverage:4, riskLoad:4, opsBurden:4, portability:1, costShape:1 }
+	•	Cautions: ['low_readiness','regulated','high_sensitivity']
+
+⸻
+
+7) private_hosting
+
+Title: Private Hosting / VPC
+What: Run models in your controlled environment for privacy, control, or SLAs.
+	•	Best for
+	•	Sensitive data; isolation needs
+	•	Custom SLAs and network policies
+	•	Not ideal when
+	•	Limited infra/ops capacity
+	•	Need frontier capabilities updated frequently
+	•	Prerequisites
+	•	Infra budget; MLOps; security posture
+	•	Monitoring, patching, upgrades
+	•	Timeline meters: { speed:2, buildEffort:3, ops:4 }
+	•	Data needs: None to host; more if tuning/training.
+	•	Risks
+	•	Patch/upgrade debt
+	•	Availability/latency obligations shift to you
+	•	Under‑provisioned failover
+	•	KPIs
+	•	Uptime and p95 latency
+	•	Security incidents; capacity headroom
+	•	Myth → Truth
+	•	“On‑prem is automatically safer.” → Safety = process & controls; hosting shifts responsibility to you.
+	•	Axes: { speed:2, control:3, dataLeverage:2, riskLoad:3, opsBurden:4, portability:3, costShape:2 }
+	•	Cautions: ['high_sensitivity','regulated','edge']
+
+⸻
+
+8) edge_small_models
+
+Title: Small Models at the Edge
+What: Deploy compact models on devices/near data for latency, privacy, or offline use.
+	•	Best for
+	•	Field ops, manufacturing, retail POS
+	•	Low‑latency or intermittent connectivity
+	•	Not ideal when
+	•	Need frontier model capabilities updated weekly
+	•	Prerequisites
+	•	Model/runtime selection; OTA update plan
+	•	Telemetry and rollback strategy
+	•	Timeline meters: { speed:2, buildEffort:3, ops:4 }
+	•	Data needs: Optional on‑device tuning; minimize sensitive capture.
+	•	Risks
+	•	Fleet inconsistency; upgrade debt
+	•	Physical access risks
+	•	Debugging without full logs
+	•	KPIs
+	•	p95 latency; offline success rate
+	•	Update failure rate / rollback count
+	•	Myth → Truth
+	•	“Edge is less safe.” → Different safety: more control, more patch discipline.
+	•	Axes: { speed:2, control:3, dataLeverage:2, riskLoad:3, opsBurden:4, portability:2, costShape:2 }
+	•	Cautions: ['edge','regulated']
+
+⸻
+
+9) classical_ml_rules_rpa
+
+Title: Classical ML, Rules & RPA
+What: Regression/classifiers, rule engines, extract/transform, and automation of deterministic tasks.
+	•	Best for
+	•	Structured, repeatable decisions
+	•	Forms processing; validations; deterministic checks
+	•	Not ideal when
+	•	Open‑ended generation or multimodal reasoning
+	•	Prerequisites
+	•	Process mapping; data schema; feature engineering
+	•	Timeline meters: { speed:3, buildEffort:2, ops:2 }
+	•	Data needs: Labeled/tabular data for ML; rules specs for RPA.
+	•	Risks
+	•	Brittle rules; process drift
+	•	Blind spots without monitoring
+	•	KPIs
+	•	Precision/recall or F1 (ML)
+	•	Straight‑through‑processing rate; exception volume
+	•	Myth → Truth
+	•	“LLMs replace earlier techniques.” → Hybrid systems win: rules/ML for structure + LLMs for judgment.
+	•	Axes: { speed:3, control:3, dataLeverage:3, riskLoad:2, opsBurden:2, portability:4, costShape:3 }
+	•	Cautions: []
+
+⸻
+
+E) Cross‑Cutting “Always‑On” Cards (short overlays)
+
+Render these as small info chips or drawers that can be opened anywhere.
+
+assurance_evals
+
+Title: Assurance & Evaluations
+Body: Guardrails and tests that keep systems safe and useful: HITL where stakes are high, fairness/privacy/drift checks, quarterly red‑team for critical systems, and rollback plans.
+Do now: Define owners, cadence, and a 1‑page incident runbook.
+
+data_stewardship
+
+Title: Data Stewardship
+Body: Rights, quality, lineage, access, and retention for data used by AI (prompts, indices, logs).
+Do now: Catalog key sources, name owners, set retention defaults (e.g., 30 days for logs).
+
+portability_exit
+
+Title: Portability & Exit
+Body: Avoid brittle lock‑in: export formats, second‑source for critical paths, and exit clauses.
+Do now: Add portability terms to contracts; document “how we would switch.”
+
+⸻
+
+F) Misconception Check Bank (pick any 5)
+
+Each item: id, statement, answer, explain, links (option ids)
+	1.	mc_fix_hallu — Statement: Fine‑tuning fixes hallucinations.
+Answer: False.
+Explain: Fine‑tuning is best for style/format/domain behavior; use RAG for factual grounding.
+Links: light_ft, rag
+	2.	mc_need_own_model — Statement: We need our own model to be competitive.
+Answer: False.
+Explain: Most value comes from Buy → API → RAG; consider heavy tuning only if differentiation, data, and readiness align.
+Links: off_the_shelf_apps, api_orchestration, heavy_ft
+	3.	mc_onprem_safer — Statement: On‑prem/private hosting is automatically safer.
+Answer: False.
+Explain: Safety depends on process and controls; private hosting shifts responsibility to you.
+Links: private_hosting
+	4.	mc_rag_perfect_kb — Statement: RAG requires a perfect knowledge base to work.
+Answer: False.
+Explain: Start with curated high‑value content, iterate, and measure retrieval quality.
+Links: rag
+	5.	mc_llm_replaces_ml — Statement: LLMs replace classical ML and rules.
+Answer: False.
+Explain: Hybrid systems win—rules/ML for structure; LLMs for judgment/ambiguity.
+Links: classical_ml_rules_rpa
+	6.	mc_prompt_guess — Statement: Prompting is guesswork.
+Answer: False.
+Explain: Templates, eval harnesses, and telemetry turn prompting into an engineering discipline.
+Links: api_orchestration
+
+⸻
+
+G) Small Copy Blocks (shared UI strings)
+	•	Intro title: Options Studio — Understand Your AI Solution Patterns
+	•	Intro body: Explore common options, the trade‑offs that matter, and where myths mislead. We’ll highlight a few lenses based on your context. We won’t prescribe a choice.
+	•	Lenses legend: Speed‑to‑Value · Customization & Control · Data Leverage · Risk & Compliance Load · Operational Burden · Portability & Lock‑in · Cost Shape
+	•	Caution tooltips:
+	•	regulated: Because your profile indicates higher regulation/safety, add HITL and an assurance cadence before scale.
+	•	high_sensitivity: Your context suggests sensitive data—apply residency/retention controls and confirm vendor data‑use terms.
+	•	low_readiness: Build later—start with Buy/API/RAG while operations and governance mature.
+	•	edge: Design for offline/latency; set fallbacks and update/rollback plans.
+	•	Reflection prompts:
+	1.	Which two options feel most promising to learn more about, and why?
+	2.	Which lens mattered most for your situation?
+	•	Export CTA: Download Options Studio Summary (PDF/JSON)
+
+⸻
+
+H) Implementation Notes
+	•	Seed these objects as optionsCatalog: OptionCard[].
+	•	Use axes for the Seven Lenses plot and timelineMeters for the three mini‑meters.
+	•	Render cautions chips based on Profile flags; show tooltip copy above.
+	•	The Compare view uses axes + bestFor/notIdeal only; no numeric totals.
+	•	Export should include: viewed/compared option IDs, corrected misconceptions, selected reflections, and glossary terms opened.
+
+⸻
+
+Done. This pack is intentionally short, uniform, and memorable, so executives grasp the landscape quickly and your developers can plug it in without extra content work.
