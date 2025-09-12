@@ -109,6 +109,9 @@ function OptionCardComponent({ option, isSelected, onToggleSelect, emphasizedLen
             <CardTitle className="text-lg font-semibold mb-1" data-testid={`text-title-${option.id}`}>
               {option.title}
             </CardTitle>
+            <p className="text-sm text-muted-foreground mb-2" data-testid={`text-what-${option.id}`}>
+              {option.what}
+            </p>
             <p className="text-sm text-muted-foreground mb-3" data-testid={`text-description-${option.id}`}>
               {option.shortDescription}
             </p>
@@ -118,8 +121,18 @@ function OptionCardComponent({ option, isSelected, onToggleSelect, emphasizedLen
         {/* Lens Values */}
         <div className="grid grid-cols-7 gap-1 mb-3">
           {LENS_LABELS.map((lens, index) => {
-            const lensKey = lens.replace(/[^a-zA-Z]/g, '').slice(0, 6) as keyof typeof option.lensValues;
-            const value = option.lensValues[lensKey] || 1;
+            // Map lens names to correct property keys
+            const lensKeyMap: Record<string, keyof typeof option.lensValues> = {
+              'Speed-to-Value': 'speed',
+              'Customization & Control': 'control', 
+              'Data Leverage': 'dataLeverage',
+              'Risk & Compliance Load': 'riskLoad',
+              'Operational Burden': 'opsBurden',
+              'Portability & Lock-in': 'portability',
+              'Cost Shape': 'costShape'
+            };
+            const lensKey = lensKeyMap[lens] || 'speed';
+            const value = option.lensValues[lensKey] || 0;
             const isEmphasized = emphasizedLenses.includes(lens);
             const IconComponent = LENS_ICONS[lens];
             
@@ -170,56 +183,97 @@ function OptionCardComponent({ option, isSelected, onToggleSelect, emphasizedLen
                 </p>
               </div>
 
-              <Tabs defaultValue="pros" className="w-full">
-                <TabsList className="grid w-full grid-cols-4">
-                  <TabsTrigger value="pros" data-testid={`tab-pros-${option.id}`}>Pros</TabsTrigger>
-                  <TabsTrigger value="cons" data-testid={`tab-cons-${option.id}`}>Cons</TabsTrigger>
+              <Tabs defaultValue="bestFor" className="w-full">
+                <TabsList className="grid w-full grid-cols-6">
                   <TabsTrigger value="bestFor" data-testid={`tab-best-for-${option.id}`}>Best For</TabsTrigger>
-                  <TabsTrigger value="examples" data-testid={`tab-examples-${option.id}`}>Examples</TabsTrigger>
+                  <TabsTrigger value="risks" data-testid={`tab-risks-${option.id}`}>Risks</TabsTrigger>
+                  <TabsTrigger value="prereqs" data-testid={`tab-prereqs-${option.id}`}>Prerequisites</TabsTrigger>
+                  <TabsTrigger value="kpis" data-testid={`tab-kpis-${option.id}`}>KPIs</TabsTrigger>
+                  <TabsTrigger value="data" data-testid={`tab-data-${option.id}`}>Data Needs</TabsTrigger>
+                  <TabsTrigger value="myth" data-testid={`tab-myth-${option.id}`}>Myth vs Truth</TabsTrigger>
                 </TabsList>
                 
-                <TabsContent value="pros" className="mt-3">
-                  <ul className="space-y-1" data-testid={`list-pros-${option.id}`}>
-                    {option.pros.map((pro, index) => (
+                <TabsContent value="risks" className="mt-3">
+                  <ul className="space-y-1" data-testid={`list-risks-${option.id}`}>
+                    {option.risks.map((risk, index) => (
                       <li key={index} className="text-sm text-muted-foreground flex items-start">
-                        <CheckCircle2 className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                        {pro}
+                        <AlertTriangle className="w-4 h-4 text-orange-500 mr-2 mt-0.5 flex-shrink-0" />
+                        {risk}
                       </li>
                     ))}
                   </ul>
                 </TabsContent>
                 
-                <TabsContent value="cons" className="mt-3">
-                  <ul className="space-y-1" data-testid={`list-cons-${option.id}`}>
-                    {option.cons.map((con, index) => (
+                <TabsContent value="prereqs" className="mt-3">
+                  <ul className="space-y-1" data-testid={`list-prereqs-${option.id}`}>
+                    {option.prerequisites.map((prereq, index) => (
                       <li key={index} className="text-sm text-muted-foreground flex items-start">
-                        <XCircle className="w-4 h-4 text-orange-500 mr-2 mt-0.5 flex-shrink-0" />
-                        {con}
+                        <CheckCircle2 className="w-4 h-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
+                        {prereq}
                       </li>
                     ))}
                   </ul>
                 </TabsContent>
                 
                 <TabsContent value="bestFor" className="mt-3">
-                  <ul className="space-y-1" data-testid={`list-best-for-${option.id}`}>
-                    {option.bestFor.map((item, index) => (
+                  <div className="space-y-3">
+                    <div>
+                      <h4 className="text-sm font-medium text-foreground mb-2">Best suited for:</h4>
+                      <ul className="space-y-1" data-testid={`list-best-for-${option.id}`}>
+                        {option.bestFor.map((item, index) => (
+                          <li key={index} className="text-sm text-muted-foreground flex items-start">
+                            <CheckCircle2 className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium text-foreground mb-2">Not ideal when:</h4>
+                      <ul className="space-y-1" data-testid={`list-not-ideal-${option.id}`}>
+                        {option.notIdeal.map((item, index) => (
+                          <li key={index} className="text-sm text-muted-foreground flex items-start">
+                            <XCircle className="w-4 h-4 text-orange-500 mr-2 mt-0.5 flex-shrink-0" />
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="kpis" className="mt-3">
+                  <ul className="space-y-1" data-testid={`list-kpis-${option.id}`}>
+                    {option.kpis.map((kpi, index) => (
                       <li key={index} className="text-sm text-muted-foreground flex items-start">
-                        <Star className="w-4 h-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
-                        {item}
+                        <Target className="w-4 h-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
+                        {kpi}
                       </li>
                     ))}
                   </ul>
                 </TabsContent>
                 
-                <TabsContent value="examples" className="mt-3">
-                  <ul className="space-y-1" data-testid={`list-examples-${option.id}`}>
-                    {option.examples.map((example, index) => (
-                      <li key={index} className="text-sm text-muted-foreground flex items-start">
-                        <Lightbulb className="w-4 h-4 text-yellow-500 mr-2 mt-0.5 flex-shrink-0" />
-                        {example}
-                      </li>
-                    ))}
-                  </ul>
+                <TabsContent value="data" className="mt-3">
+                  <div className="text-sm text-muted-foreground" data-testid={`text-data-needs-${option.id}`}>
+                    {option.dataNeeds}
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="myth" className="mt-3">
+                  <div className="space-y-3">
+                    <div className="p-3 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-800">
+                      <h4 className="text-sm font-medium text-red-700 dark:text-red-300 mb-1">Common Myth:</h4>
+                      <p className="text-sm text-red-600 dark:text-red-400" data-testid={`text-myth-claim-${option.id}`}>
+                        "{option.myth.claim}"
+                      </p>
+                    </div>
+                    <div className="p-3 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
+                      <h4 className="text-sm font-medium text-green-700 dark:text-green-300 mb-1">Reality:</h4>
+                      <p className="text-sm text-green-600 dark:text-green-400" data-testid={`text-myth-truth-${option.id}`}>
+                        {option.myth.truth}
+                      </p>
+                    </div>
+                  </div>
                 </TabsContent>
               </Tabs>
             </div>
