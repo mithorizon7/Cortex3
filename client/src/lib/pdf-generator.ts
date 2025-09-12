@@ -1,5 +1,6 @@
 import { formatScaleValue } from "@shared/scale-utils";
-import type { ContextProfile } from "@shared/schema";
+import type { ContextProfile, ExtendedOptionCard, OptionsStudioSession } from "@shared/schema";
+import { MISCONCEPTION_QUESTIONS } from "@shared/options-studio-data";
 
 export interface AssessmentResults {
   contextProfile: ContextProfile;
@@ -334,17 +335,14 @@ export function exportJSONResults(results: AssessmentResults): void {
 }
 
 // Options Studio Export Functions
-export interface OptionsStudioData {
-  useCase: string;
-  goals: string[];
-  misconceptionResponses: Record<string, boolean>;
-  comparedOptions: string[];
-  reflectionResponse1: string;
-  reflectionResponse2: string;
-  selectedOptions: any[];
-  emphasizedLenses: string[];
+export interface OptionsStudioData extends OptionsStudioSession {
   contextProfile: ContextProfile;
-  assessmentId?: string;
+  selectedOptions: ExtendedOptionCard[];
+  emphasizedLenses: string[];
+  reflectionAnswers: Record<string, string>;
+  exportedAt: string;
+  cautionFlags?: string[];
+  cautionMessages?: string[];
 }
 
 export async function handleExportPDF(sessionData: OptionsStudioData, assessmentId: string): Promise<void> {
@@ -506,8 +504,191 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
       currentY += 10;
     }
 
-    // Reflection Responses
-    if (sessionData.reflectionResponse1 || sessionData.reflectionResponse2) {
+    // Misconception Results Section
+    if (sessionData.misconceptionResponses && Object.keys(sessionData.misconceptionResponses).length > 0) {
+      checkPageOverflow(30);
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(accentColor);
+      doc.text('MISCONCEPTION CHECK RESULTS', margin, currentY);
+      currentY += 10;
+      
+      // Use shared source of truth for misconception questions
+      const misconceptionData = MISCONCEPTION_QUESTIONS.reduce((acc, q) => {
+        acc[q.id] = q;
+        return acc;
+      }, {} as Record<string, typeof MISCONCEPTION_QUESTIONS[0]>);
+      
+      Object.entries(sessionData.misconceptionResponses).forEach(([questionId, userAnswer]) => {
+        const questionData = misconceptionData[questionId as keyof typeof misconceptionData];
+        if (questionData) {
+          checkPageOverflow(20);
+          
+          doc.setFontSize(11);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(primaryColor);
+          const questionLines = doc.splitTextToSize(questionData.question, contentWidth - 10);
+          questionLines.forEach((line: string) => {
+            checkPageOverflow(5);
+            doc.text(line, margin + 5, currentY);
+            currentY += 4;
+          });
+          currentY += 2;
+          
+          // Show user's answer and correctness
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'normal');
+          const isCorrect = userAnswer === questionData.correctAnswer;
+          const resultText = `Your answer: ${userAnswer ? 'True' : 'False'} • ${isCorrect ? '[CORRECT]' : '[INCORRECT]'}`;
+          doc.setTextColor(isCorrect ? '#16a34a' : '#dc2626');
+          doc.text(resultText, margin + 10, currentY);
+          currentY += 5;
+          
+          // Show explanation
+          doc.setTextColor(primaryColor);
+          doc.setFont('helvetica', 'italic');
+          const explanationLines = doc.splitTextToSize(questionData.explanation, contentWidth - 20);
+          explanationLines.forEach((line: string) => {
+            checkPageOverflow(4);
+            doc.text(line, margin + 10, currentY);
+            currentY += 3.5;
+          });
+          currentY += 6;
+        }
+      });
+      currentY += 5;
+    }
+
+    // Seven Lenses Comparison Table
+    if (sessionData.selectedOptions && sessionData.selectedOptions.length > 0) {
+      checkPageOverflow(40);
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(accentColor);
+      doc.text('SEVEN LENSES COMPARISON', margin, currentY);
+      currentY += 15;
+      
+      const lensLabels = ['Speed-to-Value', 'Customization & Control', 'Data Leverage', 'Risk & Compliance Load', 'Operational Burden', 'Portability & Lock-in', 'Cost Shape'];
+      const cellWidth = contentWidth / (lensLabels.length + 1);
+      const cellHeight = 8;
+      
+      // Table header
+      doc.setFillColor(lightGray);
+      doc.rect(margin, currentY, cellWidth, cellHeight, 'F');
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(primaryColor);
+      doc.text('Option', margin + 2, currentY + 5.5);
+      
+      lensLabels.forEach((label, index) => {
+        const x = margin + cellWidth + (index * cellWidth);
+        doc.setFillColor(sessionData.emphasizedLenses.includes(label) ? '#dbeafe' : lightGray);
+        doc.rect(x, currentY, cellWidth, cellHeight, 'F');
+        
+        // Split long labels across lines
+        const words = label.split(' ');
+        if (words.length > 1) {
+          doc.setFontSize(7);
+          doc.text(words[0], x + 2, currentY + 3.5);
+          doc.text(words.slice(1).join(' '), x + 2, currentY + 6);
+        } else {
+          doc.setFontSize(8);
+          doc.text(label, x + 2, currentY + 5.5);
+        }
+      });
+      
+      currentY += cellHeight;
+      
+      // Table rows for each option
+      sessionData.selectedOptions.forEach((option) => {
+        checkPageOverflow(cellHeight + 2);
+        
+        // Option name
+        doc.setFillColor(255, 255, 255);
+        doc.rect(margin, currentY, cellWidth, cellHeight, 'F');
+        doc.setDrawColor(0, 0, 0);
+        doc.rect(margin, currentY, cellWidth, cellHeight, 'S');
+        
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(primaryColor);
+        const optionTitleLines = doc.splitTextToSize(option.title || option.id, cellWidth - 4);
+        optionTitleLines.slice(0, 2).forEach((line: string, lineIndex: number) => {
+          doc.text(line, margin + 2, currentY + 3 + (lineIndex * 2.5));
+        });
+        
+        // Lens values
+        const lensValues = option.lensValues || option.axes || {};
+        const lensKeyMap = {
+          'Speed-to-Value': 'speed',
+          'Customization & Control': 'control',
+          'Data Leverage': 'dataLeverage',
+          'Risk & Compliance Load': 'riskLoad',
+          'Operational Burden': 'opsBurden',
+          'Portability & Lock-in': 'portability',
+          'Cost Shape': 'costShape'
+        };
+        
+        lensLabels.forEach((label, index) => {
+          const x = margin + cellWidth + (index * cellWidth);
+          const lensKey = lensKeyMap[label as keyof typeof lensKeyMap];
+          const value = lensValues[lensKey] || 0;
+          
+          const isEmphasized = sessionData.emphasizedLenses.includes(label);
+          doc.setFillColor(isEmphasized ? '#dbeafe' : 255);
+          doc.rect(x, currentY, cellWidth, cellHeight, 'F');
+          doc.rect(x, currentY, cellWidth, cellHeight, 'S');
+          
+          // Value and dots
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(isEmphasized ? '#1e40af' : primaryColor);
+          doc.text(value.toString(), x + cellWidth/2 - 3, currentY + 4);
+          
+          // Small dots to represent value
+          for (let i = 0; i < 4; i++) {
+            const dotX = x + 4 + (i * 3);
+            const dotY = currentY + 6;
+            doc.setFillColor(i < value ? (isEmphasized ? '#1e40af' : primaryColor) : '#d1d5db');
+            doc.circle(dotX, dotY, 0.8, 'F');
+          }
+        });
+        
+        currentY += cellHeight;
+      });
+      
+      currentY += 10;
+    }
+    
+    // Caution Messages
+    if (sessionData.cautionMessages && sessionData.cautionMessages.length > 0) {
+      checkPageOverflow(25);
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(accentColor);
+      doc.text('CONTEXT-BASED CAUTIONS', margin, currentY);
+      currentY += 10;
+      
+      doc.setFillColor('#fef3c7');
+      doc.rect(margin, currentY - 5, contentWidth, sessionData.cautionMessages.length * 8 + 10, 'F');
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor('#92400e');
+      sessionData.cautionMessages.forEach(message => {
+        const messageLines = doc.splitTextToSize(`⚠ ${message}`, contentWidth - 10);
+        messageLines.forEach((line: string) => {
+          checkPageOverflow(5);
+          doc.text(line, margin + 5, currentY);
+          currentY += 4;
+        });
+        currentY += 2;
+      });
+      currentY += 8;
+    }
+
+    // Strategic Reflections
+    if (sessionData.reflectionAnswers && Object.keys(sessionData.reflectionAnswers).length > 0) {
       checkPageOverflow(25);
       doc.setFontSize(16);
       doc.setFont('helvetica', 'bold');
@@ -515,43 +696,55 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
       doc.text('STRATEGIC REFLECTIONS', margin, currentY);
       currentY += 10;
       
-      if (sessionData.reflectionResponse1) {
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(primaryColor);
-        doc.text('Key Trade-offs:', margin, currentY);
-        currentY += 6;
-        
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        const reflection1Lines = doc.splitTextToSize(sessionData.reflectionResponse1, contentWidth - 10);
-        reflection1Lines.forEach((line: string) => {
-          checkPageOverflow(5);
-          doc.text(line, margin + 5, currentY);
-          currentY += 4;
-        });
-        currentY += 8;
-      }
-      
-      if (sessionData.reflectionResponse2) {
-        checkPageOverflow(15);
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(primaryColor);
-        doc.text('Next Steps:', margin, currentY);
-        currentY += 6;
-        
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        const reflection2Lines = doc.splitTextToSize(sessionData.reflectionResponse2, contentWidth - 10);
-        reflection2Lines.forEach((line: string) => {
-          checkPageOverflow(5);
-          doc.text(line, margin + 5, currentY);
-          currentY += 4;
-        });
-        currentY += 8;
-      }
+      Object.entries(sessionData.reflectionAnswers).forEach(([prompt, answer], index) => {
+        if (answer && answer.trim()) {
+          checkPageOverflow(20);
+          doc.setFontSize(12);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(primaryColor);
+          const promptLines = doc.splitTextToSize(`${index + 1}. ${prompt}`, contentWidth - 10);
+          promptLines.forEach((line: string) => {
+            checkPageOverflow(5);
+            doc.text(line, margin, currentY);
+            currentY += 5;
+          });
+          currentY += 2;
+          
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'normal');
+          const answerLines = doc.splitTextToSize(answer, contentWidth - 10);
+          answerLines.forEach((line: string) => {
+            checkPageOverflow(4);
+            doc.text(line, margin + 5, currentY);
+            currentY += 4;
+          });
+          currentY += 8;
+        }
+      });
     }
+
+    // Session Summary Box
+    checkPageOverflow(30);
+    doc.setFillColor('#f8fafc');
+    doc.rect(margin, currentY, contentWidth, 25, 'F');
+    doc.setDrawColor('#e2e8f0');
+    doc.rect(margin, currentY, contentWidth, 25, 'S');
+    
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(accentColor);
+    doc.text('SESSION SUMMARY', margin + 5, currentY + 8);
+    
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(primaryColor);
+    const summaryText = `Options explored: ${sessionData.selectedOptions?.length || 0} • Misconceptions tested: ${Object.keys(sessionData.misconceptionResponses || {}).length} • Emphasized lenses: ${sessionData.emphasizedLenses?.length || 0} • Completed: ${sessionData.completed ? 'Yes' : 'No'}`;
+    const summaryLines = doc.splitTextToSize(summaryText, contentWidth - 10);
+    summaryLines.forEach((line: string, index: number) => {
+      doc.text(line, margin + 5, currentY + 14 + (index * 4));
+    });
+    
+    currentY += 35;
 
     // Footer
     const footerY = pageHeight - 15;
@@ -559,6 +752,8 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
     doc.setFont('helvetica', 'normal');
     doc.setTextColor('#888888');
     doc.text('© 2024 CORTEX™ Executive AI Readiness Program - Options Studio', margin, footerY);
+    const exportedText = `Exported: ${new Date(sessionData.exportedAt).toLocaleString()}`;
+    doc.text(exportedText, pageWidth - margin - doc.getTextWidth(exportedText), footerY);
 
     // Generate and download PDF
     const pdfBlob = doc.output('blob');
@@ -598,12 +793,16 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
   }
 }
 
-export function handleExportJSON(sessionData: OptionsStudioData): void {
+export function handleExportJSON(sessionData: OptionsStudioData, filename: string): void {
   try {
     const exportData = {
       ...sessionData,
-      exportedAt: new Date().toISOString(),
-      version: '1.0'
+      version: '1.0',
+      exportMetadata: {
+        exportedAt: sessionData.exportedAt,
+        dataStructureVersion: '1.0',
+        sourceApplication: 'CORTEX Options Studio'
+      }
     };
     
     const dataStr = JSON.stringify(exportData, null, 2);
@@ -612,7 +811,7 @@ export function handleExportJSON(sessionData: OptionsStudioData): void {
     
     const link = document.createElement('a');
     link.href = url;
-    link.download = `cortex-options-studio-${sessionData.assessmentId || Date.now()}.json`;
+    link.download = filename;
     link.style.display = 'none';
     document.body.appendChild(link);
     

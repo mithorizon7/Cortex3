@@ -546,6 +546,8 @@ function OptionsStudioContent() {
         selectedOptions: selectedOptions,
         emphasizedLenses,
         reflectionAnswers,
+        cautionFlags,
+        cautionMessages,
         exportedAt: new Date().toISOString()
       };
 
