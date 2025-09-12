@@ -83,7 +83,7 @@ Edge Operations: ${results.contextProfile.edge_operations ? 'Yes' : 'No'}
 export async function generateContextBrief(data: ContextMirrorData): Promise<void> {
   const formatSliderValue = (value: number) => {
     const labels = ["Very Low", "Low", "Medium", "High", "Very High"];
-    return `${labels[value - 1]} (${value}/5)`;
+    return `${labels[value]} (${value}/4)`;
   };
 
   const content = `

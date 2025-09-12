@@ -1,6 +1,7 @@
 import { useParams, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useContextMirror } from "@/hooks/useContextMirror";
+import type { Assessment } from "../../../shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -64,10 +65,31 @@ function ErrorFallback({ error }: { error: Error }) {
 export default function ContextInsightPage() {
   const { id } = useParams();
   const { data, loading, error } = useContextMirror(id!);
+  
+  // Fetch the full assessment data to get contextProfile
+  const { data: assessmentData, isLoading: assessmentLoading } = useQuery<Assessment>({
+    queryKey: ['/api/assessments', id],
+    enabled: !!id,
+  });
 
-  const handleDownloadBrief = () => {
-    // TODO: Implement PDF download functionality
-    console.log("Download context brief for assessment:", id);
+  const handleDownloadBrief = async () => {
+    if (!data || !assessmentData || !id) {
+      console.error('Missing required data for PDF download');
+      return;
+    }
+
+    try {
+      await generateContextBrief({
+        strengths: data.strengths,
+        fragilities: data.fragilities,
+        whatWorks: data.whatWorks,
+        disclaimer: data.disclaimer,
+        contextProfile: assessmentData.contextProfile,
+        assessmentId: id,
+      });
+    } catch (error) {
+      console.error('Failed to generate context brief:', error);
+    }
   };
 
   return (
@@ -145,7 +167,7 @@ export default function ContextInsightPage() {
         <Button 
           variant="ghost" 
           onClick={handleDownloadBrief}
-          disabled={!data || loading}
+          disabled={!data || loading || !assessmentData || assessmentLoading}
           data-testid="button-download-brief"
         >
           <Download className="w-4 h-4 mr-2" />
