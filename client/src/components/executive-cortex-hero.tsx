@@ -186,8 +186,8 @@ export function ExecutiveCortexHero({
 
               {/* Ring gradient */}
               <linearGradient id={`ring-${uid}`} x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="hsl(var(--border))" stopOpacity="0.65" />
-                <stop offset="100%" stopColor="hsl(var(--border))" stopOpacity="0.2" />
+                <stop offset="0%" stopColor="hsl(var(--foreground))" stopOpacity="0.30" />
+                <stop offset="100%" stopColor="hsl(var(--foreground))" stopOpacity="0.18" />
               </linearGradient>
 
               {/* Center well gradient */}
@@ -229,7 +229,7 @@ export function ExecutiveCortexHero({
             </defs>
 
             {/* Subtle hex background - dialed back */}
-            <g opacity="0.04" mask={`url(#fadeMask-${uid})`}>
+            <g opacity="0.035" mask={`url(#fadeMask-${uid})`}>
               <rect width={VB} height={VB} fill={`url(#hex-${uid})`} />
             </g>
 
@@ -243,16 +243,16 @@ export function ExecutiveCortexHero({
                   r={r}
                   fill="none"
                   stroke={`url(#ring-${uid})`}
-                  strokeWidth={i === RINGS.length - 1 ? 1.5 : 1}
+                  strokeWidth={i === RINGS.length - 1 ? 1.8 : 1.4}
                   vectorEffect="non-scaling-stroke"
                   shapeRendering="geometricPrecision"
-                  opacity={i === 0 ? 0.6 : i === 1 ? 0.45 : 0.35}
+                  opacity={i === 0 ? 0.80 : i === 1 ? 0.65 : 0.55}
                 />
               ))}
             </g>
 
             {/* Spokes */}
-            <g opacity="0.28" filter={`url(#soft-${uid})`}>
+            <g opacity="0.38" filter={`url(#soft-${uid})`}>
               {angles.map((a, i) => {
                 const { x, y } = pointAt(RINGS[RINGS.length - 1], a);
                 return (
@@ -263,7 +263,9 @@ export function ExecutiveCortexHero({
                     x2={x}
                     y2={y}
                     stroke={`url(#ring-${uid})`}
-                    strokeWidth="1"
+                    strokeWidth="1.25"
+                    vectorEffect="non-scaling-stroke"
+                    shapeRendering="geometricPrecision"
                   />
                 );
               })}
@@ -303,21 +305,44 @@ export function ExecutiveCortexHero({
             <g aria-hidden="true">
               {[1, 2, 3].map((n, idx) => {
                 const r = RINGS[idx];
+                const y = C - r - 6;
                 return (
-                  <text
-                    key={n}
-                    x={C}
-                    y={C - r - 8}
-                    textAnchor="middle"
-                    className="text-[10px] font-medium"
-                    style={{ 
-                      fill: "hsl(var(--muted-foreground))", 
-                      opacity: 0.6,
-                      letterSpacing: "0.5px"
-                    }}
-                  >
-                    {n}
-                  </text>
+                  <g key={n}>
+                    {/* Outline version underneath */}
+                    <text
+                      x={C}
+                      y={y}
+                      textAnchor="middle"
+                      style={{
+                        fontFamily: "var(--font-heading)",
+                        fontSize: "12px",
+                        fontWeight: 700,
+                        // SVG stroke outline for contrast
+                        stroke: "hsl(var(--background) / 0.70)",
+                        strokeWidth: 3,
+                        paintOrder: "stroke fill",
+                        fill: "hsl(var(--foreground) / 0.80)",
+                        letterSpacing: "0.2px",
+                      }}
+                    >
+                      {n}
+                    </text>
+                    {/* Fill layer on top (keeps text crisp) */}
+                    <text
+                      x={C}
+                      y={y}
+                      textAnchor="middle"
+                      style={{
+                        fontFamily: "var(--font-heading)",
+                        fontSize: "12px",
+                        fontWeight: 700,
+                        fill: "hsl(var(--foreground) / 0.82)",
+                        letterSpacing: "0.2px",
+                      }}
+                    >
+                      {n}
+                    </text>
+                  </g>
                 );
               })}
             </g>

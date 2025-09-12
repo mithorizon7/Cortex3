@@ -1,10 +1,12 @@
 import { useParams, Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { useContextMirror } from "@/hooks/useContextMirror";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Download } from "lucide-react";
+import { generateContextBrief } from "@/lib/pdf-generator";
 
 function Skeleton({ className }: { className: string }) {
   return <div className={`animate-pulse bg-muted rounded ${className}`} />;
@@ -143,8 +145,10 @@ export default function ContextInsightPage() {
         <Button 
           variant="ghost" 
           onClick={handleDownloadBrief}
+          disabled={!data || loading}
           data-testid="button-download-brief"
         >
+          <Download className="w-4 h-4 mr-2" />
           Download context brief
         </Button>
         <Link to={`/pulse/${id}`} data-testid="link-proceed-pulse">

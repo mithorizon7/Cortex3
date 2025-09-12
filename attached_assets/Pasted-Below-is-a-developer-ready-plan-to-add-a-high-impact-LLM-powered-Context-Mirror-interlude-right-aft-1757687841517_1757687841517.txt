@@ -1,0 +1,396 @@
+Below is a developer‑ready plan to add a high‑impact, LLM‑powered Context Mirror interlude right after the Context Profile and before the Pulse. It plugs cleanly into your current stack (React + Vite + shadcn/ui + Tailwind + TypeScript) without changing any downstream functionality.
+
+⸻
+
+1) What we’re building (in one sentence)
+
+A Context Insight page that generates a concise, executive‑quality Context Mirror—three likely strengths, three likely fragilities, and two moves that usually work first—based solely on the 12 Context Profile answers, before the Pulse begins.
+
+Tone: board‑ready, educational, non‑prescriptive.
+Length: ~180–250 words total.
+No benchmarks, no numbers, no PII.
+
+⸻
+
+2) User flow (where it lives)
+	1.	User completes Context Profile → clicks Continue.
+	2.	App routes to /context‑insight/:assessmentId
+	3.	Page immediately requests the Context Mirror (server calls LLM).
+	4.	Render mirror (Strengths / Fragilities / What usually works first) with a calm, MIT‑quality layout.
+	5.	Primary CTA: Proceed to Pulse → existing Pulse route.
+	6.	Secondary: Download context brief (use your existing PDF export utility).
+
+⸻
+
+3) Page layout & copy (UI spec)
+
+Route: /context-insight/:id
+Component: ContextInsight.tsx (new)
+
+Structure (desktop two‑column, stacked on mobile):
+	•	Header: “Context Insight” (H1) with a short subline:
+“A brief reflection based on your context. Educational, not prescriptive.”
+	•	Left Card: “What your profile signals”
+	•	Strengths (3 bullets)
+	•	Fragilities (3 bullets)
+	•	What usually works first (2 bullets)
+	•	Right Card (quiet): “Notes for your discussion”
+	•	2–3 short prompts (e.g., “Underline one strength and one fragility that surprised you.”)
+	•	Small disclaimer chip: “No PII · No benchmarks · Context‑based reflection”
+	•	CTA Bar (sticky on mobile):
+	•	Secondary: “Download context brief”
+	•	Primary: “Proceed to Pulse”
+
+Style:
+	•	Use shadcn Card with generous padding (p-6 md:p-8), no heavy shadows, muted borders.
+	•	Typography: display: text-2xl md:text-3xl font-semibold; section titles text-xl; bullets text-sm text-muted-foreground.
+	•	Subtle divider lines between Strengths / Fragilities / What Works.
+	•	Motion: fade‑in content after load; 150ms ease.
+
+Skeleton & error states:
+	•	While loading: pulsing skeleton lines inside the two cards (3/3/2 rows).
+	•	On error: a neutral message (“We couldn’t generate the insight. Showing a concise rule‑based summary.”) then render fallback content.
+
+⸻
+
+4) Data contract (inputs/outputs)
+
+Input (server receives): Saved Context Profile vector for assessmentId:
+
+type Profile = {
+  regulatory_intensity: 0|1|2|3|4;
+  data_sensitivity: 0|1|2|3|4;
+  safety_criticality: 0|1|2|3|4;
+  brand_exposure: 0|1|2|3|4;
+  clock_speed: 0|1|2|3|4;
+  latency_edge: 0|1|2|3|4;
+  scale_throughput: 0|1|2|3|4;
+  data_advantage: 0|1|2|3|4;
+  build_readiness: 0|1|2|3|4;
+  finops_priority: 0|1|2|3|4;
+  procurement_constraints: boolean;
+  edge_operations: boolean;
+};
+
+Output (server returns):
+
+type ContextMirror = {
+  strengths: string[];   // length 3, 8–18 words each
+  fragilities: string[]; // length 3, 8–18 words each
+  whatWorks: string[];   // length 2, 10–18 words each
+  disclaimer: string;    // fixed line: "Educational reflection based on your context; not a compliance determination."
+};
+
+
+⸻
+
+5) API & service plan
+
+New endpoint (server): POST /api/insight/context-mirror
+Body: { assessmentId: string } or { profile: Profile } (choose what’s convenient)
+Returns: ContextMirror
+
+Server steps:
+	1.	Fetch Profile for the assessmentId.
+	2.	Call LLM with system + user prompt and the Profile as structured JSON.
+	3.	Validate LLM output against a Zod schema; if invalid or error → run rule‑based fallback.
+	4.	Cache the result for the assessmentId (TTL 24h) to avoid re‑billing.
+	5.	Return ContextMirror.
+
+Security & privacy:
+	•	Do not send org name, emails, or free‑text to the LLM.
+	•	Use a no‑retention LLM endpoint if available.
+	•	Log only event names and durations—no payloads.
+
+⸻
+
+6) LLM prompt (production‑safe)
+
+System message (constant):
+
+You are an executive coach for AI readiness. Produce concise, board‑ready text. Use ONLY the structured profile JSON provided. Do not invent numbers, benchmarks, or proper nouns. Speak in probabilities (“often”, “tends to”) and options. Be educational, not prescriptive. Output valid JSON matching the supplied schema. Keep total under 220 words.
+
+User message (template):
+
+Generate a Context Mirror with 3 strengths, 3 fragilities, and 2 “what usually works first” items based solely on this Profile.
+Constraints:
+• Each bullet is a single sentence.
+• Make them specific to the profile (use dimension names implicitly, not verbatim).
+• No vendor/tool names.
+• No promises; avoid “guarantee”, “always”, “never”.
+• JSON only; match the schema exactly.
+Profile JSON:
+
+{ ...profile... }
+
+Return JSON only with keys: strengths[3], fragilities[3], whatWorks[2], disclaimer.
+
+Schema enforcement:
+	•	If your LLM supports JSON schema/structured output, pass a schema for ContextMirror.
+	•	Otherwise, wrap with a JSON extractor and validate with Zod.
+
+Token budget: keep input compact; temperature ~0.2, top_p 0.8, max_tokens ~600.
+
+⸻
+
+7) Rule‑based fallback (deterministic, crisp)
+
+If LLM fails, compose bullets from heuristics mapped to profile thresholds:
+	•	Strengths examples
+	•	regulatory_intensity>=3: “Clear guardrails enable trust and focus on high‑value, defensible use‑cases.”
+	•	clock_speed>=3: “Faster market clock‑speed encourages rapid iteration and learning velocity.”
+	•	data_advantage>=3: “Proprietary data offers leverage for differentiated results when harnessed safely.”
+	•	build_readiness>=3: “Mature teams and pipelines reduce time from prototype to dependable service.”
+	•	finops_priority>=3: “Cost discipline supports sustainable scaling and smart vendor choices.”
+	•	Fragilities examples
+	•	safety_criticality>=3: “High‑impact decisions can fail silently without human checkpoints and routine assurance.”
+	•	data_sensitivity>=3: “Sensitive data in prompts/logs raises residency, retention, and exposure risks.”
+	•	latency_edge>=3: “Near‑real‑time needs require tested fallbacks and smaller models for core tasks.”
+	•	scale_throughput>=3: “Traffic spikes expose brittle integrations without rate limits and failover.”
+	•	build_readiness<=1: “Heavy custom builds outpace governance and MLOps readiness, delaying value.”
+	•	What usually works first
+	•	If build_readiness<=1: “Start Buy→API→RAG; prove gaps before any fine‑tune.”
+	•	If regulatory_intensity>=3 or safety_criticality>=3: “Add HITL to high‑impact flows and run a monthly assurance cadence.”
+	•	If latency_edge>=3: “Set p95 latency SLOs and implement a simple offline/backup path.”
+	•	If clock_speed>=3: “Run time‑boxed pilots with explicit decision dates and sunset logic.”
+
+Pick top matches (max 2) by priority of risk + readiness.
+
+⸻
+
+8) Front‑end integration (files & snippets)
+
+New hook: useContextMirror.ts
+
+import { useEffect, useState } from "react";
+
+export function useContextMirror(assessmentId: string) {
+  const [data, setData] = useState<ContextMirror | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState<Error | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    fetch("/api/insight/context-mirror", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ assessmentId })
+    })
+    .then(r => r.ok ? r.json() : Promise.reject(new Error("Bad response")))
+    .then(json => { if (isMounted) { setData(json); setLoading(false);} })
+    .catch(e => { if (isMounted) { setErr(e); setLoading(false);} });
+
+    return () => { isMounted = false; };
+  }, [assessmentId]);
+
+  return { data, loading, err };
+}
+
+Page: ContextInsight.tsx (structure)
+
+export default function ContextInsightPage() {
+  const { id } = useParams(); // from react-router
+  const { data, loading, err } = useContextMirror(id!);
+
+  return (
+    <section className="max-w-7xl mx-auto px-6 py-10 space-y-8">
+      <header className="space-y-2">
+        <h1 className="text-2xl md:text-3xl font-semibold">Context Insight</h1>
+        <p className="text-sm text-muted-foreground">
+          A brief reflection based on your context. Educational, not prescriptive.
+        </p>
+      </header>
+
+      <div className="grid md:grid-cols-2 gap-6 items-start">
+        <Card>
+          <CardHeader><CardTitle>What your profile signals</CardTitle></CardHeader>
+          <CardContent className="space-y-6">
+            {loading ? <SkeletonList rows={8}/> : (
+              <>
+                <Section title="Strengths" items={data?.strengths ?? []}/>
+                <Section title="Fragilities" items={data?.fragilities ?? []}/>
+                <Section title="What usually works first" items={data?.whatWorks ?? []}/>
+              </>
+            )}
+            {err && <MutedNote text="We couldn’t generate the insight. Showing a concise rule-based summary."/>}
+            <p className="text-xs text-muted-foreground">{data?.disclaimer}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader><CardTitle>Notes for your discussion</CardTitle></CardHeader>
+          <CardContent className="space-y-3 text-sm text-muted-foreground">
+            <ul className="list-disc ml-5 space-y-2">
+              <li>Underline one strength and one fragility that surprised you.</li>
+              <li>Which item would most affect customers or reputation if mishandled?</li>
+              <li>What’s the smallest next step to de‑risk a fragility?</li>
+            </ul>
+            <div className="pt-3">
+              <Badge variant="outline">No PII</Badge>{' '}
+              <Badge variant="outline">No benchmarks</Badge>{' '}
+              <Badge variant="outline">Context‑based reflection</Badge>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <footer className="flex items-center justify-end gap-3">
+        <Button variant="ghost" onClick={downloadContextBrief}>Download context brief</Button>
+        <Link to={`/pulse/${id}`}><Button>Proceed to Pulse</Button></Link>
+      </footer>
+    </section>
+  );
+}
+
+Skeleton component (light):
+
+function SkeletonList({ rows=6 }: { rows?: number }) {
+  return (
+    <div className="space-y-3">
+      {Array.from({length: rows}).map((_,i)=>(
+        <div key={i} className="h-4 w-full bg-muted animate-pulse rounded" />
+      ))}
+    </div>
+  );
+}
+
+
+⸻
+
+9) Server handler (LLM + validation)
+
+Zod schema
+
+import { z } from "zod";
+
+export const contextMirrorSchema = z.object({
+  strengths: z.array(z.string().min(8).max(180)).length(3),
+  fragilities: z.array(z.string().min(8).max(180)).length(3),
+  whatWorks: z.array(z.string().min(10).max(180)).length(2),
+  disclaimer: z.string().min(10).max(140)
+});
+export type ContextMirror = z.infer<typeof contextMirrorSchema>;
+
+Handler outline (express/worker):
+
+app.post("/api/insight/context-mirror", async (req, res) => {
+  try {
+    const { assessmentId } = req.body;
+    const profile = await getProfile(assessmentId); // from your store
+    // cache check
+    const cacheKey = `mirror:${assessmentId}`;
+    const cached = await cache.get(cacheKey);
+    if (cached) return res.json(cached);
+
+    const llmJson = await callLLMForMirror(profile); // returns raw string
+    let parsed: ContextMirror | null = null;
+
+    try {
+      parsed = contextMirrorSchema.parse(JSON.parse(llmJson));
+    } catch {
+      parsed = ruleBasedFallback(profile); // build deterministic mirror
+    }
+
+    await cache.set(cacheKey, parsed, { ttl: 60 * 60 * 24 }); // 24h
+    res.json(parsed);
+
+  } catch (e) {
+    const profile = await getProfile(req.body.assessmentId);
+    const fb = ruleBasedFallback(profile);
+    res.json(fb);
+  }
+});
+
+LLM call (pseudo):
+
+async function callLLMForMirror(profile: Profile): Promise<string> {
+  const system = `You are an executive coach... [as above]`;
+  const user = `Generate a Context Mirror... Profile JSON: ${JSON.stringify(profile)}`;
+  const resp = await llm.chat({
+    model: process.env.LLM_MODEL,
+    messages: [{role:"system", content:system}, {role:"user", content:user}],
+    temperature: 0.2,
+    // If available: response_format: { type: "json_object" }
+  });
+  return resp.content; // stringified JSON
+}
+
+Fallback (example):
+
+function ruleBasedFallback(p: Profile): ContextMirror {
+  const strengths: string[] = [];
+  if (p.regulatory_intensity >= 3) strengths.push("Clear guardrails enable trust and keep effort focused on defensible, high‑value use‑cases.");
+  if (p.data_advantage >= 3) strengths.push("Proprietary data offers leverage for differentiated outcomes when handled with sound governance.");
+  if (p.clock_speed >= 3) strengths.push("Faster market clock‑speed supports rapid iteration and learning velocity.");
+  while (strengths.length < 3) strengths.push("Leadership attention creates momentum for focused experiments and measurable outcomes.");
+
+  const fragilities: string[] = [];
+  if (p.safety_criticality >= 3) fragilities.push("High‑impact decisions can fail silently without human checkpoints and routine assurance.");
+  if (p.data_sensitivity >= 3) fragilities.push("Sensitive prompts and logs increase residency, retention, and exposure risks if unmanaged.");
+  if (p.latency_edge >= 3) fragilities.push("Near‑real‑time needs demand tested fallbacks and smaller models for core tasks.");
+  while (fragilities.length < 3) fragilities.push("Heavy customization can outpace MLOps and governance readiness, delaying value.");
+
+  const whatWorks: string[] = [];
+  if (p.build_readiness <= 1) whatWorks.push("Start Buy→API→RAG; prove consistent gaps before any fine‑tune.");
+  if (p.regulatory_intensity >= 3 || p.safety_criticality >= 3) whatWorks.push("Add HITL to high‑impact flows and run a monthly assurance cadence.");
+  if (whatWorks.length < 2) whatWorks.push("Time‑box pilots with clear decision dates and sunset logic to increase learning velocity.");
+
+  return {
+    strengths: strengths.slice(0,3),
+    fragilities: fragilities.slice(0,3),
+    whatWorks: whatWorks.slice(0,2),
+    disclaimer: "Educational reflection based on your context; not a compliance determination."
+  };
+}
+
+
+⸻
+
+10) Telemetry (to learn fast)
+
+Log (no payloads):
+	•	context.mirror.requested (assessmentId)
+	•	context.mirror.success.llm | context.mirror.success.fallback
+	•	context.mirror.failed (error class)
+	•	context.mirror.proceed_to_pulse
+	•	context.mirror.downloaded
+
+⸻
+
+11) Acceptance criteria
+	1.	After saving the Context Profile, the app routes to /context‑insight/:id and shows a skeleton within 250ms.
+	2.	Within ~1–2 seconds (cached) or ~3–5 seconds (LLM), the Context Mirror renders with exactly 3 strengths, 3 fragilities, 2 what‑works and the disclaimer.
+	3.	Copy fits within ~220 words, bullet sentences are clean and specific, no vendor names, no numbers.
+	4.	Proceed to Pulse button routes to the existing Pulse page; Download exports a one‑pager (title + bullets + disclaimer + profile chips).
+	5.	If LLM fails, a rule‑based mirror appears with a neutral error note—no blank state.
+	6.	Works on mobile (stacked cards), keyboard navigable, meets WCAG AA contrast.
+	7.	No org names or emails are sent to the LLM.
+
+⸻
+
+12) QA profiles to test (quick set)
+	•	High‑reg + high‑sensitivity + low‑readiness → HITL/assurance themes, Buy→RAG bias.
+	•	Consumer digital + high clock‑speed + med‑readiness → iteration velocity, brand‑safety fragility.
+	•	Industrial edge + high latency → offline/fallback; small model for core tasks.
+	•	Hyperscale + strong data advantage + mature ops → targeted differentiation, scale hardening.
+	•	Low‑everything (baseline) → general strengths/fragilities; guidance remains meaningful.
+
+⸻
+
+13) Design polish (tokens to apply on this page)
+	•	Background: neutral (bg-background), cards bg-card border-border.
+	•	Headings: font-semibold, slightly tighter tracking, disciplined spacing (space-y-6).
+	•	Bullets: list-disc ml-5 text-sm text-muted-foreground space-y-2.
+	•	Badges: outline variant; don’t over‑color.
+	•	Transitions: transition-transform duration-150 ease-out on buttons (hover scale 1.01).
+	•	Respect prefers-reduced-motion.
+
+⸻
+
+Why this will impress your audience
+	•	Immediate value before scoring—feels like the tool “gets” them.
+	•	Educational tone that teaches leadership patterns without prescribing.
+	•	MIT‑caliber restraint and precision: no hype, no noise, just insight.
+	•	Low risk, high reliability with schema validation and graceful fallback.
+
+If you want, I can supply a ready‑to‑paste ContextInsight.tsx with shadcn imports and the server handler file in your preferred framework format.

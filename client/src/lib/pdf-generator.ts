@@ -7,6 +7,15 @@ export interface AssessmentResults {
   completedAt: string;
 }
 
+export interface ContextMirrorData {
+  strengths: string[];
+  fragilities: string[];
+  whatWorks: string[];
+  disclaimer: string;
+  contextProfile: any;
+  assessmentId: string;
+}
+
 export async function generatePDFReport(results: AssessmentResults): Promise<Blob> {
   // For MVP, we'll use a simple approach to generate PDF
   // In production, consider using libraries like jsPDF or Puppeteer
@@ -69,6 +78,92 @@ Edge Operations: ${results.contextProfile.edge_operations ? 'Yes' : 'No'}
 
   const blob = new Blob([content], { type: 'text/plain' });
   return blob;
+}
+
+export async function generateContextBrief(data: ContextMirrorData): Promise<void> {
+  const formatSliderValue = (value: number) => {
+    const labels = ["Very Low", "Low", "Medium", "High", "Very High"];
+    return `${labels[value - 1]} (${value}/5)`;
+  };
+
+  const content = `
+CORTEX™ Executive AI Readiness Context Brief
+Generated: ${new Date().toLocaleDateString()}
+Assessment ID: ${data.assessmentId}
+
+═══════════════════════════════════════════════════════════════
+
+WHAT YOUR PROFILE SIGNALS
+
+Strengths
+${data.strengths.map(s => `• ${s}`).join('\n')}
+
+Fragilities
+${data.fragilities.map(f => `• ${f}`).join('\n')}
+
+What usually works first
+${data.whatWorks.map(w => `• ${w}`).join('\n')}
+
+═══════════════════════════════════════════════════════════════
+
+NOTES FOR YOUR DISCUSSION
+
+• Underline one strength and one fragility that surprised you.
+
+• Which item would most affect customers or reputation if 
+  mishandled?
+
+• What's the smallest next step to de-risk a fragility?
+
+═══════════════════════════════════════════════════════════════
+
+ORGANIZATIONAL CONTEXT PROFILE
+
+Risk & Compliance
+  Regulatory Intensity: ${formatSliderValue(data.contextProfile.regulatory_intensity)}
+  Data Sensitivity: ${formatSliderValue(data.contextProfile.data_sensitivity)}
+  Safety Criticality: ${formatSliderValue(data.contextProfile.safety_criticality)}
+  Brand Exposure: ${formatSliderValue(data.contextProfile.brand_exposure)}
+
+Operations & Performance
+  Clock Speed (pace of change): ${formatSliderValue(data.contextProfile.clock_speed)}
+  Latency Edge (real-time needs): ${formatSliderValue(data.contextProfile.latency_edge)}
+  Scale & Throughput: ${formatSliderValue(data.contextProfile.scale_throughput)}
+
+Strategic Assets
+  Data Advantage: ${formatSliderValue(data.contextProfile.data_advantage)}
+  Build Readiness: ${formatSliderValue(data.contextProfile.build_readiness)}
+  FinOps Priority: ${formatSliderValue(data.contextProfile.finops_priority)}
+
+Constraints
+  Procurement Constraints: ${data.contextProfile.procurement_constraints ? 'Yes' : 'No'}
+  Edge Operations: ${data.contextProfile.edge_operations ? 'Yes' : 'No'}
+
+═══════════════════════════════════════════════════════════════
+
+DISCLAIMER
+
+${data.disclaimer}
+
+This brief provides a contextual reflection based on your organizational 
+profile. It is educational content designed to facilitate strategic 
+discussion, not prescriptive recommendations or compliance guidance.
+
+═══════════════════════════════════════════════════════════════
+
+© 2024 CORTEX™ Executive AI Readiness Program
+  `.trim();
+
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `cortex-context-brief-${data.assessmentId}.txt`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 
 export function exportJSONResults(results: AssessmentResults): void {
