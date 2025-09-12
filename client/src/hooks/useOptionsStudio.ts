@@ -99,11 +99,13 @@ export function useOptionsStudio(): UseOptionsStudioReturn {
     // Convert to extended cards with UI properties
     const cards = OPTION_CARDS.map(card => extendOptionCard(card));
     
-    // Sort cards based on context profile relevance
+    // Sort cards by contextual relevance for informational purposes
+    // Note: All options remain visible - this ordering helps surface 
+    // options that align with your context profile for consideration
     return cards.sort((a, b) => {
       const scoreA = calculateCardRelevance(a, contextProfile);
       const scoreB = calculateCardRelevance(b, contextProfile);
-      return scoreB - scoreA; // Higher scores first
+      return scoreB - scoreA; // Higher contextual relevance first
     });
   }, []);
 

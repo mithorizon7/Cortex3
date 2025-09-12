@@ -178,16 +178,26 @@ function OptionCardComponent({ option, isSelected, onToggleSelect, emphasizedLen
             
             {relevantCautions.length > 0 && (
               <div className="flex flex-wrap gap-1 mb-2">
-                {relevantCautions.map(caution => (
-                  <Badge 
-                    key={caution} 
-                    variant="outline" 
-                    className="text-xs bg-orange-50 border-orange-200 text-orange-700"
-                  >
-                    <AlertTriangle className="w-3 h-3 mr-1" />
-                    {caution.replace('_', ' ')}
-                  </Badge>
-                ))}
+                {relevantCautions.map(caution => {
+                  const cautionLabels = {
+                    'regulated': 'Regulatory Context',
+                    'high_sensitivity': 'Data Sensitivity',
+                    'low_readiness': 'Build Later',
+                    'edge': 'Edge/Offline'
+                  };
+                  
+                  return (
+                    <Badge 
+                      key={caution} 
+                      variant="outline" 
+                      className="text-xs bg-orange-50 border-orange-300 text-orange-800 dark:bg-orange-950/30 dark:border-orange-700 dark:text-orange-300 transition-colors"
+                      title={`This option requires special consideration for your ${cautionLabels[caution as keyof typeof cautionLabels] || caution} profile`}
+                    >
+                      <AlertTriangle className="w-3 h-3 mr-1" />
+                      {cautionLabels[caution as keyof typeof cautionLabels] || caution.replace('_', ' ')}
+                    </Badge>
+                  );
+                })}
               </div>
             )}
             
@@ -220,16 +230,29 @@ function OptionCardComponent({ option, isSelected, onToggleSelect, emphasizedLen
             return (
               <div 
                 key={lens} 
-                className={`text-center p-2 rounded-md transition-colors ${
-                  isEmphasized ? 'bg-accent/20 border border-accent/30' : 'bg-background/50'
+                className={`text-center p-2 rounded-md transition-all duration-200 ${
+                  isEmphasized 
+                    ? 'bg-blue-100 border border-blue-300 dark:bg-blue-950/50 dark:border-blue-700 shadow-sm' 
+                    : 'bg-background/50 hover:bg-muted/30'
                 }`}
                 data-testid={`lens-${option.id}-${lensKey}`}
-                title={lens}
+                title={`${lens}${isEmphasized ? ' (Key for your context)' : ''}`}
               >
-                <IconComponent className={`w-3 h-3 mx-auto mb-1 ${isEmphasized ? 'text-accent' : 'text-muted-foreground'}`} />
-                <div className={`text-xs font-medium ${isEmphasized ? 'text-accent' : ''}`}>
+                <IconComponent className={`w-3 h-3 mx-auto mb-1 transition-colors ${
+                  isEmphasized 
+                    ? 'text-blue-600 dark:text-blue-400' 
+                    : 'text-muted-foreground'
+                }`} />
+                <div className={`text-xs font-medium transition-colors ${
+                  isEmphasized 
+                    ? 'text-blue-800 dark:text-blue-200' 
+                    : 'text-foreground'
+                }`}>
                   {value}
                 </div>
+                {isEmphasized && (
+                  <div className="w-1 h-1 bg-blue-500 rounded-full mx-auto mt-1" />
+                )}
               </div>
             );
           })}
@@ -485,18 +508,22 @@ function OptionsStudioContent() {
     
     const flags: string[] = [];
     
+    // High regulatory or safety context triggers regulated caution
     if (contextProfile.regulatory_intensity >= 3 || contextProfile.safety_criticality >= 3) {
       flags.push('regulated');
     }
     
+    // High data sensitivity triggers high_sensitivity caution
     if (contextProfile.data_sensitivity >= 3) {
       flags.push('high_sensitivity');
     }
     
+    // Low build readiness triggers low_readiness caution
     if (contextProfile.build_readiness <= 1) {
       flags.push('low_readiness');
     }
     
+    // Edge operations trigger edge caution
     if (contextProfile.edge_operations) {
       flags.push('edge');
     }
