@@ -126,6 +126,94 @@ export function sanitizationMiddleware(req: Request, res: Response, next: NextFu
 }
 
 /**
+ * Authentication middleware - ensures user is authenticated
+ */
+export function requireAuthMiddleware(req: Request, res: Response, next: NextFunction) {
+  // Check if user is authenticated (not anonymous)
+  const userId = req.userId;
+  
+  if (!userId || userId === 'anonymous') {
+    const incidentId = generateIncidentId();
+    
+    logger.warn('Authentication required - unauthorized access attempt', {
+      additionalContext: {
+        path: req.path,
+        method: req.method,
+        userAgent: req.get('User-Agent'),
+        ip: req.ip,
+        incidentId
+      }
+    });
+    
+    const errorResponse = createUserError(
+      'Authentication required. Please sign in and try again.',
+      incidentId,
+      HTTP_STATUS.UNAUTHORIZED
+    );
+    
+    res.status(HTTP_STATUS.UNAUTHORIZED).json(errorResponse);
+    return;
+  }
+  
+  // User is authenticated, proceed
+  next();
+}
+
+/**
+ * Context Mirror specific rate limiting middleware
+ * Stricter limits for expensive LLM operations
+ */
+const contextMirrorRequests = new Map<string, { count: number; resetTime: number }>();
+
+export function contextMirrorRateLimitMiddleware(req: Request, res: Response, next: NextFunction) {
+  const userId = req.userId || 'anonymous';
+  const now = Date.now();
+  // 10 minutes window with max 5 requests per user (stricter than general rate limit)
+  const windowMs = 10 * 60 * 1000; // 10 minutes
+  const maxRequests = process.env.NODE_ENV === 'development' ? 20 : 5; // Higher limit in development
+  
+  const userKey = `contextmirror:${userId}`;
+  const userData = contextMirrorRequests.get(userKey);
+  
+  if (!userData || now > userData.resetTime) {
+    contextMirrorRequests.set(userKey, {
+      count: 1,
+      resetTime: now + windowMs
+    });
+    next();
+    return;
+  }
+  
+  if (userData.count >= maxRequests) {
+    const incidentId = generateIncidentId();
+    
+    logger.warn('Context Mirror rate limit exceeded', {
+      additionalContext: {
+        userId,
+        ip: req.ip,
+        userAgent: req.get('User-Agent'),
+        path: req.path,
+        count: userData.count,
+        maxRequests,
+        incidentId
+      }
+    });
+    
+    const errorResponse = createUserError(
+      'Too many Context Mirror requests. Please wait before requesting another analysis.',
+      incidentId,
+      HTTP_STATUS.TOO_MANY_REQUESTS
+    );
+    
+    res.status(HTTP_STATUS.TOO_MANY_REQUESTS).json(errorResponse);
+    return;
+  }
+  
+  userData.count++;
+  next();
+}
+
+/**
  * Recursively sanitize an object
  */
 function sanitizeObject(obj: any): any {

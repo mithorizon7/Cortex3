@@ -6,9 +6,9 @@ import { db } from "./db";
 import { eq } from "drizzle-orm";
 
 export interface IStorage {
-  getAssessment(id: string): Promise<Assessment | null>;
+  getAssessment(id: string, userId?: string): Promise<Assessment | null>;
   createAssessment(assessment: InsertAssessment): Promise<Assessment>;
-  updateAssessment(id: string, updates: Partial<InsertAssessment>): Promise<Assessment | null>;
+  updateAssessment(id: string, updates: Partial<InsertAssessment>, userId?: string): Promise<Assessment | null>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -125,6 +125,8 @@ export class MemStorage implements IStorage {
           ...insertAssessment, 
           id,
           createdAt: new Date().toISOString(),
+          contextMirror: insertAssessment.contextMirror || null,
+          contextMirrorUpdatedAt: insertAssessment.contextMirrorUpdatedAt || null,
           pulseResponses: insertAssessment.pulseResponses || null,
           pillarScores: insertAssessment.pillarScores || null,
           triggeredGates: insertAssessment.triggeredGates || null,

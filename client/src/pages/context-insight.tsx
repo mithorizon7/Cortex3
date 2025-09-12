@@ -1,12 +1,14 @@
 import { useParams, Link } from "wouter";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useContextMirror } from "@/hooks/useContextMirror";
+import { useToast } from "@/hooks/use-toast";
 import type { Assessment } from "../../../shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Download } from "lucide-react";
+import { AlertCircle, Download, Loader2 } from "lucide-react";
 import { generateContextBrief } from "@/lib/pdf-generator";
 
 function Skeleton({ className }: { className: string }) {
@@ -65,6 +67,8 @@ function ErrorFallback({ error }: { error: Error }) {
 export default function ContextInsightPage() {
   const { id } = useParams();
   const { data, loading, error } = useContextMirror(id!);
+  const { toast } = useToast();
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   
   // Fetch the full assessment data to get contextProfile
   const { data: assessmentData, isLoading: assessmentLoading } = useQuery<Assessment>({
@@ -74,10 +78,16 @@ export default function ContextInsightPage() {
 
   const handleDownloadBrief = async () => {
     if (!data || !assessmentData || !id) {
-      console.error('Missing required data for PDF download');
+      toast({
+        title: "Cannot generate PDF",
+        description: "Missing required data. Please try refreshing the page.",
+        variant: "destructive",
+      });
       return;
     }
 
+    setIsGeneratingPDF(true);
+    
     try {
       await generateContextBrief({
         strengths: data.strengths,
@@ -87,8 +97,25 @@ export default function ContextInsightPage() {
         contextProfile: assessmentData.contextProfile,
         assessmentId: id,
       });
+      
+      toast({
+        title: "PDF downloaded successfully",
+        description: "Your CORTEX context brief has been saved to your downloads folder.",
+      });
     } catch (error) {
       console.error('Failed to generate context brief:', error);
+      
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'An unexpected error occurred';
+        
+      toast({
+        title: "Failed to generate PDF",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingPDF(false);
     }
   };
 
@@ -167,11 +194,20 @@ export default function ContextInsightPage() {
         <Button 
           variant="ghost" 
           onClick={handleDownloadBrief}
-          disabled={!data || loading || !assessmentData || assessmentLoading}
+          disabled={!data || loading || !assessmentData || assessmentLoading || isGeneratingPDF}
           data-testid="button-download-brief"
         >
-          <Download className="w-4 h-4 mr-2" />
-          Download context brief
+          {isGeneratingPDF ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Generating PDF...
+            </>
+          ) : (
+            <>
+              <Download className="w-4 h-4 mr-2" />
+              Download context brief
+            </>
+          )}
         </Button>
         <Link to={`/pulse/${id}`} data-testid="link-proceed-pulse">
           <Button data-testid="button-proceed-pulse">

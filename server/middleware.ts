@@ -3,6 +3,7 @@ import { logger, generateRequestId } from './logger';
 import { generateIncidentId, createUserError, sanitizeErrorForUser } from './utils/incident';
 import { DatabaseError } from './utils/database-errors';
 import { USER_ERROR_MESSAGES, HTTP_STATUS } from './constants';
+import { verifyFirebaseToken, isFirebaseAdminConfigured } from './lib/firebase-admin';
 
 // Extend Express Request type to include our custom properties
 declare global {
@@ -10,19 +11,72 @@ declare global {
     interface Request {
       requestId: string;
       userId?: string;
+      userEmail?: string;
       startTime: number;
     }
   }
 }
 
-export function requestContextMiddleware(req: Request, res: Response, next: NextFunction) {
+export async function requestContextMiddleware(req: Request, res: Response, next: NextFunction) {
   // Generate unique request ID
   req.requestId = generateRequestId();
   req.startTime = Date.now();
   
-  // Extract user ID from headers/session if available
-  // For now, using a header-based approach - in production this might come from JWT or session
-  req.userId = req.headers['x-user-id'] as string || 'anonymous';
+  // Extract and verify Firebase ID token from Authorization header
+  let userId = 'anonymous';
+  let userEmail: string | undefined;
+  
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const idToken = authHeader.substring(7); // Remove 'Bearer ' prefix
+    
+    try {
+      if (isFirebaseAdminConfigured()) {
+        const verifiedToken = await verifyFirebaseToken(idToken);
+        if (verifiedToken) {
+          userId = verifiedToken.uid;
+          userEmail = verifiedToken.email;
+          
+          logger.debug('Successfully verified Firebase token', {
+            additionalContext: {
+              operation: 'token_verification_success',
+              userId: userId,
+              hasEmail: !!userEmail
+            }
+          });
+        } else {
+          logger.debug('Firebase token verification failed - invalid token');
+        }
+      } else {
+        logger.debug('Firebase Admin not configured - skipping token verification');
+      }
+    } catch (error) {
+      logger.debug('Error during token verification', {
+        additionalContext: {
+          operation: 'token_verification_error',
+          error: error instanceof Error ? error.message : String(error)
+        }
+      });
+    }
+  }
+  
+  // Fallback to header-based auth for development/testing (SECURITY: Remove in production)
+  if (userId === 'anonymous' && process.env.NODE_ENV === 'development') {
+    const headerUserId = req.headers['x-user-id'] as string;
+    if (headerUserId && headerUserId !== 'anonymous') {
+      userId = headerUserId;
+      logger.warn('Using insecure header-based auth in development mode', {
+        additionalContext: {
+          operation: 'development_header_auth',
+          userId: userId,
+          warning: 'This is insecure and should not be used in production'
+        }
+      });
+    }
+  }
+  
+  req.userId = userId;
+  req.userEmail = userEmail;
   
   // Extract frontend request ID for correlation if provided
   const frontendRequestId = req.headers['x-frontend-request-id'] as string;
@@ -53,9 +107,7 @@ export function requestContextMiddleware(req: Request, res: Response, next: Next
     
     logger.logRequest(req.method, req.path, res.statusCode, duration, {
       requestBody: shouldLogBody ? req.body : undefined,
-      responseBody: shouldLogBody && res.statusCode >= 400 ? capturedResponse : undefined,
-      hasRequestBody: !!req.body,
-      hasResponseBody: !!capturedResponse
+      responseBody: shouldLogBody && res.statusCode >= 400 ? capturedResponse : undefined
     });
     
     // Clear context after request
@@ -68,7 +120,7 @@ export function requestContextMiddleware(req: Request, res: Response, next: Next
 export function errorHandlerMiddleware(err: any, req: Request, res: Response, next: NextFunction) {
   // Detect and handle different error types with appropriate status codes
   let status = err.status || err.statusCode;
-  let userMessage: string;
+  let userMessage: string | undefined;
   
   // Handle database errors with specific status codes and messages
   if (err instanceof DatabaseError) {
@@ -94,7 +146,6 @@ export function errorHandlerMiddleware(err: any, req: Request, res: Response, ne
     err instanceof Error ? err : new Error(String(err)),
     {
       requestBody: isDevMode ? req.body : undefined,
-      hasRequestBody: !!req.body,
       additionalContext: {
         operation: 'request_handler',
         requestId: req.requestId,

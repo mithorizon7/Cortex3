@@ -5,8 +5,10 @@ import { z } from "zod";
 
 export const assessments = pgTable("assessments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(), // Firebase user ID for ownership tracking
   contextProfile: jsonb("context_profile").notNull(),
   contextMirror: jsonb("context_mirror"),
+  contextMirrorUpdatedAt: text("context_mirror_updated_at"),
   pulseResponses: jsonb("pulse_responses"),
   pillarScores: jsonb("pillar_scores"),
   triggeredGates: jsonb("triggered_gates"),
@@ -101,3 +103,10 @@ export const contextMirrorSchema = z.object({
 });
 
 export type ContextMirror = z.infer<typeof contextMirrorSchema>;
+
+// Context Mirror Request Validation Schema
+export const contextMirrorRequestSchema = z.object({
+  assessmentId: z.string().uuid("Assessment ID must be a valid UUID"),
+});
+
+export type ContextMirrorRequest = z.infer<typeof contextMirrorRequestSchema>;

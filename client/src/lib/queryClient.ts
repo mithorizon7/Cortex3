@@ -1,4 +1,18 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { auth } from './firebase';
+
+// Firebase token utilities
+export async function getFirebaseIdToken(): Promise<string | null> {
+  try {
+    if (auth && auth.currentUser) {
+      return await auth.currentUser.getIdToken();
+    }
+    return null;
+  } catch (error) {
+    console.warn('Failed to get Firebase ID token:', error);
+    return null;
+  }
+}
 
 // Network and retry utilities
 export function isOnline() {
@@ -75,14 +89,18 @@ export async function apiRequest(
   }
 
   try {
-
+    // Get Firebase ID token for authentication
+    const idToken = await getFirebaseIdToken();
+    
     const startTime = performance.now();
     const res = await fetch(url, {
       method,
       headers: {
         ...(data ? { "Content-Type": "application/json" } : {}),
         // Send frontend request ID for correlation with backend logs
-        "X-Frontend-Request-Id": frontendRequestId
+        "X-Frontend-Request-Id": frontendRequestId,
+        // Include Firebase ID token for authentication
+        ...(idToken ? { "Authorization": `Bearer ${idToken}` } : {})
       },
       body: data ? JSON.stringify(data) : undefined,
       credentials: "include",
@@ -130,7 +148,14 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    // Get Firebase ID token for authentication
+    const idToken = await getFirebaseIdToken();
+    
     const res = await fetch(queryKey.join("/") as string, {
+      headers: {
+        // Include Firebase ID token for authentication
+        ...(idToken ? { "Authorization": `Bearer ${idToken}` } : {})
+      },
       credentials: "include",
     });
 

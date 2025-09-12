@@ -11,11 +11,12 @@ export class AssessmentService {
   /**
    * Create a new assessment with context profile
    */
-  async createAssessment(data: { contextProfile: unknown }): Promise<Assessment> {
+  async createAssessment(data: { contextProfile: unknown; userId?: string }): Promise<Assessment> {
     // Validate context profile
     const validatedProfile = contextProfileSchema.parse(data.contextProfile);
     
     const assessment = await storage.createAssessment({
+      userId: data.userId || 'anonymous',
       contextProfile: validatedProfile,
       pulseResponses: null,
       pillarScores: null,
