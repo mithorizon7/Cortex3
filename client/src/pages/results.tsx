@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -35,7 +36,10 @@ import {
   Users,
   Settings,
   Lightbulb,
-  BookOpen
+  BookOpen,
+  Compass,
+  Brain,
+  ExternalLink
 } from "lucide-react";
 import type { Assessment, PillarScores, ContextProfile, ValueOverlay, ValueOverlayPillar } from "@shared/schema";
 
@@ -384,6 +388,78 @@ export default function ResultsPage() {
                     Get Detailed Action Plan
                   </Button>
                 </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Options Studio CTA */}
+        <Card className="mb-8 border-accent/30 bg-gradient-to-r from-accent/5 to-accent/10">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center space-x-2 text-accent-foreground">
+              <Compass className="h-6 w-6 text-accent" />
+              <span className="text-xl font-display">Ready to Explore Strategic Options?</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
+              <div>
+                <h3 className="text-lg font-semibold mb-3 font-ui flex items-center space-x-2">
+                  <Brain className="h-5 w-5 text-accent" />
+                  <span>Options Studio</span>
+                  <Badge variant="secondary" className="text-xs">Optional</Badge>
+                </h3>
+                <p className="text-muted-foreground mb-4 font-ui">
+                  Now that you understand your AI readiness, dive deeper with our guided exploration tool. 
+                  Compare strategic options, debunk common myths, and get personalized recommendations 
+                  based on your specific context and goals.
+                </p>
+                <ul className="text-sm text-muted-foreground space-y-2 mb-4 font-ui">
+                  <li className="flex items-start space-x-2">
+                    <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span>Interactive learning modules tailored to your industry</span>
+                  </li>
+                  <li className="flex items-start space-x-2">
+                    <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span>Side-by-side comparison of AI implementation strategies</span>
+                  </li>
+                  <li className="flex items-start space-x-2">
+                    <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                    <span>Context-aware recommendations and risk assessments</span>
+                  </li>
+                </ul>
+              </div>
+              
+              <div className="flex flex-col items-center lg:items-end space-y-4">
+                <div className="text-center lg:text-right">
+                  <p className="text-sm text-muted-foreground mb-2 font-ui">
+                    Estimated time: 15-20 minutes
+                  </p>
+                  <div className="flex items-center justify-center lg:justify-end space-x-1 text-accent">
+                    <Star className="h-4 w-4 fill-current" />
+                    <Star className="h-4 w-4 fill-current" />
+                    <Star className="h-4 w-4 fill-current" />
+                    <Star className="h-4 w-4 fill-current" />
+                    <Star className="h-4 w-4" />
+                    <span className="ml-2 text-sm text-muted-foreground">4.3/5 user rating</span>
+                  </div>
+                </div>
+                
+                <Link to={`/decide/${assessmentId}`}>
+                  <Button 
+                    size="lg" 
+                    className="w-full lg:w-auto hover-elevate"
+                    data-testid="button-explore-options"
+                  >
+                    <Compass className="h-5 w-5 mr-2" />
+                    Explore Strategic Options
+                    <ExternalLink className="h-4 w-4 ml-2" />
+                  </Button>
+                </Link>
+                
+                <p className="text-xs text-muted-foreground text-center lg:text-right font-ui">
+                  Your assessment results will be used to personalize the experience
+                </p>
               </div>
             </div>
           </CardContent>
