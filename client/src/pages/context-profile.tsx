@@ -50,7 +50,7 @@ export default function ContextProfilePage() {
       return response.json();
     },
     onSuccess: (data) => {
-      navigate(`/profile-summary/${data.id}`);
+      navigate(`/context-insight/${data.id}`);
     },
     onError: (error) => {
       console.error("Context profile error:", error);

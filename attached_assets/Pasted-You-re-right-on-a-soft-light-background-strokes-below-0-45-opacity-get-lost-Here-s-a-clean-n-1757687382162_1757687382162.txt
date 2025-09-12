@@ -1,0 +1,137 @@
+You’re right—on a soft, light background, strokes below \~0.45 opacity get lost.
+Here’s a **clean, non-busy fix**: (1) make rings/spokes darker and slightly thicker (but crisp), and (2) give the numerals a subtle outline so they’re readable over anything.
+
+## Do this (copy/paste tweaks)
+
+### 1) Make rings & spokes actually visible (crisp, not heavy)
+
+* Use your existing gradient but with higher opacities.
+* Keep lines hairline-thin but **non-scaling** so they don’t blur on resize.
+* Slightly increase spoke opacity.
+
+```jsx
+// defs (replace your ring gradient)
+<linearGradient id={`ring-${uid}`} x1="0%" y1="0%" x2="0%" y2="100%">
+  <stop offset="0%"  stopColor="hsl(var(--foreground))" stopOpacity="0.30" />
+  <stop offset="100%" stopColor="hsl(var(--foreground))" stopOpacity="0.18" />
+</linearGradient>
+
+// rings (replace your map)
+<g>
+  {RINGS.map((r, i) => (
+    <circle
+      key={r}
+      cx={C}
+      cy={C}
+      r={r}
+      fill="none"
+      stroke={`url(#ring-${uid})`}
+      strokeWidth={i === RINGS.length - 1 ? 1.8 : 1.4}
+      vectorEffect="non-scaling-stroke"
+      shapeRendering="geometricPrecision"
+      opacity={i === 0 ? 0.80 : i === 1 ? 0.65 : 0.55}  // was ~0.6/0.45/0.35
+    />
+  ))}
+</g>
+
+// spokes (slightly stronger)
+<g opacity="0.38" filter={`url(#soft-${uid})`}>
+  {angles.map((a, i) => {
+    const { x, y } = pointAt(RINGS[RINGS.length - 1], a);
+    return (
+      <line
+        key={i}
+        x1={C}
+        y1={C}
+        x2={x}
+        y2={y}
+        stroke={`url(#ring-${uid})`}
+        strokeWidth="1.25"
+        vectorEffect="non-scaling-stroke"
+        shapeRendering="geometricPrecision"
+      />
+    );
+  })}
+</g>
+```
+
+### 2) Make the ring numbers readable everywhere
+
+* Keep them tiny, but add a **soft outline** the same color as the background.
+* This works in light/dark themes because it uses your CSS variables.
+
+```jsx
+// ring labels (single placement at top of each ring)
+<g aria-hidden="true">
+  {[1, 2, 3].map((n, idx) => {
+    const r = RINGS[idx];
+    const y = C - r - 6;
+    return (
+      <g key={n}>
+        {/* Outline version underneath */}
+        <text
+          x={C}
+          y={y}
+          textAnchor="middle"
+          style={{
+            fontFamily: "var(--font-heading)",
+            fontSize: "12px",
+            fontWeight: 700,
+            // SVG stroke outline for contrast
+            stroke: "hsl(var(--background) / 0.70)",
+            strokeWidth: 3,
+            paintOrder: "stroke fill",
+            fill: "hsl(var(--foreground) / 0.80)",
+            letterSpacing: "0.2px",
+          }}
+        >
+          {n}
+        </text>
+        {/* Fill layer on top (keeps text crisp) */}
+        <text
+          x={C}
+          y={y}
+          textAnchor="middle"
+          style={{
+            fontFamily: "var(--font-heading)",
+            fontSize: "12px",
+            fontWeight: 700,
+            fill: "hsl(var(--foreground) / 0.82)",
+            letterSpacing: "0.2px",
+          }}
+        >
+          {n}
+        </text>
+      </g>
+    );
+  })}
+</g>
+```
+
+### 3) (Optional) nudge the background texture down a hair
+
+If the hex texture is contributing to the “faint” feel, lower it slightly:
+
+```jsx
+<g opacity="0.035" mask={`url(#fadeMask-${uid})`}> {/* was ~0.06–0.08 */}
+  <rect width={VB} height={VB} fill={`url(#hex-${uid})`} />
+</g>
+```
+
+---
+
+## Why this works
+
+* **Contrast without clutter:** rings/spokes move from \~0.35–0.6 to \~0.55–0.80 effective opacity, but remain thin and gradient-soft so they don’t dominate.
+* **Crisp at all sizes:** `vectorEffect="non-scaling-stroke"` + `shapeRendering="geometricPrecision"` prevent blurry/thick lines at different breakpoints.
+* **Numerals that always read:** the subtle outline separates numbers from both the polygon and background, staying tasteful and theme-aware.
+
+If you still want a touch more presence, bump the ring opacities by another **+0.05** and the number font to **13px**—but the values above are a good executive default.
+
+---
+
+### Confidence
+
+* **High** that these exact tweaks will improve visibility across common displays without making the hero look busy.
+* **High** that the outline approach will keep numerals readable in both light/dark themes.
+* **Medium** on the precise opacity values for your brand palette—tweak ±0.05 if your background gradient shifts.

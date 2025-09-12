@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/auth-context";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import ContextProfile from "@/pages/context-profile";
+import ContextInsight from "@/pages/context-insight";
 import ProfileSummary from "@/pages/profile-summary";
 import PulseCheck from "@/pages/pulse-check";
 import Results from "@/pages/results";
@@ -16,8 +17,9 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/context-profile" component={ContextProfile} />
+      <Route path="/context-insight/:id" component={ContextInsight} />
       <Route path="/profile-summary/:id" component={ProfileSummary} />
-      <Route path="/pulse-check/:id" component={PulseCheck} />
+      <Route path="/pulse/:id" component={PulseCheck} />
       <Route path="/results/:id" component={Results} />
       <Route component={NotFound} />
     </Switch>

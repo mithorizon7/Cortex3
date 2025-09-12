@@ -6,6 +6,7 @@ import { z } from "zod";
 export const assessments = pgTable("assessments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   contextProfile: jsonb("context_profile").notNull(),
+  contextMirror: jsonb("context_mirror"),
   pulseResponses: jsonb("pulse_responses"),
   pillarScores: jsonb("pillar_scores"),
   triggeredGates: jsonb("triggered_gates"),
@@ -90,3 +91,13 @@ export const valueOverlaySchema = z.object({
 
 export type ValueOverlayPillar = z.infer<typeof valueOverlayPillarSchema>;
 export type ValueOverlay = z.infer<typeof valueOverlaySchema>;
+
+// Context Mirror Types
+export const contextMirrorSchema = z.object({
+  strengths: z.array(z.string().min(8).max(180)).length(3),
+  fragilities: z.array(z.string().min(8).max(180)).length(3),
+  whatWorks: z.array(z.string().min(10).max(180)).length(2),
+  disclaimer: z.string().min(10).max(140),
+});
+
+export type ContextMirror = z.infer<typeof contextMirrorSchema>;
