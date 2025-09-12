@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Download, Loader2 } from "lucide-react";
 import { generateContextBrief } from "@/lib/pdf-generator";
+import { ProtectedRoute } from "@/components/auth/protected-route";
 
 function Skeleton({ className }: { className: string }) {
   return <div className={`animate-pulse bg-muted rounded ${className}`} />;
@@ -64,7 +65,7 @@ function ErrorFallback({ error }: { error: Error }) {
   );
 }
 
-export default function ContextInsightPage() {
+function ContextInsightPageContent() {
   const { id } = useParams();
   const { data, loading, error } = useContextMirror(id!);
   const { toast } = useToast();
@@ -105,14 +106,45 @@ export default function ContextInsightPage() {
     } catch (error) {
       console.error('Failed to generate context brief:', error);
       
-      const errorMessage = error instanceof Error 
-        ? error.message 
-        : 'An unexpected error occurred';
+      // Enhanced error handling with incidentId extraction
+      let errorMessage = 'An unexpected error occurred';
+      let incidentId: string | null = null;
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
         
+        // Try to extract incidentId from error message or response
+        const incidentIdMatch = error.message.match(/incident[Ii]d:\s*([a-zA-Z0-9-]+)/);
+        if (incidentIdMatch) {
+          incidentId = incidentIdMatch[1];
+        }
+        
+        // Check if this is a fetch error with a response
+        if ((error as any).response) {
+          try {
+            const response = (error as any).response;
+            if (response.incidentId) {
+              incidentId = response.incidentId;
+            }
+          } catch (parseError) {
+            // Ignore parsing errors, continue with basic error handling
+          }
+        }
+      }
+      
+      // Construct enhanced error description
+      let description = errorMessage;
+      if (incidentId) {
+        description += `\n\nIncident ID: ${incidentId}\nPlease reference this ID when contacting support.`;
+      } else if (errorMessage.includes('contact support')) {
+        description = errorMessage + '\n\nTip: Try refreshing the page or check your internet connection.';
+      }
+      
       toast({
         title: "Failed to generate PDF",
-        description: errorMessage,
+        description,
         variant: "destructive",
+        duration: 6000, // Show longer for error messages with more detail
       });
     } finally {
       setIsGeneratingPDF(false);
@@ -216,5 +248,13 @@ export default function ContextInsightPage() {
         </Link>
       </footer>
     </section>
+  );
+}
+
+export default function ContextInsightPage() {
+  return (
+    <ProtectedRoute requireAuth={true}>
+      <ContextInsightPageContent />
+    </ProtectedRoute>
   );
 }

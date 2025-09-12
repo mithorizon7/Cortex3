@@ -15,7 +15,7 @@ import { AppHeader } from "@/components/navigation/app-header";
 import { ValueSnapshot } from "@/components/value-overlay";
 import { initializeValueOverlay } from "@/lib/value-overlay";
 import { CORTEX_PILLARS, getPriorityLevel } from "@/lib/cortex";
-import { generatePDFReport, exportJSONResults } from "@/lib/pdf-generator";
+import { exportJSONResults } from "@/lib/pdf-generator";
 import { getNetworkError } from "@/lib/queryClient";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -213,19 +213,12 @@ export default function ResultsPage() {
     if (!assessment) return;
     
     try {
-      const blob = await generatePDFReport({
-        contextProfile: assessment.contextProfile as ContextProfile,
-        pillarScores: assessment.pillarScores as PillarScores,
-        triggeredGates: (assessment.triggeredGates as any[]) || [],
-        priorityMoves: (assessment as any).priorityMoves || null,
-        valueOverlay: valueOverlay,
-        completedAt: assessment.completedAt || new Date().toISOString(),
-      });
-      
+      // TODO: Update to use new PDF generation approach for full assessment results
+      const blob = new Blob([JSON.stringify(assessment, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `cortex-assessment-${Date.now()}.txt`;
+      link.download = `cortex-assessment-${assessment.id}.json`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -233,12 +226,12 @@ export default function ResultsPage() {
       
       toast({
         title: "Export Complete",
-        description: "Your assessment results have been downloaded.",
+        description: "Your assessment results have been downloaded as JSON.",
       });
     } catch (error) {
       toast({
-        title: "Export Failed",
-        description: "Failed to generate PDF report. Please try again.",
+        title: "Export Failed", 
+        description: "Failed to generate export file. Please try again.",
         variant: "destructive",
       });
     }

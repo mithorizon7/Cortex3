@@ -1,5 +1,8 @@
+import { formatScaleValue } from "@shared/scale-utils";
+import type { ContextProfile } from "@shared/schema";
+
 export interface AssessmentResults {
-  contextProfile: any;
+  contextProfile: ContextProfile;
   pillarScores: any;
   triggeredGates: any[];
   priorityMoves?: any;
@@ -12,90 +15,34 @@ export interface ContextMirrorData {
   fragilities: string[];
   whatWorks: string[];
   disclaimer: string;
-  contextProfile: any;
+  contextProfile: ContextProfile;
   assessmentId: string;
 }
 
-export async function generatePDFReport(results: AssessmentResults): Promise<Blob> {
-  // For MVP, we'll use a simple approach to generate PDF
-  // In production, consider using libraries like jsPDF or Puppeteer
-  
-  const content = `
-CORTEX™ Executive AI Readiness Assessment Results
-Generated: ${new Date(results.completedAt).toLocaleDateString()}
-
-MATURITY SCORES
-===============
-Clarity & Command: Stage ${results.pillarScores.C}/3
-Operations & Data: Stage ${results.pillarScores.O}/3  
-Risk, Trust & Security: Stage ${results.pillarScores.R}/3
-Talent & Culture: Stage ${results.pillarScores.T}/3
-Ecosystem & Infrastructure: Stage ${results.pillarScores.E}/3
-Experimentation & Evolution: Stage ${results.pillarScores.X}/3
-
-CONTEXT GATES
-=============
-${results.triggeredGates.map((gate: any) => `
-${gate.title}
-Reason: ${gate.reason}
-`).join('\n')}
-
-PRIORITY MOVES
-==============
-${results.priorityMoves?.moves ? results.priorityMoves.moves.map((move: any) => `
-#${move.rank} - ${move.title} (${move.pillar} Domain)
-Priority Score: ${move.priority.toFixed(3)}
-${move.explain ? `Gap Impact: +${(move.explain.gapBoost * 100).toFixed(0)}%, Context Fit: +${(move.explain.profileBoost * 100).toFixed(0)}%` : ''}
-`).join('\n') : 'No priority moves available'}
-
-VALUE METRICS
-=============
-${results.valueOverlay ? Object.entries(results.valueOverlay).map(([pillar, data]: [string, any]) => `
-${pillar} Domain: ${data.name}
-Unit: ${data.unit}
-Cadence: ${data.cadence}
-${data.baseline !== null ? `Baseline: ${data.baseline}` : 'Baseline: Not set'}
-${data.target !== null ? `Target: ${data.target}` : 'Target: Not set'}
-`).join('') : 'No value metrics selected'}
-
-CONTEXT PROFILE
-===============
-Regulatory Intensity: ${results.contextProfile.regulatory_intensity}/4
-Data Sensitivity: ${results.contextProfile.data_sensitivity}/4
-Safety Criticality: ${results.contextProfile.safety_criticality}/4
-Brand Exposure: ${results.contextProfile.brand_exposure}/4
-Market Clock Speed: ${results.contextProfile.clock_speed}/4
-Latency/Edge Needs: ${results.contextProfile.latency_edge}/4
-Scale/Throughput: ${results.contextProfile.scale_throughput}/4
-Data Advantage: ${results.contextProfile.data_advantage}/4
-Build Readiness: ${results.contextProfile.build_readiness}/4
-FinOps Priority: ${results.contextProfile.finops_priority}/4
-Procurement Constraints: ${results.contextProfile.procurement_constraints ? 'Yes' : 'No'}
-Edge Operations: ${results.contextProfile.edge_operations ? 'Yes' : 'No'}
-
-© 2024 CORTEX™ Executive AI Readiness Program
-  `.trim();
-
-  const blob = new Blob([content], { type: 'text/plain' });
-  return blob;
-}
 
 export async function generateContextBrief(data: ContextMirrorData): Promise<void> {
   try {
-    const { jsPDF } = await import('jspdf');
-  
-  const formatSliderValue = (value: number) => {
-    const labels = ["Very Low", "Low", "Medium", "High", "Very High"];
-    return `${labels[value]} (${value}/4)`;
-  };
-
-    // Validate required data
+    // Validate required data first
     if (!data || !data.contextProfile || !data.assessmentId) {
       throw new Error('Missing required data for PDF generation');
     }
     
     if (!data.strengths?.length || !data.fragilities?.length || !data.whatWorks?.length) {
       throw new Error('Missing context insight data for PDF generation');
+    }
+
+    // Attempt to load jsPDF with better error handling
+    let jsPDF;
+    try {
+      const jsPDFModule = await import('jspdf');
+      jsPDF = jsPDFModule.jsPDF;
+      
+      if (!jsPDF) {
+        throw new Error('jsPDF not available');
+      }
+    } catch (importError) {
+      console.error('Failed to import jsPDF:', importError);
+      throw new Error('PDF library failed to load. Please try refreshing the page or contact support if this persists.');
     }
 
     // Create new PDF document
@@ -232,26 +179,26 @@ export async function generateContextBrief(data: ContextMirrorData): Promise<voi
     {
       title: 'Risk & Compliance',
       items: [
-        { label: 'Regulatory Intensity', value: data.contextProfile.regulatory_intensity },
-        { label: 'Data Sensitivity', value: data.contextProfile.data_sensitivity },
-        { label: 'Safety Criticality', value: data.contextProfile.safety_criticality },
-        { label: 'Brand Exposure', value: data.contextProfile.brand_exposure }
+        { key: 'regulatory_intensity', label: 'Regulatory Intensity', value: data.contextProfile.regulatory_intensity },
+        { key: 'data_sensitivity', label: 'Data Sensitivity', value: data.contextProfile.data_sensitivity },
+        { key: 'safety_criticality', label: 'Safety Criticality', value: data.contextProfile.safety_criticality },
+        { key: 'brand_exposure', label: 'Brand Exposure', value: data.contextProfile.brand_exposure }
       ]
     },
     {
       title: 'Operations & Performance',
       items: [
-        { label: 'Clock Speed', value: data.contextProfile.clock_speed },
-        { label: 'Latency Edge', value: data.contextProfile.latency_edge },
-        { label: 'Scale & Throughput', value: data.contextProfile.scale_throughput }
+        { key: 'clock_speed', label: 'Clock Speed', value: data.contextProfile.clock_speed },
+        { key: 'latency_edge', label: 'Latency Edge', value: data.contextProfile.latency_edge },
+        { key: 'scale_throughput', label: 'Scale & Throughput', value: data.contextProfile.scale_throughput }
       ]
     },
     {
       title: 'Strategic Assets',
       items: [
-        { label: 'Data Advantage', value: data.contextProfile.data_advantage },
-        { label: 'Build Readiness', value: data.contextProfile.build_readiness },
-        { label: 'FinOps Priority', value: data.contextProfile.finops_priority }
+        { key: 'data_advantage', label: 'Data Advantage', value: data.contextProfile.data_advantage },
+        { key: 'build_readiness', label: 'Build Readiness', value: data.contextProfile.build_readiness },
+        { key: 'finops_priority', label: 'FinOps Priority', value: data.contextProfile.finops_priority }
       ]
     }
   ];
@@ -265,7 +212,7 @@ export async function generateContextBrief(data: ContextMirrorData): Promise<voi
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
     section.items.forEach(item => {
-      const valueText = formatSliderValue(item.value);
+      const valueText = formatScaleValue(item.key || '', item.value);
       doc.text(`${item.label}: ${valueText}`, rightColumnX + 3, rightColumnY);
       rightColumnY += 4;
     });
@@ -356,11 +303,18 @@ export async function generateContextBrief(data: ContextMirrorData): Promise<voi
     }, 100);
     
   } catch (error) {
-    // Re-throw with more context for better error handling
+    // Enhanced error handling with more specific error types
     if (error instanceof Error) {
-      throw new Error(`PDF generation failed: ${error.message}`);
+      // Check for specific error types to provide better user guidance
+      if (error.message.includes('jsPDF') || error.message.includes('PDF library')) {
+        throw new Error(`${error.message} Please check your internet connection and try again.`);
+      } else if (error.message.includes('Missing required data') || error.message.includes('Missing context insight')) {
+        throw new Error(`${error.message} Please refresh the page and complete the assessment again.`);
+      } else {
+        throw new Error(`PDF generation failed: ${error.message}. If this problem persists, please contact support.`);
+      }
     } else {
-      throw new Error('PDF generation failed: Unknown error occurred');
+      throw new Error('PDF generation failed: An unexpected error occurred. Please try again or contact support if this persists.');
     }
   }
 }
