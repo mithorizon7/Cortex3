@@ -465,9 +465,10 @@ function OptionsStudioContent() {
   const personalizedCards = useMemo(() => {
     if (!contextProfile) return OPTION_CARDS.map(card => extendOptionCard(card));
     
-    // For v1.0: Show all cards but emphasize relevant ones (no scoring/filtering)
-    return OPTION_CARDS.map(card => extendOptionCard(card));
-  }, [contextProfile]);
+    // Use hook function for proper personalization without being prescriptive
+    // Cards are sorted by relevance but all options remain visible
+    return getPersonalizedCards(contextProfile);
+  }, [contextProfile, getPersonalizedCards]);
 
   const emphasizedLenses = useMemo(() => {
     if (!contextProfile) return [];
