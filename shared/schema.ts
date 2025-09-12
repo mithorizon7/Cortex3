@@ -110,3 +110,49 @@ export const contextMirrorRequestSchema = z.object({
 });
 
 export type ContextMirrorRequest = z.infer<typeof contextMirrorRequestSchema>;
+
+// Options Studio Types
+export const lensValuesSchema = z.object({
+  Speed: z.number().min(1).max(5),
+  Custom: z.number().min(1).max(5),
+  Data: z.number().min(1).max(5),
+  Risk: z.number().min(1).max(5),
+  Ops: z.number().min(1).max(5),
+  Lock: z.number().min(1).max(5),
+  Cost: z.number().min(1).max(5),
+});
+
+export const optionCardSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  shortDescription: z.string(),
+  fullDescription: z.string(),
+  pros: z.array(z.string()),
+  cons: z.array(z.string()),
+  bestFor: z.array(z.string()),
+  lensValues: lensValuesSchema,
+  examples: z.array(z.string()),
+  category: z.enum(['ready', 'build', 'custom']),
+});
+
+export const misconceptionQuestionSchema = z.object({
+  id: z.string(),
+  question: z.string(),
+  correctAnswer: z.boolean(),
+  explanation: z.string(),
+});
+
+export const optionsStudioSessionSchema = z.object({
+  useCase: z.string(),
+  goals: z.array(z.string()),
+  misconceptionResponses: z.record(z.string(), z.boolean()),
+  comparedOptions: z.array(z.string()),
+  reflectionPrompts: z.array(z.string()),
+  completed: z.boolean(),
+  completedAt: z.string().optional(),
+});
+
+export type LensValues = z.infer<typeof lensValuesSchema>;
+export type OptionCard = z.infer<typeof optionCardSchema>;
+export type MisconceptionQuestion = z.infer<typeof misconceptionQuestionSchema>;
+export type OptionsStudioSession = z.infer<typeof optionsStudioSessionSchema>;
