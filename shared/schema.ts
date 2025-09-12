@@ -16,6 +16,7 @@ export const assessments = pgTable("assessments", {
   contentTags: jsonb("content_tags"),
   contextGuidance: jsonb("context_guidance"),
   valueOverlay: jsonb("value_overlay"),
+  optionsStudioSession: jsonb("options_studio_session"),
   completedAt: text("completed_at"),
   createdAt: text("created_at").default(sql`now()`),
 });
@@ -111,48 +112,66 @@ export const contextMirrorRequestSchema = z.object({
 
 export type ContextMirrorRequest = z.infer<typeof contextMirrorRequestSchema>;
 
-// Options Studio Types
-export const lensValuesSchema = z.object({
-  Speed: z.number().min(1).max(5),
-  Custom: z.number().min(1).max(5),
-  Data: z.number().min(1).max(5),
-  Risk: z.number().min(1).max(5),
-  Ops: z.number().min(1).max(5),
-  Lock: z.number().min(1).max(5),
-  Cost: z.number().min(1).max(5),
+// Options Studio Types - Seven Lenses Framework
+export const lensPositionsSchema = z.object({
+  speed: z.number().int().min(0).max(4),               // Speed-to-Value: 0=months+; 2=weeks; 4=days
+  control: z.number().int().min(0).max(4),             // Customization & Control: 0=out-of-box; 4=deeply tailored
+  dataLeverage: z.number().int().min(0).max(4),        // Data Leverage: 0=doesn't use your data; 4=strong proprietary use
+  riskLoad: z.number().int().min(0).max(4),            // Risk & Compliance Load: 0=minimal controls; 4=heavy governance
+  opsBurden: z.number().int().min(0).max(4),           // Operational Burden: 0=near zero ops; 4=dedicated team
+  portability: z.number().int().min(0).max(4),         // Portability & Lock-in: 0=hard to switch; 4=easy to migrate
+  costShape: z.number().int().min(0).max(4),           // Cost Shape: 0=heavy fixed/CapEx; 4=variable/throttleable OpEx
+});
+
+export const timelineMetersSchema = z.object({
+  speed: z.number().int().min(0).max(4),
+  buildEffort: z.number().int().min(0).max(4),
+  ops: z.number().int().min(0).max(4),
+});
+
+export const mythSchema = z.object({
+  claim: z.string(),
+  truth: z.string(),
 });
 
 export const optionCardSchema = z.object({
   id: z.string(),
   title: z.string(),
-  shortDescription: z.string(),
-  fullDescription: z.string(),
-  pros: z.array(z.string()),
-  cons: z.array(z.string()),
-  bestFor: z.array(z.string()),
-  lensValues: lensValuesSchema,
-  examples: z.array(z.string()),
-  category: z.enum(['ready', 'build', 'custom']),
+  what: z.string(),                              // What this option is
+  bestFor: z.array(z.string()),                  // 3-5 bullets of when to use
+  notIdeal: z.array(z.string()),                 // 2-4 bullets of when not to use
+  prerequisites: z.array(z.string()),            // 3-5 bullets of what's needed
+  timelineMeters: timelineMetersSchema,
+  dataNeeds: z.string(),                         // 1-2 sentences about data requirements
+  risks: z.array(z.string()),                    // 3-5 bullets of key risks
+  kpis: z.array(z.string()),                     // 2-3 bullets of success metrics
+  myth: mythSchema,                              // Common misconception and truth
+  axes: lensPositionsSchema,                     // Seven Lenses positioning
+  cautions: z.array(z.enum(['regulated', 'high_sensitivity', 'low_readiness', 'edge'])).optional(),
 });
 
 export const misconceptionQuestionSchema = z.object({
   id: z.string(),
-  question: z.string(),
-  correctAnswer: z.boolean(),
-  explanation: z.string(),
+  statement: z.string(),                         // The misconception statement
+  correctAnswer: z.boolean(),                    // True/False for the statement
+  explanation: z.string(),                       // Why the answer is correct
+  links: z.array(z.string()),                    // Related option IDs
 });
 
 export const optionsStudioSessionSchema = z.object({
   useCase: z.string(),
   goals: z.array(z.string()),
-  misconceptionResponses: z.record(z.string(), z.boolean()),
-  comparedOptions: z.array(z.string()),
-  reflectionPrompts: z.array(z.string()),
+  misconceptionResponses: z.record(z.string(), z.boolean()),  // misconception ID -> user answer
+  comparedOptions: z.array(z.string()),          // Option IDs that were compared
+  viewedOptions: z.array(z.string()),            // Option IDs that were viewed
+  reflectionAnswers: z.record(z.string(), z.string()),       // reflection prompt ID -> user answer
   completed: z.boolean(),
   completedAt: z.string().optional(),
 });
 
-export type LensValues = z.infer<typeof lensValuesSchema>;
+export type LensPositions = z.infer<typeof lensPositionsSchema>;
+export type TimelineMeters = z.infer<typeof timelineMetersSchema>;
+export type Myth = z.infer<typeof mythSchema>;
 export type OptionCard = z.infer<typeof optionCardSchema>;
 export type MisconceptionQuestion = z.infer<typeof misconceptionQuestionSchema>;
 export type OptionsStudioSession = z.infer<typeof optionsStudioSessionSchema>;
