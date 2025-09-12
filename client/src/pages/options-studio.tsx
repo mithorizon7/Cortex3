@@ -1,5 +1,5 @@
 import { useParams, Link } from "wouter";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useOptionsStudio } from "@/hooks/useOptionsStudio";
 import { useToast } from "@/hooks/use-toast";
@@ -14,13 +14,13 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
 import { 
   AlertTriangle, 
   CheckCircle2, 
   XCircle, 
   ChevronDown, 
   ChevronRight,
-  Eye,
   Download,
   FileText,
   Lightbulb,
@@ -34,24 +34,28 @@ import {
   TrendingUp,
   Loader2,
   Info,
-  Star
+  Star,
+  PlayCircle,
+  Eye,
+  BookOpen,
+  Brain,
+  Radar,
+  BarChart3
 } from "lucide-react";
 import type { Assessment, ContextProfile, ExtendedOptionCard } from "@shared/schema";
-import { extendMisconceptionQuestion, extendOptionCard } from "@shared/schema";
-import { OPTION_CARDS, MISCONCEPTION_QUESTIONS, LENS_LABELS } from "@shared/options-studio-data";
+import { extendOptionCard } from "@shared/schema";
+import { 
+  OPTION_CARDS, 
+  MISCONCEPTION_QUESTIONS, 
+  LENS_LABELS,
+  AVAILABLE_GOALS,
+  UI_COPY,
+  ALWAYS_ON_CARDS
+} from "@shared/options-studio-data";
 import { handleExportPDF, handleExportJSON } from "@/lib/pdf-generator";
 
-// Available goals for selection
-const AVAILABLE_GOALS = [
-  "Increase operational efficiency",
-  "Enhance customer experience", 
-  "Reduce manual workload",
-  "Improve decision-making speed",
-  "Generate new revenue streams",
-  "Strengthen competitive advantage",
-  "Reduce operational costs",
-  "Scale existing processes"
-];
+// Flow steps for the new v1.0 experience
+type FlowStep = 'intro' | 'misconceptions' | 'situation' | 'options' | 'compare' | 'reflection' | 'export';
 
 // Lens icons mapping
 const LENS_ICONS = {
@@ -64,20 +68,85 @@ const LENS_ICONS = {
   "Cost Shape": DollarSign
 };
 
+interface MisconceptionCardProps {
+  question: typeof MISCONCEPTION_QUESTIONS[0];
+  response?: boolean;
+  onAnswer: (answer: boolean) => void;
+  showFeedback: boolean;
+}
+
+function MisconceptionCard({ question, response, onAnswer, showFeedback }: MisconceptionCardProps) {
+  return (
+    <Card className="mb-4" data-testid={`card-misconception-${question.id}`}>
+      <CardHeader>
+        <CardTitle className="text-lg flex items-start gap-2">
+          <Brain className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+          {question.question}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex gap-3 mb-3">
+          <Button
+            variant={response === true ? "default" : "outline"}
+            size="sm"
+            onClick={() => onAnswer(true)}
+            data-testid={`button-true-${question.id}`}
+          >
+            <CheckCircle2 className="w-4 h-4 mr-1" />
+            True
+          </Button>
+          <Button
+            variant={response === false ? "default" : "outline"}
+            size="sm"
+            onClick={() => onAnswer(false)}
+            data-testid={`button-false-${question.id}`}
+          >
+            <XCircle className="w-4 h-4 mr-1" />
+            False
+          </Button>
+        </div>
+        
+        {showFeedback && response !== undefined && (
+          <Alert className={response === question.correctAnswer ? "border-green-200 bg-green-50" : "border-orange-200 bg-orange-50"}>
+            <Lightbulb className="h-4 w-4" />
+            <AlertDescription className="text-sm">
+              <strong>{response === question.correctAnswer ? "Correct!" : "Not quite."}</strong> {question.explanation}
+              {question.links.length > 0 && (
+                <span className="block mt-2 text-xs text-muted-foreground">
+                  Related options: {question.links.join(", ")}
+                </span>
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 interface OptionCardProps {
   option: ExtendedOptionCard;
   isSelected: boolean;
   onToggleSelect: () => void;
   emphasizedLenses: string[];
+  cautionFlags: string[];
 }
 
-function OptionCardComponent({ option, isSelected, onToggleSelect, emphasizedLenses }: OptionCardProps) {
+function OptionCardComponent({ option, isSelected, onToggleSelect, emphasizedLenses, cautionFlags }: OptionCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  
+  // Check if this option has caution flags
+  const relevantCautions = option.cautions?.filter(caution => 
+    cautionFlags.includes(caution)
+  ) || [];
 
   return (
-    <Card className={`transition-all duration-200 ${isSelected ? 'ring-2 ring-primary' : ''}`} data-testid={`card-option-${option.id}`}>
+    <Card 
+      className={`transition-all duration-200 ${isSelected ? 'ring-2 ring-primary bg-primary/5' : 'hover-elevate'}`} 
+      data-testid={`card-option-${option.id}`}
+    >
       <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between mb-2">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
               <Badge 
@@ -106,22 +175,34 @@ function OptionCardComponent({ option, isSelected, onToggleSelect, emphasizedLen
                 )}
               </Button>
             </div>
+            
+            {relevantCautions.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-2">
+                {relevantCautions.map(caution => (
+                  <Badge 
+                    key={caution} 
+                    variant="outline" 
+                    className="text-xs bg-orange-50 border-orange-200 text-orange-700"
+                  >
+                    <AlertTriangle className="w-3 h-3 mr-1" />
+                    {caution.replace('_', ' ')}
+                  </Badge>
+                ))}
+              </div>
+            )}
+            
             <CardTitle className="text-lg font-semibold mb-1" data-testid={`text-title-${option.id}`}>
               {option.title}
             </CardTitle>
-            <p className="text-sm text-muted-foreground mb-2" data-testid={`text-what-${option.id}`}>
+            <p className="text-sm text-muted-foreground mb-3" data-testid={`text-what-${option.id}`}>
               {option.what}
-            </p>
-            <p className="text-sm text-muted-foreground mb-3" data-testid={`text-description-${option.id}`}>
-              {option.shortDescription}
             </p>
           </div>
         </div>
 
-        {/* Lens Values */}
-        <div className="grid grid-cols-7 gap-1 mb-3">
-          {LENS_LABELS.map((lens, index) => {
-            // Map lens names to correct property keys
+        {/* Seven Lenses Radar */}
+        <div className="grid grid-cols-7 gap-1 mb-3 p-2 bg-muted/30 rounded-md">
+          {LENS_LABELS.map((lens) => {
             const lensKeyMap: Record<string, keyof typeof option.lensValues> = {
               'Speed-to-Value': 'speed',
               'Customization & Control': 'control', 
@@ -140,9 +221,10 @@ function OptionCardComponent({ option, isSelected, onToggleSelect, emphasizedLen
               <div 
                 key={lens} 
                 className={`text-center p-2 rounded-md transition-colors ${
-                  isEmphasized ? 'bg-accent/20 border border-accent/30' : 'bg-muted/50'
+                  isEmphasized ? 'bg-accent/20 border border-accent/30' : 'bg-background/50'
                 }`}
                 data-testid={`lens-${option.id}-${lensKey}`}
+                title={lens}
               >
                 <IconComponent className={`w-3 h-3 mx-auto mb-1 ${isEmphasized ? 'text-accent' : 'text-muted-foreground'}`} />
                 <div className={`text-xs font-medium ${isEmphasized ? 'text-accent' : ''}`}>
@@ -153,197 +235,99 @@ function OptionCardComponent({ option, isSelected, onToggleSelect, emphasizedLen
           })}
         </div>
 
-        <div className="text-xs text-muted-foreground mb-2">
-          {LENS_LABELS.map((lens, i) => (
-            <span key={lens}>
-              {lens.split(' ')[0]}{i < LENS_LABELS.length - 1 ? ' • ' : ''}
-            </span>
+        {/* Timeline Meters */}
+        <div className="grid grid-cols-3 gap-2 mb-3 p-2 bg-muted/20 rounded-md">
+          {Object.entries({
+            Speed: option.timelineMeters.speed,
+            Build: option.timelineMeters.buildEffort,
+            Ops: option.timelineMeters.ops
+          }).map(([label, value]) => (
+            <div key={label} className="text-center">
+              <div className="text-xs text-muted-foreground mb-1">{label}</div>
+              <div className="flex justify-center">
+                {[1, 2, 3, 4].map(i => (
+                  <div 
+                    key={i} 
+                    className={`w-2 h-2 rounded-full mx-0.5 ${
+                      i <= value ? 'bg-primary' : 'bg-muted'
+                    }`} 
+                  />
+                ))}
+              </div>
+            </div>
           ))}
         </div>
-
-        {/* Timeline Meters */}
-        <div className="grid grid-cols-3 gap-2 mb-3 p-2 bg-muted/30 rounded-md">
-          <div className="text-center">
-            <div className="text-xs text-muted-foreground mb-1">Speed</div>
-            <div className="flex justify-center">
-              {[1, 2, 3, 4].map(i => (
-                <div 
-                  key={i} 
-                  className={`w-2 h-2 rounded-full mx-0.5 ${
-                    i <= option.timelineMeters.speed ? 'bg-green-500' : 'bg-muted'
-                  }`} 
-                />
-              ))}
-            </div>
-          </div>
-          <div className="text-center">
-            <div className="text-xs text-muted-foreground mb-1">Build</div>
-            <div className="flex justify-center">
-              {[1, 2, 3, 4].map(i => (
-                <div 
-                  key={i} 
-                  className={`w-2 h-2 rounded-full mx-0.5 ${
-                    i <= option.timelineMeters.buildEffort ? 'bg-orange-500' : 'bg-muted'
-                  }`} 
-                />
-              ))}
-            </div>
-          </div>
-          <div className="text-center">
-            <div className="text-xs text-muted-foreground mb-1">Ops</div>
-            <div className="flex justify-center">
-              {[1, 2, 3, 4].map(i => (
-                <div 
-                  key={i} 
-                  className={`w-2 h-2 rounded-full mx-0.5 ${
-                    i <= option.timelineMeters.ops ? 'bg-blue-500' : 'bg-muted'
-                  }`} 
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Caution Chips */}
-        {option.cautions && option.cautions.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-3">
-            {option.cautions.map((caution) => {
-              const cautionConfig = {
-                regulated: { label: 'Regulated', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' },
-                high_sensitivity: { label: 'High Sensitivity', color: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300' },
-                low_readiness: { label: 'Build Later', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' },
-                edge: { label: 'Edge/Offline', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' }
-              };
-              const config = cautionConfig[caution as keyof typeof cautionConfig];
-              return config ? (
-                <Badge 
-                  key={caution}
-                  variant="secondary"
-                  className={`text-xs px-2 py-1 ${config.color}`}
-                  data-testid={`badge-caution-${caution}-${option.id}`}
-                >
-                  {config.label}
-                </Badge>
-              ) : null;
-            })}
-          </div>
-        )}
       </CardHeader>
 
       <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
         <CollapsibleTrigger asChild>
           <Button 
             variant="ghost" 
-            className="w-full justify-between px-6 py-2"
+            className="w-full justify-between p-3 border-t"
             data-testid={`button-expand-${option.id}`}
           >
-            <span>View Details</span>
-            {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+            <span>More Details</span>
+            {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           </Button>
         </CollapsibleTrigger>
-        
         <CollapsibleContent>
           <CardContent className="pt-0">
             <div className="space-y-4">
               <div>
-                <p className="text-sm text-foreground mb-3" data-testid={`text-full-description-${option.id}`}>
-                  {option.fullDescription}
-                </p>
+                <h4 className="text-sm font-medium text-green-700 mb-2">✓ Best for</h4>
+                <ul className="text-sm space-y-1 text-muted-foreground">
+                  {option.bestFor.map((item, i) => (
+                    <li key={i}>• {item}</li>
+                  ))}
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="text-sm font-medium text-red-700 mb-2">✗ Not ideal when</h4>
+                <ul className="text-sm space-y-1 text-muted-foreground">
+                  {option.notIdeal.map((item, i) => (
+                    <li key={i}>• {item}</li>
+                  ))}
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="text-sm font-medium text-blue-700 mb-2">Prerequisites</h4>
+                <ul className="text-sm space-y-1 text-muted-foreground">
+                  {option.prerequisites.map((item, i) => (
+                    <li key={i}>• {item}</li>
+                  ))}
+                </ul>
+              </div>
+              
+              <div>
+                <h4 className="text-sm font-medium text-purple-700 mb-2">Key Risks</h4>
+                <ul className="text-sm space-y-1 text-muted-foreground">
+                  {option.risks.map((item, i) => (
+                    <li key={i}>• {item}</li>
+                  ))}
+                </ul>
               </div>
 
-              <Tabs defaultValue="bestFor" className="w-full">
-                <TabsList className="grid w-full grid-cols-6">
-                  <TabsTrigger value="bestFor" data-testid={`tab-best-for-${option.id}`}>Best For</TabsTrigger>
-                  <TabsTrigger value="risks" data-testid={`tab-risks-${option.id}`}>Risks</TabsTrigger>
-                  <TabsTrigger value="prereqs" data-testid={`tab-prereqs-${option.id}`}>Prerequisites</TabsTrigger>
-                  <TabsTrigger value="kpis" data-testid={`tab-kpis-${option.id}`}>KPIs</TabsTrigger>
-                  <TabsTrigger value="data" data-testid={`tab-data-${option.id}`}>Data Needs</TabsTrigger>
-                  <TabsTrigger value="myth" data-testid={`tab-myth-${option.id}`}>Myth vs Truth</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="risks" className="mt-3">
-                  <ul className="space-y-1" data-testid={`list-risks-${option.id}`}>
-                    {option.risks.map((risk, index) => (
-                      <li key={index} className="text-sm text-muted-foreground flex items-start">
-                        <AlertTriangle className="w-4 h-4 text-orange-500 mr-2 mt-0.5 flex-shrink-0" />
-                        {risk}
-                      </li>
-                    ))}
-                  </ul>
-                </TabsContent>
-                
-                <TabsContent value="prereqs" className="mt-3">
-                  <ul className="space-y-1" data-testid={`list-prereqs-${option.id}`}>
-                    {option.prerequisites.map((prereq, index) => (
-                      <li key={index} className="text-sm text-muted-foreground flex items-start">
-                        <CheckCircle2 className="w-4 h-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
-                        {prereq}
-                      </li>
-                    ))}
-                  </ul>
-                </TabsContent>
-                
-                <TabsContent value="bestFor" className="mt-3">
-                  <div className="space-y-3">
-                    <div>
-                      <h4 className="text-sm font-medium text-foreground mb-2">Best suited for:</h4>
-                      <ul className="space-y-1" data-testid={`list-best-for-${option.id}`}>
-                        {option.bestFor.map((item, index) => (
-                          <li key={index} className="text-sm text-muted-foreground flex items-start">
-                            <CheckCircle2 className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                            {item}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-medium text-foreground mb-2">Not ideal when:</h4>
-                      <ul className="space-y-1" data-testid={`list-not-ideal-${option.id}`}>
-                        {option.notIdeal.map((item, index) => (
-                          <li key={index} className="text-sm text-muted-foreground flex items-start">
-                            <XCircle className="w-4 h-4 text-orange-500 mr-2 mt-0.5 flex-shrink-0" />
-                            {item}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="kpis" className="mt-3">
-                  <ul className="space-y-1" data-testid={`list-kpis-${option.id}`}>
-                    {option.kpis.map((kpi, index) => (
-                      <li key={index} className="text-sm text-muted-foreground flex items-start">
-                        <Target className="w-4 h-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
-                        {kpi}
-                      </li>
-                    ))}
-                  </ul>
-                </TabsContent>
-                
-                <TabsContent value="data" className="mt-3">
-                  <div className="text-sm text-muted-foreground" data-testid={`text-data-needs-${option.id}`}>
-                    {option.dataNeeds}
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="myth" className="mt-3">
-                  <div className="space-y-3">
-                    <div className="p-3 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-800">
-                      <h4 className="text-sm font-medium text-red-700 dark:text-red-300 mb-1">Common Myth:</h4>
-                      <p className="text-sm text-red-600 dark:text-red-400" data-testid={`text-myth-claim-${option.id}`}>
-                        "{option.myth.claim}"
-                      </p>
-                    </div>
-                    <div className="p-3 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
-                      <h4 className="text-sm font-medium text-green-700 dark:text-green-300 mb-1">Reality:</h4>
-                      <p className="text-sm text-green-600 dark:text-green-400" data-testid={`text-myth-truth-${option.id}`}>
-                        {option.myth.truth}
-                      </p>
-                    </div>
-                  </div>
-                </TabsContent>
-              </Tabs>
+              <div>
+                <h4 className="text-sm font-medium text-orange-700 mb-2">Success KPIs</h4>
+                <ul className="text-sm space-y-1 text-muted-foreground">
+                  {option.kpis.map((item, i) => (
+                    <li key={i}>• {item}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-md">
+                <h4 className="text-sm font-medium text-amber-700 mb-1">Common Myth</h4>
+                <p className="text-sm text-amber-700 mb-2">"{option.myth.claim}"</p>
+                <p className="text-sm text-amber-800"><strong>Reality:</strong> {option.myth.truth}</p>
+              </div>
+              
+              <div>
+                <h4 className="text-sm font-medium mb-2">Data Needs</h4>
+                <p className="text-sm text-muted-foreground">{option.dataNeeds}</p>
+              </div>
             </div>
           </CardContent>
         </CollapsibleContent>
@@ -352,522 +336,84 @@ function OptionCardComponent({ option, isSelected, onToggleSelect, emphasizedLen
   );
 }
 
-function OptionsStudioPageContent() {
-  const { id } = useParams();
-  const { toast } = useToast();
-  const [isExportingPDF, setIsExportingPDF] = useState(false);
-  const [isExportingJSON, setIsExportingJSON] = useState(false);
-  const [currentSection, setCurrentSection] = useState(0);
-  const [reflectionResponse1, setReflectionResponse1] = useState("");
-  const [reflectionResponse2, setReflectionResponse2] = useState("");
+interface ComparisonTableProps {
+  options: ExtendedOptionCard[];
+  emphasizedLenses: string[];
+}
 
-  // Fetch assessment data
-  const { data: assessment, isLoading, error } = useQuery<Assessment>({
-    queryKey: ['/api/assessments', id],
-    enabled: !!id,
-  });
-
-  // Options Studio hook
-  const {
-    useCase,
-    goals,
-    misconceptionResponses,
-    comparedOptions,
-    updateUseCase,
-    toggleGoal,
-    setMisconceptionResponse,
-    toggleCompareOption,
-    getPersonalizedCards,
-    getCautionMessages,
-    getEmphasizedLenses,
-    getSessionSummary,
-    sessionProgress
-  } = useOptionsStudio();
-
-  // Get personalized data based on context profile
-  const contextProfile = assessment?.contextProfile;
-  const personalizedCards = contextProfile ? getPersonalizedCards(contextProfile) : OPTION_CARDS.map(card => extendOptionCard(card));
-  const cautionMessages = contextProfile ? getCautionMessages(contextProfile) : [];
-  const emphasizedLenses = contextProfile ? getEmphasizedLenses(contextProfile) : [];
-
-  const selectedCards = personalizedCards.filter(card => comparedOptions.includes(card.id));
-
-  // Progress calculation
-  const sections = [
-    { name: "Intro", completed: true },
-    { name: "Misconceptions", completed: Object.keys(misconceptionResponses).length === 6 },
-    { name: "Situation", completed: useCase.length > 0 && goals.length > 0 },
-    { name: "Options", completed: comparedOptions.length >= 2 },
-    { name: "Reflection", completed: reflectionResponse1.length > 0 && reflectionResponse2.length > 0 }
-  ];
-  const completedSections = sections.filter(s => s.completed).length;
-  const progressPercentage = (completedSections / sections.length) * 100;
-
-  // Export handlers
-  const handlePDFExport = async () => {
-    if (!assessment || !contextProfile) {
-      toast({
-        title: "Cannot export PDF",
-        description: "Assessment data is not available",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsExportingPDF(true);
-    try {
-      const sessionData = {
-        ...getSessionSummary(),
-        reflectionResponse1,
-        reflectionResponse2,
-        selectedOptions: selectedCards,
-        emphasizedLenses,
-        contextProfile
-      };
-
-      await handleExportPDF(sessionData, id!);
-      toast({
-        title: "PDF exported successfully",
-        description: "Your Options Studio report has been downloaded"
-      });
-    } catch (error) {
-      console.error('PDF export failed:', error);
-      toast({
-        title: "Export failed", 
-        description: error instanceof Error ? error.message : "Failed to export PDF",
-        variant: "destructive"
-      });
-    } finally {
-      setIsExportingPDF(false);
-    }
-  };
-
-  const handleJSONExport = () => {
-    if (!assessment || !contextProfile) {
-      toast({
-        title: "Cannot export data",
-        description: "Assessment data is not available",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsExportingJSON(true);
-    try {
-      const sessionData = {
-        ...getSessionSummary(),
-        reflectionResponse1,
-        reflectionResponse2,
-        selectedOptions: selectedCards,
-        emphasizedLenses,
-        contextProfile,
-        assessmentId: id
-      };
-
-      handleExportJSON(sessionData);
-      toast({
-        title: "Data exported successfully",
-        description: "Your Options Studio session data has been downloaded"
-      });
-    } catch (error) {
-      console.error('JSON export failed:', error);
-      toast({
-        title: "Export failed",
-        description: error instanceof Error ? error.message : "Failed to export data",
-        variant: "destructive"
-      });
-    } finally {
-      setIsExportingJSON(false);
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background">
-        <AppHeader />
-        <div className="max-w-4xl mx-auto px-6 py-8">
-          <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-8 h-8 animate-spin" />
-            <span className="ml-2 text-muted-foreground">Loading assessment data...</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !assessment) {
-    return (
-      <div className="min-h-screen bg-background">
-        <AppHeader />
-        <div className="max-w-4xl mx-auto px-6 py-8">
-          <Alert className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/20">
-            <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
-            <AlertDescription className="text-red-700 dark:text-red-300">
-              Failed to load assessment data. Please try refreshing the page or go back to the results.
-            </AlertDescription>
-          </Alert>
-          <div className="mt-4">
-            <Link href={`/results/${id}`}>
-              <Button variant="outline" data-testid="button-back-to-results">
-                ← Back to Results
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
+function ComparisonTable({ options, emphasizedLenses }: ComparisonTableProps) {
+  if (options.length === 0) return null;
 
   return (
-    <div className="min-h-screen bg-background" data-testid="options-studio-page">
-      <AppHeader />
-      
-      <div className="max-w-6xl mx-auto px-6 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground mb-2" data-testid="text-page-title">
-                Options Studio
-              </h1>
-              <p className="text-muted-foreground" data-testid="text-page-subtitle">
-                Explore AI implementation approaches tailored to your context
-              </p>
-            </div>
-            <Link href={`/results/${id}`}>
-              <Button variant="outline" data-testid="button-back-to-results">
-                ← Back to Results
-              </Button>
-            </Link>
-          </div>
-          
-          <div className="mb-4">
-            <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
-              <span>Progress</span>
-              <span>{completedSections}/{sections.length} sections complete</span>
-            </div>
-            <Progress value={progressPercentage} className="h-2" data-testid="progress-completion" />
-          </div>
-        </div>
-
-        {/* Caution Messages */}
-        {cautionMessages.length > 0 && (
-          <div className="mb-8 space-y-3">
-            {cautionMessages.map((message, index) => (
-              <Alert key={index} className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950/20">
-                <AlertTriangle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-                <AlertDescription className="text-orange-700 dark:text-orange-300">
-                  {message}
-                </AlertDescription>
-              </Alert>
-            ))}
-          </div>
-        )}
-
-        <div className="space-y-12">
-          {/* 1. Introduction */}
-          <section data-testid="section-intro">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Info className="w-5 h-5 text-primary" />
-                  Seven Lenses Framework
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground mb-4">
-                  Each AI implementation approach is evaluated across seven key dimensions. Your organizational context 
-                  determines which lenses are most critical for your success.
-                </p>
-                
-                <div className="grid md:grid-cols-2 gap-4">
-                  {LENS_LABELS.map((lens) => {
-                    const IconComponent = LENS_ICONS[lens];
-                    const isEmphasized = emphasizedLenses.includes(lens);
-                    
-                    return (
-                      <div 
-                        key={lens}
-                        className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
-                          isEmphasized ? 'bg-accent/10 border border-accent/20' : 'bg-muted/50'
-                        }`}
-                        data-testid={`lens-explanation-${lens.replace(/[^a-zA-Z]/g, '').toLowerCase()}`}
-                      >
-                        <IconComponent className={`w-5 h-5 ${isEmphasized ? 'text-accent' : 'text-muted-foreground'}`} />
-                        <div>
-                          <div className={`font-medium ${isEmphasized ? 'text-accent' : ''}`}>
-                            {lens}
-                            {isEmphasized && <Badge variant="secondary" className="ml-2 text-xs">Important for you</Badge>}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          </section>
-
-          {/* 2. Misconception Check */}
-          <section data-testid="section-misconceptions">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Lightbulb className="w-5 h-5 text-primary" />
-                  Knowledge Check: Common AI Misconceptions
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Test your understanding of AI implementation realities. Each question reveals important insights.
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  {MISCONCEPTION_QUESTIONS.map((question, index) => {
-                    const userAnswer = misconceptionResponses[question.id];
-                    const hasAnswered = userAnswer !== undefined;
-                    const isCorrect = hasAnswered && userAnswer === question.correctAnswer;
-                    
-                    return (
-                      <div key={question.id} className="space-y-3" data-testid={`question-${question.id}`}>
-                        <div className="flex items-start gap-3">
-                          <Badge variant="outline" className="mt-1">
-                            {index + 1}
-                          </Badge>
-                          <div className="flex-1">
-                            <p className="font-medium mb-3" data-testid={`text-question-${question.id}`}>
-                              {extendMisconceptionQuestion(question).question}
-                            </p>
-                            
-                            <div className="flex gap-4 mb-3">
-                              <Button
-                                variant={userAnswer === true ? (isCorrect ? "default" : "destructive") : "outline"}
-                                size="sm"
-                                onClick={() => setMisconceptionResponse(question.id, true)}
-                                data-testid={`button-true-${question.id}`}
-                              >
-                                True
-                                {hasAnswered && userAnswer === true && (
-                                  isCorrect ? <CheckCircle2 className="w-4 h-4 ml-1" /> : <XCircle className="w-4 h-4 ml-1" />
-                                )}
-                              </Button>
-                              <Button
-                                variant={userAnswer === false ? (isCorrect ? "default" : "destructive") : "outline"}
-                                size="sm"
-                                onClick={() => setMisconceptionResponse(question.id, false)}
-                                data-testid={`button-false-${question.id}`}
-                              >
-                                False
-                                {hasAnswered && userAnswer === false && (
-                                  isCorrect ? <CheckCircle2 className="w-4 h-4 ml-1" /> : <XCircle className="w-4 h-4 ml-1" />
-                                )}
-                              </Button>
-                            </div>
-                            
-                            {hasAnswered && (
-                              <Alert className={isCorrect ? "border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/20" : "border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950/20"}>
-                                <AlertDescription className={isCorrect ? "text-green-700 dark:text-green-300" : "text-orange-700 dark:text-orange-300"}>
-                                  <strong>{isCorrect ? "Correct!" : "Not quite."}</strong> {question.explanation}
-                                </AlertDescription>
-                              </Alert>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          </section>
-
-          {/* 3. Situation */}
-          <section data-testid="section-situation">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="w-5 h-5 text-primary" />
-                  Your AI Implementation Context
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Help us understand your specific use case and objectives.
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium mb-2" htmlFor="use-case">
-                    Describe your primary AI use case:
-                  </label>
-                  <Textarea
-                    id="use-case"
-                    placeholder="e.g., Automate customer support responses, Analyze financial documents, Generate content for marketing..."
-                    value={useCase}
-                    onChange={(e) => updateUseCase(e.target.value)}
-                    className="min-h-24"
-                    data-testid="textarea-use-case"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-3">
-                    What are your primary goals? (Select all that apply)
-                  </label>
-                  <div className="grid md:grid-cols-2 gap-3">
-                    {AVAILABLE_GOALS.map((goal) => (
-                      <div key={goal} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={goal}
-                          checked={goals.includes(goal)}
-                          onCheckedChange={() => toggleGoal(goal)}
-                          data-testid={`checkbox-goal-${goal.replace(/[^a-zA-Z]/g, '').toLowerCase()}`}
-                        />
-                        <label htmlFor={goal} className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                          {goal}
-                        </label>
-                      </div>
-                    ))}
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse border border-border">
+        <thead>
+          <tr className="bg-muted/50">
+            <th className="border border-border p-3 text-left">Option</th>
+            {LENS_LABELS.map(lens => {
+              const isEmphasized = emphasizedLenses.includes(lens);
+              return (
+                <th 
+                  key={lens} 
+                  className={`border border-border p-3 text-center text-xs ${
+                    isEmphasized ? 'bg-accent/20' : ''
+                  }`}
+                >
+                  <div className="flex flex-col items-center">
+                    <div className="font-medium">{lens.split(' ')[0]}</div>
+                    <div className="font-normal">{lens.split(' ').slice(1).join(' ')}</div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </section>
-
-          {/* 4. Option Exploration */}
-          <section data-testid="section-options">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Zap className="w-5 h-5 text-primary" />
-                  AI Implementation Options
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Select 2-3 options to compare in detail. Options are personalized based on your organizational context.
-                </p>
-              </CardHeader>
-              <CardContent>
-                {comparedOptions.length > 0 && (
-                  <div className="mb-6 p-4 bg-accent/10 rounded-lg border border-accent/20">
-                    <h4 className="font-medium mb-2">Comparing {comparedOptions.length} options:</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedCards.map((card) => (
-                        <Badge key={card.id} variant="default" data-testid={`badge-selected-${card.id}`}>
-                          {card.title}
-                        </Badge>
+                </th>
+              );
+            })}
+          </tr>
+        </thead>
+        <tbody>
+          {options.map(option => (
+            <tr key={option.id} className="hover:bg-muted/30">
+              <td className="border border-border p-3">
+                <div className="font-medium text-sm">{option.title}</div>
+                <div className="text-xs text-muted-foreground">{option.what}</div>
+              </td>
+              {LENS_LABELS.map(lens => {
+                const lensKeyMap: Record<string, keyof typeof option.lensValues> = {
+                  'Speed-to-Value': 'speed',
+                  'Customization & Control': 'control', 
+                  'Data Leverage': 'dataLeverage',
+                  'Risk & Compliance Load': 'riskLoad',
+                  'Operational Burden': 'opsBurden',
+                  'Portability & Lock-in': 'portability',
+                  'Cost Shape': 'costShape'
+                };
+                const lensKey = lensKeyMap[lens] || 'speed';
+                const value = option.lensValues[lensKey] || 0;
+                const isEmphasized = emphasizedLenses.includes(lens);
+                
+                return (
+                  <td 
+                    key={lens}
+                    className={`border border-border p-3 text-center ${
+                      isEmphasized ? 'bg-accent/10' : ''
+                    }`}
+                  >
+                    <div className="font-bold text-lg">{value}</div>
+                    <div className="flex justify-center mt-1">
+                      {[1, 2, 3, 4].map(i => (
+                        <div 
+                          key={i} 
+                          className={`w-2 h-2 rounded-full mx-0.5 ${
+                            i <= value ? 'bg-primary' : 'bg-muted'
+                          }`} 
+                        />
                       ))}
                     </div>
-                  </div>
-                )}
-
-                <div className="grid gap-6">
-                  {personalizedCards.map((option) => (
-                    <OptionCardComponent
-                      key={option.id}
-                      option={option}
-                      isSelected={comparedOptions.includes(option.id)}
-                      onToggleSelect={() => toggleCompareOption(option.id)}
-                      emphasizedLenses={emphasizedLenses}
-                    />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </section>
-
-          {/* 5. Reflection */}
-          <section data-testid="section-reflection">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-primary" />
-                  Strategic Reflection
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Capture your insights to guide implementation decisions.
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium mb-2" htmlFor="reflection-1">
-                    Based on your selections, what are the key trade-offs you're willing to make?
-                  </label>
-                  <Textarea
-                    id="reflection-1"
-                    placeholder="Consider speed vs. control, cost vs. capability, risk vs. innovation..."
-                    value={reflectionResponse1}
-                    onChange={(e) => setReflectionResponse1(e.target.value)}
-                    className="min-h-32"
-                    data-testid="textarea-reflection-1"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2" htmlFor="reflection-2">
-                    What specific next steps will you take to move forward with your AI implementation?
-                  </label>
-                  <Textarea
-                    id="reflection-2"
-                    placeholder="Think about pilot projects, team preparation, vendor evaluation, technical requirements..."
-                    value={reflectionResponse2}
-                    onChange={(e) => setReflectionResponse2(e.target.value)}
-                    className="min-h-32"
-                    data-testid="textarea-reflection-2"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </section>
-
-          {/* 6. Export */}
-          <section data-testid="section-export">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Download className="w-5 h-5 text-primary" />
-                  Export Your Analysis
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Save your Options Studio session for future reference and team discussions.
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="flex gap-4">
-                  <Button
-                    onClick={handlePDFExport}
-                    disabled={isExportingPDF || comparedOptions.length === 0}
-                    data-testid="button-export-pdf"
-                  >
-                    {isExportingPDF ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <FileText className="w-4 h-4 mr-2" />
-                    )}
-                    Export PDF Report
-                  </Button>
-                  
-                  <Button
-                    variant="outline"
-                    onClick={handleJSONExport}
-                    disabled={isExportingJSON}
-                    data-testid="button-export-json"
-                  >
-                    {isExportingJSON ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Download className="w-4 h-4 mr-2" />
-                    )}
-                    Export Data (JSON)
-                  </Button>
-                </div>
-                
-                {comparedOptions.length === 0 && (
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Select at least one option to enable PDF export.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </section>
-        </div>
-      </div>
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -875,7 +421,645 @@ function OptionsStudioPageContent() {
 export default function OptionsStudio() {
   return (
     <ProtectedRoute>
-      <OptionsStudioPageContent />
+      <div className="min-h-screen bg-background">
+        <AppHeader />
+        <OptionsStudioContent />
+      </div>
     </ProtectedRoute>
+  );
+}
+
+function OptionsStudioContent() {
+  const { assessmentId } = useParams();
+  const { toast } = useToast();
+  const [currentStep, setCurrentStep] = useState<FlowStep>('intro');
+  const [reflectionAnswers, setReflectionAnswers] = useState<Record<string, string>>({});
+
+  const {
+    useCase,
+    goals,
+    misconceptionResponses,
+    comparedOptions,
+    completed,
+    updateUseCase,
+    toggleGoal,
+    setMisconceptionResponse,
+    toggleCompareOption,
+    markCompleted,
+    getSessionSummary,
+    resetSession
+  } = useOptionsStudio();
+
+  // Get assessment data
+  const { data: assessment, isLoading } = useQuery<Assessment>({
+    queryKey: ['/api/assessments', assessmentId],
+    enabled: !!assessmentId,
+  });
+
+  const contextProfile = assessment?.contextProfile as ContextProfile | undefined;
+
+  // Get personalized data based on context profile
+  const personalizedCards = useMemo(() => {
+    if (!contextProfile) return OPTION_CARDS.map(card => extendOptionCard(card));
+    
+    // For v1.0: Show all cards but emphasize relevant ones (no scoring/filtering)
+    return OPTION_CARDS.map(card => extendOptionCard(card));
+  }, [contextProfile]);
+
+  const emphasizedLenses = useMemo(() => {
+    if (!contextProfile) return [];
+    
+    const emphasized: string[] = [];
+    
+    // High regulatory intensity emphasizes Risk & Compliance
+    if (contextProfile.regulatory_intensity >= 3) {
+      emphasized.push('Risk & Compliance Load');
+    }
+    
+    // High data sensitivity emphasizes Data Leverage and Risk
+    if (contextProfile.data_sensitivity >= 3) {
+      emphasized.push('Data Leverage', 'Risk & Compliance Load');
+    }
+    
+    // High safety criticality emphasizes Risk and Operational Burden
+    if (contextProfile.safety_criticality >= 3) {
+      emphasized.push('Risk & Compliance Load', 'Operational Burden');
+    }
+    
+    // High clock speed emphasizes Speed-to-Value
+    if (contextProfile.clock_speed >= 3) {
+      emphasized.push('Speed-to-Value');
+    }
+    
+    // Low build readiness emphasizes Speed-to-Value
+    if (contextProfile.build_readiness <= 1) {
+      emphasized.push('Speed-to-Value');
+    }
+    
+    // High finops priority emphasizes Cost
+    if (contextProfile.finops_priority >= 3) {
+      emphasized.push('Cost Shape');
+    }
+    
+    // Procurement constraints emphasize Portability
+    if (contextProfile.procurement_constraints) {
+      emphasized.push('Portability & Lock-in');
+    }
+    
+    // Edge operations emphasize Operational Burden and Speed
+    if (contextProfile.edge_operations) {
+      emphasized.push('Operational Burden', 'Speed-to-Value');
+    }
+    
+    return Array.from(new Set(emphasized));
+  }, [contextProfile]);
+
+  const cautionFlags = useMemo(() => {
+    if (!contextProfile) return [];
+    
+    const flags: string[] = [];
+    
+    if (contextProfile.regulatory_intensity >= 3 || contextProfile.safety_criticality >= 3) {
+      flags.push('regulated');
+    }
+    
+    if (contextProfile.data_sensitivity >= 3) {
+      flags.push('high_sensitivity');
+    }
+    
+    if (contextProfile.build_readiness <= 1) {
+      flags.push('low_readiness');
+    }
+    
+    if (contextProfile.edge_operations) {
+      flags.push('edge');
+    }
+    
+    return flags;
+  }, [contextProfile]);
+
+  const selectedOptions = useMemo(() => 
+    personalizedCards.filter(option => comparedOptions.includes(option.id)),
+    [personalizedCards, comparedOptions]
+  );
+
+  const handleExport = async (format: 'pdf' | 'json') => {
+    if (!assessmentId) return;
+    
+    try {
+      const sessionData = {
+        ...getSessionSummary(),
+        contextProfile,
+        selectedOptions: selectedOptions,
+        emphasizedLenses,
+        reflectionAnswers,
+        exportedAt: new Date().toISOString()
+      };
+
+      if (format === 'pdf') {
+        await handleExportPDF(sessionData, assessmentId);
+        toast({
+          title: "PDF Downloaded",
+          description: "Your Options Studio learning dossier has been downloaded as PDF."
+        });
+      } else {
+        await handleExportJSON(sessionData, `options-studio-${assessmentId}.json`);
+        toast({
+          title: "JSON Downloaded", 
+          description: "Your Options Studio session data has been downloaded as JSON."
+        });
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({
+        title: "Export Failed",
+        description: error instanceof Error ? error.message : "Failed to export session data",
+        variant: "destructive"
+      });
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin mr-3" />
+          Loading Options Studio...
+        </div>
+      </div>
+    );
+  }
+
+  if (!assessment || !contextProfile) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Alert>
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            Assessment not found or context profile missing. Please complete the assessment first.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  const stepProgress = {
+    intro: 0,
+    misconceptions: 14,
+    situation: 28, 
+    options: 42,
+    compare: 57,
+    reflection: 71,
+    export: 85
+  };
+
+  return (
+    <div className="container mx-auto px-4 py-8 max-w-6xl">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2" data-testid="text-studio-title">
+          {UI_COPY.introTitle}
+        </h1>
+        <p className="text-lg text-muted-foreground mb-4">
+          {UI_COPY.introBody}
+        </p>
+        
+        {/* Progress Bar */}
+        <div className="mb-4">
+          <Progress value={stepProgress[currentStep]} className="h-2" />
+          <div className="flex justify-between text-xs text-muted-foreground mt-1">
+            <span>Intro</span>
+            <span>Misconceptions</span>
+            <span>Situation</span>
+            <span>Options</span>
+            <span>Compare</span>
+            <span>Reflection</span>
+            <span>Export</span>
+          </div>
+        </div>
+
+        {/* Emphasized Lenses Legend */}
+        {emphasizedLenses.length > 0 && (
+          <Alert className="mb-6 border-accent/20 bg-accent/5">
+            <Radar className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Focus Areas for Your Context:</strong> {emphasizedLenses.join(' • ')}
+              <div className="text-xs text-muted-foreground mt-1">
+                {UI_COPY.lensesLegend}
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
+      </div>
+
+      {/* Step Content */}
+      <div className="space-y-8">
+        {currentStep === 'intro' && (
+          <Card data-testid="section-intro">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <PlayCircle className="w-5 h-5" />
+                Welcome to Options Studio
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-muted-foreground">
+                This studio will guide you through the AI solution landscape. You'll explore 9 common patterns, 
+                challenge misconceptions, and develop your own perspective on what might work in your context.
+              </p>
+              
+              <div className="grid md:grid-cols-3 gap-4 mb-6">
+                {ALWAYS_ON_CARDS.map(card => (
+                  <Card key={card.id} className="border-dashed">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm">{card.title}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-xs text-muted-foreground mb-2">{card.body}</p>
+                      <p className="text-xs font-medium text-primary">{card.doNow}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+              
+              <Button 
+                onClick={() => setCurrentStep('misconceptions')}
+                className="w-full"
+                data-testid="button-start-journey"
+              >
+                <ArrowRight className="w-4 h-4 mr-2" />
+                Start Your Learning Journey
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {currentStep === 'misconceptions' && (
+          <div data-testid="section-misconceptions">
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Brain className="w-5 h-5" />
+                  Misconception Check
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Let's start by testing some common beliefs about AI implementation. 
+                  Answer True or False for each statement.
+                </p>
+              </CardHeader>
+            </Card>
+
+            <div className="space-y-4">
+              {MISCONCEPTION_QUESTIONS.map(question => (
+                <MisconceptionCard
+                  key={question.id}
+                  question={question}
+                  response={misconceptionResponses[question.id]}
+                  onAnswer={(answer) => setMisconceptionResponse(question.id, answer)}
+                  showFeedback={misconceptionResponses[question.id] !== undefined}
+                />
+              ))}
+            </div>
+
+            <div className="flex justify-between mt-6">
+              <Button 
+                variant="outline" 
+                onClick={() => setCurrentStep('intro')}
+                data-testid="button-back-intro"
+              >
+                <ArrowRight className="w-4 h-4 mr-2 rotate-180" />
+                Back
+              </Button>
+              <Button 
+                onClick={() => setCurrentStep('situation')}
+                disabled={Object.keys(misconceptionResponses).length < MISCONCEPTION_QUESTIONS.length}
+                data-testid="button-next-situation"
+              >
+                Pick Your Situation
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {currentStep === 'situation' && (
+          <div data-testid="section-situation">
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Target className="w-5 h-5" />
+                  Describe Your Situation
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Help us understand what you're trying to achieve with AI.
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">
+                    What's your AI use case or goal?
+                  </label>
+                  <Textarea
+                    placeholder="Describe what you want to accomplish with AI..."
+                    value={useCase}
+                    onChange={(e) => updateUseCase(e.target.value)}
+                    className="min-h-[100px]"
+                    data-testid="textarea-usecase"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-3 block">
+                    Select primary goals (choose any that apply):
+                  </label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {AVAILABLE_GOALS.map(goal => (
+                      <div 
+                        key={goal}
+                        className="flex items-center space-x-2 p-3 border rounded-md hover-elevate cursor-pointer"
+                        onClick={() => toggleGoal(goal)}
+                        data-testid={`goal-${goal.replace(/\s+/g, '-').toLowerCase()}`}
+                      >
+                        <Checkbox 
+                          checked={goals.includes(goal)}
+                          onChange={() => toggleGoal(goal)}
+                        />
+                        <span className="text-sm">{goal}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="flex justify-between">
+              <Button 
+                variant="outline" 
+                onClick={() => setCurrentStep('misconceptions')}
+                data-testid="button-back-misconceptions"
+              >
+                <ArrowRight className="w-4 h-4 mr-2 rotate-180" />
+                Back
+              </Button>
+              <Button 
+                onClick={() => setCurrentStep('options')}
+                disabled={!useCase.trim() || goals.length === 0}
+                data-testid="button-next-options"
+              >
+                Explore Options
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {currentStep === 'options' && (
+          <div data-testid="section-options">
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5" />
+                  Explore AI Implementation Options
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Here are 9 common patterns for implementing AI. Select options to compare them in detail.
+                </p>
+              </CardHeader>
+            </Card>
+
+            <div className="grid lg:grid-cols-2 gap-6">
+              {personalizedCards.map(option => (
+                <OptionCardComponent
+                  key={option.id}
+                  option={option}
+                  isSelected={comparedOptions.includes(option.id)}
+                  onToggleSelect={() => toggleCompareOption(option.id)}
+                  emphasizedLenses={emphasizedLenses}
+                  cautionFlags={cautionFlags}
+                />
+              ))}
+            </div>
+
+            <div className="flex justify-between mt-6">
+              <Button 
+                variant="outline" 
+                onClick={() => setCurrentStep('situation')}
+                data-testid="button-back-situation"
+              >
+                <ArrowRight className="w-4 h-4 mr-2 rotate-180" />
+                Back
+              </Button>
+              <Button 
+                onClick={() => setCurrentStep('compare')}
+                disabled={comparedOptions.length < 2}
+                data-testid="button-next-compare"
+              >
+                Compare Selected ({comparedOptions.length})
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {currentStep === 'compare' && (
+          <div data-testid="section-compare">
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Eye className="w-5 h-5" />
+                  Compare Your Selected Options
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Side-by-side comparison of the {selectedOptions.length} options you selected.
+                </p>
+              </CardHeader>
+            </Card>
+
+            {selectedOptions.length > 0 && (
+              <div className="space-y-6">
+                <ComparisonTable 
+                  options={selectedOptions}
+                  emphasizedLenses={emphasizedLenses}
+                />
+
+                <div className="grid gap-4">
+                  {selectedOptions.map(option => (
+                    <Card key={option.id} className="p-4">
+                      <h3 className="font-semibold mb-2">{option.title}</h3>
+                      <div className="grid md:grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <h4 className="font-medium text-green-700 mb-1">Best for:</h4>
+                          <ul className="text-muted-foreground space-y-1">
+                            {option.bestFor.map((item, i) => (
+                              <li key={i}>• {item}</li>
+                            ))}
+                          </ul>
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-red-700 mb-1">Not ideal when:</h4>
+                          <ul className="text-muted-foreground space-y-1">
+                            {option.notIdeal.map((item, i) => (
+                              <li key={i}>• {item}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-between mt-6">
+              <Button 
+                variant="outline" 
+                onClick={() => setCurrentStep('options')}
+                data-testid="button-back-options"
+              >
+                <ArrowRight className="w-4 h-4 mr-2 rotate-180" />
+                Back
+              </Button>
+              <Button 
+                onClick={() => setCurrentStep('reflection')}
+                data-testid="button-next-reflection"
+              >
+                Reflect on Learnings
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {currentStep === 'reflection' && (
+          <div data-testid="section-reflection">
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BookOpen className="w-5 h-5" />
+                  Reflection & Next Steps
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Take a moment to reflect on what you've learned.
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {UI_COPY.reflectionPrompts.map((prompt, index) => (
+                  <div key={index}>
+                    <label className="text-sm font-medium mb-2 block">
+                      {prompt}
+                    </label>
+                    <Textarea
+                      placeholder="Your thoughts..."
+                      value={reflectionAnswers[prompt] || ''}
+                      onChange={(e) => setReflectionAnswers(prev => ({
+                        ...prev,
+                        [prompt]: e.target.value
+                      }))}
+                      className="min-h-[80px]"
+                      data-testid={`textarea-reflection-${index}`}
+                    />
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            <div className="flex justify-between">
+              <Button 
+                variant="outline" 
+                onClick={() => setCurrentStep('compare')}
+                data-testid="button-back-compare"
+              >
+                <ArrowRight className="w-4 h-4 mr-2 rotate-180" />
+                Back
+              </Button>
+              <Button 
+                onClick={() => {
+                  markCompleted();
+                  setCurrentStep('export');
+                }}
+                data-testid="button-complete-journey"
+              >
+                Complete Journey
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {currentStep === 'export' && (
+          <div data-testid="section-export">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Download className="w-5 h-5" />
+                  Your Learning Dossier
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  {UI_COPY.exportCTA}
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <Alert className="border-green-200 bg-green-50">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong>Journey Complete!</strong> You've explored {OPTION_CARDS.length} AI patterns, 
+                    tested {MISCONCEPTION_QUESTIONS.length} misconceptions, and selected {comparedOptions.length} options for deeper comparison.
+                  </AlertDescription>
+                </Alert>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Button
+                    onClick={() => handleExport('pdf')}
+                    className="flex items-center gap-2"
+                    data-testid="button-export-pdf"
+                  >
+                    <FileText className="w-4 h-4" />
+                    Download PDF Summary
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    onClick={() => handleExport('json')}
+                    className="flex items-center gap-2"
+                    data-testid="button-export-json"
+                  >
+                    <Download className="w-4 h-4" />
+                    Export Session Data (JSON)
+                  </Button>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <h3 className="font-medium">What You Explored</h3>
+                  <div className="grid gap-2 text-sm">
+                    <div>• <strong>Use Case:</strong> {useCase || 'Not specified'}</div>
+                    <div>• <strong>Goals:</strong> {goals.join(', ') || 'None selected'}</div>
+                    <div>• <strong>Misconceptions Tested:</strong> {Object.keys(misconceptionResponses).length} of {MISCONCEPTION_QUESTIONS.length}</div>
+                    <div>• <strong>Options Compared:</strong> {comparedOptions.length} options</div>
+                    <div>• <strong>Emphasized Lenses:</strong> {emphasizedLenses.join(', ') || 'None'}</div>
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <Button 
+                    variant="outline"
+                    onClick={() => setCurrentStep('intro')}
+                    data-testid="button-restart-journey"
+                  >
+                    Restart Journey
+                  </Button>
+                  <Link to="/">
+                    <Button variant="outline">
+                      Return to Dashboard
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

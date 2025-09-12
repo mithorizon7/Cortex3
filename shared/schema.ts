@@ -186,16 +186,13 @@ export function extendOptionCard(card: z.infer<typeof optionCardSchema>): Extend
 }
 
 // Helper function to extend misconception question with UI properties
-export function extendMisconceptionQuestion(question: z.infer<typeof misconceptionQuestionSchema>): z.infer<typeof misconceptionQuestionSchema> & { question: string } {
-  return {
-    ...question,
-    question: question.statement,
-  };
+export function extendMisconceptionQuestion(question: z.infer<typeof misconceptionQuestionSchema>): z.infer<typeof misconceptionQuestionSchema> {
+  return question;
 }
 
 export const misconceptionQuestionSchema = z.object({
   id: z.string(),
-  statement: z.string(),                         // The misconception statement
+  question: z.string(),                          // The misconception statement as a question
   correctAnswer: z.boolean(),                    // True/False for the statement
   explanation: z.string(),                       // Why the answer is correct
   links: z.array(z.string()),                    // Related option IDs

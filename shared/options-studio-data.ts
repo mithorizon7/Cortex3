@@ -11,15 +11,16 @@ export const LENS_LABELS = [
   "Cost Shape"
 ] as const;
 
-// 9 Option Cards for AI implementation approaches
+// 9 Option Cards for AI implementation approaches - v1.0 Content (exact from specifications)
 export const OPTION_CARDS: OptionCard[] = [
   // 1. Off-the-Shelf AI Apps
   {
     id: "off_the_shelf_apps",
-    title: "Off-the-Shelf AI Apps (copilots, vertical SaaS)",
+    title: "Off‑the‑Shelf AI Apps (copilots, vertical SaaS)",
+    what: "Ready‑made AI inside productivity or line‑of‑business tools.",
     bestFor: [
       "Fast productivity uplift and drafting",
-      "Low-risk internal tasks and experimentation",
+      "Low‑risk internal tasks and experimentation",
       "Broad enablement across roles"
     ],
     notIdeal: [
@@ -38,16 +39,16 @@ export const OPTION_CARDS: OptionCard[] = [
     },
     dataNeeds: "None beyond typical app content; avoid sensitive data unless enterprise terms cover it.",
     risks: [
-      "Vendor terms and data-use defaults",
+      "Vendor terms and data‑use defaults",
       "Prompt hygiene; misrouting sensitive content",
-      "Shadow usage without enablement"
+      "\"Shadow usage\" without enablement"
     ],
     kpis: [
       "Adoption in target roles",
       "Time saved per task / rework rate"
     ],
     myth: {
-      claim: "Off-the-shelf is toy-grade.",
+      claim: "Off‑the‑shelf is toy‑grade.",
       truth: "Often the fastest ROI and a strong baseline."
     },
     axes: {
@@ -66,6 +67,7 @@ export const OPTION_CARDS: OptionCard[] = [
   {
     id: "api_orchestration",
     title: "API Orchestration & Prompt Libraries (no training)",
+    what: "Call foundation model APIs from your systems; reusable prompts; function calling.",
     bestFor: [
       "Integrating AI into existing apps and workflows",
       "Controlled logging/costs with simple evals",
@@ -92,7 +94,7 @@ export const OPTION_CARDS: OptionCard[] = [
     ],
     kpis: [
       "Cost per call; p95 latency",
-      "Success rate per use-case"
+      "Success rate per use‑case"
     ],
     myth: {
       claim: "Prompting is guesswork.",
@@ -113,13 +115,14 @@ export const OPTION_CARDS: OptionCard[] = [
   // 3. RAG
   {
     id: "rag",
-    title: "Retrieval-Augmented Generation (RAG)",
+    title: "Retrieval‑Augmented Generation (RAG)",
+    what: "The model retrieves your own content as context before generating an answer.",
     bestFor: [
       "Policies/FAQs; internal knowledge assistance",
       "Domain Q&A and search + summarization"
     ],
     notIdeal: [
-      "You need new capabilities not present in base model (consider fine-tune)"
+      "You need new capabilities not present in base model (consider fine‑tune)"
     ],
     prerequisites: [
       "Curated corpus; indexing & chunking strategy",
@@ -131,11 +134,11 @@ export const OPTION_CARDS: OptionCard[] = [
       buildEffort: 3,
       ops: 3
     },
-    dataNeeds: "Rights-clear documents; refresh cadence for updates.",
+    dataNeeds: "Rights‑clear documents; refresh cadence for updates.",
     risks: [
       "Data leakage in indices",
       "Stale or conflicting content",
-      "Over-trust without citations"
+      "Over‑trust without citations"
     ],
     kpis: [
       "Retrieval precision/recall",
@@ -161,17 +164,18 @@ export const OPTION_CARDS: OptionCard[] = [
   {
     id: "agents",
     title: "Agentic Workflows & Orchestrators",
+    what: "Multi‑step LLM workflows that call tools/APIs, plan subtasks, and verify steps.",
     bestFor: [
       "Complex processes (intake → classify → retrieve → draft → QA)",
-      "Operations triage, case handling, multi-tool flows"
+      "Operations triage, case handling, multi‑tool flows"
     ],
     notIdeal: [
       "Tasks must be fully deterministic with strict audit trails"
     ],
     prerequisites: [
       "Stable tool APIs and schemas",
-      "Step-wise evals and guardrails",
-      "Incident runbook; kill-switches"
+      "Step‑wise evals and guardrails",
+      "Incident runbook; kill‑switches"
     ],
     timelineMeters: {
       speed: 2,
@@ -181,11 +185,11 @@ export const OPTION_CARDS: OptionCard[] = [
     dataNeeds: "Tool schemas; optional RAG for knowledge.",
     risks: [
       "Cascading failures across steps",
-      "Prompt-injection via tools/data",
+      "Prompt‑injection via tools/data",
       "Harder debugging without tracing"
     ],
     kpis: [
-      "End-to-end success rate",
+      "End‑to‑end success rate",
       "Intervention rate / step accuracy"
     ],
     myth: {
@@ -207,7 +211,8 @@ export const OPTION_CARDS: OptionCard[] = [
   // 5. Light Fine-Tuning
   {
     id: "light_ft",
-    title: "Light Fine-Tuning (LoRA / adapters)",
+    title: "Light Fine‑Tuning (LoRA / adapters)",
+    what: "Small, targeted updates so a model matches style, format, or narrow domain behaviors.",
     bestFor: [
       "Consistent formatting and tone/brand",
       "Routine, structured outputs"
@@ -226,7 +231,7 @@ export const OPTION_CARDS: OptionCard[] = [
       buildEffort: 3,
       ops: 3
     },
-    dataNeeds: "Rights-clear, high-quality examples; continuous curation.",
+    dataNeeds: "Rights‑clear, high‑quality examples; continuous curation.",
     risks: [
       "Overfitting; model/weights drift",
       "Maintenance as base models evolve",
@@ -237,7 +242,7 @@ export const OPTION_CARDS: OptionCard[] = [
       "Editing time reduction"
     ],
     myth: {
-      claim: "Fine-tuning fixes hallucinations.",
+      claim: "Fine‑tuning fixes hallucinations.",
       truth: "Often better for style/format; ground facts with RAG."
     },
     axes: {
@@ -255,9 +260,10 @@ export const OPTION_CARDS: OptionCard[] = [
   // 6. Heavy Fine-Tuning
   {
     id: "heavy_ft",
-    title: "Heavy Fine-Tuning / Domain Model",
+    title: "Heavy Fine‑Tuning / Domain Model",
+    what: "Extensive training to adapt a base model for a specific domain/task.",
     bestFor: [
-      "Specialized reasoning or non-English domains",
+      "Specialized reasoning or non‑English domains",
       "Strict latency/size constraints via smaller models"
     ],
     notIdeal: [
@@ -274,11 +280,11 @@ export const OPTION_CARDS: OptionCard[] = [
       buildEffort: 4,
       ops: 4
     },
-    dataNeeds: "Large, high-signal, rights-clear datasets; ongoing refresh.",
+    dataNeeds: "Large, high‑signal, rights‑clear datasets; ongoing refresh.",
     risks: [
       "High cost; obsolescence vs frontier",
       "Compliance review overhead",
-      "Vendor/model architecture lock-in"
+      "Vendor/model architecture lock‑in"
     ],
     kpis: [
       "Task accuracy vs baseline",
@@ -304,6 +310,7 @@ export const OPTION_CARDS: OptionCard[] = [
   {
     id: "private_hosting",
     title: "Private Hosting / VPC",
+    what: "Run models in your controlled environment for privacy, control, or SLAs.",
     bestFor: [
       "Sensitive data; isolation needs",
       "Custom SLAs and network policies"
@@ -325,14 +332,14 @@ export const OPTION_CARDS: OptionCard[] = [
     risks: [
       "Patch/upgrade debt",
       "Availability/latency obligations shift to you",
-      "Under-provisioned failover"
+      "Under‑provisioned failover"
     ],
     kpis: [
       "Uptime and p95 latency",
       "Security incidents; capacity headroom"
     ],
     myth: {
-      claim: "On-prem is automatically safer.",
+      claim: "On‑prem is automatically safer.",
       truth: "Safety = process & controls; hosting shifts responsibility to you."
     },
     axes: {
@@ -347,13 +354,14 @@ export const OPTION_CARDS: OptionCard[] = [
     cautions: ["high_sensitivity", "regulated", "edge"]
   },
 
-  // 8. Edge Small Models
+  // 8. Small Models at the Edge
   {
     id: "edge_small_models",
     title: "Small Models at the Edge",
+    what: "Deploy compact models on devices/near data for latency, privacy, or offline use.",
     bestFor: [
       "Field ops, manufacturing, retail POS",
-      "Low-latency or intermittent connectivity"
+      "Low‑latency or intermittent connectivity"
     ],
     notIdeal: [
       "Need frontier model capabilities updated weekly"
@@ -367,7 +375,7 @@ export const OPTION_CARDS: OptionCard[] = [
       buildEffort: 3,
       ops: 4
     },
-    dataNeeds: "Optional on-device tuning; minimize sensitive capture.",
+    dataNeeds: "Optional on‑device tuning; minimize sensitive capture.",
     risks: [
       "Fleet inconsistency; upgrade debt",
       "Physical access risks",
@@ -397,12 +405,13 @@ export const OPTION_CARDS: OptionCard[] = [
   {
     id: "classical_ml_rules_rpa",
     title: "Classical ML, Rules & RPA",
+    what: "Regression/classifiers, rule engines, extract/transform, and automation of deterministic tasks.",
     bestFor: [
       "Structured, repeatable decisions",
       "Forms processing; validations; deterministic checks"
     ],
     notIdeal: [
-      "Open-ended generation or multimodal reasoning"
+      "Open‑ended generation or multimodal reasoning"
     ],
     prerequisites: [
       "Process mapping; data schema; feature engineering"
@@ -419,7 +428,7 @@ export const OPTION_CARDS: OptionCard[] = [
     ],
     kpis: [
       "Precision/recall or F1 (ML)",
-      "Straight-through-processing rate; exception volume"
+      "Straight‑through‑processing rate; exception volume"
     ],
     myth: {
       claim: "LLMs replace earlier techniques.",
@@ -438,13 +447,13 @@ export const OPTION_CARDS: OptionCard[] = [
   }
 ];
 
-// 6 Misconception Questions from reference document
+// 5 Misconception Questions from v1.0 specifications (exact)
 export const MISCONCEPTION_QUESTIONS: MisconceptionQuestion[] = [
   {
     id: "mc_fix_hallu",
-    question: "Fine-tuning fixes hallucinations.",
+    question: "Fine‑tuning fixes hallucinations.",
     correctAnswer: false,
-    explanation: "Fine-tuning is best for style/format/domain behavior; use RAG for factual grounding.",
+    explanation: "Fine‑tuning is best for style/format/domain behavior; use RAG for factual grounding.",
     links: ["light_ft", "rag"]
   },
   {
@@ -456,7 +465,7 @@ export const MISCONCEPTION_QUESTIONS: MisconceptionQuestion[] = [
   },
   {
     id: "mc_onprem_safer",
-    question: "On-prem/private hosting is automatically safer.",
+    question: "On‑prem/private hosting is automatically safer.",
     correctAnswer: false,
     explanation: "Safety depends on process and controls; private hosting shifts responsibility to you.",
     links: ["private_hosting"]
@@ -465,15 +474,8 @@ export const MISCONCEPTION_QUESTIONS: MisconceptionQuestion[] = [
     id: "mc_rag_perfect_kb",
     question: "RAG requires a perfect knowledge base to work.",
     correctAnswer: false,
-    explanation: "Start with curated high-value content, iterate, and measure retrieval quality.",
+    explanation: "Start with curated high‑value content, iterate, and measure retrieval quality.",
     links: ["rag"]
-  },
-  {
-    id: "mc_llm_replaces_ml",
-    question: "LLMs replace classical ML and rules.",
-    correctAnswer: false,
-    explanation: "Hybrid systems win—rules/ML for structure; LLMs for judgment/ambiguity.",
-    links: ["classical_ml_rules_rpa"]
   },
   {
     id: "mc_prompt_guess",
@@ -484,25 +486,77 @@ export const MISCONCEPTION_QUESTIONS: MisconceptionQuestion[] = [
   }
 ];
 
-// Context-Based Caution Messages (simplified for new schema)
+// Context-Based Caution Messages (v1.0 specifications)
 export const CAUTION_MESSAGES: Record<string, (profile: ContextProfile) => string | null> = {
-  highRegulatoryIntensity: (profile: ContextProfile) => 
-    profile.regulatory_intensity >= 3 
+  regulated: (profile: ContextProfile) => 
+    (profile.regulatory_intensity >= 3 || profile.safety_criticality >= 3)
       ? "Because your profile indicates higher regulation/safety, add HITL and an assurance cadence before scale."
       : null,
       
-  highDataSensitivity: (profile: ContextProfile) =>
+  highSensitivity: (profile: ContextProfile) =>
     profile.data_sensitivity >= 3
-      ? "Your context suggests sensitive data—apply residency/retention controls and confirm vendor data-use terms."
+      ? "Your context suggests sensitive data—apply residency/retention controls and confirm vendor data‑use terms."
       : null,
       
-  lowBuildReadiness: (profile: ContextProfile) =>
+  lowReadiness: (profile: ContextProfile) =>
     profile.build_readiness <= 1
       ? "Build later—start with Buy/API/RAG while operations and governance mature."
       : null,
       
-  edgeOperations: (profile: ContextProfile) =>
+  edge: (profile: ContextProfile) =>
     profile.edge_operations
       ? "Design for offline/latency; set fallbacks and update/rollback plans."
       : null
+};
+
+// Available goals for use case definition
+export const AVAILABLE_GOALS = [
+  "Increase operational efficiency",
+  "Enhance customer experience", 
+  "Reduce manual workload",
+  "Improve decision-making speed",
+  "Generate new revenue streams",
+  "Strengthen competitive advantage",
+  "Reduce operational costs",
+  "Scale existing processes"
+];
+
+// Cross-cutting "Always-On" info cards (from specifications)
+export const ALWAYS_ON_CARDS = [
+  {
+    id: "assurance_evals",
+    title: "Assurance & Evaluations",
+    body: "Guardrails and tests that keep systems safe and useful: HITL where stakes are high, fairness/privacy/drift checks, quarterly red‑team for critical systems, and rollback plans.",
+    doNow: "Define owners, cadence, and a 1‑page incident runbook."
+  },
+  {
+    id: "data_stewardship", 
+    title: "Data Stewardship",
+    body: "Rights, quality, lineage, access, and retention for data used by AI (prompts, indices, logs).",
+    doNow: "Catalog key sources, name owners, set retention defaults (e.g., 30 days for logs)."
+  },
+  {
+    id: "portability_exit",
+    title: "Portability & Exit", 
+    body: "Avoid brittle lock‑in: export formats, second‑source for critical paths, and exit clauses.",
+    doNow: "Add portability terms to contracts; document \"how we would switch.\""
+  }
+];
+
+// UI Copy blocks (from specifications)
+export const UI_COPY = {
+  introTitle: "Options Studio — Understand Your AI Solution Patterns",
+  introBody: "Explore common options, the trade‑offs that matter, and where myths mislead. We'll highlight a few lenses based on your context. We won't prescribe a choice.",
+  lensesLegend: "Speed‑to‑Value · Customization & Control · Data Leverage · Risk & Compliance Load · Operational Burden · Portability & Lock‑in · Cost Shape",
+  cautionTooltips: {
+    regulated: "Because your profile indicates higher regulation/safety, add HITL and an assurance cadence before scale.",
+    high_sensitivity: "Your context suggests sensitive data—apply residency/retention controls and confirm vendor data‑use terms.",
+    low_readiness: "Build later—start with Buy/API/RAG while operations and governance mature.",
+    edge: "Design for offline/latency; set fallbacks and update/rollback plans."
+  },
+  reflectionPrompts: [
+    "Which two options feel most promising to learn more about, and why?",
+    "Which lens mattered most for your situation?"
+  ],
+  exportCTA: "Download Options Studio Summary (PDF/JSON)"
 };
