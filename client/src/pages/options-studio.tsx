@@ -1,7 +1,7 @@
 import { useParams, Link } from "wouter";
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useOptionsStudio } from "@/hooks/useOptionsStudio";
+import { useOptionsStudioBackend } from "@/hooks/useOptionsStudioBackend";
 import { useToast } from "@/hooks/use-toast";
 import { AppHeader } from "@/components/navigation/app-header";
 import { ProtectedRoute } from "@/components/auth/protected-route";
@@ -473,8 +473,12 @@ function OptionsStudioContent() {
     resetSession,
     getPersonalizedCards,
     getCautionMessages,
-    getEmphasizedLenses
-  } = useOptionsStudio();
+    getEmphasizedLenses,
+    isLoading: isSessionLoading,
+    isError: isSessionError,
+    isSaving,
+    saveSession
+  } = useOptionsStudioBackend(assessmentId);
 
   // Get assessment data
   const { data: assessment, isLoading } = useQuery<Assessment>({
@@ -574,13 +578,32 @@ function OptionsStudioContent() {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || isSessionLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-8 h-8 animate-spin mr-3" />
-          Loading Options Studio...
+          {isSessionLoading ? "Loading your session..." : "Loading Options Studio..."}
         </div>
+      </div>
+    );
+  }
+
+  // Show session error if there's a problem loading the session
+  if (isSessionError) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            Failed to load your Options Studio session. Please refresh the page or try again later.
+            <div className="mt-2">
+              <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
+                Refresh Page
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
       </div>
     );
   }
@@ -619,9 +642,36 @@ function OptionsStudioContent() {
           {UI_COPY.introBody}
         </p>
         
-        {/* Progress Bar */}
+        {/* Progress Bar with Save Status */}
         <div className="mb-4">
-          <Progress value={stepProgress[currentStep]} className="h-2" />
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex-1">
+              <Progress value={stepProgress[currentStep]} className="h-2" />
+            </div>
+            <div className="ml-4 flex items-center gap-2">
+              {isSaving ? (
+                <div className="flex items-center text-xs text-muted-foreground">
+                  <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                  Saving...
+                </div>
+              ) : (
+                <div className="flex items-center text-xs text-green-600">
+                  <CheckCircle2 className="w-3 h-3 mr-1" />
+                  Saved
+                </div>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={saveSession}
+                disabled={isSaving}
+                data-testid="button-save-session"
+                className="text-xs px-2 py-1 h-6"
+              >
+                Save Now
+              </Button>
+            </div>
+          </div>
           <div className="flex justify-between text-xs text-muted-foreground mt-1">
             <span>Intro</span>
             <span>Misconceptions</span>
