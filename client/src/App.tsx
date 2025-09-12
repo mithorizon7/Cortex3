@@ -23,6 +23,7 @@ function Router() {
       <Route path="/pulse/:id" component={PulseCheck} />
       <Route path="/results/:id" component={Results} />
       <Route path="/decide/:id" component={OptionsStudio} />
+      <Route path="/decide" component={OptionsStudio} />
       <Route component={NotFound} />
     </Switch>
   );

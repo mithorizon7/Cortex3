@@ -22,7 +22,8 @@ import {
   Shield,
   Users,
   HelpCircle,
-  BookOpen
+  BookOpen,
+  Compass
 } from "lucide-react";
 
 const METHODOLOGY_CONTENT = {
@@ -301,10 +302,24 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="border-t border-border py-8 px-6 bg-muted/10">
-        <div className="max-w-6xl mx-auto text-center">
-          <p className="text-sm text-muted-foreground">
-            CORTEX™ v3.2 Executive AI-Readiness Program • Built for C-suite leaders and senior executives
-          </p>
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-4">
+            <p className="text-sm text-muted-foreground">
+              CORTEX™ v3.2 Executive AI-Readiness Program • Built for C-suite leaders and senior executives
+            </p>
+          </div>
+          <div className="flex justify-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/decide')}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors px-3 py-1 h-auto"
+              data-testid="link-options-studio"
+            >
+              <Compass className="h-3 w-3 mr-1" />
+              Explore AI Options
+            </Button>
+          </div>
         </div>
       </footer>
     </div>

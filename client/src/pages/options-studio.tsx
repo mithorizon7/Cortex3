@@ -442,6 +442,20 @@ function ComparisonTable({ options, emphasizedLenses }: ComparisonTableProps) {
 }
 
 export default function OptionsStudio() {
+  const { id } = useParams();
+  const assessmentId = id;
+  
+  // For direct access (no assessment ID), don't require authentication
+  if (!assessmentId) {
+    return (
+      <div className="min-h-screen bg-background">
+        <AppHeader />
+        <OptionsStudioContent />
+      </div>
+    );
+  }
+  
+  // For assessment-linked access, require authentication
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-background">
@@ -453,7 +467,8 @@ export default function OptionsStudio() {
 }
 
 function OptionsStudioContent() {
-  const { assessmentId } = useParams();
+  const { id } = useParams();
+  const assessmentId = id;
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState<FlowStep>('intro');
   const [reflectionAnswers, setReflectionAnswers] = useState<Record<string, string>>({});
@@ -608,6 +623,31 @@ function OptionsStudioContent() {
     );
   }
 
+  // Handle direct access gracefully (no assessment ID)
+  if (!assessmentId) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <Alert className="mb-6 border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30">
+          <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          <AlertDescription>
+            <strong className="text-blue-800 dark:text-blue-200">Exploring AI Options (Standalone Mode)</strong>
+            <p className="mt-2 text-sm text-blue-700 dark:text-blue-300">
+              You're accessing Options Studio directly. This provides a general overview of AI implementation patterns. 
+              For personalized guidance based on your context, consider completing the full CORTEX assessment first.
+            </p>
+            <div className="mt-3">
+              <Link href="/" className="text-blue-700 dark:text-blue-300 hover:text-blue-900 dark:hover:text-blue-100 text-sm underline">
+                Take the Assessment for Personalized Guidance
+              </Link>
+            </div>
+          </AlertDescription>
+        </Alert>
+        <StandaloneOptionsStudioContent />
+      </div>
+    );
+  }
+  
+  // Handle assessment-linked access but missing data
   if (!assessment || !contextProfile) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -1137,6 +1177,284 @@ function OptionsStudioContent() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// Standalone Options Studio for direct access without assessment
+function StandaloneOptionsStudioContent() {
+  const [currentStep, setCurrentStep] = useState<FlowStep>('intro');
+  const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
+  const [misconceptionResponses, setMisconceptionResponses] = useState<Record<string, boolean>>({});
+  const [reflectionAnswers, setReflectionAnswers] = useState<Record<string, string>>({});
+
+  // Use default cards without personalization
+  const optionCards = useMemo(() => OPTION_CARDS.map(card => extendOptionCard(card)), []);
+  const selectedOptionCards = useMemo(() => 
+    optionCards.filter(option => selectedOptions.includes(option.id)),
+    [optionCards, selectedOptions]
+  );
+
+  const toggleOption = (optionId: string) => {
+    setSelectedOptions(prev => 
+      prev.includes(optionId) 
+        ? prev.filter(id => id !== optionId)
+        : [...prev, optionId]
+    );
+  };
+
+  const handleMisconceptionAnswer = (questionId: string, answer: boolean) => {
+    setMisconceptionResponses(prev => ({ ...prev, [questionId]: answer }));
+  };
+
+  const stepProgress = {
+    intro: 0,
+    misconceptions: 14,
+    situation: 28, 
+    options: 42,
+    compare: 57,
+    reflection: 71,
+    export: 85
+  };
+
+  return (
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2" data-testid="text-studio-title-standalone">
+          AI Options Explorer
+        </h1>
+        <p className="text-lg text-muted-foreground mb-4">
+          Explore AI implementation patterns and build your understanding of the solution landscape.
+        </p>
+        
+        {/* Progress Bar */}
+        <div className="mb-4">
+          <Progress value={stepProgress[currentStep]} className="h-2" />
+          <div className="flex justify-between text-xs text-muted-foreground mt-1">
+            <span>Intro</span>
+            <span>Misconceptions</span>
+            <span>Options</span>
+            <span>Compare</span>
+            <span>Reflection</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Step Content */}
+      {currentStep === 'intro' && (
+        <Card data-testid="section-intro-standalone">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <PlayCircle className="w-5 h-5" />
+              Welcome to AI Options Explorer
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-muted-foreground">
+              This standalone exploration will guide you through the AI solution landscape. You'll explore common patterns, 
+              challenge misconceptions, and develop your own perspective on what might work in different contexts.
+            </p>
+            
+            <Alert className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30">
+              <Lightbulb className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              <AlertDescription>
+                <strong className="text-amber-800 dark:text-amber-200">Note:</strong> This is a general exploration mode. 
+                For personalized guidance based on your specific context, consider taking the full CORTEX assessment first.
+              </AlertDescription>
+            </Alert>
+            
+            <Button 
+              onClick={() => setCurrentStep('misconceptions')}
+              className="w-full"
+              data-testid="button-start-exploration"
+            >
+              <ArrowRight className="w-4 h-4 mr-2" />
+              Start Exploration
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {currentStep === 'misconceptions' && (
+        <div>
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold mb-2">Challenge Common Misconceptions</h2>
+            <p className="text-muted-foreground">
+              Test your understanding of AI implementation patterns. These misconceptions are commonly held by technical leaders.
+            </p>
+          </div>
+          
+          {MISCONCEPTION_QUESTIONS.map(question => (
+            <MisconceptionCard
+              key={question.id}
+              question={question}
+              response={misconceptionResponses[question.id]}
+              onAnswer={(answer) => handleMisconceptionAnswer(question.id, answer)}
+              showFeedback={misconceptionResponses[question.id] !== undefined}
+            />
+          ))}
+          
+          <div className="flex justify-between pt-6">
+            <Button 
+              variant="outline" 
+              onClick={() => setCurrentStep('intro')}
+              data-testid="button-back-to-intro"
+            >
+              Back
+            </Button>
+            <Button 
+              onClick={() => setCurrentStep('options')}
+              data-testid="button-continue-to-options"
+            >
+              Explore Options
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {currentStep === 'options' && (
+        <div>
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold mb-2">Explore AI Implementation Options</h2>
+            <p className="text-muted-foreground">
+              Browse through different AI implementation patterns. Select options to compare their characteristics.
+            </p>
+          </div>
+          
+          <div className="grid gap-6">
+            {optionCards.map(option => (
+              <OptionCardComponent
+                key={option.id}
+                option={option}
+                isSelected={selectedOptions.includes(option.id)}
+                onToggleSelect={() => toggleOption(option.id)}
+                emphasizedLenses={[]}
+                cautionFlags={[]}
+              />
+            ))}
+          </div>
+          
+          <div className="flex justify-between pt-6">
+            <Button 
+              variant="outline" 
+              onClick={() => setCurrentStep('misconceptions')}
+              data-testid="button-back-to-misconceptions"
+            >
+              Back
+            </Button>
+            <Button 
+              onClick={() => setCurrentStep('compare')}
+              disabled={selectedOptions.length === 0}
+              data-testid="button-compare-options"
+            >
+              Compare Selected ({selectedOptions.length})
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {currentStep === 'compare' && (
+        <div>
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold mb-2">Compare Your Selected Options</h2>
+            <p className="text-muted-foreground">
+              Side-by-side comparison of the AI implementation patterns you selected.
+            </p>
+          </div>
+          
+          {selectedOptionCards.length > 0 ? (
+            <ComparisonTable 
+              options={selectedOptionCards}
+              emphasizedLenses={[]}
+            />
+          ) : (
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                No options selected for comparison. Go back to select some options first.
+              </AlertDescription>
+            </Alert>
+          )}
+          
+          <div className="flex justify-between pt-6">
+            <Button 
+              variant="outline" 
+              onClick={() => setCurrentStep('options')}
+              data-testid="button-back-to-options"
+            >
+              Back to Options
+            </Button>
+            <Button 
+              onClick={() => setCurrentStep('reflection')}
+              disabled={selectedOptions.length === 0}
+              data-testid="button-continue-to-reflection"
+            >
+              Reflection
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {currentStep === 'reflection' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Reflection & Next Steps</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div>
+              <label className="text-sm font-medium mb-2 block">
+                What patterns seem most relevant to your context?
+              </label>
+              <Textarea
+                value={reflectionAnswers['relevant_patterns'] || ''}
+                onChange={(e) => setReflectionAnswers(prev => ({ 
+                  ...prev, 
+                  relevant_patterns: e.target.value 
+                }))}
+                placeholder="Reflect on which AI implementation patterns align with your needs..."
+                className="min-h-[100px]"
+                data-testid="input-relevant-patterns"
+              />
+            </div>
+
+            <Alert className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30">
+              <Lightbulb className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <AlertDescription>
+                <strong className="text-blue-800 dark:text-blue-200">Ready for more personalized guidance?</strong>
+                <p className="mt-2 text-sm text-blue-700 dark:text-blue-300">
+                  Consider taking the full CORTEX assessment to get tailored recommendations based on your specific 
+                  operating context, risk profile, and organizational readiness.
+                </p>
+                <div className="mt-3">
+                  <Link href="/" className="text-blue-700 dark:text-blue-300 hover:text-blue-900 dark:hover:text-blue-100 text-sm underline">
+                    Take CORTEX Assessment
+                  </Link>
+                </div>
+              </AlertDescription>
+            </Alert>
+            
+            <div className="flex justify-between">
+              <Button 
+                variant="outline" 
+                onClick={() => setCurrentStep('compare')}
+                data-testid="button-back-to-compare"
+              >
+                Back to Comparison
+              </Button>
+              <Button 
+                onClick={() => setCurrentStep('intro')}
+                data-testid="button-restart-exploration"
+              >
+                Restart Exploration
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
