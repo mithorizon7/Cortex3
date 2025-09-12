@@ -472,51 +472,13 @@ function OptionsStudioContent() {
 
   const emphasizedLenses = useMemo(() => {
     if (!contextProfile) return [];
-    
-    const emphasized: string[] = [];
-    
-    // High regulatory intensity emphasizes Risk & Compliance
-    if (contextProfile.regulatory_intensity >= 3) {
-      emphasized.push('Risk & Compliance Load');
-    }
-    
-    // High data sensitivity emphasizes Data Leverage and Risk
-    if (contextProfile.data_sensitivity >= 3) {
-      emphasized.push('Data Leverage', 'Risk & Compliance Load');
-    }
-    
-    // High safety criticality emphasizes Risk and Operational Burden
-    if (contextProfile.safety_criticality >= 3) {
-      emphasized.push('Risk & Compliance Load', 'Operational Burden');
-    }
-    
-    // High clock speed emphasizes Speed-to-Value
-    if (contextProfile.clock_speed >= 3) {
-      emphasized.push('Speed-to-Value');
-    }
-    
-    // Low build readiness emphasizes Speed-to-Value
-    if (contextProfile.build_readiness <= 1) {
-      emphasized.push('Speed-to-Value');
-    }
-    
-    // High finops priority emphasizes Cost
-    if (contextProfile.finops_priority >= 3) {
-      emphasized.push('Cost Shape');
-    }
-    
-    // Procurement constraints emphasize Portability
-    if (contextProfile.procurement_constraints) {
-      emphasized.push('Portability & Lock-in');
-    }
-    
-    // Edge operations emphasize Operational Burden and Speed
-    if (contextProfile.edge_operations) {
-      emphasized.push('Operational Burden', 'Speed-to-Value');
-    }
-    
-    return Array.from(new Set(emphasized));
-  }, [contextProfile]);
+    return getEmphasizedLenses(contextProfile);
+  }, [contextProfile, getEmphasizedLenses]);
+
+  const cautionMessages = useMemo(() => {
+    if (!contextProfile) return [];
+    return getCautionMessages(contextProfile);
+  }, [contextProfile, getCautionMessages]);
 
   const cautionFlags = useMemo(() => {
     if (!contextProfile) return [];
@@ -644,13 +606,45 @@ function OptionsStudioContent() {
 
         {/* Emphasized Lenses Legend */}
         {emphasizedLenses.length > 0 && (
-          <Alert className="mb-6 border-accent/20 bg-accent/5">
-            <Radar className="h-4 w-4" />
+          <Alert className="mb-6 border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30">
+            <Radar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
             <AlertDescription>
-              <strong>Focus Areas for Your Context:</strong> {emphasizedLenses.join(' • ')}
-              <div className="text-xs text-muted-foreground mt-1">
+              <strong className="text-blue-800 dark:text-blue-200">Key Considerations for Your Context:</strong>
+              <div className="flex flex-wrap gap-1 mt-2 mb-2">
+                {emphasizedLenses.map(lens => {
+                  const IconComponent = LENS_ICONS[lens as keyof typeof LENS_ICONS];
+                  return (
+                    <Badge 
+                      key={lens} 
+                      variant="outline" 
+                      className="bg-blue-100 border-blue-300 text-blue-800 dark:bg-blue-900/50 dark:border-blue-700 dark:text-blue-200"
+                    >
+                      {IconComponent && <IconComponent className="w-3 h-3 mr-1" />}
+                      {lens}
+                    </Badge>
+                  );
+                })}
+              </div>
+              <div className="text-xs text-muted-foreground">
                 {UI_COPY.lensesLegend}
               </div>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Context-Based Cautions */}
+        {cautionMessages.length > 0 && (
+          <Alert className="mb-6 border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950/30">
+            <AlertTriangle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+            <AlertDescription>
+              <strong className="text-orange-800 dark:text-orange-200">Important Considerations:</strong>
+              <ul className="mt-2 space-y-1">
+                {cautionMessages.map((message, index) => (
+                  <li key={index} className="text-sm text-orange-700 dark:text-orange-300">
+                    • {message}
+                  </li>
+                ))}
+              </ul>
             </AlertDescription>
           </Alert>
         )}
