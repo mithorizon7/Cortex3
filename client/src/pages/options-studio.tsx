@@ -447,7 +447,10 @@ function OptionsStudioContent() {
     toggleCompareOption,
     markCompleted,
     getSessionSummary,
-    resetSession
+    resetSession,
+    getPersonalizedCards,
+    getCautionMessages,
+    getEmphasizedLenses
   } = useOptionsStudio();
 
   // Get assessment data
