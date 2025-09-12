@@ -17,7 +17,6 @@ export const OPTION_CARDS: OptionCard[] = [
   {
     id: "off_the_shelf_apps",
     title: "Off-the-Shelf AI Apps (copilots, vertical SaaS)",
-    what: "Ready-made AI inside productivity or line-of-business tools.",
     bestFor: [
       "Fast productivity uplift and drafting",
       "Low-risk internal tasks and experimentation",
@@ -67,7 +66,6 @@ export const OPTION_CARDS: OptionCard[] = [
   {
     id: "api_orchestration",
     title: "API Orchestration & Prompt Libraries (no training)",
-    what: "Call foundation model APIs from your systems; reusable prompts; function calling.",
     bestFor: [
       "Integrating AI into existing apps and workflows",
       "Controlled logging/costs with simple evals",
@@ -116,7 +114,6 @@ export const OPTION_CARDS: OptionCard[] = [
   {
     id: "rag",
     title: "Retrieval-Augmented Generation (RAG)",
-    what: "The model retrieves your own content as context before generating an answer.",
     bestFor: [
       "Policies/FAQs; internal knowledge assistance",
       "Domain Q&A and search + summarization"
@@ -164,7 +161,6 @@ export const OPTION_CARDS: OptionCard[] = [
   {
     id: "agents",
     title: "Agentic Workflows & Orchestrators",
-    what: "Multi-step LLM workflows that call tools/APIs, plan subtasks, and verify steps.",
     bestFor: [
       "Complex processes (intake → classify → retrieve → draft → QA)",
       "Operations triage, case handling, multi-tool flows"
@@ -212,7 +208,6 @@ export const OPTION_CARDS: OptionCard[] = [
   {
     id: "light_ft",
     title: "Light Fine-Tuning (LoRA / adapters)",
-    what: "Small, targeted updates so a model matches style, format, or narrow domain behaviors.",
     bestFor: [
       "Consistent formatting and tone/brand",
       "Routine, structured outputs"
@@ -261,7 +256,6 @@ export const OPTION_CARDS: OptionCard[] = [
   {
     id: "heavy_ft",
     title: "Heavy Fine-Tuning / Domain Model",
-    what: "Extensive training to adapt a base model for a specific domain/task.",
     bestFor: [
       "Specialized reasoning or non-English domains",
       "Strict latency/size constraints via smaller models"
@@ -310,7 +304,6 @@ export const OPTION_CARDS: OptionCard[] = [
   {
     id: "private_hosting",
     title: "Private Hosting / VPC",
-    what: "Run models in your controlled environment for privacy, control, or SLAs.",
     bestFor: [
       "Sensitive data; isolation needs",
       "Custom SLAs and network policies"
@@ -358,7 +351,6 @@ export const OPTION_CARDS: OptionCard[] = [
   {
     id: "edge_small_models",
     title: "Small Models at the Edge",
-    what: "Deploy compact models on devices/near data for latency, privacy, or offline use.",
     bestFor: [
       "Field ops, manufacturing, retail POS",
       "Low-latency or intermittent connectivity"
@@ -405,7 +397,6 @@ export const OPTION_CARDS: OptionCard[] = [
   {
     id: "classical_ml_rules_rpa",
     title: "Classical ML, Rules & RPA",
-    what: "Regression/classifiers, rule engines, extract/transform, and automation of deterministic tasks.",
     bestFor: [
       "Structured, repeatable decisions",
       "Forms processing; validations; deterministic checks"
@@ -451,42 +442,42 @@ export const OPTION_CARDS: OptionCard[] = [
 export const MISCONCEPTION_QUESTIONS: MisconceptionQuestion[] = [
   {
     id: "mc_fix_hallu",
-    statement: "Fine-tuning fixes hallucinations.",
+    question: "Fine-tuning fixes hallucinations.",
     correctAnswer: false,
     explanation: "Fine-tuning is best for style/format/domain behavior; use RAG for factual grounding.",
     links: ["light_ft", "rag"]
   },
   {
     id: "mc_need_own_model",
-    statement: "We need our own model to be competitive.",
+    question: "We need our own model to be competitive.",
     correctAnswer: false,
     explanation: "Most value comes from Buy → API → RAG; consider heavy tuning only if differentiation, data, and readiness align.",
     links: ["off_the_shelf_apps", "api_orchestration", "heavy_ft"]
   },
   {
     id: "mc_onprem_safer",
-    statement: "On-prem/private hosting is automatically safer.",
+    question: "On-prem/private hosting is automatically safer.",
     correctAnswer: false,
     explanation: "Safety depends on process and controls; private hosting shifts responsibility to you.",
     links: ["private_hosting"]
   },
   {
     id: "mc_rag_perfect_kb",
-    statement: "RAG requires a perfect knowledge base to work.",
+    question: "RAG requires a perfect knowledge base to work.",
     correctAnswer: false,
     explanation: "Start with curated high-value content, iterate, and measure retrieval quality.",
     links: ["rag"]
   },
   {
     id: "mc_llm_replaces_ml",
-    statement: "LLMs replace classical ML and rules.",
+    question: "LLMs replace classical ML and rules.",
     correctAnswer: false,
     explanation: "Hybrid systems win—rules/ML for structure; LLMs for judgment/ambiguity.",
     links: ["classical_ml_rules_rpa"]
   },
   {
     id: "mc_prompt_guess",
-    statement: "Prompting is guesswork.",
+    question: "Prompting is guesswork.",
     correctAnswer: false,
     explanation: "Templates, eval harnesses, and telemetry turn prompting into an engineering discipline.",
     links: ["api_orchestration"]
