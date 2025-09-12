@@ -11,6 +11,7 @@ import ContextInsight from "@/pages/context-insight";
 import ProfileSummary from "@/pages/profile-summary";
 import PulseCheck from "@/pages/pulse-check";
 import Results from "@/pages/results";
+import OptionsStudio from "@/pages/options-studio";
 
 function Router() {
   return (
@@ -21,6 +22,7 @@ function Router() {
       <Route path="/profile-summary/:id" component={ProfileSummary} />
       <Route path="/pulse/:id" component={PulseCheck} />
       <Route path="/results/:id" component={Results} />
+      <Route path="/decide" component={OptionsStudio} />
       <Route component={NotFound} />
     </Switch>
   );
