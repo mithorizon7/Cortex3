@@ -65,6 +65,16 @@ export function ExecutiveCortexHero({
   
   // Place badge centers so the inner edge of the pulse circle touches the ring
   const NODE_ORBIT = OUTER_RING_R + OUTER_RING_STROKE / 2 + NODE_PULSE_R + TOUCH_GAP;
+  
+  // How much to stop short of the badge (prevents line peeking into the halo)
+  const SPOKE_CLEARANCE = 1.5;       // px
+  
+  // Center-to-spoke endpoint radius so the line stops just before the halo
+  const SPOKE_TARGET_R = OUTER_RING_R + OUTER_RING_STROKE / 2 + NODE_PULSE_R - SPOKE_CLEARANCE;
+  
+  // Label nudge so 1/2/3 sit to the right of the top spoke
+  const RING_LABEL_DX = 10;          // px to the right
+  const RING_LABEL_DY = -4;          // px above the ring (fine-tune if needed)
 
   // 6 rays at 60° steps, starting at -90° (top)
   const angles = actualPillars.map((_, i) => (i * Math.PI) / 3 - Math.PI / 2);
@@ -265,21 +275,19 @@ export function ExecutiveCortexHero({
               ))}
             </g>
 
-            {/* Spokes */}
-            <g opacity="0.38" filter={`url(#soft-${uid})`}>
+            {/* Spokes: from center to just shy of each badge halo (uniform for all 6) */}
+            <g opacity="0.38" vectorEffect="non-scaling-stroke" shapeRendering="geometricPrecision">
               {angles.map((a, i) => {
-                const { x, y } = pointAt(RINGS[RINGS.length - 1], a);
+                const { x, y } = pointAt(SPOKE_TARGET_R, a);
                 return (
                   <line
-                    key={i}
+                    key={`spoke-${i}`}
                     x1={C}
                     y1={C}
                     x2={x}
                     y2={y}
                     stroke={`url(#ring-${uid})`}
                     strokeWidth="1.25"
-                    vectorEffect="non-scaling-stroke"
-                    shapeRendering="geometricPrecision"
                   />
                 );
               })}
@@ -315,42 +323,43 @@ export function ExecutiveCortexHero({
               />
             </g>
 
-            {/* Ring scale labels (tiny, at top for clarity) */}
-            <g aria-hidden="true">
+            {/* Ring labels: tiny, outlined, nudged right of the top spoke */}
+            <g aria-hidden="true" className="pointer-events-none select-none">
               {[1, 2, 3].map((n, idx) => {
                 const r = RINGS[idx];
-                const y = C - r - 6;
+                const tx = C + RING_LABEL_DX;     // right of the top spoke
+                const ty = C - r + RING_LABEL_DY; // just above the ring
+
                 return (
-                  <g key={n}>
-                    {/* Outline version underneath */}
+                  <g key={`ring-label-${n}`}>
+                    {/* outline below for contrast over any background */}
                     <text
-                      x={C}
-                      y={y}
+                      x={tx}
+                      y={ty}
                       textAnchor="middle"
                       style={{
                         fontFamily: "var(--font-heading)",
                         fontSize: "12px",
                         fontWeight: 700,
-                        // SVG stroke outline for contrast
                         stroke: "hsl(var(--background) / 0.70)",
                         strokeWidth: 3,
                         paintOrder: "stroke fill",
-                        fill: "hsl(var(--foreground) / 0.80)",
+                        fill: "hsl(var(--foreground) / 0.82)",
                         letterSpacing: "0.2px",
                       }}
                     >
                       {n}
                     </text>
-                    {/* Fill layer on top (keeps text crisp) */}
+                    {/* crisp fill on top */}
                     <text
-                      x={C}
-                      y={y}
+                      x={tx}
+                      y={ty}
                       textAnchor="middle"
                       style={{
                         fontFamily: "var(--font-heading)",
                         fontSize: "12px",
                         fontWeight: 700,
-                        fill: "hsl(var(--foreground) / 0.82)",
+                        fill: "hsl(var(--foreground) / 0.85)",
                         letterSpacing: "0.2px",
                       }}
                     >

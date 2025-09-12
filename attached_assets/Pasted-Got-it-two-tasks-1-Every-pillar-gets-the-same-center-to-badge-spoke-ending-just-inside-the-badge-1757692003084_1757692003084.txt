@@ -1,0 +1,141 @@
+Got it—two tasks:
+	1.	Every pillar gets the same center-to-badge spoke, ending just inside the badge halo.
+	2.	Ring numbers (1/2/3) shift a few pixels to the right of the top spoke so they never overlap it.
+
+Below are clean, drop-in edits.
+
+⸻
+
+What we’re aiming for
+	•	Spokes should visually “connect” the center to each badge (C/O/R/T/E/X) with identical length/style.
+	•	Spokes should stop right before the badge halo, not run underneath it.
+	•	The “1/2/3” labels should sit just to the right of the top spoke (vertical one), staying legible at all sizes.
+
+⸻
+
+Exact changes
+
+Put these next to your other geometry constants.
+
+// ── Geometry helpers ──────────────────────────────────────────────
+const OUTER_RING_INDEX = RINGS.length - 1;
+const OUTER_RING_R = RINGS[OUTER_RING_INDEX];
+const OUTER_RING_STROKE = 1.8;     // match your ring stroke
+
+// Your badge radii (keep in sync with the node drawing):
+const NODE_PULSE_R = 26;           // the outer/halo circle (the "kiss" circle)
+const NODE_CORE_R  = 17.5;         // inner filled circle
+
+// How much to stop short of the badge (prevents line peeking into the halo)
+const SPOKE_CLEARANCE = 1.5;       // px
+
+// Center-to-spoke endpoint radius so the line stops just before the halo
+const SPOKE_TARGET_R = OUTER_RING_R + OUTER_RING_STROKE / 2 + NODE_PULSE_R - SPOKE_CLEARANCE;
+
+// Label nudge so 1/2/3 sit to the right of the top spoke
+const RING_LABEL_DX = 10;          // px to the right
+const RING_LABEL_DY = -4;          // px above the ring (fine-tune if needed)
+
+1) Replace your existing “spokes” group with this
+
+This guarantees six spokes that all reach the badges uniformly.
+
+{/* Spokes: from center to just shy of each badge halo (uniform for all 6) */}
+<g opacity="0.38" vectorEffect="non-scaling-stroke" shapeRendering="geometricPrecision">
+  {angles.map((a, i) => {
+    const { x, y } = pointAt(SPOKE_TARGET_R, a);
+    return (
+      <line
+        key={`spoke-${i}`}
+        x1={C}
+        y1={C}
+        x2={x}
+        y2={y}
+        stroke={`url(#ring-${uid})`}
+        strokeWidth="1.25"
+      />
+    );
+  })}
+</g>
+
+Why: We’re no longer ending spokes at the outer ring radius; we’re extending them to the badge tangent (minus SPOKE_CLEARANCE). That fixes the missing lines for C and T and keeps the finish consistent around the circle.
+
+2) Shift the ring numbers “1/2/3” slightly right of the top spoke
+
+This keeps them off the vertical line without adding clutter.
+
+{/* Ring labels: tiny, outlined, nudged right of the top spoke */}
+<g aria-hidden="true" className="pointer-events-none select-none">
+  {[1, 2, 3].map((n, idx) => {
+    const r = RINGS[idx];
+    const tx = C + RING_LABEL_DX;     // right of the top spoke
+    const ty = C - r + RING_LABEL_DY; // just above the ring
+
+    return (
+      <g key={`ring-label-${n}`}>
+        {/* outline below for contrast over any background */}
+        <text
+          x={tx}
+          y={ty}
+          textAnchor="middle"
+          style={{
+            fontFamily: "var(--font-heading)",
+            fontSize: "12px",
+            fontWeight: 700,
+            stroke: "hsl(var(--background) / 0.70)",
+            strokeWidth: 3,
+            paintOrder: "stroke fill",
+            fill: "hsl(var(--foreground) / 0.82)",
+            letterSpacing: "0.2px",
+          }}
+        >
+          {n}
+        </text>
+        {/* crisp fill on top */}
+        <text
+          x={tx}
+          y={ty}
+          textAnchor="middle"
+          style={{
+            fontFamily: "var(--font-heading)",
+            fontSize: "12px",
+            fontWeight: 700,
+            fill: "hsl(var(--foreground) / 0.85)",
+            letterSpacing: "0.2px",
+          }}
+        >
+          {n}
+        </text>
+      </g>
+    );
+  })}
+</g>
+
+
+⸻
+
+Layering order (important)
+
+Make sure the spokes render under badges and the polygon stroke, so the end of each line looks clean:
+	1.	Hex background
+	2.	Rings
+	3.	Spokes (this group)
+	4.	Polygon area/stroke
+	5.	Badges (C/O/R/T/E/X)
+	6.	Center badge (“CORTEX”) and any labels
+
+If needed, reorder the JSX blocks accordingly.
+
+⸻
+
+QA checklist (fast)
+	•	Zoom at 80%, 100%, 125%: each spoke should land evenly “just before” the badge halo.
+	•	Check top labels: “1/2/3” should be clearly to the right of the vertical spoke and never overlap it.
+	•	Dark/light themes: the label outline keeps the numbers readable in both.
+
+⸻
+
+Confidence
+	•	High this fixes the missing C/T spokes and keeps all six lines uniform.
+	•	High that the ring labels will avoid overlap while remaining subtle.
+	•	Medium on exact pixel offsets across all displays—tweak SPOKE_CLEARANCE (±0.5 px) and RING_LABEL_DX/DY (±2 px) to taste.
