@@ -6,9 +6,9 @@ import { eq, and } from "drizzle-orm";
 
 // Lazy-load database connection to avoid initialization errors in tests
 let _db: any = null;
-function getDb() {
+async function getDb() {
   if (!_db) {
-    const { db } = require("./db");
+    const { db } = await import("./db");
     _db = db;
   }
   return _db;
@@ -37,7 +37,7 @@ export class DatabaseStorage implements IStorage {
           whereConditions.push(eq(assessments.userId, userId));
         }
         
-        const [assessment] = await getDb().select().from(assessments).where(and(...whereConditions));
+        const [assessment] = await (await getDb()).select().from(assessments).where(and(...whereConditions));
         
         if (assessment) {
           logger.debug('Assessment retrieved successfully', {
@@ -59,7 +59,7 @@ export class DatabaseStorage implements IStorage {
     return withDatabaseErrorHandling(
       'createAssessment',
       async () => {
-        const [assessment] = await getDb()
+        const [assessment] = await (await getDb())
           .insert(assessments)
           .values(insertAssessment)
           .returning();
@@ -89,7 +89,7 @@ export class DatabaseStorage implements IStorage {
           whereConditions.push(eq(assessments.userId, userId));
         }
         
-        const [updated] = await getDb()
+        const [updated] = await (await getDb())
           .update(assessments)
           .set(updates)
           .where(and(...whereConditions))
@@ -128,7 +128,7 @@ export class DatabaseStorage implements IStorage {
           whereConditions.push(eq(assessments.userId, userId));
         }
         
-        const [assessment] = await getDb()
+        const [assessment] = await (await getDb())
           .select({ optionsStudioSession: assessments.optionsStudioSession })
           .from(assessments)
           .where(and(...whereConditions));
@@ -175,7 +175,7 @@ export class DatabaseStorage implements IStorage {
           whereConditions.push(eq(assessments.userId, userId));
         }
         
-        const [updated] = await getDb()
+        const [updated] = await (await getDb())
           .update(assessments)
           .set({ optionsStudioSession: validatedSessionData as any })
           .where(and(...whereConditions))
