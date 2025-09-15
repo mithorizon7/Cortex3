@@ -88,47 +88,32 @@ export default function HomePage() {
         Skip to main content
       </a>
       
-      <AppHeader />
+      <AppHeader 
+        showIdentityInline={true}
+        identityText="MIT Open Learning"
+        showHelp={true}
+        onHelpClick={() => setMethodologyOpen(true)}
+      />
       
-      {/* MIT Identity Strip */}
-      <div className="border-b border-border bg-muted/30">
-        <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-foreground">CORTEX™</span>
-            <span className="text-xs text-muted-foreground">•</span>
-            <span className="text-sm text-muted-foreground">MIT Open Learning</span>
-          </div>
-          <Sheet open={methodologyOpen} onOpenChange={setMethodologyOpen}>
-            <SheetTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="text-muted-foreground hover:text-foreground"
-                data-testid="button-help"
-              >
-                <HelpCircle className="h-4 w-4 mr-1" />
-                Help
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[400px] sm:w-[540px]">
-              <SheetHeader>
-                <SheetTitle>{METHODOLOGY_CONTENT.title}</SheetTitle>
-                <SheetDescription>
-                  Understanding the CORTEX methodology and what to expect from your assessment.
-                </SheetDescription>
-              </SheetHeader>
-              <div className="mt-6 space-y-6">
-                {METHODOLOGY_CONTENT.sections.map((section, index) => (
-                  <div key={index}>
-                    <h4 className="font-semibold text-sm mb-2">{section.title}</h4>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{section.content}</p>
-                  </div>
-                ))}
+      {/* Methodology Sheet - moved from identity strip */}
+      <Sheet open={methodologyOpen} onOpenChange={setMethodologyOpen}>
+        <SheetContent side="right" className="w-[400px] sm:w-[540px]">
+          <SheetHeader>
+            <SheetTitle>{METHODOLOGY_CONTENT.title}</SheetTitle>
+            <SheetDescription>
+              Understanding the CORTEX methodology and what to expect from your assessment.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-6 space-y-6">
+            {METHODOLOGY_CONTENT.sections.map((section, index) => (
+              <div key={index}>
+                <h4 className="font-semibold text-sm mb-2">{section.title}</h4>
+                <p className="text-sm text-muted-foreground leading-relaxed">{section.content}</p>
               </div>
-            </SheetContent>
-          </Sheet>
-        </div>
-      </div>
+            ))}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Hero Section - Above the fold */}
       <section id="main-content" className="relative bg-background">
