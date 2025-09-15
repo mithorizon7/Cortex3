@@ -1,5 +1,5 @@
 import { useParams, Link } from "wouter";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useContextMirror } from "@/hooks/useContextMirror";
 import { useToast } from "@/hooks/use-toast";
@@ -67,9 +67,16 @@ function ErrorFallback({ error }: { error: Error }) {
 
 function ContextInsightPageContent() {
   const { id } = useParams();
-  const { data, loading, error } = useContextMirror(id!);
+  const { data, isLoading, isError, error, generateMirror, reset } = useContextMirror();
   const { toast } = useToast();
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  
+  // Generate the context mirror when the component mounts and we have an id
+  useEffect(() => {
+    if (id && !data && !isLoading && !isError) {
+      generateMirror(id);
+    }
+  }, [id, data, isLoading, isError, generateMirror]);
   
   // Fetch the full assessment data to get contextProfile
   const { data: assessmentData, isLoading: assessmentLoading } = useQuery<Assessment>({
@@ -174,9 +181,9 @@ function ContextInsightPageContent() {
             <CardTitle className="text-xl">What your profile signals</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {loading ? (
+            {isLoading ? (
               <SkeletonList rows={8} />
-            ) : error ? (
+            ) : isError && error ? (
               <ErrorFallback error={error} />
             ) : data ? (
               <>
@@ -226,7 +233,7 @@ function ContextInsightPageContent() {
         <Button 
           variant="ghost" 
           onClick={handleDownloadBrief}
-          disabled={!data || loading || !assessmentData || assessmentLoading || isGeneratingPDF}
+          disabled={!data || isLoading || !assessmentData || assessmentLoading || isGeneratingPDF}
           data-testid="button-download-brief"
         >
           {isGeneratingPDF ? (

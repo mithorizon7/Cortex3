@@ -1,51 +1,119 @@
-import { useEffect, useState } from "react";
-import type { ContextMirror } from "../../../shared/schema";
+import { useMutation } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import type { ContextMirror, ContextMirrorRequest } from "@shared/schema";
+import { contextMirrorRequestSchema } from "@shared/schema";
 
-export function useContextMirror(assessmentId: string) {
-  const [data, setData] = useState<ContextMirror | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+export interface UseContextMirrorReturn {
+  data: ContextMirror | null;
+  isLoading: boolean;
+  isError: boolean;
+  error: Error | null;
+  generateMirror: (assessmentId: string) => void;
+  reset: () => void;
+}
 
-  useEffect(() => {
-    if (!assessmentId) {
-      setLoading(false);
+export function useContextMirror(): UseContextMirrorReturn {
+  const { toast } = useToast();
+
+  const mutation = useMutation({
+    mutationFn: async (assessmentId: string): Promise<ContextMirror> => {
+      // Validate input before making API call
+      const validationResult = contextMirrorRequestSchema.safeParse({ assessmentId });
+      
+      if (!validationResult.success) {
+        const errors = validationResult.error.errors.map(e => e.message).join(", ");
+        throw new Error(`Invalid assessment ID: ${errors}`);
+      }
+
+      const response = await apiRequest(
+        "POST",
+        "/api/insight/context-mirror",
+        validationResult.data
+      );
+
+      return response.json();
+    },
+    onSuccess: (data: ContextMirror) => {
+      toast({
+        title: "Context Mirror Generated",
+        description: "Your context mirror analysis is ready.",
+      });
+    },
+    onError: (error: any) => {
+      console.error("Context Mirror generation failed:", error);
+      
+      // Handle specific error types
+      let errorMessage = "Failed to generate context mirror. Please try again.";
+      
+      if (error?.message?.includes("404")) {
+        errorMessage = "Assessment not found. Please ensure you have completed the context profile.";
+      } else if (error?.message?.includes("offline")) {
+        errorMessage = "You're offline. Please check your connection and try again.";
+      } else if (error?.message?.includes("500")) {
+        errorMessage = "Server error occurred. Please try again in a moment.";
+      } else if (error?.message?.includes("429")) {
+        errorMessage = "Too many requests. Please wait a moment and try again.";
+      } else if (error?.incidentId) {
+        errorMessage = `${error.message} (Incident ID: ${error.incidentId})`;
+      }
+
+      toast({
+        title: "Generation Failed",
+        description: errorMessage,
+        variant: "destructive"
+      });
+    },
+    retry: (failureCount, error: any) => {
+      // Don't retry on client errors (4xx)
+      if (error?.message?.match(/^4\d\d/)) {
+        return false;
+      }
+      
+      // Don't retry on validation errors
+      if (error?.message?.includes("Invalid assessment ID")) {
+        return false;
+      }
+      
+      // Retry up to 2 times for server/network errors
+      return failureCount < 2;
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+  });
+
+  const generateMirror = (assessmentId: string) => {
+    // Additional client-side validation
+    if (!assessmentId || typeof assessmentId !== 'string') {
+      toast({
+        title: "Invalid Input",
+        description: "Assessment ID is required to generate a context mirror.",
+        variant: "destructive"
+      });
       return;
     }
 
-    let isMounted = true;
-    
-    const fetchContextMirror = async () => {
-      try {
-        const response = await fetch("/api/insight/context-mirror", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ assessmentId })
-        });
+    if (assessmentId.trim().length === 0) {
+      toast({
+        title: "Invalid Input", 
+        description: "Assessment ID cannot be empty.",
+        variant: "destructive"
+      });
+      return;
+    }
 
-        if (!response.ok) {
-          throw new Error(`Failed to fetch context mirror: ${response.status}`);
-        }
+    mutation.mutate(assessmentId);
+  };
 
-        const json = await response.json();
-        
-        if (isMounted) {
-          setData(json);
-          setLoading(false);
-        }
-      } catch (err) {
-        if (isMounted) {
-          setError(err instanceof Error ? err : new Error("Unknown error"));
-          setLoading(false);
-        }
-      }
-    };
+  const reset = () => {
+    mutation.reset();
+  };
 
-    fetchContextMirror();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [assessmentId]);
-
-  return { data, loading, error };
+  return {
+    data: mutation.data || null,
+    isLoading: mutation.isPending,
+    isError: mutation.isError,
+    error: mutation.error as Error | null,
+    generateMirror,
+    reset,
+  };
 }
