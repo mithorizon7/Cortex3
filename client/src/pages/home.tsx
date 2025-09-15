@@ -128,22 +128,30 @@ export default function HomePage() {
           <p className="text-base text-muted-foreground" data-testid="text-main-description">
             A focused, two‑step assessment to align leadership and surface your next best moves.
           </p>
+          
+          {/* Featured 0-3 Scale Information */}
+          <div className="bg-muted/30 border border-border rounded-md p-4" data-testid="scale-information">
+            <h3 className="text-sm font-semibold mb-2 text-foreground">0–3 Scale</h3>
+            <p className="text-sm text-muted-foreground">
+              Four clear stages: <strong>0 Nascent</strong>, <strong>1 Emerging</strong>, <strong>2 Integrated</strong>, <strong>3 Leading</strong>.
+            </p>
+          </div>
 
           <ol className="space-y-4" data-testid="list-assessment-steps">
             <li>
-              <div className="font-medium">Step 1 — Context (4–5 minutes)</div>
+              <div className="font-medium">Step 1 — Context</div>
               <div className="text-sm text-muted-foreground">
                 A short profile of your operating environment. Tailors guidance; does not change scores.
               </div>
             </li>
             <li>
-              <div className="font-medium">Step 2 — Pulse Check (6–8 minutes)</div>
+              <div className="font-medium">Step 2 — Pulse Check</div>
               <div className="text-sm text-muted-foreground">
                 18 binary questions across six pillars. Answer "Yes" only if fully true today.
               </div>
             </li>
             <li>
-              <div className="font-medium">Step 3 — Results (5–10 minutes)</div>
+              <div className="font-medium">Step 3 — Results</div>
               <div className="text-sm text-muted-foreground">
                 Honeycomb snapshot, context gates, and practical guidance. Export as PDF/JSON.
               </div>
@@ -170,9 +178,6 @@ export default function HomePage() {
             </Button>
           </div>
 
-          <div className="text-xs text-muted-foreground" data-testid="text-time-estimate">
-            ~15 minutes total • No PII collected
-          </div>
         </div>
 
         <ExecutiveCortexHero className="hidden md:block" />
@@ -181,63 +186,32 @@ export default function HomePage() {
 
       {/* Below the fold - Reassurance cards */}
       <section className="py-16 px-6 bg-muted/20">
-        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
+        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-8">
           
           {/* What you'll get today */}
           <Card className="hover-elevate transition-colors duration-200" data-testid="card-what-youll-get">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <FileText className="h-5 w-5 text-primary" />
-                Your CORTEX Snapshot
+                What You'll Get Today
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
               <div className="flex items-start gap-2">
                 <CheckCircle className="h-4 w-4 text-accent mt-0.5 flex-shrink-0" />
-                <span>A <strong>honeycomb maturity view</strong> across six executive domains</span>
+                <span>A single-page view of where you stand across six ai-readiness domains (0–3 scale).</span>
               </div>
               <div className="flex items-start gap-2">
                 <CheckCircle className="h-4 w-4 text-accent mt-0.5 flex-shrink-0" />
-                <span><strong>Context "gates"</strong> (non‑negotiables) if you operate in higher‑risk settings</span>
+                <span>Context-specific safeguards to satisfy before scaling (e.g., human checks, basic testing, data handling rules).</span>
               </div>
               <div className="flex items-start gap-2">
                 <CheckCircle className="h-4 w-4 text-accent mt-0.5 flex-shrink-0" />
-                <span><strong>Guidance cards</strong> per domain: why it matters, what good looks like, how to improve</span>
+                <span>Guidance cards for each domain: why it matters, what good looks like, and practical ways to improve.</span>
               </div>
               <div className="flex items-start gap-2">
                 <Download className="h-4 w-4 text-accent mt-0.5 flex-shrink-0" />
-                <span><strong>Export</strong> (PDF/JSON) — suitable for the executive team or board materials</span>
-              </div>
-              <p className="text-xs text-muted-foreground italic mt-3">
-                No vendor pitching; no benchmarks unless a cohort study is explicitly enabled.
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Your data & privacy */}
-          <Card className="hover-elevate transition-colors duration-200" data-testid="card-data-privacy">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Shield className="h-5 w-5 text-primary" />
-                Your Data & Privacy
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              <div className="flex items-start gap-2">
-                <CheckCircle className="h-4 w-4 text-accent mt-0.5 flex-shrink-0" />
-                <span>We collect <strong>only</strong> small integers/booleans (no free‑text PII).</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <CheckCircle className="h-4 w-4 text-accent mt-0.5 flex-shrink-0" />
-                <span>Results are <strong>yours</strong>: export/download is available at the end.</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <CheckCircle className="h-4 w-4 text-accent mt-0.5 flex-shrink-0" />
-                <span>If you provided an organization name, it appears only on your export.</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <CheckCircle className="h-4 w-4 text-accent mt-0.5 flex-shrink-0" />
-                <span>Optional cohort comparisons are disabled by default.</span>
+                <span>A downloadable brief (PDF/JSON) you can share with your executive team.</span>
               </div>
             </CardContent>
           </Card>
@@ -247,25 +221,21 @@ export default function HomePage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Users className="h-5 w-5 text-primary" />
-                How This Will Be Used in Today's Session
+                How This Fits Into Today's Session
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
               <div className="flex items-start gap-2">
                 <CheckCircle className="h-4 w-4 text-accent mt-0.5 flex-shrink-0" />
-                <span>We'll use your results to <strong>focus discussion</strong> on the weakest domains.</span>
+                <span>You'll use your snapshot to choose areas with the most headroom.</span>
               </div>
               <div className="flex items-start gap-2">
                 <CheckCircle className="h-4 w-4 text-accent mt-0.5 flex-shrink-0" />
-                <span>"Gates" ensure we don't scale with blind spots (e.g., safety, compliance).</span>
+                <span>Safeguards help you scale responsibly where risk is higher.</span>
               </div>
               <div className="flex items-start gap-2">
                 <CheckCircle className="h-4 w-4 text-accent mt-0.5 flex-shrink-0" />
-                <span>We'll highlight <strong>two moves</strong> most likely to raise value in the next quarter.</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <CheckCircle className="h-4 w-4 text-accent mt-0.5 flex-shrink-0" />
-                <span>No one is graded. This is a <strong>snapshot</strong>, not a compliance score.</span>
+                <span>We'll point to common first steps leaders take in similar situations.</span>
               </div>
             </CardContent>
           </Card>
@@ -290,7 +260,7 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-4">
             <p className="text-sm text-muted-foreground">
-              CORTEX™ v3.2 Executive AI-Readiness Program • Built for C-suite leaders and senior executives
+              CORTEX™ v3.2 Executive AI-Readiness Program
             </p>
           </div>
           <div className="flex justify-center">
