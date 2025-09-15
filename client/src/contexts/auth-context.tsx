@@ -92,6 +92,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     handleRedirectResult()
       .then((result) => {
         if (result) {
+          setUser(result.user);
         }
       })
       .catch((error) => {
