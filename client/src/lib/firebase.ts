@@ -106,12 +106,9 @@ export const handleRedirectResult = async (): Promise<UserCredential | null> => 
   if (!firebaseAuth) {
     return null;
   }
-  
+
   try {
-    const result = await getRedirectResult(firebaseAuth);
-    if (result) {
-    }
-    return result;
+    return await getRedirectResult(firebaseAuth);
   } catch (error) {
     console.error('Redirect result handling failed:', error);
     throw error;

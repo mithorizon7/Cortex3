@@ -164,13 +164,13 @@ describe('AuthContext', () => {
 
   it('should handle auth state changes', async () => {
     const mockUser = { uid: 'test-uid', email: 'test@example.com' };
-    
+
     mockOnAuthStateChange.mockImplementation((callback) => {
       // Simulate user sign in
       setTimeout(() => callback(mockUser), 0);
       return vi.fn();
     });
-    
+
     render(
       <AuthProvider>
         <TestComponent />
@@ -179,6 +179,26 @@ describe('AuthContext', () => {
 
     await waitFor(() => {
       expect(screen.getByText('user: test@example.com')).toBeInTheDocument();
+    });
+  });
+
+  it('should set user from redirect result', async () => {
+    const mockUser = { uid: 'redirect-uid', email: 'redirect@example.com' };
+
+    mockHandleRedirectResult.mockResolvedValue({ user: mockUser });
+    mockOnAuthStateChange.mockImplementation((callback) => {
+      setTimeout(() => callback(mockUser), 0);
+      return vi.fn();
+    });
+
+    render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('user: redirect@example.com')).toBeInTheDocument();
     });
   });
 
