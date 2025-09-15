@@ -37,7 +37,8 @@ export class DatabaseStorage implements IStorage {
           whereConditions.push(eq(assessments.userId, userId));
         }
         
-        const [assessment] = await (await getDb()).select().from(assessments).where(and(...whereConditions));
+        const db = await getDb();
+        const [assessment] = await db.select().from(assessments).where(and(...whereConditions));
         
         if (assessment) {
           logger.debug('Assessment retrieved successfully', {
@@ -59,7 +60,8 @@ export class DatabaseStorage implements IStorage {
     return withDatabaseErrorHandling(
       'createAssessment',
       async () => {
-        const [assessment] = await (await getDb())
+        const db = await getDb();
+        const [assessment] = await db
           .insert(assessments)
           .values(insertAssessment)
           .returning();
@@ -89,7 +91,8 @@ export class DatabaseStorage implements IStorage {
           whereConditions.push(eq(assessments.userId, userId));
         }
         
-        const [updated] = await (await getDb())
+        const db = await getDb();
+        const [updated] = await db
           .update(assessments)
           .set(updates)
           .where(and(...whereConditions))
@@ -128,7 +131,8 @@ export class DatabaseStorage implements IStorage {
           whereConditions.push(eq(assessments.userId, userId));
         }
         
-        const [assessment] = await (await getDb())
+        const db = await getDb();
+        const [assessment] = await db
           .select({ optionsStudioSession: assessments.optionsStudioSession })
           .from(assessments)
           .where(and(...whereConditions));
@@ -175,7 +179,8 @@ export class DatabaseStorage implements IStorage {
           whereConditions.push(eq(assessments.userId, userId));
         }
         
-        const [updated] = await (await getDb())
+        const db = await getDb();
+        const [updated] = await db
           .update(assessments)
           .set({ optionsStudioSession: validatedSessionData as any })
           .where(and(...whereConditions))

@@ -14,6 +14,7 @@ import OfflineBanner from "@/components/offline-banner";
 import { ErrorFallback } from "@/components/error-boundary";
 import { FormSkeleton } from "@/components/skeleton-loader";
 import { AppHeader } from "@/components/navigation/app-header";
+import { ProtectedRoute } from "@/components/auth/protected-route";
 import { contextProfileSchema, type ContextProfile } from "@shared/schema";
 import { CONTEXT_ITEMS, CONTEXT_SCREENS } from "@/lib/cortex";
 import { apiRequest, getNetworkError } from "@/lib/queryClient";
@@ -118,13 +119,14 @@ export default function ContextProfilePage() {
   const currentScreenTotal = currentScreenData.questions.length;
 
   return (
-    <div className="min-h-screen bg-background">
-      <AppHeader />
-      <OfflineBanner 
-        onRetry={() => window.location.reload()} 
-        showRetryButton={true}
-      />
-      <ProgressHeader currentStep={1} />
+    <ProtectedRoute requireAuth>
+      <div className="min-h-screen bg-background">
+        <AppHeader />
+        <OfflineBanner 
+          onRetry={() => window.location.reload()} 
+          showRetryButton={true}
+        />
+        <ProgressHeader currentStep={1} />
       
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header Section */}
@@ -350,6 +352,7 @@ export default function ContextProfilePage() {
           </div>
         </div>
       </main>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

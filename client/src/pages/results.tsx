@@ -13,6 +13,7 @@ import { ResultsSkeleton } from "@/components/skeleton-loader";
 import { ExecutiveCortexHero } from "@/components/executive-cortex-hero";
 import DomainCard from "@/components/domain-card";
 import { AppHeader } from "@/components/navigation/app-header";
+import { ProtectedRoute } from "@/components/auth/protected-route";
 import { ValueSnapshot } from "@/components/value-overlay";
 import { initializeValueOverlay } from "@/lib/value-overlay";
 import { CORTEX_PILLARS, getPriorityLevel } from "@/lib/cortex";
@@ -272,21 +273,23 @@ export default function ResultsPage() {
 
   if (!assessment) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="w-full max-w-md mx-4">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <h1 className="text-2xl font-bold text-foreground mb-2 font-display">Assessment Not Found</h1>
-              <p className="text-muted-foreground mb-4">
-                The assessment you're looking for doesn't exist or has been removed.
-              </p>
-              <Button onClick={() => window.location.href = "/"} data-testid="button-start-new">
-                Start New Assessment
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <ProtectedRoute requireAuth>
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <Card className="w-full max-w-md mx-4">
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <h1 className="text-2xl font-bold text-foreground mb-2 font-display">Assessment Not Found</h1>
+                <p className="text-muted-foreground mb-4">
+                  The assessment you're looking for doesn't exist or has been removed.
+                </p>
+                <Button onClick={() => window.location.href = "/"} data-testid="button-start-new">
+                  Start New Assessment
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </ProtectedRoute>
     );
   }
 
@@ -302,13 +305,14 @@ export default function ResultsPage() {
   const maturityLevel = avgScore < 1 ? 'Nascent' : avgScore < 2 ? 'Emerging' : avgScore < 3 ? 'Integrated' : 'Leading';
 
   return (
-    <div className="min-h-screen bg-background">
-      <AppHeader />
-      <OfflineBanner 
-        onRetry={() => window.location.reload()} 
-        showRetryButton={true}
-      />
-      <ProgressHeader currentStep={4} />
+    <ProtectedRoute requireAuth>
+      <div className="min-h-screen bg-background">
+        <AppHeader />
+        <OfflineBanner 
+          onRetry={() => window.location.reload()} 
+          showRetryButton={true}
+        />
+        <ProgressHeader currentStep={4} />
       
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Executive Header */}
@@ -680,6 +684,7 @@ export default function ResultsPage() {
           </CardContent>
         </Card>
       </main>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

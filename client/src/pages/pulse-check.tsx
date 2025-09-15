@@ -10,6 +10,7 @@ import OfflineBanner from "@/components/offline-banner";
 import { ErrorFallback } from "@/components/error-boundary";
 import { QuestionSkeleton } from "@/components/skeleton-loader";
 import { AppHeader } from "@/components/navigation/app-header";
+import { ProtectedRoute } from "@/components/auth/protected-route";
 import { PULSE_QUESTIONS, CORTEX_PILLARS } from "@/lib/cortex";
 import { apiRequest, getNetworkError } from "@/lib/queryClient";
 import { getEnhancedErrorMessage } from "@/lib/error-utils";
@@ -121,58 +122,63 @@ export default function PulseCheckPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background">
-        <AppHeader />
-        <ProgressHeader currentStep={3} />
-        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center mb-8">
-            <div className="flex items-center justify-center space-x-2 mb-4">
-              <Target className="h-6 w-6 text-primary" />
-              <h1 className="text-3xl font-display font-bold text-foreground">Pulse Check</h1>
-              <Clock className="h-5 w-5 text-muted-foreground" />
+      <ProtectedRoute requireAuth>
+        <div className="min-h-screen bg-background">
+          <AppHeader />
+          <ProgressHeader currentStep={3} />
+          <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="text-center mb-8">
+              <div className="flex items-center justify-center space-x-2 mb-4">
+                <Target className="h-6 w-6 text-primary" />
+                <h1 className="text-3xl font-display font-bold text-foreground">Pulse Check</h1>
+                <Clock className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <p className="text-lg text-muted-foreground mb-4 font-ui">
+                Loading your assessment...
+              </p>
             </div>
-            <p className="text-lg text-muted-foreground mb-4 font-ui">
-              Loading your assessment...
-            </p>
-          </div>
-          <div className="space-y-8">
-            <QuestionSkeleton />
-            <QuestionSkeleton />
-            <QuestionSkeleton />
-          </div>
-        </main>
-      </div>
+            <div className="space-y-8">
+              <QuestionSkeleton />
+              <QuestionSkeleton />
+              <QuestionSkeleton />
+            </div>
+          </main>
+        </div>
+      </ProtectedRoute>
     );
   }
 
   if (!assessment) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="w-full max-w-md mx-4">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <h1 className="text-2xl font-bold text-foreground mb-2">Assessment Not Found</h1>
-              <p className="text-muted-foreground mb-4">
-                The assessment you're looking for doesn't exist or has been removed.
-              </p>
-              <Button onClick={() => navigate("/")} data-testid="button-start-new">
-                Start New Assessment
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <ProtectedRoute requireAuth>
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <Card className="w-full max-w-md mx-4">
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <h1 className="text-2xl font-bold text-foreground mb-2">Assessment Not Found</h1>
+                <p className="text-muted-foreground mb-4">
+                  The assessment you're looking for doesn't exist or has been removed.
+                </p>
+                <Button onClick={() => navigate("/")} data-testid="button-start-new">
+                  Start New Assessment
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </ProtectedRoute>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <AppHeader />
-      <OfflineBanner 
-        onRetry={() => window.location.reload()} 
-        showRetryButton={true}
-      />
-      <ProgressHeader currentStep={3} />
+    <ProtectedRoute requireAuth>
+      <div className="min-h-screen bg-background">
+        <AppHeader />
+        <OfflineBanner 
+          onRetry={() => window.location.reload()} 
+          showRetryButton={true}
+        />
+        <ProgressHeader currentStep={3} />
       
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
@@ -398,6 +404,7 @@ export default function PulseCheckPage() {
           </div>
         </div>
       </main>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

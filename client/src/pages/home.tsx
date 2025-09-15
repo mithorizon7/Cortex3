@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/sheet";
 import { AppHeader } from "@/components/navigation/app-header";
 import { ExecutiveCortexHero } from "@/components/executive-cortex-hero";
+import { AuthRequiredModal } from "@/components/auth-required-modal";
+import { useAuth } from "@/contexts/auth-context";
 import { 
   ArrowRight,
   CheckCircle,
@@ -59,6 +61,8 @@ const METHODOLOGY_CONTENT = {
 export default function HomePage() {
   const [, navigate] = useLocation();
   const [methodologyOpen, setMethodologyOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const { user, loading } = useAuth();
 
   // Set document title for SEO
   useEffect(() => {
@@ -74,6 +78,24 @@ export default function HomePage() {
   }, []);
 
   const startAssessment = () => {
+    // Don't allow navigation while auth is loading
+    if (loading) {
+      return;
+    }
+    
+    // Check if user is authenticated
+    if (!user) {
+      // Show authentication modal if not logged in
+      setAuthModalOpen(true);
+      return;
+    }
+    
+    // Proceed to assessment if authenticated
+    navigate('/context-profile');
+  };
+
+  const handleAuthSuccess = () => {
+    // Called when user successfully authenticates
     navigate('/context-profile');
   };
 
@@ -93,6 +115,13 @@ export default function HomePage() {
         identityText="MIT Open Learning"
         showHelp={true}
         onHelpClick={() => setMethodologyOpen(true)}
+      />
+      
+      {/* Authentication Required Modal */}
+      <AuthRequiredModal 
+        open={authModalOpen}
+        onOpenChange={setAuthModalOpen}
+        onAuthSuccess={handleAuthSuccess}
       />
       
       {/* Methodology Sheet - moved from identity strip */}
