@@ -5,6 +5,8 @@ import { useOptionsStudioBackend } from "@/hooks/useOptionsStudioBackend";
 import { useToast } from "@/hooks/use-toast";
 import { AppHeader } from "@/components/navigation/app-header";
 import { ProtectedRoute } from "@/components/auth/protected-route";
+import { OptionsComparison } from "@/components/options-comparison";
+import { SevenLensesRadar } from "@/components/seven-lenses-radar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -359,87 +361,6 @@ function OptionCardComponent({ option, isSelected, onToggleSelect, emphasizedLen
   );
 }
 
-interface ComparisonTableProps {
-  options: ExtendedOptionCard[];
-  emphasizedLenses: string[];
-}
-
-function ComparisonTable({ options, emphasizedLenses }: ComparisonTableProps) {
-  if (options.length === 0) return null;
-
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse border border-border">
-        <thead>
-          <tr className="bg-muted/50">
-            <th className="border border-border p-3 text-left">Option</th>
-            {LENS_LABELS.map(lens => {
-              const isEmphasized = emphasizedLenses.includes(lens);
-              return (
-                <th 
-                  key={lens} 
-                  className={`border border-border p-3 text-center text-xs ${
-                    isEmphasized ? 'bg-accent/20' : ''
-                  }`}
-                >
-                  <div className="flex flex-col items-center">
-                    <div className="font-medium">{lens.split(' ')[0]}</div>
-                    <div className="font-normal">{lens.split(' ').slice(1).join(' ')}</div>
-                  </div>
-                </th>
-              );
-            })}
-          </tr>
-        </thead>
-        <tbody>
-          {options.map(option => (
-            <tr key={option.id} className="hover:bg-muted/30">
-              <td className="border border-border p-3">
-                <div className="font-medium text-sm">{option.title}</div>
-                <div className="text-xs text-muted-foreground">{option.what}</div>
-              </td>
-              {LENS_LABELS.map(lens => {
-                const lensKeyMap: Record<string, keyof typeof option.lensValues> = {
-                  'Speed-to-Value': 'speed',
-                  'Customization & Control': 'control', 
-                  'Data Leverage': 'dataLeverage',
-                  'Risk & Compliance Load': 'riskLoad',
-                  'Operational Burden': 'opsBurden',
-                  'Portability & Lock-in': 'portability',
-                  'Cost Shape': 'costShape'
-                };
-                const lensKey = lensKeyMap[lens] || 'speed';
-                const value = option.lensValues[lensKey] || 0;
-                const isEmphasized = emphasizedLenses.includes(lens);
-                
-                return (
-                  <td 
-                    key={lens}
-                    className={`border border-border p-3 text-center ${
-                      isEmphasized ? 'bg-accent/10' : ''
-                    }`}
-                  >
-                    <div className="font-bold text-lg">{value}</div>
-                    <div className="flex justify-center mt-1">
-                      {[1, 2, 3, 4].map(i => (
-                        <div 
-                          key={i} 
-                          className={`w-2 h-2 rounded-full mx-0.5 ${
-                            i <= value ? 'bg-primary' : 'bg-muted'
-                          }`} 
-                        />
-                      ))}
-                    </div>
-                  </td>
-                );
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
 
 export default function OptionsStudio() {
   const { id } = useParams();
@@ -556,7 +477,7 @@ function OptionsStudioContent() {
   );
 
   const handleExport = async (format: 'pdf' | 'json') => {
-    if (!assessmentId) return;
+    if (!assessmentId || !contextProfile) return;
     
     try {
       const sessionData = {
@@ -994,36 +915,23 @@ function OptionsStudioContent() {
 
             {selectedOptions.length > 0 && (
               <div className="space-y-6">
-                <ComparisonTable 
-                  options={selectedOptions}
+                {/* Seven Lenses Radar Visualization */}
+                <SevenLensesRadar 
+                  selectedOptions={selectedOptions}
                   emphasizedLenses={emphasizedLenses}
                 />
 
-                <div className="grid gap-4">
-                  {selectedOptions.map(option => (
-                    <Card key={option.id} className="p-4">
-                      <h3 className="font-semibold mb-2">{option.title}</h3>
-                      <div className="grid md:grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <h4 className="font-medium text-green-700 mb-1">Best for:</h4>
-                          <ul className="text-muted-foreground space-y-1">
-                            {option.bestFor.map((item, i) => (
-                              <li key={i}>• {item}</li>
-                            ))}
-                          </ul>
-                        </div>
-                        <div>
-                          <h4 className="font-medium text-red-700 mb-1">Not ideal when:</h4>
-                          <ul className="text-muted-foreground space-y-1">
-                            {option.notIdeal.map((item, i) => (
-                              <li key={i}>• {item}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
+                {/* Advanced Options Comparison */}
+                <OptionsComparison
+                  selectedOptions={selectedOptions}
+                  emphasizedLenses={emphasizedLenses}
+                  onRemoveOption={(optionId) => {
+                    toggleCompareOption(optionId);
+                  }}
+                  onClearAll={() => {
+                    selectedOptions.forEach(option => toggleCompareOption(option.id));
+                  }}
+                />
               </div>
             )}
 

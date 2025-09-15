@@ -632,10 +632,10 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
         lensLabels.forEach((label, index) => {
           const x = margin + cellWidth + (index * cellWidth);
           const lensKey = lensKeyMap[label as keyof typeof lensKeyMap];
-          const value = lensValues[lensKey] || 0;
+          const value = (lensValues as any)[lensKey] || 0;
           
           const isEmphasized = sessionData.emphasizedLenses.includes(label);
-          doc.setFillColor(isEmphasized ? '#dbeafe' : 255);
+          doc.setFillColor(isEmphasized ? '#dbeafe' : '#ffffff');
           doc.rect(x, currentY, cellWidth, cellHeight, 'F');
           doc.rect(x, currentY, cellWidth, cellHeight, 'S');
           
