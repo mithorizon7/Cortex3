@@ -65,6 +65,7 @@ describe('AssessmentService', () => {
       })
 
       expect(storage.createAssessment).toHaveBeenCalledWith({
+        userId: 'anonymous',
         contextProfile,
         pulseResponses: null,
         pillarScores: null,

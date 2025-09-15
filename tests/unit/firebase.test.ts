@@ -10,7 +10,9 @@ vi.mock('firebase/app', () => ({
 
 vi.mock('firebase/auth', () => ({
   getAuth: vi.fn(),
-  GoogleAuthProvider: vi.fn(),
+  GoogleAuthProvider: vi.fn().mockImplementation(() => ({
+    addScope: vi.fn(),
+  })),
   signInWithRedirect: vi.fn(),
   signInWithPopup: vi.fn(),
   getRedirectResult: vi.fn(),

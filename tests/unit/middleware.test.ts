@@ -65,11 +65,18 @@ describe('Middleware', () => {
     })
 
     it('should use provided user ID from header', () => {
+      // Temporarily set NODE_ENV to development for this test
+      const originalNodeEnv = process.env.NODE_ENV
+      process.env.NODE_ENV = 'development'
+      
       mockReq.headers!['x-user-id'] = 'custom-user'
       
       requestContextMiddleware(mockReq as Request, mockRes as Response, mockNext)
       
       expect(mockReq.userId).toBe('custom-user')
+      
+      // Restore original NODE_ENV
+      process.env.NODE_ENV = originalNodeEnv
     })
 
     it('should default to anonymous user', () => {

@@ -1274,9 +1274,13 @@ function StandaloneOptionsStudioContent() {
           </div>
           
           {selectedOptionCards.length > 0 ? (
-            <ComparisonTable 
-              options={selectedOptionCards}
+            <OptionsComparison 
+              selectedOptions={selectedOptionCards}
               emphasizedLenses={[]}
+              onRemoveOption={(optionId) => {
+                setSelectedOptions(prev => prev.filter(id => id !== optionId));
+              }}
+              onClearAll={() => setSelectedOptions([])}
             />
           ) : (
             <Alert>

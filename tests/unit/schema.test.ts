@@ -155,6 +155,7 @@ describe('Schema Validation', () => {
   describe('insertAssessmentSchema', () => {
     it('should validate valid assessment data for insertion', () => {
       const validData = {
+        userId: 'test-user-id',
         contextProfile: {
           regulatory_intensity: 2,
           data_sensitivity: 3,
@@ -186,7 +187,21 @@ describe('Schema Validation', () => {
       const dataWithForbiddenFields = {
         id: 'some-id', // Should be omitted
         createdAt: '2025-01-01T00:00:00.000Z', // Should be omitted
-        contextProfile: {},
+        userId: 'test-user-id',
+        contextProfile: {
+          regulatory_intensity: 2,
+          data_sensitivity: 3,
+          safety_criticality: 1,
+          brand_exposure: 2,
+          clock_speed: 3,
+          latency_edge: 1,
+          scale_throughput: 2,
+          data_advantage: 2,
+          build_readiness: 3,
+          finops_priority: 2,
+          procurement_constraints: false,
+          edge_operations: true,
+        },
         pulseResponses: null,
         pillarScores: null,
         triggeredGates: null,

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useContextMirror } from "@/hooks/useContextMirror";
 import { useToast } from "@/hooks/use-toast";
-import type { Assessment } from "../../../shared/schema";
+import type { Assessment, ContextProfile } from "../../../shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -95,7 +95,7 @@ function ContextInsightPageContent() {
         fragilities: data.fragilities,
         whatWorks: data.whatWorks,
         disclaimer: data.disclaimer,
-        contextProfile: assessmentData.contextProfile,
+        contextProfile: assessmentData.contextProfile as ContextProfile,
         assessmentId: id,
       });
       
