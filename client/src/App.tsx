@@ -34,8 +34,18 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
+          {/* Skip to main content for screen readers */}
+          <a 
+            href="#main-content" 
+            className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 z-50 bg-primary text-primary-foreground px-4 py-2 rounded-md"
+            data-testid="skip-to-main"
+          >
+            Skip to main content
+          </a>
           <Toaster />
-          <Router />
+          <main id="main-content" role="main">
+            <Router />
+          </main>
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>

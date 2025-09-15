@@ -52,5 +52,13 @@ The interface uses a progress-based design with clear visual indicators for asse
 - **ESBuild**: Fast JavaScript bundler for production builds
 - **Zod**: Schema validation for type-safe data handling
 
+## Recent Changes
+
+### Security & Production Readiness Enhancements (September 2025)
+- **Critical Security Fixes**: Resolved XSS vulnerabilities by implementing DOMPurify sanitization with strict allowlists for HTML content rendering in value-overlay and chart components
+- **Enhanced Accessibility**: Added skip navigation links, proper ARIA landmarks, and reduced motion support for users with motion sensitivity preferences
+- **Performance Optimizations**: Enhanced font preloading, implemented proper easing functions, and added motion-safe CSS transitions
+- **Design System Enhancement**: Added semantic design tokens following MIT-inspired color palette for improved consistency and maintainability
+
 ### Assessment Logic
-The application includes embedded assessment logic based on the CORTEX methodology, with predefined questions, scoring algorithms, and guidance content. Context-aware gate evaluation determines organizational requirements based on regulatory intensity, data sensitivity, and other risk factors collected in the context profile.
+The application includes embedded assessment logic based on the CORTEX methodology, with predefined questions, scoring algorithms, and guidance content. Context-aware gate evaluation determines organizational requirements based on regulatory intensity, data sensitivity, and other risk factors collected in the context profile. The honeycomb radar visualization uses mathematically correct equal-area ring calculations for accurate data representation.

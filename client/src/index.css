@@ -16,6 +16,12 @@
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
 
+  /* Enhanced semantic tokens */
+  --color-ink: 220 10% 12%;            /* primary text (matches MIT guide) */
+  --color-cardinal: 350 100% 22.94%;   /* MIT Red accent/action */
+  --color-surface: 0 0% 100%;          /* page background */
+  --color-panel: 220 30% 96.08%;       /* card backgrounds */
+  
   /* Core neutrals */
   --background: 0 0% 100%;
   --foreground: 220 10% 12%;
@@ -366,7 +372,7 @@
   }
   
   .stage-indicator {
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(.2,.8,.2,1);
   }
   
   .gate-callout {
@@ -378,7 +384,7 @@
   }
   
   .step-indicator {
-    transition: all 0.2s ease;
+    transition: all 0.2s cubic-bezier(.2,.8,.2,1);
   }
   
   .step-indicator.active {
@@ -389,5 +395,22 @@
   .step-indicator.completed {
     background: hsl(var(--success));
     color: hsl(var(--success-foreground));
+  }
+
+  /* Motion accessibility - respect user preference */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+    
+    .stage-indicator,
+    .step-indicator {
+      transition: none;
+    }
   }
 }
