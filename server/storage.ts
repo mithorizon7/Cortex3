@@ -2,8 +2,17 @@ import { type Assessment, type InsertAssessment, type OptionsStudioSession, asse
 import { randomUUID } from "crypto";
 import { logger, withErrorHandling } from "./logger";
 import { withDatabaseErrorHandling } from "./utils/database-errors";
-import { db } from "./db";
 import { eq, and } from "drizzle-orm";
+
+// Lazy-load database connection to avoid initialization errors in tests
+let _db: any = null;
+function getDb() {
+  if (!_db) {
+    const { db } = require("./db");
+    _db = db;
+  }
+  return _db;
+}
 
 export interface IStorage {
   getAssessment(id: string, userId?: string): Promise<Assessment | null>;
@@ -28,7 +37,7 @@ export class DatabaseStorage implements IStorage {
           whereConditions.push(eq(assessments.userId, userId));
         }
         
-        const [assessment] = await db.select().from(assessments).where(and(...whereConditions));
+        const [assessment] = await getDb().select().from(assessments).where(and(...whereConditions));
         
         if (assessment) {
           logger.debug('Assessment retrieved successfully', {
@@ -50,7 +59,7 @@ export class DatabaseStorage implements IStorage {
     return withDatabaseErrorHandling(
       'createAssessment',
       async () => {
-        const [assessment] = await db
+        const [assessment] = await getDb()
           .insert(assessments)
           .values(insertAssessment)
           .returning();
@@ -80,7 +89,7 @@ export class DatabaseStorage implements IStorage {
           whereConditions.push(eq(assessments.userId, userId));
         }
         
-        const [updated] = await db
+        const [updated] = await getDb()
           .update(assessments)
           .set(updates)
           .where(and(...whereConditions))
@@ -119,7 +128,7 @@ export class DatabaseStorage implements IStorage {
           whereConditions.push(eq(assessments.userId, userId));
         }
         
-        const [assessment] = await db
+        const [assessment] = await getDb()
           .select({ optionsStudioSession: assessments.optionsStudioSession })
           .from(assessments)
           .where(and(...whereConditions));
@@ -166,7 +175,7 @@ export class DatabaseStorage implements IStorage {
           whereConditions.push(eq(assessments.userId, userId));
         }
         
-        const [updated] = await db
+        const [updated] = await getDb()
           .update(assessments)
           .set({ optionsStudioSession: validatedSessionData as any })
           .where(and(...whereConditions))

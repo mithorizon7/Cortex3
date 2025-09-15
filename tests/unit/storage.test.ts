@@ -9,6 +9,7 @@ describe('MemStorage', () => {
   beforeEach(() => {
     storage = new MemStorage()
     testAssessment = {
+      userId: 'test-user-id',
       contextProfile: {
         regulatory_intensity: 2,
         data_sensitivity: 3,
