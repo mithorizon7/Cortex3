@@ -10,6 +10,7 @@ import { Info, Edit3, HelpCircle } from 'lucide-react';
 import { getMetricsByPillar, getMetricById, getMetricContextExplanation, type Metric } from '@/lib/value-overlay';
 import { getMetricGuide } from '@/lib/metric-guides';
 import type { ValueOverlayPillar, ContextProfile } from '@shared/schema';
+import DOMPurify from 'dompurify';
 
 interface ValueMetricChipProps {
   pillar: string;
@@ -228,10 +229,16 @@ export function HowToMeasureDialog({ metric, children }: HowToMeasureDialogProps
               <div 
                 className="text-sm leading-relaxed"
                 dangerouslySetInnerHTML={{ 
-                  __html: metricGuide.content
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\n\n/g, '</p><p>')
-                    .replace(/^(.*)$/, '<p>$1</p>')
+                  __html: DOMPurify.sanitize(
+                    metricGuide.content
+                      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                      .replace(/\n\n/g, '</p><p>')
+                      .replace(/^(.*)$/, '<p>$1</p>'),
+                    {
+                      ALLOWED_TAGS: ['p', 'strong', 'em', 'br', 'ul', 'ol', 'li'],
+                      ALLOWED_ATTR: []
+                    }
+                  )
                 }} 
               />
             </div>
