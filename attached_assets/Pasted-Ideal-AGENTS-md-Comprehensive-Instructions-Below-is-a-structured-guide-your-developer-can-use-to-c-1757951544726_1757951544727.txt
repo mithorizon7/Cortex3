@@ -1,0 +1,85 @@
+Ideal AGENTS.md – Comprehensive Instructions
+Below is a structured guide your developer can use to craft a world‑class AGENTS.md file.
+Each section clarifies the intent, scope, and specific instructions that agents (automated contributors) must follow.
+1. Purpose and Scope
+Repository name: Cortex3
+High‑level goal: (Briefly describe what the project aims to achieve.)
+Directory tree overview: (Highlight key folders and their responsibilities.)
+AGENTS hierarchy:
+This root AGENTS.md governs the entire repository.
+Nested AGENTS.md files override these rules within their subdirectories.
+2. Coding Standards
+Style guide: e.g. PEP8, Google Style, Airbnb, custom conventions.
+Language versions: (Python 3.x, Node 18+, etc.).
+Naming conventions: (files, modules, functions, classes, variables, constants).
+Formatting rules: (tab/space width, line length, import ordering).
+Comment & docstring style: (e.g. Google docstrings, JSDoc, etc.).
+Internationalization/localization rules (if relevant).
+3. Repository Workflow
+Branching model: (e.g. direct commits on main, or feature branches → PRs).
+Commit message format: e.g. Conventional Commits (feat:, fix:, etc.).
+Pull Request requirements:
+Rebase/merge strategy.
+Mandatory reviewers or approval count.
+Required labels or milestone notes.
+PR description template and checklist.
+4. Testing & Verification
+How to run tests: exact commands (e.g. npm test, pytest, make test).
+Linter / formatter commands: (e.g. eslint ., black ., flake8, prettier).
+Static analysis tools: (e.g. mypy, bandit).
+Continuous integration expectations: link to CI config and badge.
+Coverage expectations: (e.g. minimum 90% coverage).
+5. File & Directory Conventions
+Placement rules for modules, utilities, config files, assets, etc.
+Patterns to avoid: (e.g. no top‑level __init__ side effects).
+Where to put tests and naming conventions.
+Special directories: how to handle docs/, examples/, scripts/, etc.
+6. Dependencies & Environment
+Supported OS / platforms: (Linux, macOS, Windows).
+Environment setup steps: virtualenv, Docker, or other tooling.
+Dependency management: poetry, pipenv, npm, yarn, etc.
+How to update or add dependencies (including lock‑file policy).
+7. Documentation Rules
+Doc generation tool: (Sphinx, MkDocs, Docusaurus).
+Inline documentation expectations for public APIs.
+README/CHANGELOG maintenance guidelines.
+Tutorial/examples policy: where to add new examples.
+8. Security & Privacy
+Secrets management: never commit secrets; use environment variables, etc.
+Vulnerability reporting process: who to contact, disclosure timeline.
+Security scanning tools (e.g. Dependabot, Snyk) and usage.
+9. Communication & Support
+Issue tracker guidelines: how to file bugs or features, template links.
+Discussion channels: Slack, Discord, mailing lists.
+Release process & versioning (e.g. semantic versioning, release cadences).
+10. Example Section
+# AGENTS Instructions – `src/`
+
+## Scope
+This file applies to everything under `src/`.
+
+## Style
+- Use `black` formatting.
+- Run `mypy` before committing.
+
+## Tests
+- `pytest src/tests` must pass.
+- Maintain ≥90% coverage.
+
+## PR Checklist
+- [ ] `make lint`
+- [ ] `make test`
+- [ ] `make format`
+- [ ] Add relevant changelog entry.
+11. Versioning & Maintenance
+Date last updated and version number for the AGENTS.md.
+Instructions for adding/maintaining nested AGENTS.md files.
+Encourage contributors to propose enhancements to AGENTS.md via PR.
+Summary
+The “ideal” AGENTS.md:
+Explains the repository’s structure and purpose.
+Defines precise, enforceable rules for style, workflow, testing, documentation, and security.
+Guides contributors step‑by‑step from setup to PR merge.
+Lives alongside nested AGENTS.md files that override root instructions where necessary.
+Remains a living document, versioned and regularly updated.
+Give this framework to your developer, and they can tailor the details to your project’s needs while keeping everything clear for future contributors and automation agents.
