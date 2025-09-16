@@ -3,44 +3,15 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useContextMirror } from "@/hooks/useContextMirror";
 import { useToast } from "@/hooks/use-toast";
-import type { Assessment, ContextProfile } from "../../../shared/schema";
+import type { Assessment, ContextProfile, ContextMirror } from "../../../shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Download, Loader2, Brain, Compass, TrendingUp } from "lucide-react";
+import { AlertCircle, Download, Loader2, Brain, Compass, TrendingUp, MessageSquare, FileText } from "lucide-react";
 import { generateContextBrief } from "@/lib/pdf-generator";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 
-function Skeleton({ className }: { className: string }) {
-  return <div className={`animate-pulse bg-muted rounded ${className}`} />;
-}
-
-interface SectionProps {
-  title: string;
-  items: string[];
-}
-
-function Section({ title, items }: SectionProps) {
-  return (
-    <div className="space-y-3" data-testid={`section-${title.toLowerCase()}`}>
-      <h3 className="text-xl font-semibold text-foreground">{title}</h3>
-      <div className="border-l-2 border-muted pl-4">
-        <ul className="space-y-2">
-          {items.map((item, index) => (
-            <li 
-              key={index} 
-              className="text-sm text-muted-foreground leading-relaxed"
-              data-testid={`item-${title.toLowerCase()}-${index}`}
-            >
-              • {item}
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
-  );
-}
 
 function EducationalLoader() {
   const [currentTip, setCurrentTip] = useState(0);
@@ -95,19 +66,28 @@ function EducationalLoader() {
           <div
             key={index}
             className={`h-2 w-8 rounded-full transition-colors duration-300 ${
-              index <= currentStep ? 'bg-primary' : 'bg-muted'
+              index <= currentStep 
+                ? 'bg-primary dark:bg-primary/90' 
+                : 'bg-muted dark:bg-muted/60'
             }`}
             data-testid={`progress-step-${index}`}
+            role="progressbar"
+            aria-valuenow={index <= currentStep ? 100 : 0}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={`Analysis step ${index + 1} of ${analysisSteps.length}`}
           />
         ))}
       </div>
 
       {/* Educational Tip */}
-      <div className="border-l-4 border-primary/20 pl-4 py-3 bg-primary/5 rounded-r-lg">
+      <div className="border-l-4 border-primary/30 pl-6 py-4 bg-primary/10 dark:bg-primary/5 rounded-r-lg">
         <p 
-          className="text-sm text-muted-foreground italic leading-relaxed min-h-[2.5rem] flex items-center"
+          className="text-sm text-foreground/80 italic leading-relaxed min-h-[2.5rem] flex items-center font-medium"
           aria-live="polite"
           data-testid="educational-tip"
+          role="status"
+          aria-label="Educational insight"
         >
           {educationalTips[currentTip]}
         </p>
@@ -129,23 +109,23 @@ interface NarrativeContent {
   practicalNext: string;
 }
 
-function composeNarrative(contextMirror: any): NarrativeContent {
+function composeNarrative(contextMirror: ContextMirror): NarrativeContent {
   const { strengths, fragilities, whatWorks } = contextMirror;
   
   // Synthesize strengths into organizational positioning
   const strengthText = strengths.length > 0 
-    ? strengths.slice(0, 2).join(', and ') + (strengths.length > 2 ? ', among other factors' : '')
+    ? strengths.slice(0, 2).join(' and ') + (strengths.length > 2 ? ', among other key capabilities' : '')
     : 'established operational foundations';
     
   // Synthesize fragilities into risk landscape  
   const fragilityText = fragilities.length > 0
-    ? fragilities.slice(0, 2).join(', while also facing ') + (fragilities.length > 2 ? ', among other considerations' : '')
+    ? fragilities.slice(0, 2).join(' while also managing ') + (fragilities.length > 2 ? ', among other strategic considerations' : '')
     : 'typical organizational complexity';
     
   // Synthesize what works into starting approaches
   const startingApproaches = whatWorks.length > 0
-    ? whatWorks.slice(0, 2).join(', and by ') + (whatWorks.length > 2 ? ', among other proven strategies' : '')
-    : 'focusing on quick wins and building internal capability';
+    ? whatWorks.slice(0, 2).join(' and ') + (whatWorks.length > 2 ? ', among other proven methodologies' : '')
+    : 'focusing on incremental value delivery and capability building';
 
   const organizationContext = `Your organization operates with ${strengthText}. However, you're also navigating ${fragilityText}. This combination creates a specific context that shapes both your opportunities and the considerations needed for successful AI adoption.`;
   
@@ -311,23 +291,26 @@ function ContextInsightPageContent() {
       data-testid="context-insight-page"
     >
       {/* Header */}
-      <header className="space-y-2">
+      <header className="space-y-3 pb-2">
         <h1 className="text-2xl md:text-3xl font-semibold text-foreground">
           Context Insight
         </h1>
-        <p className="text-sm text-muted-foreground">
-          A brief reflection based on your context. Educational, not prescriptive.
+        <p className="text-base text-muted-foreground leading-relaxed">
+          Strategic reflection tailored to your organizational context. Educational insights to inform leadership discussion.
         </p>
       </header>
 
       {/* Main Content */}
-      <div className="grid md:grid-cols-2 gap-6 items-start">
+      <div className="grid lg:grid-cols-2 gap-8 items-start">
         {/* Left Card: What your profile signals */}
         <Card className="h-fit" data-testid="card-profile-signals">
-          <CardHeader>
-            <CardTitle className="text-xl">What your profile signals</CardTitle>
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-3 text-xl">
+              <Brain className="h-5 w-5 text-primary" />
+              What your profile signals
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-8 pt-0">
             {isLoading ? (
               <EducationalLoader />
             ) : isError && error ? (
@@ -348,35 +331,48 @@ function ContextInsightPageContent() {
 
         {/* Right Card: Notes for discussion */}
         <Card className="h-fit" data-testid="card-discussion-notes">
-          <CardHeader>
-            <CardTitle className="text-xl">Notes for your discussion</CardTitle>
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-3 text-xl">
+              <MessageSquare className="h-5 w-5 text-primary" />
+              Leadership discussion guide
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <ul className="list-disc ml-5 space-y-3 text-sm text-muted-foreground">
-              <li data-testid="discussion-note-1">
-                Underline one insight that felt like an advantage, and one that felt like a potential risk, for your organization.
-              </li>
-              <li data-testid="discussion-note-2">
-                Which aspect would most affect customers or reputation if mishandled in an AI context?
-              </li>
-              <li data-testid="discussion-note-3">
-                What's the smallest next step to build on your organizational context for AI success?
-              </li>
-            </ul>
+          <CardContent className="space-y-6 pt-0">
+            <div className="space-y-5">
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Use these strategic questions to guide leadership discussion and identify actionable priorities:
+              </p>
+              <ul className="space-y-4 pl-1">
+                <li className="flex items-start gap-3 text-sm text-foreground leading-relaxed" data-testid="discussion-note-1">
+                  <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0" />
+                  <span>Identify one organizational strength that creates AI opportunity and one constraint that requires strategic attention.</span>
+                </li>
+                <li className="flex items-start gap-3 text-sm text-foreground leading-relaxed" data-testid="discussion-note-2">
+                  <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0" />
+                  <span>Which contextual factor would most significantly impact customer trust or brand reputation if mismanaged during AI implementation?</span>
+                </li>
+                <li className="flex items-start gap-3 text-sm text-foreground leading-relaxed" data-testid="discussion-note-3">
+                  <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0" />
+                  <span>What is the most actionable next step to leverage your organizational context for AI success?</span>
+                </li>
+              </ul>
+            </div>
             
-            <div className="pt-3 flex flex-wrap gap-2">
-              <Badge variant="outline" data-testid="badge-no-pii">No PII</Badge>
-              <Badge variant="outline" data-testid="badge-no-benchmarks">No benchmarks</Badge>
-              <Badge variant="outline" data-testid="badge-context-based">Context-based reflection</Badge>
+            <div className="pt-6 border-t">
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="secondary" className="text-xs" data-testid="badge-no-pii">Privacy Protected</Badge>
+                <Badge variant="secondary" className="text-xs" data-testid="badge-no-benchmarks">No External Comparisons</Badge>
+                <Badge variant="secondary" className="text-xs" data-testid="badge-context-based">Context-Based Analysis</Badge>
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Footer Actions */}
-      <footer className="flex items-center justify-end gap-3 pt-6" data-testid="footer-actions">
+      <footer className="flex items-center justify-end gap-4 pt-8 border-t" data-testid="footer-actions">
         <Button 
-          variant="ghost" 
+          variant="outline" 
           onClick={handleDownloadBrief}
           disabled={!data || isLoading || !assessmentData || assessmentLoading || isGeneratingPDF}
           data-testid="button-download-brief"
@@ -388,14 +384,14 @@ function ContextInsightPageContent() {
             </>
           ) : (
             <>
-              <Download className="w-4 h-4 mr-2" />
-              Download context brief
+              <FileText className="w-4 h-4 mr-2" />
+              Download Brief
             </>
           )}
         </Button>
         <Link to={`/pulse/${id}`} data-testid="link-proceed-pulse">
-          <Button data-testid="button-proceed-pulse">
-            Proceed to Pulse
+          <Button size="default" data-testid="button-proceed-pulse">
+            Continue to Pulse Check
           </Button>
         </Link>
       </footer>
