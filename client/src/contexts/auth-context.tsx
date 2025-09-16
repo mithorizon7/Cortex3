@@ -52,13 +52,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setLoading(true);
       setError(null);
       await signInWithGoogle(usePopup);
+      // Don't set loading to false here - let the auth state listener handle it
     } catch (error: any) {
       console.error('Sign-in error:', error);
       if (error.message !== 'Redirect initiated - result will be available after redirect') {
         setError(getAuthErrorMessage(error));
+        setLoading(false); // Only set loading to false on error
       }
-    } finally {
-      setLoading(false);
     }
   }, []);
 
