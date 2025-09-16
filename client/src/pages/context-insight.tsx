@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Download, Loader2 } from "lucide-react";
+import { AlertCircle, Download, Loader2, Brain, Compass, TrendingUp } from "lucide-react";
 import { generateContextBrief } from "@/lib/pdf-generator";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 
@@ -42,12 +42,159 @@ function Section({ title, items }: SectionProps) {
   );
 }
 
-function SkeletonList({ rows = 6 }: { rows?: number }) {
+function EducationalLoader() {
+  const [currentTip, setCurrentTip] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
+
+  const educationalTips = [
+    "Did you know? Rapid AI advancement requires continuous capability assessment and adaptation.",
+    "Insight: Integration complexity grows with organizational scale and regulatory requirements.",
+    "Organizations with strong data governance often achieve faster AI deployment success.",
+    "Context matters: High-regulation environments need more guardrails but enable clearer compliance frameworks.",
+    "AI readiness isn't just technical—it's about culture, process, and strategic alignment.",
+    "Quick wins in low-risk areas help build organizational confidence before tackling complex use cases.",
+    "Most successful AI implementations start with human-in-the-loop approaches to build trust."
+  ];
+
+  const analysisSteps = [
+    "Analyzing your answers...",
+    "Assessing regulatory environment...",
+    "Evaluating data sensitivity...",
+    "Reviewing operational constraints...",
+    "Synthesizing strategic context..."
+  ];
+
+  useEffect(() => {
+    const tipInterval = setInterval(() => {
+      setCurrentTip(prev => (prev + 1) % educationalTips.length);
+    }, 2000);
+
+    const stepInterval = setInterval(() => {
+      setCurrentStep(prev => (prev + 1) % analysisSteps.length);
+    }, 1500);
+
+    return () => {
+      clearInterval(tipInterval);
+      clearInterval(stepInterval);
+    };
+  }, []);
+
   return (
-    <div className="space-y-3">
-      {Array.from({ length: rows }).map((_, i) => (
-        <Skeleton key={i} className="h-4 w-full" />
-      ))}
+    <div className="space-y-6 py-8" data-testid="educational-loader">
+      {/* Analysis Status */}
+      <div className="flex items-center justify-center space-x-3">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <p className="text-lg font-medium text-foreground" aria-live="polite">
+          {analysisSteps[currentStep]}
+        </p>
+      </div>
+
+      {/* Progress Steps */}
+      <div className="flex items-center justify-center space-x-2">
+        {analysisSteps.map((_, index) => (
+          <div
+            key={index}
+            className={`h-2 w-8 rounded-full transition-colors duration-300 ${
+              index <= currentStep ? 'bg-primary' : 'bg-muted'
+            }`}
+            data-testid={`progress-step-${index}`}
+          />
+        ))}
+      </div>
+
+      {/* Educational Tip */}
+      <div className="border-l-4 border-primary/20 pl-4 py-3 bg-primary/5 rounded-r-lg">
+        <p 
+          className="text-sm text-muted-foreground italic leading-relaxed min-h-[2.5rem] flex items-center"
+          aria-live="polite"
+          data-testid="educational-tip"
+        >
+          {educationalTips[currentTip]}
+        </p>
+      </div>
+
+      {/* Reassurance */}
+      <div className="text-center">
+        <p className="text-xs text-muted-foreground">
+          We're analyzing your specific context to provide tailored insights
+        </p>
+      </div>
+    </div>
+  );
+}
+
+interface NarrativeContent {
+  organizationContext: string;
+  strategicImplications: string; 
+  practicalNext: string;
+}
+
+function composeNarrative(contextMirror: any): NarrativeContent {
+  const { strengths, fragilities, whatWorks } = contextMirror;
+  
+  // Synthesize strengths into organizational positioning
+  const strengthText = strengths.length > 0 
+    ? strengths.slice(0, 2).join(', and ') + (strengths.length > 2 ? ', among other factors' : '')
+    : 'established operational foundations';
+    
+  // Synthesize fragilities into risk landscape  
+  const fragilityText = fragilities.length > 0
+    ? fragilities.slice(0, 2).join(', while also facing ') + (fragilities.length > 2 ? ', among other considerations' : '')
+    : 'typical organizational complexity';
+    
+  // Synthesize what works into starting approaches
+  const startingApproaches = whatWorks.length > 0
+    ? whatWorks.slice(0, 2).join(', and by ') + (whatWorks.length > 2 ? ', among other proven strategies' : '')
+    : 'focusing on quick wins and building internal capability';
+
+  const organizationContext = `Your organization operates with ${strengthText}. However, you're also navigating ${fragilityText}. This combination creates a specific context that shapes both your opportunities and the considerations needed for successful AI adoption.`;
+  
+  const strategicImplications = `Organizations with this profile often find that their established strengths can accelerate AI initiatives when properly leveraged, while their operational constraints require thoughtful planning and phased implementation. This context typically favors approaches that build on existing capabilities while establishing clear governance frameworks early in the journey.`;
+  
+  const practicalNext = `Where momentum usually starts for organizations like yours: by ${startingApproaches}. These moves help establish confidence and internal expertise while respecting your operational requirements and building toward more strategic AI capabilities over time.`;
+  
+  return {
+    organizationContext,
+    strategicImplications, 
+    practicalNext
+  };
+}
+
+function NarrativeInsight({ content }: { content: NarrativeContent }) {
+  return (
+    <div className="space-y-6" data-testid="narrative-insight">
+      {/* Organization Context */}
+      <div className="space-y-3">
+        <div className="flex items-center space-x-2">
+          <Brain className="h-5 w-5 text-primary" />
+          <h3 className="text-lg font-semibold text-foreground">Your Organization</h3>
+        </div>
+        <p className="text-sm text-foreground leading-relaxed pl-7" data-testid="organization-context">
+          {content.organizationContext}
+        </p>
+      </div>
+
+      {/* Strategic Implications */}
+      <div className="space-y-3">
+        <div className="flex items-center space-x-2">
+          <Compass className="h-5 w-5 text-primary" />
+          <h3 className="text-lg font-semibold text-foreground">What This Often Means</h3>
+        </div>
+        <p className="text-sm text-foreground leading-relaxed pl-7" data-testid="strategic-implications">
+          {content.strategicImplications}
+        </p>
+      </div>
+
+      {/* Practical Next Steps */}
+      <div className="space-y-3">
+        <div className="flex items-center space-x-2">
+          <TrendingUp className="h-5 w-5 text-primary" />
+          <h3 className="text-lg font-semibold text-foreground">Where Momentum Usually Starts</h3>
+        </div>
+        <p className="text-sm text-foreground leading-relaxed pl-7" data-testid="practical-next">
+          {content.practicalNext}
+        </p>
+      </div>
     </div>
   );
 }
@@ -182,15 +329,13 @@ function ContextInsightPageContent() {
           </CardHeader>
           <CardContent className="space-y-6">
             {isLoading ? (
-              <SkeletonList rows={8} />
+              <EducationalLoader />
             ) : isError && error ? (
               <ErrorFallback error={error} />
             ) : data ? (
-              <>
-                <Section title="Strengths" items={data.strengths} />
-                <Section title="Fragilities" items={data.fragilities} />
-                <Section title="What usually works first" items={data.whatWorks} />
-              </>
+              <div className="animate-in fade-in duration-300">
+                <NarrativeInsight content={composeNarrative(data)} />
+              </div>
             ) : null}
             
             {data?.disclaimer && (
@@ -209,13 +354,13 @@ function ContextInsightPageContent() {
           <CardContent className="space-y-4">
             <ul className="list-disc ml-5 space-y-3 text-sm text-muted-foreground">
               <li data-testid="discussion-note-1">
-                Underline one strength and one fragility that surprised you.
+                Underline one insight that felt like an advantage, and one that felt like a potential risk, for your organization.
               </li>
               <li data-testid="discussion-note-2">
-                Which item would most affect customers or reputation if mishandled?
+                Which aspect would most affect customers or reputation if mishandled in an AI context?
               </li>
               <li data-testid="discussion-note-3">
-                What's the smallest next step to de-risk a fragility?
+                What's the smallest next step to build on your organizational context for AI success?
               </li>
             </ul>
             

@@ -1,0 +1,67 @@
+Upgrading the Context Mirror Page in Cortex
+Improving the Loading Experience
+Currently, the Context Insight page simply shows a static skeleton placeholder while waiting for the AI-generated insight
+GitHub
+GitHub
+. To make this wait more engaging and informative, we can replace the plain pulsing lines with a dynamic loading animation that both educates and assures the user. Specifically:
+Visual Indicator of Processing: Include an animated spinner (e.g. using the existing Loader2 icon with a spin animation
+GitHub
+) alongside text like “Analyzing your context...” to reassure users that their answers are being processed. This could be placed prominently in the left card where the insight will appear.
+Rotating Educational Messages: While the AI composes the insight, cycle through short, useful AI readiness tips or facts every few seconds. These messages let the user “learn while they wait” and reinforce the app’s value. For example, one moment the loader might display: “Did you know? Rapid AI advancement requires continuous capability assessment and adaptation.”, and a few seconds later change to “Insight: Integration complexity grows with organizational scale and technical diversity. Plan for this as you expand AI.”. These tidbits can be drawn from general best practices or even adapted from the rule-based fallback content (which already contains concise, educational statements)
+GitHub
+GitHub
+.
+Context-Specific Progress Cues: Optionally, tie the messages to the user’s context profile to signal their inputs are being analyzed. For example: “Assessing regulatory environment…”, “Evaluating data sensitivity…”, etc., cycling through the key context dimensions
+GitHub
+. This approach reinforces that their specific answers (e.g. high regulatory intensity, low build readiness, etc.) are being processed.
+Implementing this could involve a small React component with an array of message strings and a timer (e.g. using useEffect with setInterval) to update the message state. The styling should match the existing design – perhaps a muted, italicized text for tips – to maintain a calm, “MIT-quality” feel
+GitHub
+. By integrating both status messages (analysis in progress) and educational tips, the loading screen becomes an informative interlude rather than dead time.
+Reframing Insights: From Bullets to Narrative
+Once the AI analysis is ready, the page currently displays three bullet-point “Strengths” and three “Fragilities”, plus a couple of “What usually works first” bullets
+GitHub
+. This structure was initially designed to give a quick list of pros, cons, and first steps. However, since the context profile consists only of environmental factors and constraints (e.g. regulatory intensity, data sensitivity, etc.) and not the organization’s internal capabilities
+GitHub
+, labeling these points as the company’s “strengths” or “fragilities” can be misleading. We should transition to a more narrative format that provides insight into “Your organization’s context…” in a cohesive way, rather than segregated bullet lists.
+Proposed changes to content format:
+Narrative Insight Paragraphs: Instead of separate sections for strengths and fragilities, have the AI generate one or two short paragraphs that describe the organization’s situation in a nuanced way. For example, the insight might start with: “Your organization operates in a highly regulated, data-sensitive environment, which tends to enable clear guardrails but also raises oversight challenges. In such contexts, leaders often find that strong compliance frameworks build trust, yet they must invest in data governance to mitigate exposure risks.” This kind of narrative weaves together positive aspects and cautions in one cohesive story, without explicitly calling them “Strengths” or “Fragilities.” It frames them as contextual realities (“enable guardrails” vs “raises challenges”) rather than inherent virtues or flaws of the organization.
+Actionable Next Steps in Context: Following the context description, include a sentence or two about what this means for the organization’s AI journey – essentially capturing the “what usually works first” but in prose. For instance: “Organizations in this position often start with low-risk, quick-win AI pilot projects to build confidence, while adding human-in-the-loop checkpoints for high-impact decisions
+GitHub
+GitHub
+. These moves can generate early value and ensure oversight as AI capabilities mature.” This provides a forward-looking conclusion, linking the context to practical strategy.
+Remove/Replace Section Headings: In the UI, we would eliminate the subheadings “Strengths”, “Fragilities”, etc., and instead present the above narrative under a single header. We might rename the left card’s title from “What your profile signals” to something like “Context Reflection” or simply keep it as “What your profile signals” but immediately follow with the narrative text. The key is that the content itself reads as a cohesive analysis. Each paragraph can still be relatively short (3–5 sentences) for readability, with maybe two paragraphs total: one focusing on the context’s characteristics (opportunities and cautions) and a second focusing on recommended approaches or focus areas.
+To implement this, we should adjust how the AI output is generated and rendered:
+LLM Prompt Adjustments: Today the LLM is instructed to output structured JSON with separate lists for strengths, fragilities, etc.
+GitHub
+GitHub
+. We can change the prompt to request a narrative format. For example, the user prompt could be modified to: “Generate a concise, board-ready context insight for this profile in 2–3 paragraphs. Start by describing what the organization’s context likely means for its AI readiness (using probabilistic language like ‘often’ or ‘tends to’), and then describe what this often implies for their AI strategy or next steps. Do not use bullet points or explicit labels; write in a single coherent narrative. Return JSON with keys: insight (the narrative text) and disclaimer.” This way we still get a JSON response we can validate (just two fields), but the insight comes as a formatted string of one or two paragraphs. We’ll maintain the system message constraints (no PII, no invented numbers, educational tone)
+GitHub
+ to keep the voice “an incredibly intelligent expert who is easy to understand.”
+Parsing and Display: After the API returns the narrative text, the front-end can simply render it as HTML paragraphs. Any line breaks in the insight string can be converted to <p> breaks for proper formatting. Since the text is coming from the AI, we should also ensure it doesn’t contain any unwanted content – but our prompt and schema enforcement (length limits, tone guidelines, etc.) should minimize that risk. The existing disclaimer (“Educational reflection based on your context; not a compliance determination.”
+GitHub
+) can continue to be shown in small font at the bottom of the card for clarity.
+Discussion Notes Consistency: Because we’re moving away from explicit “Strengths/Fragilities” terminology in the output, we should update the discussion prompts on the right card accordingly. For example, instead of “Underline one strength and one fragility that surprised you”, the prompt could say “Underline one insight that felt like an advantage, and one that felt like a potential risk, for your organization.” This keeps the exercise relevant even though the wording in the insight has changed. The other discussion notes (about customer impact and de-risking next steps) remain applicable to the narrative content, since the narrative will still contain identifiable positive factors and cautionary factors, just phrased more fluidly.
+By presenting the context analysis in paragraph form, we deliver a more professional, story-like brief that is “worth sharing and exporting.” Executives reading it will get an integrated understanding of their situation (“insightful and surprising” yet grounded in their context) and a clear bridge to what it means for their AI strategy, without having to mentally connect disparate bullet points. This narrative approach aligns with how an expert advisor would speak in a memo or coaching session, rather than a raw list of points.
+Design and Tone Enhancements
+Upgrading the page isn’t just about text – it should also look polished and maintain the app’s modern, clean aesthetic while improving clarity:
+Visual Layout: We will keep using the existing UI components (Shadcn/UI cards, etc.) and the overall two-column layout
+GitHub
+. The left card will contain the narrative insight text. With the bullet sections gone, we can use standard paragraph styling (e.g. <p className="text-sm leading-relaxed text-muted-foreground"> ... </p>) for the insight. We might add subtle dividers between paragraphs or just a bit of extra padding to visually separate them, ensuring it doesn’t look like one big block of text. The design should remain “calm” and not overly busy – e.g. a simple border-left accent line (as was used for the bullet list before
+GitHub
+GitHub
+) could be repurposed to give the paragraph a quote-like feel, or we could italicize the insight to set it apart. Any additions should align with the muted color palette and typographic hierarchy already in use (no garish colors or heavy graphics, to keep it executive-friendly).
+Animation and Feedback: When the insight text appears (after loading), consider a slight fade-in animation (150ms ease as originally spec’d
+GitHub
+) to make the reveal feel smooth. Additionally, we might toast a small notification like “Context analysis complete” (the code already toasts "Context Mirror Generated" on success
+GitHub
+) to signal that the AI content is ready. Little touches like this improve perceived quality.
+Tone and Language: The content itself, as generated by the LLM, should continue to use the “board-ready, educational, non-prescriptive” tone
+GitHub
+. This means phrasing insights as tendencies and possibilities (“often…”, “can sometimes…”) rather than absolutes, and avoiding imperative language that tells the user what they must do. We will also ensure no specific tool names or numeric benchmarks creep in, per the guidelines (e.g. it should say “proprietary data offers leverage” rather than citing some metric)
+GitHub
+. The persona is that of a seasoned AI strategy coach: highly knowledgeable but speaking in clear, digestible terms with no jargon overload. For instance, instead of a dense phrase like “leverage heterogeneous data assets to drive competitive differentiation,” the AI should prefer something like “make the most of your unique data to get ahead” – still insightful but plainspoken. We’ve already set the system instruction to encourage this kind of voice, and we should continue to refine any prompt changes to preserve it.
+Finally, once these changes are in place, remember to update downstream features accordingly. For example, the “Download context brief” functionality (which currently compiles the strengths/fragilities into a PDF) will need to export the new narrative format
+GitHub
+GitHub
+. We might generate a nicely formatted PDF that includes the insight paragraphs and perhaps the context profile values for reference. The end result should be a document or page that senior leaders find valuable enough to save and share – essentially a customized mini-report on their AI readiness context.
+By implementing a richer loading animation and transforming the Context Mirror content into a polished narrative, we significantly elevate the user experience. Executives will be engaged from the moment they finish the assessment: learning useful facts during the brief wait, then reading a tailored, professional insight that speaks to their organization’s context in an expert yet approachable manner. These upgrades will make the Context Insight page more memorable and meaningful, setting a positive tone as they proceed to the next steps of the AI readiness program.
