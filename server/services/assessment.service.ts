@@ -40,12 +40,12 @@ export class AssessmentService {
   /**
    * Get assessment by ID
    */
-  async getAssessment(id: string): Promise<Assessment | null> {
-    const assessment = await storage.getAssessment(id);
+  async getAssessment(id: string, userId?: string): Promise<Assessment | null> {
+    const assessment = await storage.getAssessment(id, userId);
     
     if (!assessment) {
       logger.warn('Assessment not found', {
-        additionalContext: { assessmentId: id }
+        additionalContext: { assessmentId: id, hasUserFilter: !!userId }
       });
       return null;
     }

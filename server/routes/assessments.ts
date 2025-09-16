@@ -3,13 +3,14 @@ import { assessmentService } from '../services/assessment.service';
 import { generateIncidentId, createUserError, sanitizeErrorForUser } from '../utils/incident';
 import { USER_ERROR_MESSAGES, HTTP_STATUS } from '../constants';
 import { logger } from '../logger';
+import { requireAuthMiddleware } from '../middleware/security';
 
 const router = Router();
 
 /**
  * Create new assessment
  */
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', requireAuthMiddleware, async (req: Request, res: Response) => {
   const incidentId = generateIncidentId();
   
   try {
@@ -22,7 +23,8 @@ router.post('/', async (req: Request, res: Response) => {
     });
     
     const assessment = await assessmentService.createAssessment({
-      contextProfile: req.body.contextProfile
+      contextProfile: req.body.contextProfile,
+      userId: req.userId!
     });
     
     res.status(HTTP_STATUS.CREATED).json(assessment);
@@ -65,7 +67,7 @@ router.post('/', async (req: Request, res: Response) => {
 /**
  * Get assessment by ID
  */
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', requireAuthMiddleware, async (req: Request, res: Response) => {
   const incidentId = generateIncidentId();
   const assessmentId = req.params.id;
   
@@ -78,7 +80,7 @@ router.get('/:id', async (req: Request, res: Response) => {
       }
     });
     
-    const assessment = await assessmentService.getAssessment(assessmentId);
+    const assessment = await assessmentService.getAssessment(assessmentId, req.userId!);
     
     if (!assessment) {
       logger.warn('Assessment not found', {
@@ -118,7 +120,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 /**
  * Update assessment with pulse responses
  */
-router.patch('/:id/pulse', async (req: Request, res: Response) => {
+router.patch('/:id/pulse', requireAuthMiddleware, async (req: Request, res: Response) => {
   const incidentId = generateIncidentId();
   const assessmentId = req.params.id;
   
@@ -183,7 +185,7 @@ router.patch('/:id/pulse', async (req: Request, res: Response) => {
 /**
  * Update assessment data (e.g., value overlay)
  */
-router.patch('/:id', async (req: Request, res: Response) => {
+router.patch('/:id', requireAuthMiddleware, async (req: Request, res: Response) => {
   const incidentId = generateIncidentId();
   const assessmentId = req.params.id;
   
@@ -247,7 +249,7 @@ router.patch('/:id', async (req: Request, res: Response) => {
 /**
  * Complete assessment and generate final results
  */
-router.patch('/:id/complete', async (req: Request, res: Response) => {
+router.patch('/:id/complete', requireAuthMiddleware, async (req: Request, res: Response) => {
   const incidentId = generateIncidentId();
   const assessmentId = req.params.id;
   
