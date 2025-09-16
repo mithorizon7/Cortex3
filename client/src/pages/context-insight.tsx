@@ -8,9 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Loader2, Brain, Compass, TrendingUp, MessageSquare, FileText } from "lucide-react";
+import { AlertCircle, Loader2, Brain, Compass, TrendingUp, MessageSquare, FileText, CheckCircle, AlertTriangle, ListTodo, Shield } from "lucide-react";
 import { generateContextBrief } from "@/lib/pdf-generator";
 import { ProtectedRoute } from "@/components/auth/protected-route";
+import { enforceConstraints, countNarrativeWords, truncateNarrativeContent, sanitizeContent } from "@/lib/context-constraints";
 
 
 function EducationalLoader() {
@@ -18,13 +19,13 @@ function EducationalLoader() {
   const [currentStep, setCurrentStep] = useState(0);
 
   const educationalTips = [
-    "Strategic insight: Rapid AI advancement requires continuous organizational capability assessment and adaptive strategy development.",
-    "Leadership consideration: Integration complexity scales with organizational size, regulatory requirements, and stakeholder diversity.",
-    "Executive advantage: Organizations with established data governance frameworks typically achieve faster, more sustainable AI deployment outcomes.",
-    "Context-driven approach: High-regulation environments require enhanced guardrails but provide clearer compliance frameworks for strategic decision-making.",
-    "Foundational principle: AI readiness encompasses cultural transformation, process optimization, and strategic alignment—not just technical capabilities.",
-    "Proven methodology: Strategic wins in controlled environments build organizational confidence and expertise before addressing complex enterprise use cases.",
-    "Implementation best practice: Human-in-the-loop approaches establish trust, reduce risk, and enable continuous learning during AI transformation."
+    "Context Mirror methodology: Organizations tend to have unique combinations of strengths, fragilities, and working approaches that shape their strategic options and implementation paths.",
+    "Probability-based analysis: Leadership insights often emerge from patterns rather than absolute predictions—each organizational context presents different likelihood scenarios for success.",
+    "Educational approach: Board-ready summaries under 220 words help leaders focus on actionable insights rather than overwhelming detail or theoretical frameworks.",
+    "Constraint-driven value: Avoiding vendor names and benchmark comparisons often leads to more strategic thinking about organizational capabilities and contextual fit.",
+    "Structured reflection: Three strengths, three fragilities, and two working approaches typically provide sufficient depth for executive decision-making without analysis paralysis.",
+    "Executive coaching methodology: Questions that surface organizational context often prove more valuable than prescriptive recommendations for complex strategic initiatives.",
+    "Rule-based fallback: When advanced analysis is unavailable, structured frameworks still tend to provide useful strategic reflection for leadership teams."
   ];
 
   const analysisSteps = [
@@ -113,34 +114,49 @@ interface NarrativeContent {
 }
 
 function composeNarrative(contextMirror: ContextMirror): NarrativeContent {
-  const { strengths, fragilities, whatWorks } = contextMirror;
+  // First apply constraint enforcement before narrative composition
+  const constraintResult = enforceConstraints(contextMirror);
+  const { processed } = constraintResult;
+  const { strengths, fragilities, whatWorks } = processed;
+  
+  // Note: Context Mirror methodology maintains board-ready brevity (under 220 words total)
+  // Using probability-based language to reflect executive coaching approach
+  
+  // Sanitize individual elements before composing narrative
+  const sanitizedStrengths = strengths.map(s => sanitizeContent(s).sanitized);
+  const sanitizedFragilities = fragilities.map(f => sanitizeContent(f).sanitized);
+  const sanitizedWhatWorks = whatWorks.map(w => sanitizeContent(w).sanitized);
   
   // Synthesize strengths into organizational positioning
-  const strengthText = strengths.length > 0 
-    ? strengths.slice(0, 2).join(' and ') + (strengths.length > 2 ? ', among other key capabilities' : '')
+  const strengthText = sanitizedStrengths.length > 0 
+    ? sanitizedStrengths.slice(0, 2).join(' and ') + (sanitizedStrengths.length > 2 ? ', among other capabilities' : '')
     : 'established operational foundations';
     
   // Synthesize fragilities into risk landscape  
-  const fragilityText = fragilities.length > 0
-    ? fragilities.slice(0, 2).join(' while also managing ') + (fragilities.length > 2 ? ', among other strategic considerations' : '')
+  const fragilityText = sanitizedFragilities.length > 0
+    ? sanitizedFragilities.slice(0, 2).join(' while also navigating ') + (sanitizedFragilities.length > 2 ? ', among other considerations' : '')
     : 'typical organizational complexity';
     
   // Synthesize what works into starting approaches
-  const startingApproaches = whatWorks.length > 0
-    ? whatWorks.slice(0, 2).join(' and ') + (whatWorks.length > 2 ? ', among other proven methodologies' : '')
+  const startingApproaches = sanitizedWhatWorks.length > 0
+    ? sanitizedWhatWorks.slice(0, 2).join(' and ') + (sanitizedWhatWorks.length > 2 ? ', among other approaches' : '')
     : 'focusing on incremental value delivery and capability building';
 
-  const organizationContext = `Your organization operates with ${strengthText}. However, you're also navigating ${fragilityText}. This combination creates a specific context that shapes both your opportunities and the considerations needed for successful AI adoption.`;
+  const organizationContext = `Your organization tends to operate with ${strengthText}. However, you're likely also ${fragilityText}. This combination often creates a specific context that shapes both your opportunities and the strategic considerations for successful implementation.`;
   
-  const strategicImplications = `Organizations with this profile often find that their established strengths can accelerate AI initiatives when properly leveraged, while their operational constraints require thoughtful planning and phased implementation. This context typically favors approaches that build on existing capabilities while establishing clear governance frameworks early in the journey.`;
+  const strategicImplications = `Organizations with similar profiles often find that their established strengths can accelerate strategic initiatives when properly leveraged, while their operational considerations typically require thoughtful planning and phased approaches. This context often favors methodologies that build on existing capabilities while establishing appropriate governance early in the process.`;
   
-  const practicalNext = `Where momentum usually starts for organizations like yours: by ${startingApproaches}. These moves help establish confidence and internal expertise while respecting your operational requirements and building toward more strategic AI capabilities over time.`;
+  const practicalNext = `Where momentum typically starts for organizations like yours: by ${startingApproaches}. These approaches tend to establish confidence and internal expertise while respecting your operational requirements and building toward more strategic capabilities over time.`;
   
-  return {
+  const rawNarrative = {
     organizationContext,
     strategicImplications, 
     practicalNext
   };
+  
+  // Apply word limit enforcement
+  const { truncated } = truncateNarrativeContent(rawNarrative, processed.disclaimer, 220);
+  return truncated;
 }
 
 function NarrativeInsight({ content }: { content: NarrativeContent }) {
@@ -182,14 +198,129 @@ function NarrativeInsight({ content }: { content: NarrativeContent }) {
   );
 }
 
+// New component for structured 3-3-2 display
+function StructuredMirror({ mirror }: { mirror: ContextMirror }) {
+  const constraintResult = enforceConstraints(mirror);
+  const { processed, wordCount, wasTruncated, wasRedacted, structureValid, issues } = constraintResult;
+  
+  return (
+    <div className="space-y-6" data-testid="structured-mirror">
+      {/* Structure validation and constraint warnings */}
+      {(!structureValid || wasTruncated || wasRedacted) && (
+        <div className="space-y-2">
+          {!structureValid && (
+            <Alert className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/20">
+              <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+              <AlertDescription className="text-red-700 dark:text-red-300">
+                Structure issues: {issues.join(', ')}
+              </AlertDescription>
+            </Alert>
+          )}
+          {wasRedacted && (
+            <Alert className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/20">
+              <Shield className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <AlertDescription className="text-blue-700 dark:text-blue-300">
+                Content sanitized: Vendor names and benchmarks replaced with generic categories per methodology requirements.
+              </AlertDescription>
+            </Alert>
+          )}
+          {wasTruncated && (
+            <Alert className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/20">
+              <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              <AlertDescription className="text-amber-700 dark:text-amber-300">
+                Content truncated to meet 220-word methodology requirement.
+              </AlertDescription>
+            </Alert>
+          )}
+        </div>
+      )}
+      
+      {/* Word count indicator */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <ListTodo className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm text-muted-foreground">Structured Format</span>
+        </div>
+        <Badge 
+          variant={wordCount <= 220 ? "secondary" : "destructive"} 
+          className="text-xs"
+          data-testid="word-count-badge"
+        >
+          {wordCount}/220 words
+        </Badge>
+      </div>
+
+      {/* Three Strengths */}
+      <div className="space-y-3">
+        <div className="flex items-center space-x-2">
+          <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+          <h3 className="text-lg font-semibold text-foreground">Three Organizational Strengths</h3>
+        </div>
+        <ul className="space-y-3 pl-7">
+          {processed.strengths.map((strength, index) => (
+            <li key={index} className="flex items-start gap-3 text-sm text-foreground leading-relaxed" data-testid={`strength-${index}`}>
+              <div className="w-1.5 h-1.5 rounded-full bg-green-600 dark:bg-green-400 mt-2 flex-shrink-0" />
+              <span>{strength}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Three Fragilities */}
+      <div className="space-y-3">
+        <div className="flex items-center space-x-2">
+          <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+          <h3 className="text-lg font-semibold text-foreground">Three Organizational Fragilities</h3>
+        </div>
+        <ul className="space-y-3 pl-7">
+          {processed.fragilities.map((fragility, index) => (
+            <li key={index} className="flex items-start gap-3 text-sm text-foreground leading-relaxed" data-testid={`fragility-${index}`}>
+              <div className="w-1.5 h-1.5 rounded-full bg-orange-600 dark:bg-orange-400 mt-2 flex-shrink-0" />
+              <span>{fragility}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Two What Works */}
+      <div className="space-y-3">
+        <div className="flex items-center space-x-2">
+          <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+          <h3 className="text-lg font-semibold text-foreground">Two Proven Approaches</h3>
+        </div>
+        <ul className="space-y-3 pl-7">
+          {processed.whatWorks.map((work, index) => (
+            <li key={index} className="flex items-start gap-3 text-sm text-foreground leading-relaxed" data-testid={`what-works-${index}`}>
+              <div className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 mt-2 flex-shrink-0" />
+              <span>{work}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
 function ErrorFallback({ error }: { error: Error }) {
+  const isLLMFailure = error.message.includes('generation') || error.message.includes('AI') || error.message.includes('model');
+  
   return (
     <Alert className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950/20">
       <AlertCircle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
       <AlertDescription className="text-orange-700 dark:text-orange-300">
-        We couldn't generate the insight. Showing a concise rule-based summary.
-        <br />
-        <span className="text-xs opacity-75">Error: {error.message}</span>
+        {isLLMFailure ? (
+          <>
+            Advanced analysis unavailable. Using rule-based Context Mirror framework to provide structured insights from your assessment responses.
+            <br />
+            <span className="text-xs opacity-75">The structured approach still offers valuable strategic reflection for leadership discussion.</span>
+          </>
+        ) : (
+          <>
+            We couldn't generate the insight. Showing a concise rule-based summary.
+            <br />
+            <span className="text-xs opacity-75">Error: {error.message}</span>
+          </>
+        )}
       </AlertDescription>
     </Alert>
   );
@@ -304,33 +435,72 @@ function ContextInsightPageContent() {
       </header>
 
       {/* Main Content */}
-      <div className="grid lg:grid-cols-2 gap-8 items-start">
-        {/* Left Card: What your profile signals */}
-        <Card className="h-fit" data-testid="card-profile-signals">
+      <div className="space-y-8">
+        {/* Primary Structured View - Full Width */}
+        <Card className="w-full" data-testid="card-structured-mirror">
           <CardHeader className="pb-4">
-            <CardTitle className="flex items-center gap-3 text-xl">
-              <Brain className="h-5 w-5 text-primary" />
-              What your profile signals
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-3 text-xl">
+                <ListTodo className="h-5 w-5 text-primary" />
+                Context Mirror (3-3-2 Structure)
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="text-xs" data-testid="badge-methodology">Methodology Compliant</Badge>
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground mt-2">
+              Strategic reflection structured as exactly three strengths, three fragilities, and two proven approaches—sanitized and word-limited per Context Mirror methodology.
+            </p>
           </CardHeader>
-          <CardContent className="space-y-8 pt-0">
+          <CardContent className="pt-0">
             {isLoading ? (
               <EducationalLoader />
             ) : isError && error ? (
               <ErrorFallback error={error} />
             ) : data ? (
               <div className="animate-in fade-in duration-300">
-                <NarrativeInsight content={composeNarrative(data)} />
+                <StructuredMirror mirror={data} />
               </div>
             ) : null}
             
             {data?.disclaimer && (
-              <p className="text-xs text-muted-foreground pt-4 border-t">
-                {data.disclaimer}
-              </p>
+              <div className="pt-6 border-t">
+                <p className="text-xs text-muted-foreground">
+                  <strong>Methodology Note:</strong> {sanitizeContent(data.disclaimer).sanitized}
+                </p>
+              </div>
             )}
           </CardContent>
         </Card>
+        
+        {/* Secondary Content - Two Column Layout */}
+        <div className="grid lg:grid-cols-2 gap-8 items-start">
+          {/* Left Card: Narrative View */}
+          <Card className="h-fit" data-testid="card-profile-signals">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-3 text-xl">
+                <Brain className="h-5 w-5 text-primary" />
+                Executive Summary
+              </CardTitle>
+              <p className="text-sm text-muted-foreground mt-2">
+                Narrative synthesis of your organizational context for leadership discussion.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-6 pt-0">
+              {isLoading ? (
+                <div className="text-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary mx-auto" />
+                  <p className="text-sm text-muted-foreground mt-2">Generating narrative...</p>
+                </div>
+              ) : isError && error ? (
+                <ErrorFallback error={error} />
+              ) : data ? (
+                <div className="animate-in fade-in duration-300">
+                  <NarrativeInsight content={composeNarrative(data)} />
+                </div>
+              ) : null}
+            </CardContent>
+          </Card>
 
         {/* Right Card: Notes for discussion */}
         <Card className="h-fit" data-testid="card-discussion-notes">
@@ -343,33 +513,35 @@ function ContextInsightPageContent() {
           <CardContent className="space-y-6 pt-0">
             <div className="space-y-5">
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Use these strategic questions to guide leadership discussion and identify actionable priorities:
+                Context Mirror questions for executive discussion—designed to surface strategic implications from your organizational profile:
               </p>
               <ul className="space-y-4 pl-1">
                 <li className="flex items-start gap-3 text-sm text-foreground leading-relaxed" data-testid="discussion-note-1">
                   <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0" />
-                  <span>Identify one organizational strength that creates AI opportunity and one constraint that requires strategic attention.</span>
+                  <span>From your three organizational strengths, which one creates the highest-probability pathway for initial strategic value, and which fragility requires immediate attention to protect that pathway?</span>
                 </li>
                 <li className="flex items-start gap-3 text-sm text-foreground leading-relaxed" data-testid="discussion-note-2">
                   <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0" />
-                  <span>Which contextual factor would most significantly impact customer trust or brand reputation if mismanaged during AI implementation?</span>
+                  <span>Of your identified organizational fragilities, which one would most likely amplify reputational or operational risk if not addressed during strategic initiatives?</span>
                 </li>
                 <li className="flex items-start gap-3 text-sm text-foreground leading-relaxed" data-testid="discussion-note-3">
                   <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0" />
-                  <span>What is the most actionable next step to leverage your organizational context for AI success?</span>
+                  <span>Which of your 'what works' approaches offers the most transferable foundation for scaling strategic capabilities across your organization?</span>
                 </li>
               </ul>
             </div>
             
             <div className="pt-6 border-t">
               <div className="flex flex-wrap gap-2">
-                <Badge variant="secondary" className="text-xs" data-testid="badge-no-pii">Privacy Protected</Badge>
-                <Badge variant="secondary" className="text-xs" data-testid="badge-no-benchmarks">No External Comparisons</Badge>
-                <Badge variant="secondary" className="text-xs" data-testid="badge-context-based">Context-Based Analysis</Badge>
+                <Badge variant="secondary" className="text-xs" data-testid="badge-no-vendor-names">No Vendor Names</Badge>
+                <Badge variant="secondary" className="text-xs" data-testid="badge-no-benchmarks">No Benchmarks</Badge>
+                <Badge variant="secondary" className="text-xs" data-testid="badge-probability-based">Probability-Based</Badge>
+                <Badge variant="secondary" className="text-xs" data-testid="badge-word-limit">Under 220 Words</Badge>
               </div>
             </div>
           </CardContent>
         </Card>
+        </div>
       </div>
 
       {/* Footer Actions */}
