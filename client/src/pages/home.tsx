@@ -260,7 +260,7 @@ export default function HomePage() {
               pillarScores={userAssessment?.pillarScores}
             />
             <p className="text-sm text-center text-muted-foreground md:block hidden">
-              Once you have finished the assessment this will reflect your organization's AI strategic maturity
+              Once complete this will reflect your organization's AI strategic maturity
             </p>
           </div>
         </div>
