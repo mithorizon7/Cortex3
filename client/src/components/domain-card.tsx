@@ -312,14 +312,14 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
             
             {/* Context-specific priority note */}
             {guidance.priority_note && (
-              <p className="text-xs text-info-foreground mt-2 bg-info/10 p-2 rounded font-ui">
+              <p className="text-xs text-primary mt-2 bg-primary/5 p-2 rounded font-ui border border-primary/15">
                 <Star className="h-4 w-4 mr-1" />
                 <strong>Context Priority:</strong> {guidance.priority_note}
               </p>
             )}
             
             {contextReason && (
-              <p className="text-xs text-warning-foreground mt-2 bg-warning/10 p-2 rounded font-ui">
+              <p className="text-xs text-orange-600 dark:text-orange-400 mt-2 bg-orange-50 dark:bg-orange-950/30 p-2 rounded font-ui border border-orange-200 dark:border-orange-800">
                 <Info className="h-4 w-4 mr-1" />
                 <strong>Because:</strong> {contextReason}
               </p>

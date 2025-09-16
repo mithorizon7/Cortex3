@@ -284,13 +284,13 @@ export default function ContextProfilePage() {
                                 </div>
 
                                 {item.anchors && (
-                                  <div className={`p-4 bg-accent/10 rounded-lg border border-accent/20 transition-opacity duration-300 ${
+                                  <div className={`p-4 bg-primary/5 rounded-lg border border-primary/15 transition-opacity duration-300 ${
                                     touchedFields.has(item.key) ? 'opacity-100' : 'opacity-70'
                                   }`}>
-                                    <p className="text-sm font-medium text-accent-foreground mb-2 font-ui">
+                                    <p className="text-sm font-medium text-primary mb-2 font-ui">
                                       What this level means:
                                     </p>
-                                    <p className="text-sm text-muted-foreground font-ui">
+                                    <p className="text-sm text-foreground/80 font-ui">
                                       {item.anchors[field.value as number]}
                                     </p>
                                   </div>

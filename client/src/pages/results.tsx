@@ -398,10 +398,10 @@ export default function ResultsPage() {
         </Card>
 
         {/* Options Studio CTA */}
-        <Card className="mb-8 border-accent/30 bg-gradient-to-r from-accent/5 to-accent/10">
+        <Card className="mb-8 border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">
           <CardHeader className="pb-4">
-            <CardTitle className="flex items-center space-x-2 text-accent-foreground">
-              <Compass className="h-6 w-6 text-accent" />
+            <CardTitle className="flex items-center space-x-2 text-foreground">
+              <Compass className="h-6 w-6 text-primary" />
               <span className="text-xl font-display">Ready to Explore Strategic Options?</span>
             </CardTitle>
           </CardHeader>
@@ -595,18 +595,18 @@ export default function ResultsPage() {
 
         {/* Detailed Analysis */}
         {/* How to Read the Guidance */}
-        <Card className="mb-8 bg-info/10 border-info/20">
+        <Card className="mb-8 bg-primary/5 border-primary/15">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2 text-info-foreground font-display">
+            <CardTitle className="flex items-center space-x-2 text-primary font-display">
               <BookOpen className="h-5 w-5" />
               <span>How to Read the Guidance</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-            <p className="text-info-foreground mb-4 font-ui">
+            <p className="text-foreground/90 mb-4 font-ui">
               For each domain you'll see:
             </p>
-            <ul className="text-info-foreground space-y-2 font-ui">
+            <ul className="text-foreground/90 space-y-2 font-ui">
               <li className="flex items-start space-x-2">
                 <span className="font-semibold min-w-fit">• Why this matters</span>
                 <span className="text-sm">— business impact in plain language</span>
@@ -620,7 +620,7 @@ export default function ResultsPage() {
                 <span className="text-sm">— common pathways, options, and trade-offs</span>
               </li>
             </ul>
-            <p className="text-info-foreground mt-4 text-sm italic font-ui">
+            <p className="text-foreground/80 mt-4 text-sm italic font-ui">
               Use these as teaching notes and talking points. They are <strong>not mandates</strong>.
             </p>
           </CardContent>

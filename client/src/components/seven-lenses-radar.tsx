@@ -187,11 +187,11 @@ export function SevenLensesRadar({ selectedOptions, emphasizedLenses = [], class
         </div>
 
         {emphasizedLenses.length > 0 && (
-          <div className="mt-4 p-3 bg-accent/10 rounded-lg">
-            <div className="text-sm font-medium text-accent mb-1">
+          <div className="mt-4 p-3 bg-primary/5 rounded-lg border border-primary/15">
+            <div className="text-sm font-medium text-primary mb-1">
               Emphasized for your context:
             </div>
-            <div className="text-xs text-muted-foreground">
+            <div className="text-xs text-foreground/80">
               {emphasizedLenses.join(', ')} - These lenses are particularly important based on your assessment profile.
             </div>
           </div>
