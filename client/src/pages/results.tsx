@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { Link, useParams } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -150,7 +150,7 @@ function generateExecutiveInsights(pillarScores: PillarScores, gates: any[], con
 
 export default function ResultsPage() {
   const { toast } = useToast();
-  const assessmentId = window.location.pathname.split('/')[2];
+  const { id: assessmentId } = useParams();
   const [remindQuarterly, setRemindQuarterly] = useState(false);
   const [showDetailedView, setShowDetailedView] = useState(false);
   const [valueOverlay, setValueOverlay] = useState<ValueOverlay | null>(null);

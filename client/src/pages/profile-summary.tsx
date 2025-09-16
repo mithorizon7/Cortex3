@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useLocation } from "wouter";
+import { useLocation, useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +14,7 @@ import { ChevronRight, Shield, AlertTriangle, CheckCircle, Clock } from "lucide-
 
 export default function ProfileSummaryPage() {
   const [, navigate] = useLocation();
-  const assessmentId = window.location.pathname.split('/')[2];
+  const { id: assessmentId } = useParams();
   
   const { data: assessment, isLoading } = useQuery({
     queryKey: ['/api/assessments', assessmentId],

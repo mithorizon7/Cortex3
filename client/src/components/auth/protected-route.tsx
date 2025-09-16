@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuth } from '@/contexts/auth-context';
+import { useLocation } from 'wouter';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AuthButton } from './auth-button';
@@ -58,6 +59,17 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requireAuth = true 
 }) => {
   const { user, loading } = useAuth();
+  const [location, navigate] = useLocation();
+
+  // Effect to handle redirect to home for deep links
+  useEffect(() => {
+    // Only redirect if user is definitively not authenticated (not loading)
+    if (!loading && !user && requireAuth && location !== '/') {
+      // Preserve the intended destination and redirect to home with auth intent
+      const destination = encodeURIComponent(location);
+      navigate(`/?auth=required&destination=${destination}`);
+    }
+  }, [user, loading, requireAuth, location, navigate]);
 
   // If auth is not required, always show children
   if (!requireAuth) {
@@ -71,6 +83,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // Show sign-in prompt if user is not authenticated
   if (!user) {
+    // For the home page, still show the fallback to avoid redirect loops
+    if (location === '/') {
+      return fallback || <DefaultAuthRequired />;
+    }
+    // For other pages, the useEffect will handle the redirect
     return fallback || <DefaultAuthRequired />;
   }
 

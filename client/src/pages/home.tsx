@@ -62,6 +62,7 @@ export default function HomePage() {
   const [, navigate] = useLocation();
   const [methodologyOpen, setMethodologyOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [intendedDestination, setIntendedDestination] = useState<string | null>(null);
   const { user, loading } = useAuth();
 
   // Set document title for SEO
@@ -76,6 +77,36 @@ export default function HomePage() {
       );
     }
   }, []);
+
+  // Effect to handle deep-link authentication
+  useEffect(() => {
+    // Check URL parameters for deep-link auth flow
+    const urlParams = new URLSearchParams(window.location.search);
+    const authRequired = urlParams.get('auth') === 'required';
+    const destination = urlParams.get('destination');
+
+    if (authRequired && destination) {
+      // Store the intended destination
+      setIntendedDestination(decodeURIComponent(destination));
+      
+      // Clean up the URL without reloading the page
+      window.history.replaceState({}, '', '/');
+      
+      // Automatically open auth modal for deep links
+      if (!user && !loading) {
+        setAuthModalOpen(true);
+      }
+    }
+  }, [user, loading]);
+
+  // Effect to handle successful authentication for deep links
+  useEffect(() => {
+    // If user authenticates and we have an intended destination, redirect
+    if (user && intendedDestination) {
+      navigate(intendedDestination);
+      setIntendedDestination(null); // Clear the destination
+    }
+  }, [user, intendedDestination, navigate]);
 
   const startAssessment = () => {
     // Don't allow navigation while auth is loading
@@ -96,7 +127,14 @@ export default function HomePage() {
 
   const handleAuthSuccess = () => {
     // Called when user successfully authenticates
-    navigate('/context-profile');
+    if (intendedDestination) {
+      // If we have a deep-link destination, navigate there
+      navigate(intendedDestination);
+      setIntendedDestination(null);
+    } else {
+      // Default behavior for normal home page start button
+      navigate('/context-profile');
+    }
   };
 
   return (

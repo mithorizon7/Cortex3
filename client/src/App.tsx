@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/auth-context";
+import { ProtectedRoute } from "@/components/auth/protected-route";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import ContextProfile from "@/pages/context-profile";
@@ -17,13 +18,55 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
-      <Route path="/context-profile" component={ContextProfile} />
-      <Route path="/context-insight/:id" component={ContextInsight} />
-      <Route path="/profile-summary/:id" component={ProfileSummary} />
-      <Route path="/pulse/:id" component={PulseCheck} />
-      <Route path="/results/:id" component={Results} />
-      <Route path="/decide/:id" component={OptionsStudio} />
-      <Route path="/decide" component={OptionsStudio} />
+      <Route path="/context-profile">
+        {() => (
+          <ProtectedRoute>
+            <ContextProfile />
+          </ProtectedRoute>
+        )}
+      </Route>
+      <Route path="/context-insight/:id">
+        {() => (
+          <ProtectedRoute>
+            <ContextInsight />
+          </ProtectedRoute>
+        )}
+      </Route>
+      <Route path="/profile-summary/:id">
+        {() => (
+          <ProtectedRoute>
+            <ProfileSummary />
+          </ProtectedRoute>
+        )}
+      </Route>
+      <Route path="/pulse/:id">
+        {() => (
+          <ProtectedRoute>
+            <PulseCheck />
+          </ProtectedRoute>
+        )}
+      </Route>
+      <Route path="/results/:id">
+        {() => (
+          <ProtectedRoute>
+            <Results />
+          </ProtectedRoute>
+        )}
+      </Route>
+      <Route path="/decide/:id">
+        {() => (
+          <ProtectedRoute>
+            <OptionsStudio />
+          </ProtectedRoute>
+        )}
+      </Route>
+      <Route path="/decide">
+        {() => (
+          <ProtectedRoute>
+            <OptionsStudio />
+          </ProtectedRoute>
+        )}
+      </Route>
       <Route component={NotFound} />
     </Switch>
   );

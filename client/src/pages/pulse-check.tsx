@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
+import { useLocation, useParams } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -30,7 +30,7 @@ const DOMAIN_GROUPS = [
 export default function PulseCheckPage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const assessmentId = window.location.pathname.split('/')[2];
+  const { id: assessmentId } = useParams();
   
   const [responses, setResponses] = useState<Record<string, boolean | null>>({});
   const [currentDomain, setCurrentDomain] = useState(0);
