@@ -187,8 +187,10 @@ export default function HomePage() {
         <div aria-hidden className="pointer-events-none absolute inset-0 [mask-image:linear-gradient(to_bottom,rgba(0,0,0,.9),rgba(0,0,0,.2))] [-webkit-mask-image:linear-gradient(to_bottom,rgba(0,0,0,.9),rgba(0,0,0,.2))] [mask-repeat:no-repeat] [-webkit-mask-repeat:no-repeat]">
           <div className="absolute inset-0 bg-[url('/img/hex.svg')] bg-[length:180px_156px] opacity-40 dark:opacity-25"></div>
         </div>
-        <div className="relative mx-auto max-w-6xl px-6 py-14 md:py-20 grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
-        <div className="space-y-6">
+        <div className="relative mx-auto max-w-6xl px-6 py-14 md:py-20 space-y-12">
+        {/* Top section: Steps on left, graphic on right */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+          <div className="space-y-6">
           <h1 className="text-3xl md:text-4xl font-semibold tracking-tight" data-testid="text-main-title">
             CORTEX™ — Executive AI‑Readiness Snapshot
           </h1>
@@ -218,97 +220,100 @@ export default function HomePage() {
             </li>
           </ol>
 
-          {/* Enhanced 0-3 Scale Section - Using maturity color system */}
-          <div className="bg-card/50 border border-border rounded-lg p-6 space-y-4" data-testid="scale-information">
+
+            <div className="flex items-center gap-4 pt-2">
+              <Button 
+                size="lg" 
+                className="px-6" 
+                onClick={startAssessment}
+                data-testid="button-begin-assessment"
+              >
+                Begin Assessment
+              </Button>
+              <Button 
+                variant="ghost"
+                size="sm"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors p-0 h-auto" 
+                onClick={() => setMethodologyOpen(true)}
+                data-testid="button-view-methodology"
+              >
+                View methodology
+              </Button>
+            </div>
+          </div>
+
+          <ExecutiveCortexHero className="hidden md:block" />
+        </div>
+
+        {/* Assessment Scale Section - Centered and larger below both columns */}
+        <div className="flex justify-center">
+          <div className="bg-card/50 border border-border rounded-lg p-8 space-y-6 max-w-4xl w-full" data-testid="scale-information">
             <div className="text-center">
-              <h3 className="text-lg font-semibold mb-2">Assessment Scale</h3>
-              <p className="text-sm text-muted-foreground">
+              <h3 className="text-2xl font-semibold mb-3">Assessment Scale</h3>
+              <p className="text-base text-muted-foreground">
                 Each domain is evaluated on a four-stage maturity scale
               </p>
             </div>
             
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {/* Level 0 - Nascent */}
-              <div className="text-center space-y-2">
+              <div className="text-center space-y-3">
                 <div 
-                  className="w-10 h-10 rounded-full mx-auto flex items-center justify-center font-bold text-white text-sm shadow-md"
+                  className="w-16 h-16 rounded-full mx-auto flex items-center justify-center font-bold text-white text-lg shadow-lg"
                   style={{ backgroundColor: "hsl(220, 15%, 60%)" }}
                 >
                   0
                 </div>
                 <div>
-                  <div className="font-semibold text-sm">Nascent</div>
-                  <div className="text-xs text-muted-foreground leading-tight">Trials and one-offs</div>
+                  <div className="font-semibold text-base">Nascent</div>
+                  <div className="text-sm text-muted-foreground leading-tight">Trials and one-offs</div>
                 </div>
               </div>
               
               {/* Level 1 - Emerging */}
-              <div className="text-center space-y-2">
+              <div className="text-center space-y-3">
                 <div 
-                  className="w-10 h-10 rounded-full mx-auto flex items-center justify-center font-bold text-white text-sm shadow-md"
+                  className="w-16 h-16 rounded-full mx-auto flex items-center justify-center font-bold text-white text-lg shadow-lg"
                   style={{ backgroundColor: "hsl(38, 92%, 50%)" }}
                 >
                   1
                 </div>
                 <div>
-                  <div className="font-semibold text-sm">Emerging</div>
-                  <div className="text-xs text-muted-foreground leading-tight">Roles and routines forming</div>
+                  <div className="font-semibold text-base">Emerging</div>
+                  <div className="text-sm text-muted-foreground leading-tight">Roles and routines forming</div>
                 </div>
               </div>
               
-              {/* Level 2 - Integrated */}
-              <div className="text-center space-y-2">
+              {/* Level 2 - Integrating */}
+              <div className="text-center space-y-3">
                 <div 
-                  className="w-10 h-10 rounded-full mx-auto flex items-center justify-center font-bold text-white text-sm shadow-md"
+                  className="w-16 h-16 rounded-full mx-auto flex items-center justify-center font-bold text-white text-lg shadow-lg"
                   style={{ backgroundColor: "hsl(158, 64%, 52%)" }}
                 >
                   2
                 </div>
                 <div>
-                  <div className="font-semibold text-sm">Integrating</div>
-                  <div className="text-xs text-muted-foreground leading-tight">Consistent execution across teams</div>
+                  <div className="font-semibold text-base">Integrating</div>
+                  <div className="text-sm text-muted-foreground leading-tight">Consistent execution across teams</div>
                 </div>
               </div>
               
-              {/* Level 3 - Leading */}
-              <div className="text-center space-y-2">
+              {/* Level 3 - Strategic */}
+              <div className="text-center space-y-3">
                 <div 
-                  className="w-10 h-10 rounded-full mx-auto flex items-center justify-center font-bold text-white text-sm shadow-md ring-2 ring-primary/20"
+                  className="w-16 h-16 rounded-full mx-auto flex items-center justify-center font-bold text-white text-lg shadow-lg ring-2 ring-primary/20"
                   style={{ backgroundColor: "hsl(158, 64%, 52%)" }}
                 >
                   3
                 </div>
                 <div>
-                  <div className="font-semibold text-sm">Strategic</div>
-                  <div className="text-xs text-muted-foreground leading-tight">Measured impact and continuous improvement</div>
+                  <div className="font-semibold text-base">Strategic</div>
+                  <div className="text-sm text-muted-foreground leading-tight">Measured impact and continuous improvement</div>
                 </div>
               </div>
             </div>
           </div>
-
-          <div className="flex items-center gap-4 pt-2">
-            <Button 
-              size="lg" 
-              className="px-6" 
-              onClick={startAssessment}
-              data-testid="button-begin-assessment"
-            >
-              Begin Assessment
-            </Button>
-            <Button 
-              variant="ghost"
-              size="sm"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors p-0 h-auto" 
-              onClick={() => setMethodologyOpen(true)}
-              data-testid="button-view-methodology"
-            >
-              View methodology
-            </Button>
-          </div>
-
         </div>
-
-        <ExecutiveCortexHero className="hidden md:block" />
         </div>
       </section>
 
