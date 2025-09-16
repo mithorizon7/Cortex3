@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Download, Loader2, Brain, Compass, TrendingUp, MessageSquare, FileText } from "lucide-react";
+import { AlertCircle, Loader2, Brain, Compass, TrendingUp, MessageSquare, FileText } from "lucide-react";
 import { generateContextBrief } from "@/lib/pdf-generator";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 
@@ -18,13 +18,13 @@ function EducationalLoader() {
   const [currentStep, setCurrentStep] = useState(0);
 
   const educationalTips = [
-    "Did you know? Rapid AI advancement requires continuous capability assessment and adaptation.",
-    "Insight: Integration complexity grows with organizational scale and regulatory requirements.",
-    "Organizations with strong data governance often achieve faster AI deployment success.",
-    "Context matters: High-regulation environments need more guardrails but enable clearer compliance frameworks.",
-    "AI readiness isn't just technical—it's about culture, process, and strategic alignment.",
-    "Quick wins in low-risk areas help build organizational confidence before tackling complex use cases.",
-    "Most successful AI implementations start with human-in-the-loop approaches to build trust."
+    "Strategic insight: Rapid AI advancement requires continuous organizational capability assessment and adaptive strategy development.",
+    "Leadership consideration: Integration complexity scales with organizational size, regulatory requirements, and stakeholder diversity.",
+    "Executive advantage: Organizations with established data governance frameworks typically achieve faster, more sustainable AI deployment outcomes.",
+    "Context-driven approach: High-regulation environments require enhanced guardrails but provide clearer compliance frameworks for strategic decision-making.",
+    "Foundational principle: AI readiness encompasses cultural transformation, process optimization, and strategic alignment—not just technical capabilities.",
+    "Proven methodology: Strategic wins in controlled environments build organizational confidence and expertise before addressing complex enterprise use cases.",
+    "Implementation best practice: Human-in-the-loop approaches establish trust, reduce risk, and enable continuous learning during AI transformation."
   ];
 
   const analysisSteps = [
@@ -61,7 +61,14 @@ function EducationalLoader() {
       </div>
 
       {/* Progress Steps */}
-      <div className="flex items-center justify-center space-x-2">
+      <div 
+        className="flex items-center justify-center space-x-2"
+        role="progressbar"
+        aria-valuenow={((currentStep + 1) / analysisSteps.length) * 100}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={`Analysis progress: step ${currentStep + 1} of ${analysisSteps.length}`}
+      >
         {analysisSteps.map((_, index) => (
           <div
             key={index}
@@ -71,11 +78,7 @@ function EducationalLoader() {
                 : 'bg-muted dark:bg-muted/60'
             }`}
             data-testid={`progress-step-${index}`}
-            role="progressbar"
-            aria-valuenow={index <= currentStep ? 100 : 0}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-label={`Analysis step ${index + 1} of ${analysisSteps.length}`}
+            aria-hidden="true"
           />
         ))}
       </div>
