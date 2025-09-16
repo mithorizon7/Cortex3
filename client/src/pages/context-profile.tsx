@@ -124,23 +124,14 @@ export default function ContextProfilePage() {
     createAssessment.mutate(data);
   };
 
-  // Check if current screen questions are answered (count sliders as answered by default, switches only when touched)
+  // Check if current screen questions are answered (only count when user has interacted)
   const getCurrentScreenAnswers = () => {
     const answers = currentScreenData.questions.map(questionKey => {
       const item = CONTEXT_ITEMS.find(i => i.key === questionKey);
       if (!item) return false;
       
-      // Sliders are considered answered by default (they have meaningful default values)
-      if (item.type === 'slider') {
-        return true;
-      }
-      
-      // Switches only count as answered when touched
-      if (item.type === 'boolean') {
-        return touchedFields.has(questionKey);
-      }
-      
-      return false;
+      // Both sliders and switches only count as answered when touched by user
+      return touchedFields.has(questionKey);
     });
     return answers.filter(Boolean).length;
   };
