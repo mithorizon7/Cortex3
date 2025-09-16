@@ -238,7 +238,7 @@ export default function HomePage() {
                 </div>
                 <div>
                   <div className="font-semibold text-sm">Nascent</div>
-                  <div className="text-xs text-muted-foreground leading-tight">Ad hoc, minimal practices</div>
+                  <div className="text-xs text-muted-foreground leading-tight">Trials and one-offs</div>
                 </div>
               </div>
               
@@ -252,7 +252,7 @@ export default function HomePage() {
                 </div>
                 <div>
                   <div className="font-semibold text-sm">Emerging</div>
-                  <div className="text-xs text-muted-foreground leading-tight">Early structures exist</div>
+                  <div className="text-xs text-muted-foreground leading-tight">Roles and routines forming</div>
                 </div>
               </div>
               
@@ -265,8 +265,8 @@ export default function HomePage() {
                   2
                 </div>
                 <div>
-                  <div className="font-semibold text-sm">Integrated</div>
-                  <div className="text-xs text-muted-foreground leading-tight">Documented practices</div>
+                  <div className="font-semibold text-sm">Integrating</div>
+                  <div className="text-xs text-muted-foreground leading-tight">Consistent execution across teams</div>
                 </div>
               </div>
               
@@ -279,8 +279,8 @@ export default function HomePage() {
                   3
                 </div>
                 <div>
-                  <div className="font-semibold text-sm">Leading</div>
-                  <div className="text-xs text-muted-foreground leading-tight">Institutionalized capabilities</div>
+                  <div className="font-semibold text-sm">Strategic</div>
+                  <div className="text-xs text-muted-foreground leading-tight">Measured impact and continuous improvement</div>
                 </div>
               </div>
             </div>
