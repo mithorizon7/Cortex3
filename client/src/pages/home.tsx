@@ -201,19 +201,19 @@ export default function HomePage() {
             <li>
               <div className="font-medium">Step 1 — Context</div>
               <div className="text-sm text-muted-foreground">
-                A short profile of your operating environment. Tailors guidance; does not change scores.
+                Begin with a quick profile of the conditions you operate in. This information shapes the advice and highlights where extra care may be needed. It does not change your scores.
               </div>
             </li>
             <li>
               <div className="font-medium">Step 2 — Pulse Check</div>
               <div className="text-sm text-muted-foreground">
-                18 binary questions across six pillars. Answer "Yes" only if fully true today.
+                Review 18 items that reflect how your organization is operating today. The result is a straightforward score per domain that shows strengths and where there is room to improve.
               </div>
             </li>
             <li>
               <div className="font-medium">Step 3 — Results</div>
               <div className="text-sm text-muted-foreground">
-                Honeycomb snapshot, context gates, and practical guidance. Export as PDF/JSON.
+                View a honeycomb chart summarizing your AI maturity, along with tailored cautions where risk is higher. Each domain includes a short card that explains why it matters and typical ways organizations strengthen that area. A downloadable brief is available at the end.
               </div>
             </li>
           </ol>
