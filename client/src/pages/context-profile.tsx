@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,12 +20,14 @@ import { CONTEXT_ITEMS, CONTEXT_SCREENS } from "@/lib/cortex";
 import { apiRequest, getNetworkError } from "@/lib/queryClient";
 import { getEnhancedErrorMessage } from "@/lib/error-utils";
 import { useToast } from "@/hooks/use-toast";
-import { ChevronLeft, ChevronRight, Clock, Target } from "lucide-react";
+import { ChevronLeft, ChevronRight, Target } from "lucide-react";
 
 export default function ContextProfilePage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [currentScreen, setCurrentScreen] = useState(0);
+  // Track which fields users have actually interacted with
+  const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
   
   const form = useForm<ContextProfile>({
     resolver: zodResolver(contextProfileSchema),
@@ -90,6 +92,11 @@ export default function ContextProfilePage() {
   const progress = ((currentScreen + 1) / CONTEXT_SCREENS.length) * 100;
   const isLastScreen = currentScreen === CONTEXT_SCREENS.length - 1;
   
+  // Auto-scroll to top when screen changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentScreen]);
+  
   const handleNext = () => {
     if (currentScreen < CONTEXT_SCREENS.length - 1) {
       setCurrentScreen(prev => prev + 1);
@@ -102,15 +109,32 @@ export default function ContextProfilePage() {
     }
   };
 
+  // Helper function to track user interactions
+  const handleFieldTouch = (fieldKey: string) => {
+    setTouchedFields(prev => new Set(prev).add(fieldKey));
+  };
+
   const onSubmit = (data: ContextProfile) => {
     createAssessment.mutate(data);
   };
 
-  // Check if current screen questions are answered
+  // Check if current screen questions are answered (count sliders as answered by default, switches only when touched)
   const getCurrentScreenAnswers = () => {
     const answers = currentScreenData.questions.map(questionKey => {
-      const value = form.getValues(questionKey as keyof ContextProfile);
-      return value !== undefined && value !== null;
+      const item = CONTEXT_ITEMS.find(i => i.key === questionKey);
+      if (!item) return false;
+      
+      // Sliders are considered answered by default (they have meaningful default values)
+      if (item.type === 'slider') {
+        return true;
+      }
+      
+      // Switches only count as answered when touched
+      if (item.type === 'boolean') {
+        return touchedFields.has(questionKey);
+      }
+      
+      return false;
     });
     return answers.filter(Boolean).length;
   };
@@ -134,10 +158,10 @@ export default function ContextProfilePage() {
           <div className="flex items-center justify-center space-x-2 mb-4">
             <Target className="h-6 w-6 text-primary" />
             <h1 className="text-3xl font-display font-bold text-foreground">AI Readiness Assessment</h1>
-            <Clock className="h-5 w-5 text-muted-foreground" />
+            <Target className="h-6 w-6 text-primary" />
           </div>
           <p className="text-lg text-muted-foreground mb-4 font-ui">
-            A few quick sliders tell us about your operating environment (regulation, sensitivity, speed, scale, etc.). We use these to <strong>tailor guidance and highlight critical requirements</strong>. We do <strong>not</strong> change your scores based on context.
+            A few quick questions tell us about your operating environment (regulation, sensitivity, speed, scale, etc.). We use these to <strong>tailor guidance and highlight critical requirements</strong>. We do <strong>not</strong> change your scores based on context.
           </p>
           <div className="space-y-3">
             <Progress value={progress} className="w-full max-w-md mx-auto" />
@@ -150,9 +174,9 @@ export default function ContextProfilePage() {
         {/* Current Screen */}
         <Card className="mb-6 sm:mb-8">
           <CardContent className="p-6 sm:p-8">
-            <div className="mb-6 sm:mb-8">
-              <h2 className="text-xl sm:text-2xl font-display font-bold text-foreground mb-2">{currentScreenData.title}</h2>
-              <p className="text-base sm:text-lg text-muted-foreground font-ui">{currentScreenData.subtitle}</p>
+            <div className="mb-6 sm:mb-8 text-center">
+              <h2 className="text-2xl sm:text-3xl font-display font-bold text-foreground mb-3">{currentScreenData.title}</h2>
+              <p className="text-lg sm:text-xl text-muted-foreground font-ui">{currentScreenData.subtitle}</p>
             </div>
 
             <Form {...form}>
@@ -168,23 +192,32 @@ export default function ContextProfilePage() {
                       name={item.key as keyof ContextProfile}
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-lg sm:text-xl font-ui font-semibold text-foreground">
+                          <FormLabel className={`text-lg sm:text-xl font-ui font-semibold transition-colors duration-300 ${
+                            touchedFields.has(item.key) ? 'text-foreground' : 'text-muted-foreground'
+                          }`}>
                             {item.label}
+                            {item.type === 'boolean' && !touchedFields.has(item.key) && (
+                              <span className="ml-2 text-sm text-muted-foreground/60 font-normal">
+                                (not answered)
+                              </span>
+                            )}
                           </FormLabel>
-                          <p className="text-sm sm:text-base text-muted-foreground mb-4 font-ui">
+                          <p className={`text-sm sm:text-base mb-4 font-ui transition-colors duration-300 ${
+                            touchedFields.has(item.key) ? 'text-muted-foreground' : 'text-muted-foreground/80'
+                          }`}>
                             {item.description}
                           </p>
                           
                           {/* Show examples upfront */}
                           {item.examples && (
-                            <div className="mb-6 p-4 bg-info/10 rounded-lg border border-info/20">
-                              <p className="text-sm font-medium text-info-foreground mb-2 font-ui">
+                            <div className="mb-6 p-4 bg-secondary rounded-lg border border-border">
+                              <p className="text-sm font-medium text-secondary-foreground mb-2 font-ui">
                                 Examples by level:
                               </p>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs text-info-foreground/80 font-ui">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs text-muted-foreground font-ui">
                                 {item.examples.map((example, idx) => (
                                   <div key={idx} className="flex items-center space-x-2">
-                                    <span className="bg-info/20 px-2 py-1 rounded font-medium font-mono text-info-foreground">
+                                    <span className="bg-primary/20 px-2 py-1 rounded font-medium font-mono text-primary">
                                       {idx}
                                     </span>
                                     <span>{example}</span>
@@ -196,14 +229,19 @@ export default function ContextProfilePage() {
 
                           <FormControl>
                             {item.type === 'slider' ? (
-                              <div className="space-y-6">
+                              <div className={`space-y-6 transition-opacity duration-300 ${
+                                touchedFields.has(item.key) ? 'opacity-100' : 'opacity-60'
+                              }`}>
                                 <div className="px-2 sm:px-4">
                                   <Slider
                                     min={0}
                                     max={4}
                                     step={1}
                                     value={[field.value as number]}
-                                    onValueChange={(value) => field.onChange(value[0])}
+                                    onValueChange={(value) => {
+                                      field.onChange(value[0]);
+                                      handleFieldTouch(item.key);
+                                    }}
                                     className="w-full"
                                     data-testid={`slider-${item.key}`}
                                   />
@@ -219,12 +257,20 @@ export default function ContextProfilePage() {
                                 </div>
                                 
                                 <div className="text-center">
-                                  <div className="inline-flex items-center space-x-3 bg-muted p-5 sm:p-4 rounded-lg">
-                                    <span className="text-xl sm:text-lg font-bold text-primary">
+                                  <div className={`inline-flex items-center space-x-3 p-5 sm:p-4 rounded-lg transition-all duration-300 ${
+                                    touchedFields.has(item.key) 
+                                      ? 'bg-primary/10 border-2 border-primary/30' 
+                                      : 'bg-muted border-2 border-transparent'
+                                  }`}>
+                                    <span className={`text-xl sm:text-lg font-bold transition-colors duration-300 ${
+                                      touchedFields.has(item.key) ? 'text-primary' : 'text-muted-foreground'
+                                    }`}>
                                       {field.value}/4
                                     </span>
                                     {item.labels && (
-                                      <span className="text-lg sm:text-base font-medium">
+                                      <span className={`text-lg sm:text-base font-medium transition-colors duration-300 ${
+                                        touchedFields.has(item.key) ? 'text-foreground' : 'text-muted-foreground'
+                                      }`}>
                                         {item.labels[field.value as number]}
                                       </span>
                                     )}
@@ -232,18 +278,22 @@ export default function ContextProfilePage() {
                                 </div>
 
                                 {item.anchors && (
-                                  <div className="p-4 bg-warning/10 rounded-lg border border-warning/20">
-                                    <p className="text-sm font-medium text-warning-foreground mb-2 font-ui">
+                                  <div className={`p-4 bg-accent/10 rounded-lg border border-accent/20 transition-opacity duration-300 ${
+                                    touchedFields.has(item.key) ? 'opacity-100' : 'opacity-70'
+                                  }`}>
+                                    <p className="text-sm font-medium text-accent-foreground mb-2 font-ui">
                                       What this level means:
                                     </p>
-                                    <p className="text-sm text-warning-foreground/80 font-ui">
+                                    <p className="text-sm text-muted-foreground font-ui">
                                       {item.anchors[field.value as number]}
                                     </p>
                                   </div>
                                 )}
                               </div>
                             ) : (
-                              <div>
+                              <div className={`transition-opacity duration-300 ${
+                                touchedFields.has(item.key) ? 'opacity-100' : 'opacity-60'
+                              }`}>
                                 {item.examples && (
                                   <div className="mb-6 sm:mb-4 p-4 sm:p-3 bg-muted rounded-lg">
                                     <p className="text-sm font-medium mb-2">This typically includes:</p>
@@ -252,13 +302,22 @@ export default function ContextProfilePage() {
                                     </div>
                                   </div>
                                 )}
-                                <div className="flex items-center space-x-5 sm:space-x-4 p-6 sm:p-4 bg-muted/50 rounded-lg">
+                                <div className={`flex items-center space-x-5 sm:space-x-4 p-6 sm:p-4 rounded-lg transition-all duration-300 ${
+                                  touchedFields.has(item.key) 
+                                    ? 'bg-primary/10 border-2 border-primary/30' 
+                                    : 'bg-muted/50 border-2 border-transparent'
+                                }`}>
                                   <Switch
                                     checked={field.value as boolean}
-                                    onCheckedChange={field.onChange}
+                                    onCheckedChange={(checked) => {
+                                      field.onChange(checked);
+                                      handleFieldTouch(item.key);
+                                    }}
                                     data-testid={`switch-${item.key}`}
                                   />
-                                  <span className="text-xl sm:text-lg font-medium">
+                                  <span className={`text-xl sm:text-lg font-medium transition-colors duration-300 ${
+                                    touchedFields.has(item.key) ? 'text-foreground' : 'text-muted-foreground'
+                                  }`}>
                                     {field.value ? 'Yes' : 'No'}
                                   </span>
                                 </div>
