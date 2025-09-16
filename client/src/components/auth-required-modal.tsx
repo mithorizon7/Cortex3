@@ -59,7 +59,7 @@ export const AuthRequiredModal: React.FC<AuthRequiredModalProps> = ({
     {
       icon: FileText,
       title: "Export & Share Results", 
-      description: "Download your personalized AI readiness report as PDF or JSON to share with your team."
+      description: "Download your personalized strategic maturity report as PDF or JSON to share with your team."
     },
     {
       icon: Shield,
@@ -84,7 +84,7 @@ export const AuthRequiredModal: React.FC<AuthRequiredModalProps> = ({
             Create Account to Get Started
           </DialogTitle>
           <DialogDescription className="text-center text-muted-foreground">
-            Sign in to save your progress and access your personalized AI readiness results
+            Sign in to save your progress and access your personalized strategic maturity results
           </DialogDescription>
         </DialogHeader>
 
@@ -151,7 +151,7 @@ export const AuthRequiredModal: React.FC<AuthRequiredModalProps> = ({
             </div>
             <p className="text-xs text-muted-foreground">
               Complete your organizational context profile, take the pulse check assessment, 
-              and receive your executive AI readiness snapshot with actionable guidance.
+              and receive your executive strategic maturity snapshot with actionable guidance.
             </p>
           </div>
         </div>

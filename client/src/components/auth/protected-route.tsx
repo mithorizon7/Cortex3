@@ -35,7 +35,7 @@ const DefaultAuthRequired: React.FC = () => {
           </div>
           <CardTitle>Authentication Required</CardTitle>
           <CardDescription>
-            Please sign in to access this feature of the CORTEX AI Readiness Assessment.
+            Please sign in to access this feature of the CORTEX AI Strategic Maturity Assessment.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

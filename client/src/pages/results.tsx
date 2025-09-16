@@ -91,7 +91,7 @@ function generateExecutiveInsights(pillarScores: PillarScores, gates: any[], con
   if (avgScore < 1.5) {
     insights.push({
       type: 'foundation',
-      title: 'Focus on AI Readiness Foundations',
+      title: 'Focus on Strategic Maturity Foundations',
       description: 'Your organization needs foundational AI capabilities before scaling initiatives.',
       action: 'Invest in data infrastructure, governance, and talent development first.'
     });
@@ -414,7 +414,7 @@ export default function ResultsPage() {
                   <Badge variant="secondary" className="text-xs">Optional</Badge>
                 </h3>
                 <p className="text-muted-foreground mb-4 font-ui">
-                  Now that you understand your AI readiness, dive deeper with our guided exploration tool. 
+                  Now that you understand your strategic maturity, dive deeper with our guided exploration tool. 
                   Compare strategic options, debunk common myths, and get personalized recommendations 
                   based on your specific context and goals.
                 </p>
@@ -668,7 +668,7 @@ export default function ResultsPage() {
                   onCheckedChange={(checked) => setRemindQuarterly(checked === true)}
                 />
                 <label htmlFor="quarterly-reminder" className="text-sm">
-                  Email me quarterly AI readiness updates
+                  Email me quarterly strategic maturity updates
                 </label>
               </div>
               

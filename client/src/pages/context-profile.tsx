@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
+import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -25,6 +26,7 @@ import { ChevronLeft, ChevronRight, Target } from "lucide-react";
 export default function ContextProfilePage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [currentScreen, setCurrentScreen] = useState(0);
   // Track which fields users have actually interacted with
   const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
@@ -53,6 +55,10 @@ export default function ContextProfilePage() {
       return response.json();
     },
     onSuccess: (data) => {
+      // Store the latest assessment ID for the user
+      if (user?.uid) {
+        localStorage.setItem(`latest-assessment-${user.uid}`, data.id);
+      }
       navigate(`/context-insight/${data.id}`);
     },
     onError: (error) => {
@@ -157,7 +163,7 @@ export default function ContextProfilePage() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center space-x-2 mb-4">
             <Target className="h-6 w-6 text-primary" />
-            <h1 className="text-3xl font-display font-bold text-foreground">AI Readiness Assessment</h1>
+            <h1 className="text-3xl font-display font-bold text-foreground">AI Strategic Maturity Assessment</h1>
             <Target className="h-6 w-6 text-primary" />
           </div>
           <p className="text-lg text-muted-foreground mb-4 font-ui">

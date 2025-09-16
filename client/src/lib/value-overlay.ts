@@ -407,7 +407,7 @@ export function getMetricContextExplanation(metricId: string, contextProfile: Co
       return profile.finops_priority >= 3 ? 'Selected due to high FinOps priority' : null;
     },
     t_adoption: (profile) => {
-      return profile.build_readiness <= 1 ? 'Selected due to early-stage AI readiness' : null;
+      return profile.build_readiness <= 1 ? 'Selected due to early-stage strategic maturity' : null;
     }
   };
 

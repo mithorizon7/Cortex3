@@ -73,7 +73,7 @@ export async function generateContextBrief(data: ContextMirrorData): Promise<voi
   
   doc.setFontSize(12);
   doc.setFont('helvetica', 'normal');
-  doc.text('Executive AI Readiness Context Brief', margin, 28);
+  doc.text('AI Strategic Maturity Context Brief', margin, 28);
   
   // Date and Assessment ID
   doc.setFontSize(10);
@@ -277,7 +277,7 @@ export async function generateContextBrief(data: ContextMirrorData): Promise<voi
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor('#888888');
-  doc.text('© 2024 CORTEX™ Executive AI Readiness Program', margin, footerY);
+  doc.text('© 2024 CORTEX™ AI Strategic Maturity Program', margin, footerY);
   
     // Generate and download PDF
     const pdfBlob = doc.output('blob');
@@ -751,7 +751,7 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor('#888888');
-    doc.text('© 2024 CORTEX™ Executive AI Readiness Program - Options Studio', margin, footerY);
+    doc.text('© 2024 CORTEX™ AI Strategic Maturity Program - Options Studio', margin, footerY);
     const exportedText = `Exported: ${new Date(sessionData.exportedAt).toLocaleString()}`;
     doc.text(exportedText, pageWidth - margin - doc.getTextWidth(exportedText), footerY);
 

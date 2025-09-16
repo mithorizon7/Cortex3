@@ -52,7 +52,7 @@ export const CONTEXT_SCREENS = [
   {
     id: 3,
     title: "Capabilities & Strategy", 
-    subtitle: "Help us understand your competitive position and AI readiness",
+    subtitle: "Help us understand your competitive position and strategic maturity",
     questions: ['data_advantage', 'build_readiness', 'clock_speed', 'finops_priority']
   },
   {

@@ -22,7 +22,7 @@ export default function ProgressHeader({ currentStep, onExport }: ProgressHeader
             <div className="bg-primary text-primary-foreground px-3 py-1 rounded-md font-display font-bold text-lg">
               CORTEX™
             </div>
-            <span className="text-muted-foreground text-sm font-ui">Executive AI Readiness Assessment</span>
+            <span className="text-muted-foreground text-sm font-ui">Executive AI Strategic Maturity Assessment</span>
           </div>
           
           {/* Progress Indicator */}

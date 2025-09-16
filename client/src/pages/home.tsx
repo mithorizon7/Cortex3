@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +16,7 @@ import { AppHeader } from "@/components/navigation/app-header";
 import { ExecutiveCortexHero } from "@/components/executive-cortex-hero";
 import { AuthRequiredModal } from "@/components/auth-required-modal";
 import { useAuth } from "@/contexts/auth-context";
+import type { Assessment } from "@shared/schema";
 import { 
   ArrowRight,
   CheckCircle,
@@ -65,15 +67,25 @@ export default function HomePage() {
   const [intendedDestination, setIntendedDestination] = useState<string | null>(null);
   const { user, loading } = useAuth();
 
+  // Get user's latest assessment ID from localStorage
+  const latestAssessmentId = user ? localStorage.getItem(`latest-assessment-${user.uid}`) : null;
+
+  // Fetch user's latest assessment if they have one
+  const { data: userAssessment } = useQuery<Assessment>({
+    queryKey: ['/api/assessments', latestAssessmentId],
+    enabled: !!user && !!latestAssessmentId,
+    retry: false, // Don't retry if assessment doesn't exist
+  });
+
   // Set document title for SEO
   useEffect(() => {
-    document.title = "CORTEX™ Executive AI-Readiness Assessment | MIT Open Learning";
+    document.title = "CORTEX™ AI Strategic Maturity Index | MIT Open Learning";
     
     // Set meta description
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
       metaDescription.setAttribute('content', 
-        'A focused, two-step assessment to align leadership and surface your next best moves in AI readiness. Complete context profile and pulse check in ~15 minutes.'
+        'A focused, two-step assessment to align leadership and surface your next best moves in AI strategic maturity. Complete context profile and pulse check in ~15 minutes.'
       );
     }
   }, []);
@@ -242,7 +254,15 @@ export default function HomePage() {
             </div>
           </div>
 
-          <ExecutiveCortexHero className="hidden md:block" />
+          <div className="space-y-4">
+            <ExecutiveCortexHero 
+              className="hidden md:block" 
+              pillarScores={userAssessment?.pillarScores}
+            />
+            <p className="text-sm text-center text-muted-foreground md:block hidden">
+              Once you have finished the assessment this will reflect your organization's AI strategic maturity
+            </p>
+          </div>
         </div>
 
         {/* Assessment Scale Section - Centered and larger below both columns */}
@@ -332,7 +352,7 @@ export default function HomePage() {
             <CardContent className="space-y-3 text-sm">
               <div className="flex items-start gap-2">
                 <CheckCircle className="h-4 w-4 text-accent mt-0.5 flex-shrink-0" />
-                <span>A single-page view of where you stand across six ai-readiness domains (0–3 scale).</span>
+                <span>A single-page view of where you stand across six strategic maturity domains (0–3 scale).</span>
               </div>
               <div className="flex items-start gap-2">
                 <CheckCircle className="h-4 w-4 text-accent mt-0.5 flex-shrink-0" />
@@ -393,7 +413,7 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-4">
             <p className="text-sm text-muted-foreground">
-              CORTEX™ v3.2 Executive AI-Readiness Program
+              CORTEX™ v3.2 AI Strategic Maturity Program
             </p>
           </div>
           <div className="flex justify-center">

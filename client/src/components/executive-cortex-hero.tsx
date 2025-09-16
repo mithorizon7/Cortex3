@@ -17,19 +17,19 @@ const DEFAULT_PILLARS: Pillar[] = [
 // Convert PillarScores to internal Pillar format
 function convertPillarScoresToPillars(scores: PillarScores): Pillar[] {
   return [
-    { key: "C", label: "C", level: Math.max(1, scores.C) as Level },
-    { key: "O", label: "O", level: Math.max(1, scores.O) as Level },
-    { key: "R", label: "R", level: Math.max(1, scores.R) as Level },
-    { key: "T", label: "T", level: Math.max(1, scores.T) as Level },
-    { key: "E", label: "E", level: Math.max(1, scores.E) as Level },
-    { key: "X", label: "X", level: Math.max(1, scores.X) as Level },
+    { key: "C", label: "C", level: Math.max(0, Math.min(3, scores.C)) as Level },
+    { key: "O", label: "O", level: Math.max(0, Math.min(3, scores.O)) as Level },
+    { key: "R", label: "R", level: Math.max(0, Math.min(3, scores.R)) as Level },
+    { key: "T", label: "T", level: Math.max(0, Math.min(3, scores.T)) as Level },
+    { key: "E", label: "E", level: Math.max(0, Math.min(3, scores.E)) as Level },
+    { key: "X", label: "X", level: Math.max(0, Math.min(3, scores.X)) as Level },
   ];
 }
 
 export function ExecutiveCortexHero({
   pillarScores,
   pillars,
-  ariaLabel = "Executive CORTEX AI Readiness radar",
+  ariaLabel = "Executive CORTEX AI Strategic Maturity radar",
   className = "",
 }: {
   pillarScores?: PillarScores;
@@ -103,7 +103,7 @@ export function ExecutiveCortexHero({
             <div className="text-sm uppercase tracking-widest text-muted-foreground">
               Executive
             </div>
-            <div className="text-xs text-muted-foreground">AI Readiness</div>
+            <div className="text-xs text-muted-foreground">Strategic Maturity</div>
           </div>
           <div className="mt-3 flex items-center gap-2">
             {actualPillars.map((p, i) => {
