@@ -158,13 +158,6 @@ export default function HomePage() {
             A focused, two‑step assessment to align leadership and surface your next best moves.
           </p>
           
-          {/* Featured 0-3 Scale Information */}
-          <div className="bg-muted/30 border border-border rounded-md p-4" data-testid="scale-information">
-            <h3 className="text-sm font-semibold mb-2 text-foreground">0–3 Scale</h3>
-            <p className="text-sm text-muted-foreground">
-              Four clear stages: <strong>0 Nascent</strong>, <strong>1 Emerging</strong>, <strong>2 Integrated</strong>, <strong>3 Leading</strong>.
-            </p>
-          </div>
 
           <ol className="space-y-4" data-testid="list-assessment-steps">
             <li>
@@ -186,6 +179,74 @@ export default function HomePage() {
               </div>
             </li>
           </ol>
+
+          {/* Enhanced 0-3 Scale Section - Using maturity color system */}
+          <div className="bg-card/50 border border-border rounded-lg p-6 space-y-4" data-testid="scale-information">
+            <div className="text-center">
+              <h3 className="text-lg font-semibold mb-2">Assessment Scale</h3>
+              <p className="text-sm text-muted-foreground">
+                Each domain is evaluated on a four-stage maturity scale
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {/* Level 0 - Nascent */}
+              <div className="text-center space-y-2">
+                <div 
+                  className="w-10 h-10 rounded-full mx-auto flex items-center justify-center font-bold text-white text-sm shadow-md"
+                  style={{ backgroundColor: "hsl(220, 15%, 60%)" }}
+                >
+                  0
+                </div>
+                <div>
+                  <div className="font-semibold text-sm">Nascent</div>
+                  <div className="text-xs text-muted-foreground leading-tight">Ad hoc, minimal practices</div>
+                </div>
+              </div>
+              
+              {/* Level 1 - Emerging */}
+              <div className="text-center space-y-2">
+                <div 
+                  className="w-10 h-10 rounded-full mx-auto flex items-center justify-center font-bold text-white text-sm shadow-md"
+                  style={{ backgroundColor: "hsl(38, 92%, 50%)" }}
+                >
+                  1
+                </div>
+                <div>
+                  <div className="font-semibold text-sm">Emerging</div>
+                  <div className="text-xs text-muted-foreground leading-tight">Early structures exist</div>
+                </div>
+              </div>
+              
+              {/* Level 2 - Integrated */}
+              <div className="text-center space-y-2">
+                <div 
+                  className="w-10 h-10 rounded-full mx-auto flex items-center justify-center font-bold text-white text-sm shadow-md"
+                  style={{ backgroundColor: "hsl(158, 64%, 52%)" }}
+                >
+                  2
+                </div>
+                <div>
+                  <div className="font-semibold text-sm">Integrated</div>
+                  <div className="text-xs text-muted-foreground leading-tight">Documented practices</div>
+                </div>
+              </div>
+              
+              {/* Level 3 - Leading */}
+              <div className="text-center space-y-2">
+                <div 
+                  className="w-10 h-10 rounded-full mx-auto flex items-center justify-center font-bold text-white text-sm shadow-md ring-2 ring-primary/20"
+                  style={{ backgroundColor: "hsl(158, 64%, 52%)" }}
+                >
+                  3
+                </div>
+                <div>
+                  <div className="font-semibold text-sm">Leading</div>
+                  <div className="text-xs text-muted-foreground leading-tight">Institutionalized capabilities</div>
+                </div>
+              </div>
+            </div>
+          </div>
 
           <div className="flex items-center gap-4 pt-2">
             <Button 

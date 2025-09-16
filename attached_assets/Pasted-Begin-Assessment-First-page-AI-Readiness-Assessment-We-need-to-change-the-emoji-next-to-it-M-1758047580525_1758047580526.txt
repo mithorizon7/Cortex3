@@ -1,0 +1,19 @@
+Begin Assessment:  
+  First page: AI Readiness Assessment. We need to change the emoji next to it. Maybe a target on both sides. Right now there is a target on one side. Let’s make that a target on both sides. Also, the text under the main title currently says “A few quick sliders tell us about your operating environment (regulation, sensitivity, speed, scale, etc.). We use these to tailor guidance and highlight critical requirements. We do not change your scores based on context.” Let’s change that to: “A few quick questions tell us about your operating environment (regulation, sensitivity, speed, scale, etc.). We use these to tailor guidance and highlight critical requirements. We do not change your scores based on context.”
+A few quick questions tell us about your operating environment (regulation, sensitivity, speed, scale, etc.). We use these to tailor guidance and highlight critical requirements. We do not change your scores based on context.
+
+
+
+Let’s center all of the main headlines, and make them a little more prominent on each page of the context, These should all feel a little more like some type of heading/subheading for their requisite groups of questions on each page.  this includes:  Your Industry Environment
+Let's understand your operating context 
+Data & Operations
+Tell us about your data and operational requirements
+
+Capabilities & Strategy
+Help us understand your competitive position and AI readiness
+
+Operational Constraints
+Just a couple quick questions about special requirements
+
+
+ Also, when you press NEXT on the first pages of context, can we have it scroll up to the top of the new page when the “next” page loads, so it’s clear that they’v moved to a new page?  Also, at the bottom is says things like “4 of 4 Questions answered” That’s hard to measure right now because they all start “answered” but on 2 out of 4. Can we have them start at 2 out of 4, but perhaps slightly lighter or less opaque until the person clicks on the slider and then it becomes full color and counts as “answered?” 
