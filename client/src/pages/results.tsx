@@ -319,7 +319,7 @@ export default function ResultsPage() {
         <div className="text-center mb-8 sm:mb-12">
           <div className="flex items-center justify-center space-x-2 mb-4">
             <Target className="h-6 sm:h-8 w-6 sm:w-8 text-primary" />
-            <h1 className="text-2xl sm:text-4xl font-display font-bold text-foreground">Your Readiness Snapshot</h1>
+            <h1 className="text-2xl sm:text-4xl font-display font-bold text-foreground">Your Strategic Maturity Profile</h1>
           </div>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mb-6">
             <Badge variant="outline" className="text-sm sm:text-lg px-3 sm:px-4 py-1 sm:py-2">

@@ -204,7 +204,7 @@ export default function HomePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
           <div className="space-y-6">
           <h1 className="text-3xl md:text-4xl font-semibold tracking-tight" data-testid="text-main-title">
-            CORTEX™ — Executive AI‑Readiness Snapshot
+            CORTEX™ — AI Strategic Maturity Index
           </h1>
           <p className="text-base text-muted-foreground" data-testid="text-main-description">
             A focused, two‑step assessment to align leadership and surface your next best moves.
