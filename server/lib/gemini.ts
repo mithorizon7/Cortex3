@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { ContextProfile, ContextMirror, ContextMirrorPayload } from "../../shared/schema";
 import { getContextTemplate } from "./context-templates";
 import { BANNED_PHRASES_REGEX, WORD_COUNT_LIMITS, violatesPolicy } from "../../shared/context-validation";
@@ -9,7 +9,7 @@ import { BANNED_PHRASES_REGEX, WORD_COUNT_LIMITS, violatesPolicy } from "../../s
 //   - do not change this unless explicitly requested by the user
 
 // This API key is from Gemini Developer API Key, not vertex AI API Key
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export async function generateContextMirror(profile: ContextProfile): Promise<ContextMirror> {
   // 25 second timeout for complex Context Mirror 2.0 prompts with structured JSON schema
@@ -38,11 +38,14 @@ Produce an export-ready CONTEXT MIRROR 2.0 with:
 5) scenarios: one-sentence notes for: if_regulation_tightens, if_budgets_tighten.
 Constraints: vendor-neutral. no numbers/benchmarks. no policy names. no headings or bullets inside 'insight'.`;
 
-    const llmRequest = ai.models.generateContent({
-      model: "gemini-2.5-pro",
-      contents: userPrompt,
-      config: {
-        systemInstruction: systemPrompt,
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-2.0-flash-exp", 
+      systemInstruction: systemPrompt 
+    });
+    
+    const llmRequest = model.generateContent({
+      contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+      generationConfig: {
         responseMimeType: "application/json",
         responseSchema: {
           type: "object",
@@ -68,7 +71,7 @@ Constraints: vendor-neutral. no numbers/benchmarks. no policy names. no headings
 
     const response = await Promise.race([llmRequest, timeoutPromise]);
 
-    const rawJson = response.text;
+    const rawJson = response.response.text();
 
     if (rawJson) {
       // Clean the response - remove markdown code block wrapper if present
@@ -77,7 +80,13 @@ Constraints: vendor-neutral. no numbers/benchmarks. no policy names. no headings
         .replace(/\n?```$/, '')        // Remove closing ```
         .trim();                       // Remove extra whitespace
       
-      const payload: ContextMirrorPayload = JSON.parse(cleanedJson);
+      let payload: ContextMirrorPayload;
+      try {
+        payload = JSON.parse(cleanedJson);
+      } catch (parseError) {
+        console.warn('JSON parsing failed:', parseError, 'Raw response:', rawJson.substring(0, 200));
+        throw new Error('Failed to parse JSON response from Gemini');
+      }
       
       // Check for policy violations using shared validation
       if (violatesPolicy(payload.insight)) {
@@ -94,11 +103,14 @@ Context profile:
 Return complete Context Mirror 2.0 JSON with headline, insight (two paragraphs), actions (3), watchouts (2), scenarios, disclaimer.`;
 
         try {
-          const retryLlmRequest = ai.models.generateContent({
-            model: "gemini-2.5-pro",
-            contents: retryPrompt,
-            config: {
-              systemInstruction: systemPrompt,
+          const retryModel = genAI.getGenerativeModel({ 
+            model: "gemini-2.0-flash-exp", 
+            systemInstruction: systemPrompt 
+          });
+          
+          const retryLlmRequest = retryModel.generateContent({
+            contents: [{ role: 'user', parts: [{ text: retryPrompt }] }],
+            generationConfig: {
               responseMimeType: "application/json",
               responseSchema: {
                 type: "object",
@@ -124,7 +136,7 @@ Return complete Context Mirror 2.0 JSON with headline, insight (two paragraphs),
           
           const retryResponse = await Promise.race([retryLlmRequest, timeoutPromise]);
           
-          const retryJson = retryResponse.text;
+          const retryJson = retryResponse.response.text();
           if (retryJson) {
             // Clean the retry response - remove markdown code block wrapper if present
             const cleanedRetryJson = retryJson
@@ -132,7 +144,13 @@ Return complete Context Mirror 2.0 JSON with headline, insight (two paragraphs),
               .replace(/\n?```$/, '')        // Remove closing ```
               .trim();                       // Remove extra whitespace
             
-            const retryPayload: ContextMirrorPayload = JSON.parse(cleanedRetryJson);
+            let retryPayload: ContextMirrorPayload;
+            try {
+              retryPayload = JSON.parse(cleanedRetryJson);
+            } catch (retryParseError) {
+              console.warn('Retry JSON parsing failed:', retryParseError, 'Raw retry response:', retryJson.substring(0, 200));
+              throw new Error('Failed to parse retry JSON response from Gemini');
+            }
             
             // CRITICAL: Validate retry response before returning
             if (!violatesPolicy(retryPayload.insight)) {
@@ -172,6 +190,7 @@ Return complete Context Mirror 2.0 JSON with headline, insight (two paragraphs),
         disclaimer: payload.disclaimer
       };
     } else {
+      console.warn('Empty response received from Gemini API');
       throw new Error("Empty response from Gemini");
     }
   } catch (error) {
