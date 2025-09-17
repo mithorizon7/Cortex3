@@ -38,16 +38,20 @@ Avoid headings and bullets. Avoid the words 'strengths' and 'fragilities'. Avoid
     const config = {
       systemInstruction: systemPrompt,
       responseMimeType: "application/json",
-      responseSchema: Type.OBJECT({
-        insight: Type.STRING({
-          description: "Two paragraphs separated by \\n\\n, approximately 150-220 words total"
-        }),
-        disclaimer: Type.STRING({
-          description: "One-line micro-disclaimer"
-        })
-      }, {
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          insight: {
+            type: Type.STRING,
+            description: "Two paragraphs separated by \\n\\n, approximately 150-220 words total"
+          },
+          disclaimer: {
+            type: Type.STRING,
+            description: "One-line micro-disclaimer"
+          }
+        },
         required: ["insight", "disclaimer"]
-      })
+      }
     };
 
     const llmRequest = ai.models.generateContent({
@@ -58,7 +62,7 @@ Avoid headings and bullets. Avoid the words 'strengths' and 'fragilities'. Avoid
 
     const response = await Promise.race([llmRequest, timeoutPromise]);
 
-    const rawJson = response.response.text();
+    const rawJson = response.text ?? "";
 
     if (rawJson) {
       const payload: ContextMirrorPayload = JSON.parse(rawJson);
@@ -79,12 +83,18 @@ Context profile:
         const retryConfig = {
           systemInstruction: systemPrompt,
           responseMimeType: "application/json",
-          responseSchema: Type.OBJECT({
-            insight: Type.STRING(),
-            disclaimer: Type.STRING()
-          }, {
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              insight: {
+                type: Type.STRING
+              },
+              disclaimer: {
+                type: Type.STRING
+              }
+            },
             required: ["insight", "disclaimer"]
-          })
+          }
         };
 
         const retryLlmRequest = ai.models.generateContent({
@@ -95,7 +105,7 @@ Context profile:
         
         const retryResponse = await Promise.race([retryLlmRequest, timeoutPromise]);
         
-        const retryJson = retryResponse.response.text();
+        const retryJson = retryResponse.text ?? "";
         if (retryJson) {
           const retryPayload: ContextMirrorPayload = JSON.parse(retryJson);
           return {
