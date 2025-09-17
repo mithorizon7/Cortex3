@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import type { ContextProfile, ContextMirror, ContextMirrorPayload } from "../../shared/schema";
 import { getContextTemplate } from "./context-templates";
 import { BANNED_PHRASES_REGEX, WORD_COUNT_LIMITS, violatesPolicy } from "../../shared/context-validation";
@@ -39,14 +39,14 @@ Avoid headings and bullets. Avoid the words 'strengths' and 'fragilities'. Avoid
       systemInstruction: systemPrompt,
       responseMimeType: "application/json",
       responseSchema: {
-        type: Type.OBJECT,
+        type: "object",
         properties: {
           insight: {
-            type: Type.STRING,
+            type: "string",
             description: "Two paragraphs separated by \\n\\n, approximately 150-220 words total"
           },
           disclaimer: {
-            type: Type.STRING,
+            type: "string",
             description: "One-line micro-disclaimer"
           }
         },
@@ -62,7 +62,7 @@ Avoid headings and bullets. Avoid the words 'strengths' and 'fragilities'. Avoid
 
     const response = await Promise.race([llmRequest, timeoutPromise]);
 
-    const rawJson = response.text ?? "";
+    const rawJson = response.text;
 
     if (rawJson) {
       const payload: ContextMirrorPayload = JSON.parse(rawJson);
@@ -84,35 +84,51 @@ Context profile:
           systemInstruction: systemPrompt,
           responseMimeType: "application/json",
           responseSchema: {
-            type: Type.OBJECT,
+            type: "object",
             properties: {
               insight: {
-                type: Type.STRING
+                type: "string"
               },
               disclaimer: {
-                type: Type.STRING
+                type: "string"
               }
             },
             required: ["insight", "disclaimer"]
           }
         };
 
-        const retryLlmRequest = ai.models.generateContent({
-          model: "gemini-2.5-pro",
-          contents: retryPrompt,
-          config: retryConfig
-        });
-        
-        const retryResponse = await Promise.race([retryLlmRequest, timeoutPromise]);
-        
-        const retryJson = retryResponse.text ?? "";
-        if (retryJson) {
-          const retryPayload: ContextMirrorPayload = JSON.parse(retryJson);
-          return {
-            insight: retryPayload.insight,
-            disclaimer: retryPayload.disclaimer
-          };
+        try {
+          const retryLlmRequest = ai.models.generateContent({
+            model: "gemini-2.5-pro",
+            contents: retryPrompt,
+            config: retryConfig
+          });
+          
+          const retryResponse = await Promise.race([retryLlmRequest, timeoutPromise]);
+          
+          const retryJson = retryResponse.text;
+          if (retryJson) {
+            const retryPayload: ContextMirrorPayload = JSON.parse(retryJson);
+            
+            // CRITICAL: Validate retry response before returning
+            if (!violatesPolicy(retryPayload.insight)) {
+              return {
+                insight: retryPayload.insight,
+                disclaimer: retryPayload.disclaimer
+              };
+            }
+          }
+        } catch (retryError) {
+          console.warn('Retry failed, using fallback template:', retryError);
         }
+        
+        // If retry violates policy or fails, use fallback template
+        console.warn('Original and retry both violated policy or retry failed, using fallback template');
+        const fallback = getContextTemplate(profile);
+        return {
+          insight: fallback.insight,
+          disclaimer: fallback.disclaimer
+        };
       }
       
       return {
