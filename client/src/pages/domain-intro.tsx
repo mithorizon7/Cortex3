@@ -40,9 +40,9 @@ export default function DomainIntroPage() {
 
   // Determine which context notes to show based on assessment profile
   const contextNotesToShow = domainData?.contextNotes?.filter(note => {
-    if (!assessment?.contextProfile) return false;
+    if (!assessment || !(assessment as any)?.contextProfile) return false;
     
-    const profile = assessment.contextProfile as any;
+    const profile = (assessment as any).contextProfile;
     switch (note.condition) {
       case 'regulated >= 3':
         return profile.regulatory_intensity >= 3;

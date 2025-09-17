@@ -11,6 +11,8 @@ import ContextProfile from "@/pages/context-profile";
 import ContextInsight from "@/pages/context-insight";
 import ProfileSummary from "@/pages/profile-summary";
 import PulseCheck from "@/pages/pulse-check";
+import DomainIntro from "@/pages/domain-intro";
+import DomainQuestions from "@/pages/domain-questions";
 import Results from "@/pages/results";
 import OptionsStudio from "@/pages/options-studio";
 
@@ -36,6 +38,20 @@ function Router() {
         {() => (
           <ProtectedRoute>
             <ProfileSummary />
+          </ProtectedRoute>
+        )}
+      </Route>
+      <Route path="/pulse/:domain/intro/:id">
+        {() => (
+          <ProtectedRoute>
+            <DomainIntro />
+          </ProtectedRoute>
+        )}
+      </Route>
+      <Route path="/pulse/:domain/questions/:id">
+        {() => (
+          <ProtectedRoute>
+            <DomainQuestions />
           </ProtectedRoute>
         )}
       </Route>
