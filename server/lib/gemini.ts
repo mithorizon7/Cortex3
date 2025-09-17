@@ -11,10 +11,11 @@ import { getContextTemplate } from "./context-templates";
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 
 export async function generateContextMirror(profile: ContextProfile): Promise<ContextMirror> {
-  // 7 second timeout as per spec
-  const timeoutPromise = new Promise<never>((_, reject) => 
-    setTimeout(() => reject(new Error('LLM request timed out after 7 seconds')), 7000)
-  );
+  // 7 second timeout as per spec with proper cleanup
+  let timeoutId: NodeJS.Timeout;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error('LLM request timed out after 7 seconds')), 7000);
+  });
 
   try {
     const systemPrompt = `You are an executive AI strategy advisor. Write in clear, concise prose suitable for senior leaders. Base your analysis *only* on organizational **context** (not internal capabilities). Use probability language ('often', 'tends to', 'commonly'). Vendor-neutral. No metrics or benchmarks. Output exactly two paragraphs of narrative (150–220 words total).`;
@@ -34,10 +35,10 @@ Paragraph 2: What this typically **implies** for early AI moves (guardrails, qui
 Avoid headings and bullets. Avoid the words 'strengths' and 'fragilities'. Avoid internal guidelines, rules, or counters. Return JSON:
 { "insight": "<two paragraphs>", "disclaimer": "Educational reflection based on your context; not a compliance determination." }`;
 
-    const llmRequest = ai.models.generateContent({
+    const model = ai.getGenerativeModel({
       model: "gemini-2.5-pro",
-      config: {
-        systemInstruction: systemPrompt,
+      systemInstruction: systemPrompt,
+      generationConfig: {
         responseMimeType: "application/json",
         responseSchema: {
           type: "object",
@@ -53,13 +54,15 @@ Avoid headings and bullets. Avoid the words 'strengths' and 'fragilities'. Avoid
           },
           required: ["insight", "disclaimer"]
         },
-      },
-      contents: userPrompt,
+      }
     });
 
-    const response = await Promise.race([llmRequest, timeoutPromise]);
+    const llmRequest = model.generateContent(userPrompt);
 
-    const rawJson = response.text;
+    const response = await Promise.race([llmRequest, timeoutPromise]);
+    clearTimeout(timeoutId); // Clean up timeout
+
+    const rawJson = response.response.text();
 
     if (rawJson) {
       const payload: ContextMirrorPayload = JSON.parse(rawJson);
@@ -82,10 +85,10 @@ Context profile:
 • Change tolerance: ${profile.build_readiness}
 • Scale: ${profile.scale_throughput}`;
 
-        const retryLlmRequest = ai.models.generateContent({
+        const retryModel = ai.getGenerativeModel({
           model: "gemini-2.5-pro",
-          config: {
-            systemInstruction: systemPrompt,
+          systemInstruction: systemPrompt,
+          generationConfig: {
             responseMimeType: "application/json",
             responseSchema: {
               type: "object",
@@ -95,13 +98,15 @@ Context profile:
               },
               required: ["insight", "disclaimer"]
             },
-          },
-          contents: retryPrompt,
+          }
         });
+
+        const retryLlmRequest = retryModel.generateContent(retryPrompt);
         
         const retryResponse = await Promise.race([retryLlmRequest, timeoutPromise]);
+        clearTimeout(timeoutId); // Clean up timeout on retry
         
-        const retryJson = retryResponse.text;
+        const retryJson = retryResponse.response.text();
         if (retryJson) {
           const retryPayload: ContextMirrorPayload = JSON.parse(retryJson);
           return {
@@ -119,6 +124,10 @@ Context profile:
       throw new Error("Empty response from Gemini");
     }
   } catch (error) {
+    // Clean up timeout on error
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
     console.warn('LLM generation failed, using fallback:', error);
     const fallback = getContextTemplate(profile);
     return {
