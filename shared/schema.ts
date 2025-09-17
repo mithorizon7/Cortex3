@@ -11,6 +11,7 @@ export const assessments = pgTable("assessments", {
   contextMirrorUpdatedAt: text("context_mirror_updated_at"),
   pulseResponses: jsonb("pulse_responses"),
   pillarScores: jsonb("pillar_scores"),
+  confidenceGaps: jsonb("confidence_gaps"),
   triggeredGates: jsonb("triggered_gates"),
   priorityMoves: jsonb("priority_moves"),
   contentTags: jsonb("content_tags"),
@@ -47,8 +48,8 @@ export const contextProfileSchema = z.object({
 
 export type ContextProfile = z.infer<typeof contextProfileSchema>;
 
-// Pulse Check Types
-export const pulseResponsesSchema = z.record(z.string(), z.boolean());
+// Pulse Check Types - supports true/false/null for Yes/No/Unsure responses
+export const pulseResponsesSchema = z.record(z.string(), z.union([z.boolean(), z.null()]));
 export type PulseResponses = z.infer<typeof pulseResponsesSchema>;
 
 // Pillar Scores
@@ -62,6 +63,18 @@ export const pillarScoresSchema = z.object({
 });
 
 export type PillarScores = z.infer<typeof pillarScoresSchema>;
+
+// Confidence Gaps - tracks count of "Unsure" responses per pillar (0-3)
+export const confidenceGapsSchema = z.object({
+  C: z.number().min(0).max(3),
+  O: z.number().min(0).max(3),
+  R: z.number().min(0).max(3),
+  T: z.number().min(0).max(3),
+  E: z.number().min(0).max(3),
+  X: z.number().min(0).max(3),
+});
+
+export type ConfidenceGaps = z.infer<typeof confidenceGapsSchema>;
 
 // Gate Types
 export const gateSchema = z.object({

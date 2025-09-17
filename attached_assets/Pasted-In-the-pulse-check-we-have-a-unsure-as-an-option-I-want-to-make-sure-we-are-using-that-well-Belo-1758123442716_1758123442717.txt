@@ -1,0 +1,57 @@
+In the pulse check we have a "unsure" as an option. I want to make sure we are using that well. Below is guidance; 
+
+reat Unsure = 0 for maturity, and track it separately as a “knowledge gap/confidence” signal that appears in the results and export.
+
+Below is the full recommendation with copy, UX, and implementation details.
+
+⸻
+
+Why include Unsure?
+	•	Honesty over guesswork. Executives often don’t know the ground truth for a specific control or practice. “Unsure” prevents forced, inaccurate Yes/No choices.
+	•	Better signal. It distinguishes “we don’t do this” (No) from “we may do this, but I don’t know” (Unsure). That’s useful in a one-off workshop.
+	•	Follow-up focus. Knowledge gaps are action-worthy (who to ask / what to verify) without changing the maturity picture.
+
+⸻
+
+Scoring rule (keep maturity simple)
+	•	Each domain has 3 items → score = count(Yes) → 0–3.
+	•	No and Unsure both contribute 0 to maturity.
+	•	Separately compute knowledge gaps: gaps = count(Unsure) per domain (0–3).
+
+Rationale: Maturity reflects established practice, not uncertainty. We still surface uncertainty visibly.
+
+⸻
+
+Results visualization (make Unsure useful, not punitive)
+	•	Honeycomb: fill is based on score (0–3) as before.
+	•	Confidence/Gap overlay: if a domain has 1–3 Unsure, apply a subtle dotted overlay or hatched ring and show a small caption:
+	•	“Confidence: High” (0 unsure)
+	•	“Confidence: Medium” (1 unsure)
+	•	“Confidence: Low” (≥2 unsure)
+	•	Export: include a short table of Unsure items per domain (“Follow-ups”), not as tasks—just prompts.
+
+⸻
+
+UI & copy (drop-in)
+
+Answer choices (radio group)
+	•	Yes
+	•	No
+	•	Unsure
+
+Helper text under the section header
+
+Mark “Yes” only if it is true across your organization today and you could point to evidence if asked. Use “Unsure” if you’re not certain.
+
+Per-item tooltip (optional)
+
+Unsure means you’re not confident either way. We’ll flag it as a follow-up and it won’t affect your score.
+
+Results chip (per domain)
+	•	e.g., “C — Score 2/3 · Confidence: Medium (1 unsure)”
+
+⸻
+
+Implementation details (developer-ready)
+
+Data model

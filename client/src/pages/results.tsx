@@ -11,6 +11,7 @@ import OfflineBanner from "@/components/offline-banner";
 import { ErrorFallback } from "@/components/error-boundary";
 import { ResultsSkeleton } from "@/components/skeleton-loader";
 import { ExecutiveCortexHero } from "@/components/executive-cortex-hero";
+import HoneycombRadar from "@/components/honeycomb-radar";
 import DomainCard from "@/components/domain-card";
 import { AppHeader } from "@/components/navigation/app-header";
 import { ProtectedRoute } from "@/components/auth/protected-route";
@@ -42,7 +43,7 @@ import {
   Brain,
   ExternalLink
 } from "lucide-react";
-import type { Assessment, PillarScores, ContextProfile, ValueOverlay, ValueOverlayPillar } from "@shared/schema";
+import type { Assessment, PillarScores, ConfidenceGaps, ContextProfile, ValueOverlay, ValueOverlayPillar } from "@shared/schema";
 
 // Helper function to get gate thresholds for transparency
 function getGateThreshold(gateId: string, dimension: string): string | null {
@@ -294,6 +295,7 @@ export default function ResultsPage() {
   }
 
   const pillarScores = assessment.pillarScores as PillarScores;
+  const confidenceGaps = assessment.confidenceGaps as ConfidenceGaps;
   const triggeredGates = (assessment.triggeredGates as any[]) || [];
   const contextProfile = assessment.contextProfile as ContextProfile;
   const priorityMoves = (assessment as any).priorityMoves?.moves || [];
@@ -479,7 +481,11 @@ export default function ResultsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="flex justify-center p-4 sm:p-6">
-              <ExecutiveCortexHero pillarScores={pillarScores} />
+              <HoneycombRadar 
+                pillarScores={pillarScores} 
+                confidenceGaps={confidenceGaps}
+                className="max-w-md mx-auto"
+              />
             </CardContent>
           </Card>
 
@@ -646,6 +652,7 @@ export default function ResultsPage() {
                     pillar={key} 
                     stage={score}
                     contextProfile={contextProfile}
+                    confidenceGaps={confidenceGaps}
                     valueOverlay={pillarValueData}
                     onValueOverlayUpdate={handleValueOverlayUpdate}
                     priorityMoves={pillarMoves}

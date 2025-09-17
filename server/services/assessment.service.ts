@@ -119,15 +119,17 @@ export class AssessmentService {
     assessmentId: string, 
     pulseResponses: unknown
   ): Promise<Assessment | null> {
-    // Validate pulse responses
+    // Validate pulse responses (now supports true/false/null)
     const validatedResponses = pulseResponsesSchema.parse(pulseResponses);
     
-    // Calculate pillar scores
+    // Calculate pillar scores (count of true responses) and confidence gaps (count of null responses)
     const pillarScores = this.calculatePillarScores(validatedResponses);
+    const confidenceGaps = this.calculateConfidenceGaps(validatedResponses);
     
     const assessment = await storage.updateAssessment(assessmentId, {
       pulseResponses: validatedResponses,
       pillarScores,
+      confidenceGaps,
     });
     
     if (!assessment) {
@@ -141,6 +143,7 @@ export class AssessmentService {
       additionalContext: {
         assessmentId,
         pillarScores,
+        confidenceGaps,
         operation: 'update_pulse'
       }
     });
@@ -203,10 +206,10 @@ export class AssessmentService {
   }
   
   /**
-   * Calculate pillar scores from pulse responses
+   * Calculate pillar scores from pulse responses (count of "Yes"/true responses)
    * @private
    */
-  private calculatePillarScores(responses: Record<string, boolean>): Record<string, number> {
+  private calculatePillarScores(responses: Record<string, boolean | null>): Record<string, number> {
     const pillarQuestions = {
       C: ['C1', 'C2', 'C3'],
       O: ['O1', 'O2', 'O3'],
@@ -224,6 +227,30 @@ export class AssessmentService {
     }
 
     return scores;
+  }
+
+  /**
+   * Calculate confidence gaps from pulse responses (count of "Unsure"/null responses)
+   * @private
+   */
+  private calculateConfidenceGaps(responses: Record<string, boolean | null>): Record<string, number> {
+    const pillarQuestions = {
+      C: ['C1', 'C2', 'C3'],
+      O: ['O1', 'O2', 'O3'],
+      R: ['R1', 'R2', 'R3'],
+      T: ['T1', 'T2', 'T3'],
+      E: ['E1', 'E2', 'E3'],
+      X: ['X1', 'X2', 'X3'],
+    };
+
+    const gaps: Record<string, number> = {};
+    
+    for (const [pillar, questions] of Object.entries(pillarQuestions)) {
+      const unsureCount = questions.filter(q => responses[q] === null).length;
+      gaps[pillar] = unsureCount;
+    }
+
+    return gaps;
   }
   
   /**

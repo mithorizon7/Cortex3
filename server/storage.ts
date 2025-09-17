@@ -259,6 +259,7 @@ export class MemStorage implements IStorage {
           contextMirrorUpdatedAt: insertAssessment.contextMirrorUpdatedAt || null,
           pulseResponses: insertAssessment.pulseResponses || null,
           pillarScores: insertAssessment.pillarScores || null,
+          confidenceGaps: insertAssessment.confidenceGaps || null,
           triggeredGates: insertAssessment.triggeredGates || null,
           priorityMoves: insertAssessment.priorityMoves || null,
           contentTags: insertAssessment.contentTags || null,

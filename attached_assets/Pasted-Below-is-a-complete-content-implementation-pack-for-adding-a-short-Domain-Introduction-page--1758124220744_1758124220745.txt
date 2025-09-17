@@ -1,0 +1,301 @@
+Below is a **complete content + implementation pack** for adding a short **Domain Introduction page** before each set of Pulse questions. It’s written for senior leaders—plain, fast to read, and educational—so they understand **why** each domain matters and what “good” looks like before answering. Hand this to your developer as-is.
+
+---
+
+## A) Interaction model (for the developer)
+
+**Flow:**
+`/pulse/:domain/intro → /pulse/:domain/questions` for each sequence C → O → R → T → E → X.
+
+**Intro page goals (30–60 sec read):**
+
+* Explain **why this domain matters** to leaders.
+* Set **principles** and **signals of maturity** (non‑jargon).
+* Clarify any **terms** they’ll see in the three questions.
+* Offer **evidence examples** (what they could point to if “Yes”).
+* Provide a small **context note** if their profile suggests special care (e.g., regulated, high sensitivity).
+
+**Page layout (consistent for all six):**
+
+* **Header**: Pillar letter + title (e.g., “O · Operations & Data”).
+* **Section 1 – Why it matters** (3–4 sentences).
+* **Section 2 – Principles** (3–5 bullets).
+* **Section 3 – What good looks like** (3–5 observable signals).
+* **Right rail (or collapsible panel)**:
+
+  * **Key terms** (1‑line definitions)
+  * **Evidence you could point to** (3–5 items)
+  * **Context note** (shown conditionally from profile)
+* **Footer**: “Answer ‘Yes’ only if fully true today” + **Start these 3 questions** button.
+
+**Controls & affordances:**
+
+* “Skip intros next time” checkbox (persist to local storage).
+* “Need detail?” link to **Pillar Deep Dive** (`pillar.*.deep`) in a drawer.
+* Telemetry events: `pulse.intro.viewed` `{domain}`, `pulse.intro.start` `{domain}`.
+
+**Accessibility & UX:**
+
+* Each intro page is a true route (not just a modal).
+* Provide **skip to questions** link for power users.
+* Respect `prefers-reduced-motion`.
+* Persistent progress bar: “Domain 2 of 6 • 6/18 answered”.
+
+---
+
+## B) Domain Introduction Content (ready to paste)
+
+> Keep the tone calm, instructional, and brief. Each block is \~180–230 words total.
+
+---
+
+### 1) **C · Clarity & Command**
+
+**Why this matters**
+Clear leadership direction turns scattered AI activity into business results. A short written ambition, a single accountable owner with budget authority, and a regular review cadence keep work aligned with outcomes. This avoids duplicated pilots, creates momentum, and ties effort to revenue, cost, and risk.
+
+**Principles**
+
+* Publish outcomes, not technologies (what will change for customers or operations).
+* Name one senior owner; make CoE vs BU roles explicit.
+* Review on a set rhythm and **reallocate** toward what works.
+* Use common language for value, risk, and safeguards.
+
+**What good looks like**
+
+* A one‑page AI ambition linked to strategic objectives.
+* Clear ownership (who enables, who delivers).
+* Quarterly review that results in fund/defund decisions.
+* Leaders can point to 1–2 measurable AI outcomes this year.
+
+**Key terms**
+
+* **CoE**: small team that sets standards and enables others.
+* **BU**: business unit/function that owns outcomes and adoption.
+* **Reallocation**: shifting budget/time based on evidence.
+
+**Evidence you could point to**
+AI ambition doc; named executive owner; RACI of CoE↔BU; last review notes showing funding decisions.
+
+**Context note (if regulated ≥3)**
+Pair outcome reviews with basic assurance evidence before scale.
+
+---
+
+### 2) **O · Operations & Data**
+
+**Why this matters**
+Dependable operations and governed data are the difference between a demo and a durable service. Monitoring, human checks where risk warrants, and a simple intake gate prevent silent failures, surprise costs, and reputational harm.
+
+**Principles**
+
+* Run a **documented lifecycle**: design → deploy → monitor → update → retire.
+* Track latency, errors, drift, and cost; alert on thresholds.
+* Add **HITL/QA** where consequences are high.
+* Keep a searchable **data catalogue** with owners and retention.
+* Screen new ideas with a lightweight **value/feasibility gate**.
+
+**What good looks like**
+
+* Live dashboards and alerts for the AI you run or consume.
+* Named owners for key data and prompts/indices.
+* A simple two‑page intake for new use‑cases.
+* Post‑incident notes and regular hygiene tasks.
+
+**Key terms**
+
+* **Lifecycle**: repeatable steps to run and update AI in production.
+* **Drift**: performance changes as inputs or behaviors shift.
+* **HITL**: human‑in‑the‑loop review for higher‑risk actions.
+* **Catalogue/lineage**: what data is used, where it came from, who owns it.
+* **Value gate**: quick screen for benefit and feasibility.
+
+**Evidence you could point to**
+Ops dashboard; alert rules; data catalogue entry; intake form/template; incident log.
+
+**Context note (if sensitivity ≥3)**
+Confirm data residency/retention and vendor data‑use terms for prompts, logs, and indices.
+
+---
+
+### 3) **R · Risk, Trust & Security**
+
+**Why this matters**
+Trust makes adoption sustainable. Stakeholders expect you to know what AI you run, the risks it carries, and how you’ll respond when something goes wrong. Routine checks and a simple incident plan avoid avoidable harm and build credibility with customers, regulators, and boards.
+
+**Principles**
+
+* Maintain an **AI inventory** with owners and risk levels.
+* Schedule fairness, privacy, and performance checks for high‑impact uses.
+* **Red‑team** critical systems and test prompt/identity defenses.
+* Keep a one‑page **incident response** plan with roles and communications.
+* Use internal or external **assurance** when required.
+
+**What good looks like**
+
+* Inventory is current; owners know their role.
+* Evidence of recent checks and fixes.
+* A tested path to triage, escalate, and inform.
+* Summary of assurance or audit within the last 12 months.
+
+**Key terms**
+
+* **Red‑team**: adversarial testing (e.g., injection, jailbreak, exfiltration).
+* **Incident response (IR)**: how you detect, decide, and communicate.
+* **Assurance**: internal audit or third‑party review of controls.
+
+**Evidence you could point to**
+Inventory register; last test report; IR runbook; audit/assurance letter.
+
+**Context note (if regulated ≥3 or safety ≥3)**
+Use HITL until evidence supports automation; run checks on a fixed cadence.
+
+---
+
+### 4) **T · Talent & Culture**
+
+**Why this matters**
+Adoption is about **work**, not tools. People need role‑specific skills and updated workflows that show when to use AI, when to verify, and how to escalate. Stories and incentives help good behaviors spread.
+
+**Principles**
+
+* Focus on a few **job families** first; redesign tasks with AI.
+* Provide **role‑based training** tied to those redesigned tasks.
+* Share **wins and lessons** regularly.
+* Align incentives with safe, effective outcomes.
+
+**What good looks like**
+
+* Before/after task maps for priority roles.
+* Short, relevant training and checklists.
+* Visible stories of what worked and what didn’t.
+* Incentives that reward quality and reliability, not raw usage.
+
+**Key terms**
+
+* **SOP**: standard operating procedure/checklist for a task.
+* **Job family**: a group of similar roles (e.g., CX agents, analysts).
+
+**Evidence you could point to**
+Updated SOPs; training outline and completion; internal posts sharing lessons; recognition criteria.
+
+**Context note (if build readiness ≤1)**
+Emphasize adoption and workflow design before heavy building or tuning.
+
+---
+
+### 5) **E · Ecosystem & Infrastructure**
+
+**Why this matters**
+Partners and platform choices determine speed, cost, flexibility—and how easily you can switch if needed. Elastic capacity keeps teams moving; portability and clear data terms protect your options.
+
+**Principles**
+
+* Track **unit cost** and watch quotas/limits.
+* Use a small, supported platform set with clear data‑use terms.
+* Write **portability/exit** into contracts for critical paths.
+* Govern data exchange through secure, auditable APIs/clean rooms.
+
+**What good looks like**
+
+* Basic FinOps view (cost per call/tokens; trend).
+* Documented strategic partners and data agreements.
+* Export formats and secondary options identified for key services.
+* API standards and review process.
+
+**Key terms**
+
+* **FinOps**: tracking and managing cloud/AI spend.
+* **Clean room**: controlled environment for data collaboration.
+* **Portability**: ability to export/switch with minimal disruption.
+
+**Evidence you could point to**
+Cost dashboard; quota reports; DPA/contract clauses; API gateway policy.
+
+**Context note (if clock‑speed ≥3 or scale ≥3)**
+Favor choices that balance reliability and the ability to pivot quickly.
+
+---
+
+### 6) **X · Experimentation & Evolution**
+
+**Why this matters**
+AI changes quickly. Disciplined experimentation—safe sandboxes, small budgets, clear success **and sunset** criteria—raises learning velocity and prevents “pilot purgatory.”
+
+**Principles**
+
+* Provide a safe **sandbox** with representative data and caps.
+* Reserve a small slice of time/credits for exploration.
+* Every pilot has a **metric** and a **decision date**.
+* Run a light **horizon scan** to choose what to test next.
+
+**What good looks like**
+
+* Documented on‑ramp for pilots and what’s allowed.
+* Portfolio view: ideas → pilots → decisions.
+* Pilots retired or scaled on schedule.
+* Brief quarterly note on trends to watch or ignore.
+
+**Key terms**
+
+* **Sandbox**: a controlled place to try ideas safely.
+* **Sunset logic**: criteria to retire or redirect a pilot.
+* **Horizon scan**: periodic review of tech/policy/market shifts.
+
+**Evidence you could point to**
+Sandbox guidelines; pilot register; decision log; horizon brief.
+
+**Context note (if latency/edge ≥3)**
+Include offline/latency tests in pilots; define fallback behavior.
+
+---
+
+## C) Common footer copy (reused on each intro page)
+
+> **How to answer the next three items**
+>
+> * Mark **Yes** only if it is fully true today and you could point to evidence.
+> * Mark **No** if it is not in place.
+> * Mark **Unsure** if you don’t know. (This won’t affect the score; we’ll flag it as a follow‑up.)
+>
+> **\[Start these 3 questions]**
+
+---
+
+## D) Developer checklist (build once, reuse six times)
+
+1. **Routes:**
+
+   * `/pulse/C/intro → /pulse/C/questions` … repeat for O, R, T, E, X.
+
+2. **Template component:**
+   `DomainIntro({ code:'O', title:'Operations & Data', why, principles[], good[], terms[], evidence[], contextNote? })`
+
+3. **Context injection:**
+
+   * Show `contextNote` when profile flags are present:
+
+     * `regulated≥3 || safety≥3` → C/O/R/E/X note where specified
+     * `sensitivity≥3` → O/E note
+     * `build_readiness≤1` → T note
+     * `latency_edge≥3` → X note
+
+4. **Navigation:**
+
+   * Primary button → `/pulse/:domain/questions`
+   * Secondary link “Skip intros next time” (stores `hideIntros=true`).
+
+5. **Persistence & a11y:**
+
+   * Keep progress bar visible.
+   * Provide “Skip to questions” anchor.
+   * Focus the H1 on navigation; maintain scroll position.
+
+6. **Telemetry:**
+
+   * `pulse.intro.viewed` `{domain}` when page renders.
+   * `pulse.intro.start` `{domain}` on primary button.
+
+---
+
+These introductions teach the **principles** that make each domain meaningful, reduce confusion during the Pulse, and keep the tone consistent with an MIT-led executive session—calm, precise, and useful.

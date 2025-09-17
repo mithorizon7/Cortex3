@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import ProgressHeader from "@/components/progress-header";
 import OfflineBanner from "@/components/offline-banner";
 import { ErrorFallback } from "@/components/error-boundary";
@@ -41,7 +42,7 @@ export default function PulseCheckPage() {
   });
 
   const updatePulse = useMutation({
-    mutationFn: async (pulseResponses: Record<string, boolean>) => {
+    mutationFn: async (pulseResponses: Record<string, boolean | null>) => {
       const response = await apiRequest("PATCH", `/api/assessments/${assessmentId}/pulse`, { pulseResponses });
       return response.json();
     },
@@ -101,11 +102,9 @@ export default function PulseCheckPage() {
   };
 
   const handleComplete = () => {
-    // Convert responses: null (unsure) becomes false for scoring, but we track it was "unsure"
-    const scoringResponses = Object.fromEntries(
-      Object.entries(responses).map(([key, value]) => [key, value === true])
-    );
-    updatePulse.mutate(scoringResponses);
+    // Send raw responses (true/false/null) to backend for proper scoring calculation
+    // Backend will calculate pillar scores (count of true) and confidence gaps (count of null)
+    updatePulse.mutate(responses);
   };
 
   const currentGroup = DOMAIN_GROUPS[currentDomain];
@@ -190,7 +189,7 @@ export default function PulseCheckPage() {
           </div>
           <div className="mb-4 space-y-3">
             <p className="text-lg text-muted-foreground font-ui">
-              Answer <strong>Yes</strong> only if the statement is <strong>fully true today</strong>. Each "Yes" earns a point; your domain score is 0–3.
+              Mark <strong>"Yes"</strong> only if it is <strong>true across your organization today</strong> and you could point to evidence if asked. Use <strong>"Unsure"</strong> if you're not certain. Each "Yes" earns a point; your domain score is 0–3.
             </p>
             
             <div className="bg-primary/5 rounded-lg p-4 border border-primary/15">
@@ -252,38 +251,65 @@ export default function PulseCheckPage() {
                   </h3>
                   
                   <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-4 sm:space-x-4">
-                    <Button
-                      variant={responses[question.id] === false ? "destructive" : "outline"}
-                      size="lg"
-                      onClick={() => handleResponseChange(question.id, false)}
-                      className="flex items-center justify-center space-x-2 min-w-[120px] sm:min-w-[100px] font-ui"
-                      data-testid={`button-no-${question.id}`}
-                    >
-                      <XCircle className="h-5 w-5" />
-                      <span>No</span>
-                    </Button>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant={responses[question.id] === false ? "destructive" : "outline"}
+                            size="lg"
+                            onClick={() => handleResponseChange(question.id, false)}
+                            className="flex items-center justify-center space-x-2 min-w-[120px] sm:min-w-[100px] font-ui"
+                            data-testid={`button-no-${question.id}`}
+                          >
+                            <XCircle className="h-5 w-5" />
+                            <span>No</span>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>This statement is not true for your organization today</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                     
-                    <Button
-                      variant={responses[question.id] === null ? "secondary" : "outline"}
-                      size="lg"
-                      onClick={() => handleResponseChange(question.id, null)}
-                      className="flex items-center justify-center space-x-2 min-w-[120px] sm:min-w-[100px] font-ui"
-                      data-testid={`button-unsure-${question.id}`}
-                    >
-                      <HelpCircle className="h-5 w-5" />
-                      <span>Unsure</span>
-                    </Button>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant={responses[question.id] === null ? "secondary" : "outline"}
+                            size="lg"
+                            onClick={() => handleResponseChange(question.id, null)}
+                            className="flex items-center justify-center space-x-2 min-w-[120px] sm:min-w-[100px] font-ui"
+                            data-testid={`button-unsure-${question.id}`}
+                          >
+                            <HelpCircle className="h-5 w-5" />
+                            <span>Unsure</span>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Unsure means you're not confident either way. We'll flag it as a follow-up and it won't affect your score.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                     
-                    <Button
-                      variant={responses[question.id] === true ? "default" : "outline"}
-                      size="lg"
-                      onClick={() => handleResponseChange(question.id, true)}
-                      className="flex items-center justify-center space-x-2 min-w-[120px] sm:min-w-[100px] font-ui"
-                      data-testid={`button-yes-${question.id}`}
-                    >
-                      <CheckCircle className="h-5 w-5" />
-                      <span>Yes</span>
-                    </Button>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant={responses[question.id] === true ? "default" : "outline"}
+                            size="lg"
+                            onClick={() => handleResponseChange(question.id, true)}
+                            className="flex items-center justify-center space-x-2 min-w-[120px] sm:min-w-[100px] font-ui"
+                            data-testid={`button-yes-${question.id}`}
+                          >
+                            <CheckCircle className="h-5 w-5" />
+                            <span>Yes</span>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>This statement is true across your organization today and you could point to evidence</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                   
                   {responses[question.id] !== undefined && (

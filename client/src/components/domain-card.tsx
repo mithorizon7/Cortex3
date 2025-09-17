@@ -8,7 +8,7 @@ import { getMetricById, getContextAwareDefaults, getDefaultMetricForPillar } fro
 import { ValueMetricChip, ValueInputFields, HowToMeasureDialog } from "@/components/value-overlay";
 import { Star, Info, Target, Cog, Shield, Users, Network, Lightbulb, TrendingUp, ArrowRight, BookOpen, ChevronDown, HelpCircle } from "lucide-react";
 import { useState } from "react";
-import type { ValueOverlay, ValueOverlayPillar, ContextProfile } from "@shared/schema";
+import type { ValueOverlay, ValueOverlayPillar, ContextProfile, ConfidenceGaps } from "@shared/schema";
 
 // Local types for guides with optional steps
 interface GuideStep {
@@ -26,6 +26,7 @@ interface DomainCardProps {
   contextReason?: string;
   contextGuidance?: any;
   contextProfile?: ContextProfile;
+  confidenceGaps?: ConfidenceGaps;
   valueOverlay?: ValueOverlayPillar;
   onValueOverlayUpdate?: (pillar: string, updates: Partial<ValueOverlayPillar>) => void;
   priorityMoves?: Array<{
@@ -180,11 +181,21 @@ const DOMAIN_GUIDANCE = {
   }
 };
 
-export default function DomainCard({ pillar, stage, priority, contextReason, contextGuidance, contextProfile, valueOverlay, onValueOverlayUpdate, priorityMoves }: DomainCardProps) {
+export default function DomainCard({ pillar, stage, priority, contextReason, contextGuidance, contextProfile, confidenceGaps, valueOverlay, onValueOverlayUpdate, priorityMoves }: DomainCardProps) {
   const [showGuides, setShowGuides] = useState(false);
   const pillarInfo = CORTEX_PILLARS[pillar as keyof typeof CORTEX_PILLARS];
   const stageInfo = MATURITY_STAGES[stage];
   const guidance = contextGuidance?.[pillar] || DOMAIN_GUIDANCE[pillar as keyof typeof DOMAIN_GUIDANCE];
+  
+  // Calculate confidence level
+  const getConfidenceLevel = (unsureCount: number): { level: string; label: string } => {
+    if (unsureCount === 0) return { level: 'High', label: '0 unsure' };
+    if (unsureCount === 1) return { level: 'Medium', label: '1 unsure' };
+    return { level: 'Low', label: `${unsureCount} unsure` };
+  };
+  
+  const unsureCount = confidenceGaps?.[pillar as keyof ConfidenceGaps] || 0;
+  const confidence = getConfidenceLevel(unsureCount);
   
   // Get micro-guides for this pillar and context
   const pillarGuides = getMicroGuidesByPillar(pillar);
@@ -246,7 +257,7 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
           <div>
             <h3 className="font-semibold text-lg font-display">{pillarInfo.name}</h3>
             <p className="text-sm text-muted-foreground font-ui">
-              Stage {stage} - {stageInfo.name}
+              {pillar} — Score {stage}/3 · Confidence: {confidence.level} ({confidence.label})
             </p>
           </div>
         </div>

@@ -1,0 +1,282 @@
+Fantastic—thanks for pushing a draft all the way through the pipeline. Below is a focused, “best next move” package you can hand to your developer right now. It fixes what’s broken (garbled text, leaked guardrails, strengths/fragilities), upgrades the UX, and locks in a repeatable generation path that consistently produces **board‑ready**, share‑worthy output.
+
+---
+
+## A. What the page should look and read like
+
+### 1) Rename + structure
+
+* **Card title:** **Context Reflection**
+* **Body:** **exactly two short paragraphs** (150–220 words total).
+
+  * **Paragraph 1 — “Signals”**: What this *context* often enables and often constrains (probabilistic, not prescriptive).
+  * **Paragraph 2 — “Implications”**: What this typically implies for early AI moves (governance, guardrails, quick wins, continuity).
+* **Footer (micro‑disclaimer, single line):**
+  *Educational reflection based on your context; not a compliance determination.*
+
+> **Remove**: “Strengths,” “Fragilities,” “Two Proven Approaches,” any word counters, and any badges like “No vendor names / No benchmarks / Probability‑based / 220 words.” Those are internal guardrails—not user value.
+
+### 2) Leadership discussion prompts (right column)
+
+Replace references to “strengths/fragilities” with **advantages/constraints**:
+
+1. *Which **advantage** in the reflection could power an early win, and which **constraint** would most undermine it?*
+2. *Where would **customer‑visible impact** be clearest within 60–90 days without increasing risk?*
+3. *What **de‑risking guardrails** (HITL, rollback path, audit trail) should be present from day one?*
+
+---
+
+## B. The content (ready-to-use language)
+
+### 1) Narrative templates (LLM should output something in this vein)
+
+**Template A — highly regulated & data‑sensitive; moderate change tolerance**
+**Paragraph 1 (Signals).** *Your organization operates in a context where regulatory expectations and data sensitivity create clear guardrails and stakeholder trust, while also imposing oversight and integration friction. In environments like this, value tends to emerge where outcomes are observable and risk can be bounded. The upside is a strong license to operate when controls are explicit; the trade‑off is slower path‑to‑production if governance, data lineage, and vendor due diligence are not streamlined.*
+**Paragraph 2 (Implications).** *Momentum typically comes from contained, high‑signal pilots—workflows with measurable decisions, well‑defined inputs, and human‑in‑the‑loop checkpoints for material outcomes. Codify continuity early: latency thresholds, fallbacks to standard procedures, and simple rollbacks prevent operational surprises. As pilots prove stable, expand along data pipelines you already trust, harden auditability, and make review criteria explicit so oversight remains confident as scale increases.*
+
+**Template B — low regulation; fast market clock‑speed; higher change tolerance**
+**Paragraph 1 (Signals).** *Your operating context favors speed and iteration. Low external constraints and faster competitive tempo enable experimentation and short feedback loops, while raising the risk of fragmented tooling, shadow adoption, and uneven quality if standards lag behind usage. The opportunity is rapid learning and differentiation; the hazard is value that stalls at pilot because integration and measurement trail adoption.*
+**Paragraph 2 (Implications).** *Prioritize quick wins that connect directly to revenue or cycle‑time, but anchor them to minimal, shared guardrails: prompt and output policies, data boundaries, and review criteria for customer‑facing content. Instrument for outcome metrics from the start (time saved, conversion, resolution rate), and publish a simple graduation path from pilot → supported → scaled. Consolidate on a small set of services early to avoid tool sprawl as usage accelerates.*
+
+**Template C — complex legacy stack; multi‑vendor; tight uptime requirements**
+**Paragraph 1 (Signals).** *A complex integration surface and strict continuity needs favor reliability over novelty. Value tends to appear where AI augments well‑bounded tasks near existing systems of record. The benefit is clear provenance and stable runtime behavior; the downside is longer integration paths and stricter latency/observability constraints that can limit model choice or scope.*
+**Paragraph 2 (Implications).** *Start where latency budgets are tolerant and interfaces are stable (internal knowledge retrieval, assisted drafting, triage). Define p95 latency and rollback paths up front so operations never stall. Co‑locate inference near data when feasible, and prefer patterns that cache, retrieve, and verify over those that require deep re‑platforming. As reliability holds, expand into higher‑impact surfaces with explicit SLOs and automated quality checks.*
+
+> These are examples your model should *approximate*, not copy verbatim. Keep the wording varied and human.
+
+---
+
+## C. Loading experience (educational + reassuring)
+
+### 1) Behavior
+
+* Show spinner/skeleton **and** rotate 1 line of educational/progress text every **2.5s** (aria‑live polite).
+* Show 4–6 lines total before the narrative appears (or until the API returns).
+
+### 2) Message set (drop‑in list)
+
+Use \~12 so the page doesn’t feel repetitive:
+
+* Analyzing your context profile (regulation, data posture, market tempo)…
+* Checking where human‑in‑the‑loop adds the most certainty…
+* Considering integration complexity versus likely time‑to‑value…
+* Mapping quick‑win pilots that create visible outcomes…
+* Flagging continuity needs (latency thresholds, rollback paths)…
+* Linking context to early governance and auditability…
+* Estimating where retrieval beats re‑building from scratch…
+* Looking for pilots with clear before/after metrics…
+* Scanning for customer‑visible surfaces that are safe to improve…
+* Weighing data sensitivity against model placement options…
+* Preferring patterns that scale with existing systems of record…
+* Translating context into next‑step strategy implications…
+
+---
+
+## D. Prompt, schema, and post‑processing (prevents the issues you saw)
+
+### 1) Messages for your LLM call
+
+**System**
+“You are an executive AI strategy advisor. Write in clear, concise prose suitable for senior leaders. Base your analysis *only* on organizational **context** (not internal capabilities). Use probability language (‘often’, ‘tends to’, ‘commonly’). Vendor‑neutral. No metrics or benchmarks. Output exactly two paragraphs of narrative (150–220 words total).”
+
+**User** (example; pass your structured context fields)
+“Context profile:
+
+* Regulatory intensity: {{regulatory\_intensity}}
+* Data sensitivity: {{data\_sensitivity}}
+* Market clock‑speed: {{market\_clock\_speed}}
+* Integration complexity / legacy surface: {{integration\_complexity}}
+* Change tolerance: {{change\_tolerance}}
+* Scale / geography: {{scale}}
+
+Write a short, board‑ready **Context Reflection** in 2 paragraphs.
+Paragraph 1: What this context often **enables** and often **constrains**.
+Paragraph 2: What this typically **implies** for early AI moves (guardrails, quick wins, continuity).
+Avoid headings and bullets. Avoid the words ‘strengths’ and ‘fragilities’. Avoid internal guidelines, rules, or counters. Return JSON:
+{ "insight": "<two paragraphs>", "disclaimer": "Educational reflection based on your context; not a compliance determination." }”
+
+**(If your provider supports a JSON response mode, enable it.)**
+
+### 2) TypeScript interface
+
+```ts
+export interface ContextMirrorPayload {
+  insight: string;       // two paragraphs separated by \n\n
+  disclaimer: string;    // one-line micro-disclaimer
+}
+```
+
+### 3) Post‑processing (crucial)
+
+* **Reject** and re‑ask if `insight` contains any of:
+  `/\bstrength(s)?\b|\bfragilit(y|ies)\b|No Vendor Names|No Benchmarks|Probability[- ]?Based|Under \d+\s*Words/i`
+* **Sanitize** (before render):
+
+  * Collapse whitespace; fix doubled punctuation (`/\.(\s*\.)+/g -> '.'`).
+  * Strip list scaffolding (e.g., leading “– ”, “• ”).
+  * Force exactly **two** paragraphs: if more/less, split/merge at sentence boundaries.
+* **Quant checks (telemetry only):** keep word count for QA but **never** display it.
+
+---
+
+## E. Frontend: drop‑in components (React + Tailwind, shadcn/ui‑friendly)
+
+### 1) LoadingTips.tsx
+
+```tsx
+import { useEffect, useRef, useState } from "react";
+
+const MESSAGES = [
+  "Analyzing your context profile (regulation, data posture, market tempo)…",
+  "Checking where human-in-the-loop adds the most certainty…",
+  "Considering integration complexity versus likely time-to-value…",
+  "Mapping quick-win pilots that create visible outcomes…",
+  "Flagging continuity needs (latency thresholds, rollback paths)…",
+  "Linking context to early governance and auditability…",
+  "Estimating where retrieval beats re-building from scratch…",
+  "Looking for pilots with clear before/after metrics…",
+  "Scanning for customer-visible surfaces that are safe to improve…",
+  "Weighing data sensitivity against model placement options…",
+  "Preferring patterns that scale with systems of record…",
+  "Translating context into next-step strategy implications…",
+];
+
+export function LoadingTips({ intervalMs = 2500 }: { intervalMs?: number }) {
+  const [i, setI] = useState(0);
+  const timer = useRef<number | null>(null);
+
+  useEffect(() => {
+    timer.current = window.setInterval(() => setI((v) => (v + 1) % MESSAGES.length), intervalMs);
+    return () => { if (timer.current) window.clearInterval(timer.current); };
+  }, [intervalMs]);
+
+  return (
+    <div className="flex items-center gap-3" aria-live="polite" aria-busy="true">
+      <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+      <p className="text-sm text-muted-foreground">{MESSAGES[i]}</p>
+    </div>
+  );
+}
+```
+
+### 2) sanitizeInsight.ts
+
+```ts
+export function sanitizeInsight(text: string): string {
+  let t = text
+    .replace(/\r/g, "")
+    .replace(/\s+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/\.(\s*\.)+/g, ".")
+    .replace(/^\s*[-•]\s*/gm, "");
+
+  // Remove leaked internal rules
+  const banned = /(No Vendor Names|No Benchmarks|Probability[- ]?Based|Under \d+\s*Words)/gi;
+  t = t.replace(banned, "");
+
+  // Enforce exactly two paragraphs
+  const parts = t.split(/\n{2,}/).filter(Boolean);
+  if (parts.length === 1) {
+    // try to split on sentence boundary near the middle
+    const sentences = parts[0].match(/[^.!?]+[.!?]+/g) ?? [parts[0]];
+    const mid = Math.ceil(sentences.length / 2);
+    t = sentences.slice(0, mid).join(" ").trim() + "\n\n" + sentences.slice(mid).join(" ").trim();
+  } else if (parts.length > 2) {
+    t = parts.slice(0, 2).join("\n\n");
+  }
+  return t.trim();
+}
+
+export function violatesPolicy(text: string): boolean {
+  return /\bstrength(s)?\b|\bfragilit(y|ies)\b/i.test(text);
+}
+```
+
+### 3) ContextReflection.tsx
+
+```tsx
+import { sanitizeInsight, violatesPolicy } from "./sanitizeInsight";
+
+export function ContextReflection({ insight, disclaimer }: { insight: string; disclaimer: string }) {
+  const clean = sanitizeInsight(insight);
+  const bad = violatesPolicy(clean);
+  if (bad) {
+    // Render a graceful fallback; your container should re-request the model in parallel
+    return (
+      <div className="space-y-3">
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          Your context suggests clear opportunities alongside constraints. We’re refreshing this brief to
+          state those implications in narrative form. Please hold for a moment…
+        </p>
+      </div>
+    );
+  }
+
+  const [p1, p2] = clean.split(/\n{2,}/);
+  return (
+    <div className="space-y-3">
+      <p className="text-sm leading-relaxed text-muted-foreground">{p1}</p>
+      <p className="text-sm leading-relaxed text-muted-foreground">{p2}</p>
+      <p className="text-xs text-muted-foreground mt-2">{disclaimer}</p>
+    </div>
+  );
+}
+```
+
+### 4) Export button (copy + PDF hooks)
+
+* **Copy:** Use `navigator.clipboard.writeText(insightText + "\n\n" + disclaimer)`.
+* **PDF:** Pipe the same strings to your existing exporter. Do **not** include any internal QA stats.
+
+---
+
+## F. Fallbacks (when the LLM is slow or returns junk)
+
+1. **Rule‑based paragraph fallback** (use the three templates above and pick the closest profile).
+2. **Retry strategy**: on ban‑phrase hit or JSON parse error → one immediate retry with “Rewrite plainly. No internal rule text. Two paragraphs only.”
+3. **Timeout** at \~7s to show fallback, keep retry in the background, replace when ready.
+
+---
+
+## G. QA / acceptance checklist (can be automated)
+
+* [ ] No strings “strength(s)” or “fragilit(y/ies)” in the rendered page.
+* [ ] No leaked internal rules, vendor names, metrics/benchmarks, or word counters.
+* [ ] Exactly **two** paragraphs appear, total 150–220 words (tracked silently).
+* [ ] Loader rotates at least 4 distinct messages before render (unless API returns earlier).
+* [ ] Exported text/PDF contains only the two paragraphs + micro‑disclaimer.
+* [ ] Discussion prompts reference **advantages/constraints**, not strengths/fragilities.
+
+---
+
+## H. Instrumentation (to guide continuous improvement)
+
+Emit: `context_mirror_load_started`, `context_mirror_ai_returned`, `context_mirror_rendered`, `context_mirror_export_clicked`.
+Capture: time‑to‑first‑byte, time‑to‑render, retry count, fallback\_used (bool), word\_count (not shown to users), and which message IDs rotated.
+
+---
+
+## I. A “gold” example (what great looks like on the page)
+
+**Context Reflection**
+*Your organization operates in a context where regulatory expectations and data sensitivity create clear guardrails and stakeholder trust, while also introducing oversight and integration friction. In settings like this, value tends to appear where outcomes are observable and risk can be bounded. The upside is a strong license to operate when controls are explicit; the trade‑off is slower path‑to‑production if governance, data lineage, and vendor due diligence are not streamlined.*
+
+*Momentum typically comes from contained, high‑signal pilots—workflows with measurable decisions, well‑defined inputs, and human‑in‑the‑loop checkpoints for material outcomes. Codify continuity early: latency thresholds, fallbacks to standard procedures, and simple rollbacks prevent operational surprises. As pilots prove stable, expand along data pipelines you already trust, harden auditability, and make review criteria explicit so oversight remains confident as scale increases.*
+
+*Educational reflection based on your context; not a compliance determination.*
+
+---
+
+### Why this set is the “best next move”
+
+* Fixes the **core category error** (we’re not judging the org—only its context).
+* Eliminates **method leakage** and word‑count clutter.
+* Produces **export‑worthy** prose on the first pass, with strong guardrails if the model drifts.
+* Gives your devs **copy‑pasteable** components and utilities plus a pragmatic retry/fallback path.
+
+---
+
+**Confidence:**
+
+* **High** on the narrative structure, copy quality, prompt+schema, sanitization approach, and component correctness.
+* **Medium** on exact styling class names or icon imports (I assumed Tailwind + shadcn/ui conventions and a generic spinner). If your design system differs, the structure still holds; swap classes/components 1:1.
