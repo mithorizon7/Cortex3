@@ -23,6 +23,15 @@ export function sanitizeInsight(text: string): string {
   return t.trim();
 }
 
+export function validateWordCount(text: string): boolean {
+  const wordCount = text.trim().split(/\s+/).filter(word => word.length > 0).length;
+  return wordCount >= 150 && wordCount <= 220;
+}
+
+export function getWordCount(text: string): number {
+  return text.trim().split(/\s+/).filter(word => word.length > 0).length;
+}
+
 export function violatesPolicy(text: string): boolean {
   return /\bstrength(s)?\b|\bfragilit(y|ies)\b/i.test(text);
 }

@@ -64,11 +64,15 @@ Avoid headings and bullets. Avoid the words 'strengths' and 'fragilities'. Avoid
     if (rawJson) {
       const payload: ContextMirrorPayload = JSON.parse(rawJson);
       
+      // Validate word count (150-220 words)
+      const wordCount = payload.insight.trim().split(/\s+/).filter(word => word.length > 0).length;
+      const validWordCount = wordCount >= 150 && wordCount <= 220;
+      
       // Check for policy violations
       const banned = /\bstrength(s)?\b|\bfragilit(y|ies)\b|No Vendor Names|No Benchmarks|Probability[- ]?Based|Under \d+\s*Words/i;
-      if (banned.test(payload.insight)) {
+      if (banned.test(payload.insight) || !validWordCount) {
         // Retry once with clearer instructions
-        const retryPrompt = `Rewrite plainly. No internal rule text. Two paragraphs only. Avoid "strengths" and "fragilities" words. Return JSON: { "insight": "<two paragraphs>", "disclaimer": "Educational reflection based on your context; not a compliance determination." }
+        const retryPrompt = `Rewrite plainly. No internal rule text. Two paragraphs only (150-220 words total). Avoid "strengths" and "fragilities" words. Return JSON: { "insight": "<two paragraphs>", "disclaimer": "Educational reflection based on your context; not a compliance determination." }
 
 Context profile:
 • Regulatory intensity: ${profile.regulatory_intensity}

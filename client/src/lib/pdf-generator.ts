@@ -209,9 +209,9 @@ export async function generateContextBrief(data: ContextMirrorData): Promise<voi
   doc.setTextColor(primaryColor);
   
   const discussionNotes = [
-    '• Underline one strength and one fragility that surprised you.',
+    '• Underline one advantage and one constraint that surprised you.',
     '• Which item would most affect customers or reputation if mishandled?',
-    '• What\'s the smallest next step to de-risk a fragility?'
+    '• What\'s the smallest next step to address a key constraint?'
   ];
   
   let noteY = currentY + 12;

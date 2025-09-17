@@ -128,9 +128,7 @@ function ContextInsightPageContent() {
     
     try {
       await generateContextBrief({
-        strengths: data.strengths,
-        fragilities: data.fragilities,
-        whatWorks: data.whatWorks,
+        insight: data.insight,
         disclaimer: data.disclaimer,
         contextProfile: assessmentData.contextProfile as ContextProfile,
         assessmentId: id,
