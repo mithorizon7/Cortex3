@@ -108,15 +108,27 @@ export const valueOverlaySchema = z.object({
 export type ValueOverlayPillar = z.infer<typeof valueOverlayPillarSchema>;
 export type ValueOverlay = z.infer<typeof valueOverlaySchema>;
 
-// Context Mirror Types
+// Context Mirror Types - Support both structured and narrative formats
 export const contextMirrorSchema = z.object({
-  strengths: z.array(z.string().min(8).max(180)).length(3),
-  fragilities: z.array(z.string().min(8).max(180)).length(3),
-  whatWorks: z.array(z.string().min(10).max(180)).length(2),
+  // Structured format (legacy)
+  strengths: z.array(z.string().min(8).max(180)).length(3).optional(),
+  fragilities: z.array(z.string().min(8).max(180)).length(3).optional(),
+  whatWorks: z.array(z.string().min(10).max(180)).length(2).optional(),
   disclaimer: z.string().min(10).max(140),
+  
+  // Narrative format (new)
+  insight: z.string().min(50).max(500).optional(), // Two paragraphs of 150-220 words total
 });
 
 export type ContextMirror = z.infer<typeof contextMirrorSchema>;
+
+// Context Mirror Payload (for new narrative format)
+export const contextMirrorPayloadSchema = z.object({
+  insight: z.string(),       // two paragraphs separated by \n\n
+  disclaimer: z.string(),    // one-line micro-disclaimer
+});
+
+export type ContextMirrorPayload = z.infer<typeof contextMirrorPayloadSchema>;
 
 // Context Mirror Request Validation Schema
 export const contextMirrorRequestSchema = z.object({

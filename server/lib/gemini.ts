@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
-import type { ContextProfile, ContextMirror } from "../../shared/schema";
+import type { ContextProfile, ContextMirror, ContextMirrorPayload } from "../../shared/schema";
+import { getContextTemplate } from "./context-templates";
 
 // DON'T DELETE THIS COMMENT
 // Follow these instructions when using this blueprint:
@@ -11,20 +12,22 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 
 export async function generateContextMirror(profile: ContextProfile): Promise<ContextMirror> {
   try {
-    const systemPrompt = `You are an executive coach for AI readiness. Produce concise, board-ready text. Use ONLY the structured profile JSON provided. Do not invent numbers, benchmarks, or proper nouns. Speak in probabilities ("often", "tends to") and options. Be educational, not prescriptive. Output valid JSON matching the supplied schema. Keep total under 220 words.`;
+    const systemPrompt = `You are an executive AI strategy advisor. Write in clear, concise prose suitable for senior leaders. Base your analysis *only* on organizational **context** (not internal capabilities). Use probability language ('often', 'tends to', 'commonly'). Vendor-neutral. No metrics or benchmarks. Output exactly two paragraphs of narrative (150–220 words total).`;
 
-    const userPrompt = `Generate a Context Mirror with 3 strengths, 3 fragilities, and 2 "what usually works first" items based solely on this Profile.
-Constraints:
-• Each bullet is a single sentence.
-• Make them specific to the profile (use dimension names implicitly, not verbatim).
-• No vendor/tool names.
-• No promises; avoid "guarantee", "always", "never".
-• JSON only; match the schema exactly.
+    const userPrompt = `Context profile:
 
-Profile JSON:
-${JSON.stringify(profile)}
+• Regulatory intensity: ${profile.regulatory_intensity}
+• Data sensitivity: ${profile.data_sensitivity}
+• Market clock-speed: ${profile.clock_speed}
+• Integration complexity / legacy surface: ${profile.scale_throughput}
+• Change tolerance: ${profile.build_readiness}
+• Scale / geography: ${profile.scale_throughput}
 
-Return JSON only with keys: strengths[3], fragilities[3], whatWorks[2], disclaimer.`;
+Write a short, board-ready **Context Reflection** in 2 paragraphs.
+Paragraph 1: What this context often **enables** and often **constrains**.
+Paragraph 2: What this typically **implies** for early AI moves (guardrails, quick wins, continuity).
+Avoid headings and bullets. Avoid the words 'strengths' and 'fragilities'. Avoid internal guidelines, rules, or counters. Return JSON:
+{ "insight": "<two paragraphs>", "disclaimer": "Educational reflection based on your context; not a compliance determination." }`;
 
     const response = await ai.models.generateContent({
       model: "gemini-2.5-pro",
@@ -34,27 +37,16 @@ Return JSON only with keys: strengths[3], fragilities[3], whatWorks[2], disclaim
         responseSchema: {
           type: "object",
           properties: {
-            strengths: {
-              type: "array",
-              items: { type: "string" },
-              minItems: 3,
-              maxItems: 3
+            insight: { 
+              type: "string",
+              description: "Two paragraphs separated by \\n\\n, 150-220 words total"
             },
-            fragilities: {
-              type: "array", 
-              items: { type: "string" },
-              minItems: 3,
-              maxItems: 3
-            },
-            whatWorks: {
-              type: "array",
-              items: { type: "string" },
-              minItems: 2,
-              maxItems: 2
-            },
-            disclaimer: { type: "string" }
+            disclaimer: { 
+              type: "string",
+              description: "One-line micro-disclaimer"
+            }
           },
-          required: ["strengths", "fragilities", "whatWorks", "disclaimer"]
+          required: ["insight", "disclaimer"]
         },
       },
       contents: userPrompt,
@@ -63,100 +55,76 @@ Return JSON only with keys: strengths[3], fragilities[3], whatWorks[2], disclaim
     const rawJson = response.text;
 
     if (rawJson) {
-      const data: ContextMirror = JSON.parse(rawJson);
-      return data;
+      const payload: ContextMirrorPayload = JSON.parse(rawJson);
+      
+      // Check for policy violations
+      const banned = /\bstrength(s)?\b|\bfragilit(y|ies)\b|No Vendor Names|No Benchmarks|Probability[- ]?Based|Under \d+\s*Words/i;
+      if (banned.test(payload.insight)) {
+        // Retry once with clearer instructions
+        const retryPrompt = `Rewrite plainly. No internal rule text. Two paragraphs only. Avoid "strengths" and "fragilities" words. Return JSON: { "insight": "<two paragraphs>", "disclaimer": "Educational reflection based on your context; not a compliance determination." }
+
+Context profile:
+• Regulatory intensity: ${profile.regulatory_intensity}
+• Data sensitivity: ${profile.data_sensitivity}
+• Market clock-speed: ${profile.clock_speed}
+• Integration complexity / legacy surface: ${profile.scale_throughput}
+• Change tolerance: ${profile.build_readiness}
+• Scale / geography: ${profile.scale_throughput}`;
+
+        const retryResponse = await ai.models.generateContent({
+          model: "gemini-2.5-pro",
+          config: {
+            systemInstruction: systemPrompt,
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: "object",
+              properties: {
+                insight: { type: "string" },
+                disclaimer: { type: "string" }
+              },
+              required: ["insight", "disclaimer"]
+            },
+          },
+          contents: retryPrompt,
+        });
+        
+        const retryJson = retryResponse.text;
+        if (retryJson) {
+          const retryPayload: ContextMirrorPayload = JSON.parse(retryJson);
+          return {
+            insight: retryPayload.insight,
+            disclaimer: retryPayload.disclaimer
+          };
+        }
+      }
+      
+      return {
+        insight: payload.insight,
+        disclaimer: payload.disclaimer
+      };
     } else {
       throw new Error("Empty response from Gemini");
     }
   } catch (error) {
-    throw new Error(`Failed to generate context mirror: ${error}`);
+    console.warn('LLM generation failed, using fallback:', error);
+    const fallback = getContextTemplate(profile);
+    return {
+      insight: fallback.insight,
+      disclaimer: fallback.disclaimer
+    };
   }
 }
 
 export function generateRuleBasedFallback(profile: ContextProfile): ContextMirror {
-  const strengths: string[] = [];
-  const fragilities: string[] = [];
-  const whatWorks: string[] = [];
-
-  // Strengths based on profile thresholds
-  if (profile.regulatory_intensity >= 3) {
-    strengths.push("Clear guardrails enable trust and focus on high-value, defensible use-cases.");
-  }
-  if (profile.clock_speed >= 3) {
-    strengths.push("Faster market clock-speed encourages rapid iteration and learning velocity.");
-  }
-  if (profile.data_advantage >= 3) {
-    strengths.push("Proprietary data offers leverage for differentiated results when harnessed safely.");
-  }
-  if (profile.build_readiness >= 3) {
-    strengths.push("Mature teams and pipelines reduce time from prototype to dependable service.");
-  }
-  if (profile.finops_priority >= 3) {
-    strengths.push("Cost discipline supports sustainable scaling and smart vendor choices.");
-  }
-
-  // Fragilities based on profile thresholds
-  if (profile.safety_criticality >= 3) {
-    fragilities.push("High-impact decisions can fail silently without human checkpoints and routine assurance.");
-  }
-  if (profile.data_sensitivity >= 3) {
-    fragilities.push("Sensitive data in prompts/logs raises residency, retention, and exposure risks.");
-  }
-  if (profile.latency_edge >= 3) {
-    fragilities.push("Near-real-time needs require tested fallbacks and smaller models for core tasks.");
-  }
-  if (profile.scale_throughput >= 3) {
-    fragilities.push("Traffic spikes expose brittle integrations without rate limits and failover.");
-  }
-  if (profile.build_readiness <= 1) {
-    fragilities.push("Heavy custom builds outpace governance and MLOps readiness, delaying value.");
-  }
-
-  // What usually works first
-  if (profile.build_readiness <= 1) {
-    whatWorks.push("Start Buy→API→RAG; prove gaps before any fine-tune.");
-  }
-  if (profile.regulatory_intensity >= 3 || profile.safety_criticality >= 3) {
-    whatWorks.push("Add HITL to high-impact flows and run a monthly assurance cadence.");
-  }
-  if (profile.latency_edge >= 3 && whatWorks.length < 2) {
-    whatWorks.push("Set p95 latency SLOs and implement a simple offline/backup path.");
-  }
-  if (profile.clock_speed >= 3 && whatWorks.length < 2) {
-    whatWorks.push("Run time-boxed pilots with explicit decision dates and sunset logic.");
-  }
-
-  // Fill defaults if not enough matches
-  while (strengths.length < 3) {
-    const defaults = [
-      "Clear organizational priorities help focus AI efforts on high-value applications.",
-      "Existing data foundations provide material for initial AI experiments.", 
-      "Leadership engagement signals readiness for strategic AI investment."
-    ];
-    strengths.push(defaults[strengths.length] || "Structured approach enables systematic AI capability building.");
-  }
-
-  while (fragilities.length < 3) {
-    const defaults = [
-      "Rapid AI advancement requires continuous capability assessment and adaptation.",
-      "Integration complexity grows with organizational scale and technical diversity.",
-      "Change management becomes critical as AI transforms existing workflows."
-    ];
-    fragilities.push(defaults[fragilities.length] || "Evolving AI landscape demands flexible strategic planning approaches.");
-  }
-
-  while (whatWorks.length < 2) {
-    const defaults = [
-      "Begin with low-risk pilot projects to build organizational AI confidence.",
-      "Establish clear success metrics before launching any AI initiatives."
-    ];
-    whatWorks.push(defaults[whatWorks.length] || "Focus on quick wins to demonstrate AI value.");
-  }
-
+  // Use the new context template system for fallback
+  const template = getContextTemplate(profile);
+  
   return {
-    strengths: strengths.slice(0, 3),
-    fragilities: fragilities.slice(0, 3), 
-    whatWorks: whatWorks.slice(0, 2),
-    disclaimer: "Educational reflection based on your context; not a compliance determination."
+    disclaimer: template.disclaimer,
+    insight: template.insight,
+    // Legacy format (optional - for backwards compatibility)
+    strengths: undefined,
+    fragilities: undefined,
+    whatWorks: undefined,
   };
 }
