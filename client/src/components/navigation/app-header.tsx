@@ -3,6 +3,7 @@ import { Link } from 'wouter';
 import { AuthButton } from '@/components/auth/auth-button';
 import { Button } from '@/components/ui/button';
 import { Brain, Home, BarChart3, HelpCircle } from 'lucide-react';
+import { useLatestAssessment } from '@/hooks/useLatestAssessment';
 
 interface AppHeaderProps {
   showIdentityInline?: boolean;
@@ -19,6 +20,10 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   onHelpClick,
   showNav = true
 }) => {
+  const { data: latestAssessment } = useLatestAssessment();
+  
+  // Smart navigation: go to results if completed assessment exists, otherwise start new assessment
+  const assessmentPath = latestAssessment ? `/results/${latestAssessment.id}` : '/context-profile';
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 sm:h-14 max-w-screen-2xl items-center px-4 sm:px-6">
@@ -58,10 +63,10 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                   Home
                 </Button>
               </Link>
-              <Link href="/context-profile">
+              <Link href={assessmentPath}>
                 <Button variant="ghost" size="sm" className="font-ui font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-assessment">
                   <BarChart3 className="h-4 w-4 mr-2" />
-                  Assessment
+                  {latestAssessment ? 'My Results' : 'Assessment'}
                 </Button>
               </Link>
             </nav>

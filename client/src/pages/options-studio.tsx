@@ -33,6 +33,7 @@ import {
   Settings,
   DollarSign,
   ArrowRight,
+  ArrowLeft,
   TrendingUp,
   Loader2,
   Info,
@@ -594,6 +595,18 @@ function OptionsStudioContent() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
+      {/* Back to Results Navigation - only show when coming from assessment */}
+      {assessmentId && (
+        <div className="mb-6">
+          <Link href={`/results/${assessmentId}`}>
+            <Button variant="outline" size="sm" className="mb-4" data-testid="button-back-to-results">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to My Results
+            </Button>
+          </Link>
+        </div>
+      )}
+      
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2" data-testid="text-studio-title">
