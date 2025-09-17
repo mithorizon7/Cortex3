@@ -2,81 +2,76 @@ import { BANNED_PHRASES_REGEX, violatesPolicy, getWordCount, isValidWordCount } 
 import type { ContextMirror } from "../../../../shared/schema";
 
 export function sanitizeInsight(text: string): string {
-  let t = text
-    .replace(/\r/g, "")
-    .replace(/\s+\n/g, "\n")
-    .replace(/\n{3,}/g, "\n\n")
-    .replace(/\.(\s*\.)+/g, ".")
-    .replace(/^\s*[-•]\s*/gm, "");
+  let t = (text || "").replace(/\r/g, "").trim();
 
-  // Remove leaked internal rules
+  // Remove any leaked internal rules/counters - comprehensive patterns from plan
+  t = t.replace(
+    /(no vendor names|no benchmarks|probability[- ]?based|under \d+\s*words|methodology compliant|guidance compliant|avoid vendor|avoid naming|avoid metrics|avoid benchmarks)/gi,
+    ""
+  );
+
+  // Remove leaked banned phrases
   t = t.replace(BANNED_PHRASES_REGEX, "");
 
-  // Enforce exactly two paragraphs
-  const parts = t.split(/\n{2,}/).filter(Boolean);
+  // Remove stray list tokens and excessive whitespace - enhanced cleanup
+  t = t
+    .replace(/^\s*[-•]\s*/gm, "")  // Remove bullet points
+    .replace(/\s+\n/g, "\n")         // Clean line endings
+    .replace(/\n{3,}/g, "\n\n")      // Max two newlines
+    .replace(/\.(\s*\.)+/g, ".")     // Remove doubled periods
+    .replace(/\s{2,}/g, " ")          // Single spaces only
+    .trim();
+
+  // Enforce exactly two paragraphs - improved logic from plan
+  let parts = t.split(/\n{2,}/).filter(Boolean);
+  if (parts.length === 0) return t;
+
   if (parts.length === 1) {
-    // try to split on sentence boundary near the middle
-    const sentences = parts[0].match(/[^.!?]+[.!?]+/g) ?? [parts[0]];
-    const mid = Math.ceil(sentences.length / 2);
-    t = sentences.slice(0, mid).join(" ").trim() + "\n\n" + sentences.slice(mid).join(" ").trim();
+    // Split on sentence boundary near the middle
+    const sents = parts[0].match(/[^.!?]+[.!?]+/g) ?? [parts[0]];
+    const mid = Math.ceil(sents.length / 2);
+    parts = [sents.slice(0, mid).join(" ").trim(), sents.slice(mid).join(" ").trim()];
   } else if (parts.length > 2) {
-    t = parts.slice(0, 2).join("\n\n");
+    parts = [parts[0], parts[1]];
   }
-  return t.trim();
+
+  return parts.map(p => p.trim()).join("\n\n");
 }
 
-// Context Mirror 2.0: Sanitize structured dashboard elements
+// Context Mirror 2.0: Sanitize structured dashboard elements with enhanced rules
 export function sanitizeHeadline(headline: string): string {
-  return headline
+  let clean = (headline || "")
+    .replace(/(no vendor names|no benchmarks|probability[- ]?based|under \d+\s*words|methodology compliant)/gi, "")
     .replace(BANNED_PHRASES_REGEX, "")
     .replace(/[\r\n]+/g, " ")
     .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 120); // Enforce character limit
+    .trim();
+  
+  return clean.slice(0, 120); // Enforce ≤120 chars
 }
 
 export function sanitizeActionItems(actions: string[]): string[] {
   return actions
     .slice(0, 3) // Enforce max 3 actions
     .map(action => 
-      action
-        .replace(BANNED_PHRASES_REGEX, "")
-        .replace(/[\r\n]+/g, " ")
-        .replace(/\s+/g, " ")
-        .replace(/^[-•]\s*/, "") // Remove bullet points
-        .trim()
-        .slice(0, 84) // Enforce ≤14 words (~6 chars/word)
+      sanitizeStructuredField(action, 84) // Use enhanced sanitization
     )
     .filter(Boolean);
 }
 
 export function sanitizeWatchouts(watchouts: string[]): string[] {
   return watchouts
-    .slice(0, 2) // Enforce max 2 watchouts  
+    .slice(0, 2) // Enforce max 2 watchouts
     .map(watchout => 
-      watchout
-        .replace(BANNED_PHRASES_REGEX, "")
-        .replace(/[\r\n]+/g, " ")
-        .replace(/\s+/g, " ")
-        .replace(/^[-•]\s*/, "") // Remove bullet points
-        .trim()
-        .slice(0, 84) // Enforce ≤14 words (~6 chars/word)
+      sanitizeStructuredField(watchout, 84) // Use enhanced sanitization
     )
     .filter(Boolean);
 }
 
 export function sanitizeScenarios(scenarios: { if_regulation_tightens: string; if_budgets_tighten: string }): { if_regulation_tightens: string; if_budgets_tighten: string } {
   return {
-    if_regulation_tightens: scenarios.if_regulation_tightens
-      .replace(BANNED_PHRASES_REGEX, "")
-      .replace(/[\r\n]+/g, " ")
-      .replace(/\s+/g, " ")
-      .trim(),
-    if_budgets_tighten: scenarios.if_budgets_tighten
-      .replace(BANNED_PHRASES_REGEX, "")
-      .replace(/[\r\n]+/g, " ")
-      .replace(/\s+/g, " ")
-      .trim()
+    if_regulation_tightens: sanitizeStructuredField(scenarios.if_regulation_tightens),
+    if_budgets_tighten: sanitizeStructuredField(scenarios.if_budgets_tighten)
   };
 }
 
@@ -113,6 +108,19 @@ export function sanitizeContextMirror(mirror: ContextMirror): ContextMirror {
 
 export function validateWordCount(text: string): boolean {
   return isValidWordCount(text);
+}
+
+// Enhanced sanitization for Context Mirror 2.0 structured fields
+export function sanitizeStructuredField(field: string, maxLength?: number): string {
+  let clean = (field || "")
+    .replace(/(no vendor names|no benchmarks|probability[- ]?based|under \d+\s*words|methodology compliant)/gi, "")
+    .replace(BANNED_PHRASES_REGEX, "")
+    .replace(/[\r\n]+/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/^[-•]\s*/, "") // Remove bullet points
+    .trim();
+    
+  return maxLength ? clean.slice(0, maxLength) : clean;
 }
 
 // Re-export from shared validation for backwards compatibility
