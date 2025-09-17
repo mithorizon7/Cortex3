@@ -115,7 +115,7 @@ function ContextInsightPageContent() {
   });
 
   const handleDownloadBrief = async () => {
-    if (!data || !assessmentData || !id) {
+    if (!data || !assessmentData || !id || !data.insight) {
       toast({
         title: "Cannot generate PDF",
         description: "Missing required data. Please try refreshing the page.",
