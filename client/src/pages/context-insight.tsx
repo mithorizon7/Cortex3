@@ -14,7 +14,6 @@ import { ProtectedRoute } from "@/components/auth/protected-route";
 import { LoadingTips } from "@/components/context-mirror/LoadingTips";
 import { ContextReflection } from "@/components/context-mirror/ContextReflection";
 import { violatesPolicy, sanitizeInsight } from "@/components/context-mirror/sanitizeInsight";
-import { enforceConstraints, countNarrativeWords, truncateNarrativeContent, sanitizeContent } from "@/lib/context-constraints";
 
 
 function EducationalLoader() {

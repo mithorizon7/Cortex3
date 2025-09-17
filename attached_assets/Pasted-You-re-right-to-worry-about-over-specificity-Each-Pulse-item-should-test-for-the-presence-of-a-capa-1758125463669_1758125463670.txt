@@ -1,0 +1,162 @@
+You’re right to worry about over‑specificity. Each Pulse item should test for the presence of a capability or control, not a single implementation. Below is a line‑by‑line review of all 18 items and a cleaned, principle‑level v3.3 wording that preserves rigor while avoiding prescription and jargon.
+
+⸻
+
+How I evaluated each item
+	•	Scope: Does it test the capability (what) rather than a specific method (how)?
+	•	Clarity: Is it plainly understandable by senior leaders?
+	•	Jargon: Any terms that require insider knowledge?
+	•	Verifiability: Could a “Yes” be evidenced (policy, artifact, log, minutes)?
+
+I keep Yes/No/Unsure (Unsure = 0 for score; shown as confidence).
+
+⸻
+
+Pulse v3.3 — Principle‑Level Wording (ready to use)
+
+Answer Yes only if it is fully true today and you could point to evidence.
+Key term tooltips suggested at the end.
+
+C — Clarity & Command
+
+C1 (v3.3)
+A short, written AI ambition exists and names the business outcomes it aims to move.
+Why change? Keeps focus on outcomes; “approved” can be implicit if published by leadership.
+Acceptable evidence: one‑page ambition; strategy deck; OKRs.
+
+C2 (v3.3)
+A single senior leader is accountable for AI outcomes, and responsibilities between the central enablement team and business units are defined.
+Why change? Replaces “CoE↔BU” jargon; allows any org design with clear roles.
+Evidence: org memo/RACI; charter; budget line.
+
+C3 (v3.3)
+AI work is reviewed on a set schedule and those reviews lead to resource shifts (fund, pause, stop, or scale).
+Why change? Removes “twice per year” prescription; keeps the crucial reallocation behavior.
+Evidence: review calendar; minutes showing reallocation.
+
+⸻
+
+O — Operations & Data
+
+O1 (v3.3)
+AI solutions you run or consume follow a repeatable operating process that tracks quality, reliability, and cost, with human review where stakes are high.
+Why change? Generalizes “documented lifecycle / logging / drift / HITL” into capability; keeps human‑in‑the‑loop concept in plain English.
+Evidence: runbook/lifecycle doc; dashboards; alert rules; QA checkpoints.
+
+O2 (v3.3)
+The key data and prompts these solutions rely on have named owners, usage rules, and quality expectations that are easy to find.
+Why change? Avoids “catalogue/register” prescription while preserving governance.
+Evidence: data catalog entries; ownership matrix; retention rules.
+
+O3 (v3.3)
+New AI ideas—build or buy—pass a simple value and feasibility screen before major spend or effort.
+Why change? Replaces “value/feasibility gate” jargon with plain words.
+Evidence: intake form/template; portfolio log with decision notes.
+
+⸻
+
+R — Risk, Trust & Security
+
+R1 (v3.3)
+You keep an up‑to‑date list of AI systems and vendor services, with risk level and a named risk owner for each.
+Why change? None—already capability‑level.
+Evidence: inventory/register; owner assignments.
+
+R2 (v3.3)
+Higher‑impact uses are checked on a schedule for fairness, privacy, and quality, and your critical systems are periodically security‑tested.
+Why change? “Red‑teaming” renamed to “security‑tested” to avoid jargon; keeps the intent.
+Evidence: test calendar; findings and fixes; security test summary.
+
+R3 (v3.3)
+Your AI controls have had a recent independent review (internal or external), and you have a short incident response and communications plan.
+Why change? Swaps “within 12 months” for “recent” to fit varied regimes; retains assurance + IR.
+Evidence: audit/assurance letter; IR runbook.
+
+⸻
+
+T — Talent & Culture
+
+T1 (v3.3)
+A written plan exists to attract, develop, and retain the AI‑related skills your strategy requires.
+Why change? None.
+
+T2 (v3.3)
+People in AI‑touching roles have had role‑appropriate training in the last year, and key workflows were updated to use AI safely and productively.
+Why change? Replaces “tasks redesigned” with broader “workflows”; keeps timeframe.
+Evidence: training records; updated SOPs/checklists.
+
+T3 (v3.3)
+Wins, failures, and lessons from AI use are shared on a regular rhythm, and incentives support safe, effective adoption.
+Why change? None.
+
+⸻
+
+E — Ecosystem & Infrastructure
+
+E1 (v3.3)
+Capacity and licences scale with demand, and you have clear visibility into unit costs and quotas so projects are not delayed or surprised by spend.
+Why change? Removes “FinOps” jargon; keeps cost discipline.
+Evidence: cost dashboard; quota reports; SLOs.
+
+E2 (v3.3)
+You have strategic model/tool/data partners, and for critical paths you know how you would export, switch, or run a secondary option.
+Why change? Keeps portability without prescribing contract terms.
+Evidence: contract clauses; exit/second‑source notes.
+
+E3 (v3.3)
+Data you exchange with external parties uses governed, auditable routes (for example, approved APIs or clean‑room arrangements).
+Why change? Clarifies with “for example”; avoids implying only one method.
+Evidence: API gateway policy; data‑sharing agreement.
+
+⸻
+
+X — Experimentation & Evolution
+
+X1 (v3.3)
+Teams can experiment safely in a defined space, and you maintain a simple practice for scanning what’s changing outside (tech, policy, competitors).
+Why change? Plain English for “sandbox” + “horizon scanning.”
+Evidence: sandbox guidelines; short scan notes.
+
+X2 (v3.3)
+A small, protected slice of time, budget, or credits is reserved for exploratory or high‑uncertainty work each year.
+Why change? None—capability, not method.
+
+X3 (v3.3)
+Every pilot has clear success and stop criteria with a decision date, and pilots that don’t meet the mark are retired or redirected on time.
+Why change? Keeps “sunset logic” but uses plain words.
+Evidence: pilot register with metrics and decision outcomes.
+
+⸻
+
+Items that were most at risk of being too specific
+	•	O1 (lifecycle/logging/drift/HITL) → reframed as “repeatable operating process that tracks quality/reliability/cost + human review where stakes are high.”
+	•	O2 (catalog/register) → reframed to “owners, usage rules, and quality expectations that are easy to find.”
+	•	O3 (“value/feasibility gate”) → reframed as “simple value and feasibility screen.”
+	•	R2 (“red‑teaming”) → reframed as “security‑tested” with examples; still allows red‑team, pen test, or equivalent.
+	•	R3 (“within 12 months”) → “recent independent review,” respectful of different regimes.
+	•	E1 (“FinOps”) → replaced with “clear visibility into unit costs and quotas.”
+	•	X1 (“sandbox” and “scanning”) → kept concepts, simplified language.
+
+These changes preserve the signal while allowing multiple valid implementations.
+
+⸻
+
+Minimal glossary for the few terms we still use (tooltips)
+	•	Central enablement team: A small group that sets standards and supports the organization in using AI (often called a Center of Excellence).
+	•	Human review (HITL): A person checks/approves outputs for higher‑stakes use‑cases.
+	•	Data catalogue: A place to find what data exists, who owns it, and how to use it.
+	•	Clean room: A controlled way to join data with a partner without sharing raw data.
+
+⸻
+
+Developer notes (quick)
+	•	Replace the existing prompt strings with v3.3 above.
+	•	Keep the Unsure choice; score only “Yes.”
+	•	Show a tiny info icon next to “central enablement team,” “human review,” and “clean room,” revealing the glossary lines above.
+	•	Keep the “evidence you could point to” list hidden by default; reveal on hover or via a small “What counts as evidence?” link.
+
+⸻
+
+Bottom line
+
+The v3.3 set tests for capabilities and disciplines, not single solutions. Language is plain, verifiable, and implementation‑agnostic, so leaders won’t feel boxed into a method but will still know exactly what “Yes” means.

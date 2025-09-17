@@ -12,9 +12,7 @@ export interface AssessmentResults {
 }
 
 export interface ContextMirrorData {
-  strengths: string[];
-  fragilities: string[];
-  whatWorks: string[];
+  insight: string; // Two paragraphs separated by \n\n
   disclaimer: string;
   contextProfile: ContextProfile;
   assessmentId: string;
@@ -28,7 +26,7 @@ export async function generateContextBrief(data: ContextMirrorData): Promise<voi
       throw new Error('Missing required data for PDF generation');
     }
     
-    if (!data.strengths?.length || !data.fragilities?.length || !data.whatWorks?.length) {
+    if (!data.insight || typeof data.insight !== 'string' || data.insight.trim().length === 0) {
       throw new Error('Missing context insight data for PDF generation');
     }
 
@@ -91,11 +89,11 @@ export async function generateContextBrief(data: ContextMirrorData): Promise<voi
   const leftColumnX = margin;
   const rightColumnX = margin + columnWidth + 10;
   
-  // Left Column: Context Insights
+  // Left Column: Context Reflection
   doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(accentColor);
-  doc.text('WHAT YOUR PROFILE SIGNALS', leftColumnX, currentY);
+  doc.text('CONTEXT REFLECTION', leftColumnX, currentY);
   currentY += 10;
   
     // Helper function to check if content fits on current page
@@ -108,61 +106,23 @@ export async function generateContextBrief(data: ContextMirrorData): Promise<voi
       return false;
     };
 
-    // Strengths
-    checkPageOverflow(20);
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
+    // Split insight into paragraphs
+    const paragraphs = data.insight.split(/\n{2,}/).filter(p => p.trim().length > 0);
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
     doc.setTextColor(primaryColor);
-    doc.text('Strengths', leftColumnX, currentY);
-    currentY += 6;
     
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    data.strengths.forEach(strength => {
-      const lines = doc.splitTextToSize(`• ${strength}`, columnWidth - 5);
+    paragraphs.forEach((paragraph, index) => {
+      const lines = doc.splitTextToSize(paragraph.trim(), columnWidth);
       const requiredHeight = lines.length * 4;
-      checkPageOverflow(requiredHeight + 2);
-      doc.text(lines, leftColumnX + 3, currentY);
-      currentY += requiredHeight;
+      checkPageOverflow(requiredHeight + 6);
+      
+      doc.text(lines, leftColumnX, currentY);
+      currentY += requiredHeight + (index < paragraphs.length - 1 ? 6 : 0); // Add space between paragraphs
     });
     
     currentY += 5;
-  
-    // Fragilities
-    checkPageOverflow(20);
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Fragilities', leftColumnX, currentY);
-    currentY += 6;
-    
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    data.fragilities.forEach(fragility => {
-      const lines = doc.splitTextToSize(`• ${fragility}`, columnWidth - 5);
-      const requiredHeight = lines.length * 4;
-      checkPageOverflow(requiredHeight + 2);
-      doc.text(lines, leftColumnX + 3, currentY);
-      currentY += requiredHeight;
-    });
-    
-    currentY += 5;
-  
-    // What Works
-    checkPageOverflow(20);
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('What usually works first', leftColumnX, currentY);
-    currentY += 6;
-    
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    data.whatWorks.forEach(work => {
-      const lines = doc.splitTextToSize(`• ${work}`, columnWidth - 5);
-      const requiredHeight = lines.length * 4;
-      checkPageOverflow(requiredHeight + 2);
-      doc.text(lines, leftColumnX + 3, currentY);
-      currentY += requiredHeight;
-    });
   
   // Right Column: Context Profile
   let rightColumnY = 60;

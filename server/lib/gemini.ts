@@ -11,6 +11,11 @@ import { getContextTemplate } from "./context-templates";
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 
 export async function generateContextMirror(profile: ContextProfile): Promise<ContextMirror> {
+  // 7 second timeout as per spec
+  const timeoutPromise = new Promise<never>((_, reject) => 
+    setTimeout(() => reject(new Error('LLM request timed out after 7 seconds')), 7000)
+  );
+
   try {
     const systemPrompt = `You are an executive AI strategy advisor. Write in clear, concise prose suitable for senior leaders. Base your analysis *only* on organizational **context** (not internal capabilities). Use probability language ('often', 'tends to', 'commonly'). Vendor-neutral. No metrics or benchmarks. Output exactly two paragraphs of narrative (150–220 words total).`;
 
@@ -19,9 +24,9 @@ export async function generateContextMirror(profile: ContextProfile): Promise<Co
 • Regulatory intensity: ${profile.regulatory_intensity}
 • Data sensitivity: ${profile.data_sensitivity}
 • Market clock-speed: ${profile.clock_speed}
-• Integration complexity / legacy surface: ${profile.scale_throughput}
+• Integration complexity: ${profile.scale_throughput + profile.latency_edge}
 • Change tolerance: ${profile.build_readiness}
-• Scale / geography: ${profile.scale_throughput}
+• Scale: ${profile.scale_throughput}
 
 Write a short, board-ready **Context Reflection** in 2 paragraphs.
 Paragraph 1: What this context often **enables** and often **constrains**.
@@ -29,7 +34,7 @@ Paragraph 2: What this typically **implies** for early AI moves (guardrails, qui
 Avoid headings and bullets. Avoid the words 'strengths' and 'fragilities'. Avoid internal guidelines, rules, or counters. Return JSON:
 { "insight": "<two paragraphs>", "disclaimer": "Educational reflection based on your context; not a compliance determination." }`;
 
-    const response = await ai.models.generateContent({
+    const llmRequest = ai.models.generateContent({
       model: "gemini-2.5-pro",
       config: {
         systemInstruction: systemPrompt,
@@ -52,6 +57,8 @@ Avoid headings and bullets. Avoid the words 'strengths' and 'fragilities'. Avoid
       contents: userPrompt,
     });
 
+    const response = await Promise.race([llmRequest, timeoutPromise]);
+
     const rawJson = response.text;
 
     if (rawJson) {
@@ -67,11 +74,11 @@ Context profile:
 • Regulatory intensity: ${profile.regulatory_intensity}
 • Data sensitivity: ${profile.data_sensitivity}
 • Market clock-speed: ${profile.clock_speed}
-• Integration complexity / legacy surface: ${profile.scale_throughput}
+• Integration complexity: ${profile.scale_throughput + profile.latency_edge}
 • Change tolerance: ${profile.build_readiness}
-• Scale / geography: ${profile.scale_throughput}`;
+• Scale: ${profile.scale_throughput}`;
 
-        const retryResponse = await ai.models.generateContent({
+        const retryLlmRequest = ai.models.generateContent({
           model: "gemini-2.5-pro",
           config: {
             systemInstruction: systemPrompt,
@@ -87,6 +94,8 @@ Context profile:
           },
           contents: retryPrompt,
         });
+        
+        const retryResponse = await Promise.race([retryLlmRequest, timeoutPromise]);
         
         const retryJson = retryResponse.text;
         if (retryJson) {
