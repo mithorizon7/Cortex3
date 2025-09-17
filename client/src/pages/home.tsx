@@ -294,7 +294,7 @@ export default function HomePage() {
               <div className="text-center space-y-3">
                 <div 
                   className="w-16 h-16 rounded-full mx-auto flex items-center justify-center font-bold text-white text-lg shadow-lg"
-                  style={{ backgroundColor: "hsl(38, 92%, 50%)" }}
+                  style={{ backgroundColor: "hsl(217, 91%, 60%)" }}
                 >
                   1
                 </div>
