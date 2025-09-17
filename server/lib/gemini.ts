@@ -38,21 +38,23 @@ Avoid headings and bullets. Avoid the words 'strengths' and 'fragilities'. Avoid
     const llmRequest = ai.models.generateContent({
       model: "gemini-2.5-pro",
       contents: userPrompt,
-      systemInstruction: systemPrompt,
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: "object",
-        properties: {
-          insight: {
-            type: "string",
-            description: "Two paragraphs separated by \\n\\n, approximately 150-220 words total"
+      config: {
+        systemInstruction: systemPrompt,
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: "object",
+          properties: {
+            insight: {
+              type: "string",
+              description: "Two paragraphs separated by \\n\\n, approximately 150-220 words total"
+            },
+            disclaimer: {
+              type: "string",
+              description: "One-line micro-disclaimer"
+            }
           },
-          disclaimer: {
-            type: "string",
-            description: "One-line micro-disclaimer"
-          }
-        },
-        required: ["insight", "disclaimer"]
+          required: ["insight", "disclaimer"]
+        }
       }
     });
 
@@ -86,19 +88,21 @@ Context profile:
           const retryLlmRequest = ai.models.generateContent({
             model: "gemini-2.5-pro",
             contents: retryPrompt,
-            systemInstruction: systemPrompt,
-            responseMimeType: "application/json",
-            responseSchema: {
-              type: "object",
-              properties: {
-                insight: {
-                  type: "string"
+            config: {
+              systemInstruction: systemPrompt,
+              responseMimeType: "application/json",
+              responseSchema: {
+                type: "object",
+                properties: {
+                  insight: {
+                    type: "string"
+                  },
+                  disclaimer: {
+                    type: "string"
+                  }
                 },
-                disclaimer: {
-                  type: "string"
-                }
-              },
-              required: ["insight", "disclaimer"]
+                required: ["insight", "disclaimer"]
+              }
             }
           });
           
