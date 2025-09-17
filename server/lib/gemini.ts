@@ -12,9 +12,9 @@ import { BANNED_PHRASES_REGEX, WORD_COUNT_LIMITS, violatesPolicy } from "../../s
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 
 export async function generateContextMirror(profile: ContextProfile): Promise<ContextMirror> {
-  // 7 second timeout as per spec
+  // 25 second timeout for complex Context Mirror prompts with JSON schema (executive advisory content takes longer)
   const timeoutPromise = new Promise<never>((_, reject) => 
-    setTimeout(() => reject(new Error('LLM request timed out after 7 seconds')), 7000)
+    setTimeout(() => reject(new Error('LLM request timed out after 25 seconds')), 25000)
   );
 
   try {
@@ -35,7 +35,9 @@ Paragraph 2: What this typically **implies** for early AI moves (guardrails, qui
 Avoid headings and bullets. Avoid the words 'strengths' and 'fragilities'. Avoid internal guidelines, rules, or counters. Return JSON:
 { "insight": "<two paragraphs>", "disclaimer": "Educational reflection based on your context; not a compliance determination." }`;
 
-    const config = {
+    const llmRequest = ai.models.generateContent({
+      model: "gemini-2.5-pro",
+      contents: userPrompt,
       systemInstruction: systemPrompt,
       responseMimeType: "application/json",
       responseSchema: {
@@ -52,12 +54,6 @@ Avoid headings and bullets. Avoid the words 'strengths' and 'fragilities'. Avoid
         },
         required: ["insight", "disclaimer"]
       }
-    };
-
-    const llmRequest = ai.models.generateContent({
-      model: "gemini-2.5-pro",
-      contents: userPrompt,
-      config
     });
 
     const response = await Promise.race([llmRequest, timeoutPromise]);
@@ -65,7 +61,13 @@ Avoid headings and bullets. Avoid the words 'strengths' and 'fragilities'. Avoid
     const rawJson = response.text;
 
     if (rawJson) {
-      const payload: ContextMirrorPayload = JSON.parse(rawJson);
+      // Clean the response - remove markdown code block wrapper if present
+      const cleanedJson = rawJson
+        .replace(/^```json\n?/, '')    // Remove opening ```json
+        .replace(/\n?```$/, '')        // Remove closing ```
+        .trim();                       // Remove extra whitespace
+      
+      const payload: ContextMirrorPayload = JSON.parse(cleanedJson);
       
       // Check for policy violations using shared validation
       if (violatesPolicy(payload.insight)) {
@@ -80,35 +82,37 @@ Context profile:
 • Change tolerance: ${profile.build_readiness}
 • Scale: ${profile.scale_throughput}`;
 
-        const retryConfig = {
-          systemInstruction: systemPrompt,
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: "object",
-            properties: {
-              insight: {
-                type: "string"
-              },
-              disclaimer: {
-                type: "string"
-              }
-            },
-            required: ["insight", "disclaimer"]
-          }
-        };
-
         try {
           const retryLlmRequest = ai.models.generateContent({
             model: "gemini-2.5-pro",
             contents: retryPrompt,
-            config: retryConfig
+            systemInstruction: systemPrompt,
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: "object",
+              properties: {
+                insight: {
+                  type: "string"
+                },
+                disclaimer: {
+                  type: "string"
+                }
+              },
+              required: ["insight", "disclaimer"]
+            }
           });
           
           const retryResponse = await Promise.race([retryLlmRequest, timeoutPromise]);
           
           const retryJson = retryResponse.text;
           if (retryJson) {
-            const retryPayload: ContextMirrorPayload = JSON.parse(retryJson);
+            // Clean the retry response - remove markdown code block wrapper if present
+            const cleanedRetryJson = retryJson
+              .replace(/^```json\n?/, '')    // Remove opening ```json
+              .replace(/\n?```$/, '')        // Remove closing ```
+              .trim();                       // Remove extra whitespace
+            
+            const retryPayload: ContextMirrorPayload = JSON.parse(cleanedRetryJson);
             
             // CRITICAL: Validate retry response before returning
             if (!violatesPolicy(retryPayload.insight)) {
