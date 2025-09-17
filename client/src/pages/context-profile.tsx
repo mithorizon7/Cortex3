@@ -358,9 +358,9 @@ export default function ContextProfilePage() {
                 disabled={createAssessment.isPending}
                 size="lg"
                 className="flex items-center space-x-2 sm:hidden font-ui"
-                data-testid="button-start-pulse-check-mobile"
+                data-testid="button-view-context-overview-mobile"
               >
-                <span>{createAssessment.isPending ? "Starting..." : "Start Check"}</span>
+                <span>{createAssessment.isPending ? "Creating..." : "View Overview"}</span>
                 <ChevronRight className="h-4 w-4" />
               </Button>
             ) : (
@@ -389,9 +389,9 @@ export default function ContextProfilePage() {
                 disabled={createAssessment.isPending}
                 size="lg"
                 className="flex items-center space-x-2"
-                data-testid="button-start-pulse-check"
+                data-testid="button-view-context-overview"
               >
-                <span>{createAssessment.isPending ? "Starting..." : "Start Pulse Check"}</span>
+                <span>{createAssessment.isPending ? "Creating..." : "View Context Overview"}</span>
                 <ChevronRight className="h-4 w-4" />
               </Button>
             ) : (
