@@ -71,11 +71,11 @@ export default function HomePage() {
   const latestAssessmentId = user ? localStorage.getItem(`latest-assessment-${user.uid}`) : null;
 
   // Fetch user's latest assessment if they have one
-  const { data: userAssessment } = useQuery<Assessment>({
+  const { data: userAssessment } = useQuery({
     queryKey: ['/api/assessments', latestAssessmentId],
     enabled: !!user && !!latestAssessmentId,
     retry: false, // Don't retry if assessment doesn't exist
-  });
+  }) as { data?: Assessment };
 
   // Set document title for SEO
   useEffect(() => {
@@ -257,7 +257,7 @@ export default function HomePage() {
           <div className="space-y-4">
             <ExecutiveCortexHero 
               className="hidden md:block" 
-              pillarScores={userAssessment?.pillarScores}
+              pillarScores={userAssessment?.pillarScores as PillarScores | undefined}
             />
             <p className="text-sm text-center text-muted-foreground md:block hidden">
               Once complete this will reflect your organization's AI strategic maturity
