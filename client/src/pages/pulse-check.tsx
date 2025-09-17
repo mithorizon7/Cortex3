@@ -281,7 +281,7 @@ export default function PulseCheckPage() {
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button
-                            variant={responses[question.id] === false ? "destructive" : "outline"}
+                            variant={responses[question.id] === false ? "accent" : "outline"}
                             size="lg"
                             onClick={() => handleResponseChange(question.id, false)}
                             className="flex items-center justify-center space-x-2 min-w-[120px] sm:min-w-[100px] font-ui"
@@ -341,7 +341,7 @@ export default function PulseCheckPage() {
                   {responses[question.id] !== undefined && (
                     <div className="text-center mt-4">
                       <Badge 
-                        variant={responses[question.id] === true ? "default" : responses[question.id] === false ? "destructive" : "secondary"}
+                        variant={responses[question.id] === true ? "default" : responses[question.id] === false ? "accent" : "secondary"}
                         className="text-sm"
                       >
                         {responses[question.id] === true ? 'Yes' : responses[question.id] === false ? 'No' : 'Unsure'}
