@@ -83,10 +83,10 @@ Context profile:
 • Change tolerance: ${profile.build_readiness}
 • Scale: ${profile.scale_throughput}`;
 
-        const retryLlmRequest = ai.models.generateContent({
+        const retryModel = ai.getGenerativeModel({
           model: "gemini-2.5-pro",
-          config: {
-            systemInstruction: systemPrompt,
+          systemInstruction: systemPrompt,
+          generationConfig: {
             responseMimeType: "application/json",
             responseSchema: {
               type: "object",
@@ -97,8 +97,9 @@ Context profile:
               required: ["insight", "disclaimer"]
             },
           },
-          contents: retryPrompt,
         });
+
+        const retryLlmRequest = retryModel.generateContent(retryPrompt);
         
         const retryResponse = await Promise.race([retryLlmRequest, timeoutPromise]);
         
