@@ -69,17 +69,17 @@ export default function DomainIntroPage() {
   const handleStartQuestions = () => {
     // Track telemetry
     if (typeof window !== 'undefined' && (window as any).gtag) {
-      (window as any).gtag('event', 'pulse_intro_start', {
+      (window as any).gtag('event', 'pulse.intro.start', {
         domain: domain,
         assessment_id: assessmentId
       });
     }
     
-    navigate(`/pulse/${domain}/questions`);
+    navigate(`/pulse/${domain}/questions/${assessmentId}`);
   };
 
   const handleSkipToQuestions = () => {
-    navigate(`/pulse/${domain}/questions`);
+    navigate(`/pulse/${domain}/questions/${assessmentId}`);
   };
 
   if (isLoading || !domainData) {
@@ -104,7 +104,7 @@ export default function DomainIntroPage() {
   // Track page view
   useEffect(() => {
     if (typeof window !== 'undefined' && (window as any).gtag) {
-      (window as any).gtag('event', 'pulse_intro_viewed', {
+      (window as any).gtag('event', 'pulse.intro.viewed', {
         domain: domain,
         assessment_id: assessmentId
       });
