@@ -3,7 +3,7 @@
  * Used by both client and server to ensure consistency
  */
 
-export const BANNED_PHRASES_REGEX = /\bstrength(s)?\b|\bfragilit(y|ies)\b|No Vendor Names|No Benchmarks|Probability[- ]?Based|Under \d+\s*Words/gi;
+export const BANNED_PHRASES_REGEX = /\bstrength(s)?\b|\bfragilit(y|ies)\b|No Vendor Names|No Benchmarks|Probability[- ]?Based|Under \d+\s*Words/i;
 
 export const WORD_COUNT_LIMITS = {
   min: 150,
@@ -38,9 +38,3 @@ export function getWordCount(text: string): number {
   return text.trim().split(/\s+/).filter(word => word.length > 0).length;
 }
 
-/**
- * Reset regex state to prevent issues with global regex
- */
-export function resetBannedPhrasesRegex(): void {
-  BANNED_PHRASES_REGEX.lastIndex = 0;
-}
