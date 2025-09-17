@@ -12,28 +12,31 @@ import { BANNED_PHRASES_REGEX, WORD_COUNT_LIMITS, violatesPolicy } from "../../s
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 
 export async function generateContextMirror(profile: ContextProfile): Promise<ContextMirror> {
-  // 25 second timeout for complex Context Mirror prompts with JSON schema (executive advisory content takes longer)
+  // 25 second timeout for complex Context Mirror 2.0 prompts with structured JSON schema
   const timeoutPromise = new Promise<never>((_, reject) => 
     setTimeout(() => reject(new Error('LLM request timed out after 25 seconds')), 25000)
   );
 
   try {
-    const systemPrompt = `You are an executive AI strategy advisor. Write in clear, concise prose suitable for senior leaders. Base your analysis *only* on organizational **context** (not internal capabilities). Use probability language ('often', 'tends to', 'commonly'). Vendor-neutral. No metrics or benchmarks. Output exactly two paragraphs of narrative (${WORD_COUNT_LIMITS.min}–${WORD_COUNT_LIMITS.max} words total).`;
+    const systemPrompt = `You are an executive AI strategy advisor. Write in clear, concise prose suitable for senior leaders. Base analysis ONLY on organizational CONTEXT (not internal capabilities). Use probability language (often, tends to, commonly). Vendor-neutral; no metrics, benchmarks, or named tools. Never surface internal rules or counters.`;
 
     const userPrompt = `Context profile:
+- Regulatory intensity: ${profile.regulatory_intensity}
+- Data sensitivity: ${profile.data_sensitivity}
+- Market clock-speed: ${profile.clock_speed}
+- Integration complexity / legacy surface: ${profile.scale_throughput + profile.latency_edge}
+- Change tolerance: ${profile.build_readiness}
+- Scale / geography: ${profile.scale_throughput}
 
-• Regulatory intensity: ${profile.regulatory_intensity}
-• Data sensitivity: ${profile.data_sensitivity}
-• Market clock-speed: ${profile.clock_speed}
-• Integration complexity: ${profile.scale_throughput + profile.latency_edge}
-• Change tolerance: ${profile.build_readiness}
-• Scale: ${profile.scale_throughput}
-
-Write a short, board-ready **Context Reflection** in 2 paragraphs.
-Paragraph 1: What this context often **enables** and often **constrains**.
-Paragraph 2: What this typically **implies** for early AI moves (guardrails, quick wins, continuity).
-Avoid headings and bullets. Avoid the words 'strengths' and 'fragilities'. Avoid internal guidelines, rules, or counters. Return JSON:
-{ "insight": "<two paragraphs>", "disclaimer": "Educational reflection based on your context; not a compliance determination." }`;
+Produce an export-ready CONTEXT MIRROR 2.0 with:
+1) headline: one sentence (≤120 chars) that frames why this context matters now.
+2) insight: two paragraphs (150–220 words total).
+   • P1: what this context often ENABLES and often CONSTRAINS.
+   • P2: what this typically IMPLIES for early AI moves (guardrails, quick wins, continuity).
+3) actions: 3 short imperative suggestions (≤14 words each) tied to the context.
+4) watchouts: 2 short pitfalls to avoid (≤14 words each), context-grounded.
+5) scenarios: one-sentence notes for: if_regulation_tightens, if_budgets_tighten.
+Constraints: vendor-neutral. no numbers/benchmarks. no policy names. no headings or bullets inside 'insight'.`;
 
     const llmRequest = ai.models.generateContent({
       model: "gemini-2.5-pro",
@@ -44,16 +47,21 @@ Avoid headings and bullets. Avoid the words 'strengths' and 'fragilities'. Avoid
         responseSchema: {
           type: "object",
           properties: {
-            insight: {
-              type: "string",
-              description: "Two paragraphs separated by \\n\\n, approximately 150-220 words total"
+            headline: { type: "string", maxLength: 120 },
+            insight: { type: "string", description: "Two paragraphs separated by \\n\\n, 150-220 words total" },
+            actions: { type: "array", items: { type: "string", maxLength: 84 }, minItems: 3, maxItems: 3 },
+            watchouts: { type: "array", items: { type: "string", maxLength: 84 }, minItems: 2, maxItems: 2 },
+            scenarios: {
+              type: "object",
+              properties: {
+                if_regulation_tightens: { type: "string" },
+                if_budgets_tighten: { type: "string" }
+              },
+              required: ["if_regulation_tightens", "if_budgets_tighten"]
             },
-            disclaimer: {
-              type: "string",
-              description: "One-line micro-disclaimer"
-            }
+            disclaimer: { type: "string" }
           },
-          required: ["insight", "disclaimer"]
+          required: ["headline", "insight", "actions", "watchouts", "scenarios", "disclaimer"]
         }
       }
     });
@@ -74,15 +82,16 @@ Avoid headings and bullets. Avoid the words 'strengths' and 'fragilities'. Avoid
       // Check for policy violations using shared validation
       if (violatesPolicy(payload.insight)) {
         // Retry once with clearer instructions
-        const retryPrompt = `Rewrite plainly. No internal rule text. Two paragraphs only (${WORD_COUNT_LIMITS.min}-${WORD_COUNT_LIMITS.max} words total). Avoid "strengths" and "fragilities" words. Return JSON: { "insight": "<two paragraphs>", "disclaimer": "Educational reflection based on your context; not a compliance determination." }
-
+        const retryPrompt = `Rewrite plainly. No internal rule text. Context Mirror 2.0 format required.
 Context profile:
-• Regulatory intensity: ${profile.regulatory_intensity}
-• Data sensitivity: ${profile.data_sensitivity}
-• Market clock-speed: ${profile.clock_speed}
-• Integration complexity: ${profile.scale_throughput + profile.latency_edge}
-• Change tolerance: ${profile.build_readiness}
-• Scale: ${profile.scale_throughput}`;
+- Regulatory intensity: ${profile.regulatory_intensity}
+- Data sensitivity: ${profile.data_sensitivity}
+- Market clock-speed: ${profile.clock_speed}
+- Integration complexity: ${profile.scale_throughput + profile.latency_edge}
+- Change tolerance: ${profile.build_readiness}
+- Scale: ${profile.scale_throughput}
+
+Return complete Context Mirror 2.0 JSON with headline, insight (two paragraphs), actions (3), watchouts (2), scenarios, disclaimer.`;
 
         try {
           const retryLlmRequest = ai.models.generateContent({
@@ -94,14 +103,21 @@ Context profile:
               responseSchema: {
                 type: "object",
                 properties: {
-                  insight: {
-                    type: "string"
+                  headline: { type: "string", maxLength: 120 },
+                  insight: { type: "string" },
+                  actions: { type: "array", items: { type: "string", maxLength: 84 }, minItems: 3, maxItems: 3 },
+                  watchouts: { type: "array", items: { type: "string", maxLength: 84 }, minItems: 2, maxItems: 2 },
+                  scenarios: {
+                    type: "object",
+                    properties: {
+                      if_regulation_tightens: { type: "string" },
+                      if_budgets_tighten: { type: "string" }
+                    },
+                    required: ["if_regulation_tightens", "if_budgets_tighten"]
                   },
-                  disclaimer: {
-                    type: "string"
-                  }
+                  disclaimer: { type: "string" }
                 },
-                required: ["insight", "disclaimer"]
+                required: ["headline", "insight", "actions", "watchouts", "scenarios", "disclaimer"]
               }
             }
           });
@@ -121,7 +137,11 @@ Context profile:
             // CRITICAL: Validate retry response before returning
             if (!violatesPolicy(retryPayload.insight)) {
               return {
+                headline: retryPayload.headline,
                 insight: retryPayload.insight,
+                actions: retryPayload.actions,
+                watchouts: retryPayload.watchouts,
+                scenarios: retryPayload.scenarios,
                 disclaimer: retryPayload.disclaimer
               };
             }
@@ -134,13 +154,21 @@ Context profile:
         console.warn('Original and retry both violated policy or retry failed, using fallback template');
         const fallback = getContextTemplate(profile);
         return {
+          headline: fallback.headline,
           insight: fallback.insight,
+          actions: fallback.actions,
+          watchouts: fallback.watchouts,
+          scenarios: fallback.scenarios,
           disclaimer: fallback.disclaimer
         };
       }
       
       return {
+        headline: payload.headline,
         insight: payload.insight,
+        actions: payload.actions,
+        watchouts: payload.watchouts,
+        scenarios: payload.scenarios,
         disclaimer: payload.disclaimer
       };
     } else {
@@ -150,19 +178,28 @@ Context profile:
     console.warn('LLM generation failed, using fallback:', error);
     const fallback = getContextTemplate(profile);
     return {
+      headline: fallback.headline,
       insight: fallback.insight,
+      actions: fallback.actions,
+      watchouts: fallback.watchouts,
+      scenarios: fallback.scenarios,
       disclaimer: fallback.disclaimer
     };
   }
 }
 
 export function generateRuleBasedFallback(profile: ContextProfile): ContextMirror {
-  // Use the new context template system for fallback
+  // Use the enhanced context template system for fallback
   const template = getContextTemplate(profile);
   
   return {
-    disclaimer: template.disclaimer,
+    // Context Mirror 2.0 format
+    headline: template.headline,
     insight: template.insight,
+    actions: template.actions,
+    watchouts: template.watchouts,
+    scenarios: template.scenarios,
+    disclaimer: template.disclaimer,
     // Legacy format (optional - for backwards compatibility)
     strengths: undefined,
     fragilities: undefined,
