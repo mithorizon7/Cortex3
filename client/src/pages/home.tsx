@@ -16,7 +16,7 @@ import { AppHeader } from "@/components/navigation/app-header";
 import { ExecutiveCortexHero } from "@/components/executive-cortex-hero";
 import { AuthRequiredModal } from "@/components/auth-required-modal";
 import { useAuth } from "@/contexts/auth-context";
-import type { Assessment } from "@shared/schema";
+import type { Assessment, PillarScores } from "@shared/schema";
 import { 
   ArrowRight,
   CheckCircle,
