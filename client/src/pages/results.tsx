@@ -83,6 +83,11 @@ function generateExecutiveInsights(pillarScores: PillarScores, gates: any[], con
   const insights = [];
   const priorities = [];
   
+  // Guard against null/undefined pillarScores
+  if (!pillarScores) {
+    return { insights, priorities };
+  }
+  
   // Analyze overall maturity
   const avgScore = Object.values(pillarScores).reduce((sum, score) => sum + score, 0) / 6;
   const weakestPillars = Object.entries(pillarScores)
@@ -303,7 +308,8 @@ export default function ResultsPage() {
   const contentTags = (assessment as any).contentTags || [];
   const { insights, priorities } = generateExecutiveInsights(pillarScores, triggeredGates, contextProfile);
   
-  const avgScore = Object.values(pillarScores).reduce((sum, score) => sum + score, 0) / 6;
+  // Guard against null/undefined pillarScores
+  const avgScore = pillarScores ? Object.values(pillarScores).reduce((sum, score) => sum + score, 0) / 6 : 0;
   const maturityLevel = avgScore < 1 ? 'Nascent' : avgScore < 2 ? 'Emerging' : avgScore < 3 ? 'Integrated' : 'Leading';
 
   return (
