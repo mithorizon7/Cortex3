@@ -117,7 +117,7 @@ export const contextMirrorSchema = z.object({
   disclaimer: z.string().min(10).max(140),
   
   // Narrative format (new)
-  insight: z.string().min(50).max(500).optional(), // Two paragraphs of 150-220 words total
+  insight: z.string().min(50).optional(), // Two paragraphs of 150-220 words total (no max limit)
 });
 
 export type ContextMirror = z.infer<typeof contextMirrorSchema>;
