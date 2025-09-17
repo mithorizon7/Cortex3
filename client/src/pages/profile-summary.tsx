@@ -10,7 +10,7 @@ import ProgressHeader from "@/components/progress-header";
 import OfflineBanner from "@/components/offline-banner";
 import { AppHeader } from "@/components/navigation/app-header";
 import { CONTEXT_ITEMS } from "@/lib/cortex";
-import { ChevronRight, Shield, AlertTriangle, CheckCircle, Clock } from "lucide-react";
+import { ChevronRight, Shield, AlertTriangle, CheckCircle, Clock, Eye } from "lucide-react";
 
 export default function ProfileSummaryPage() {
   const [, navigate] = useLocation();
@@ -99,8 +99,8 @@ export default function ProfileSummaryPage() {
     item.level === 4 || item.level === 3 || (item.displayValue === 'Yes')
   );
 
-  const continueToPulseCheck = () => {
-    navigate(`/pulse-check/${assessmentId}`);
+  const continueToContextOverview = () => {
+    navigate(`/context-insight/${assessmentId}`);
   };
 
   return (
@@ -240,17 +240,17 @@ export default function ProfileSummaryPage() {
         {/* Continue Button */}
         <div className="text-center">
           <Button 
-            onClick={continueToPulseCheck}
+            onClick={continueToContextOverview}
             size="lg"
             className="flex items-center space-x-2"
-            data-testid="button-continue-to-pulse-check"
+            data-testid="button-continue-to-context-overview"
           >
-            <span>Continue to Pulse Check</span>
+            <span>View Context Overview</span>
             <ChevronRight className="h-5 w-5" />
           </Button>
           <p className="text-xs text-muted-foreground mt-2">
-            <Clock className="h-3 w-3 inline mr-1" />
-            Estimated time: 6-8 minutes
+            <Eye className="h-3 w-3 inline mr-1" />
+            Review your personalized strategic insights
           </p>
         </div>
       </main>
