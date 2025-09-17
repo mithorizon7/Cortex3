@@ -1,7 +1,7 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import type { ContextProfile, ContextMirror, ContextMirrorPayload } from "../../shared/schema";
 import { getContextTemplate } from "./context-templates";
-import { BANNED_PHRASES_REGEX, WORD_COUNT_LIMITS, isValidWordCount, violatesPolicy } from "../../shared/context-validation";
+import { BANNED_PHRASES_REGEX, WORD_COUNT_LIMITS, violatesPolicy } from "../../shared/context-validation";
 
 // DON'T DELETE THIS COMMENT
 // Follow these instructions when using this blueprint:
@@ -35,27 +35,25 @@ Paragraph 2: What this typically **implies** for early AI moves (guardrails, qui
 Avoid headings and bullets. Avoid the words 'strengths' and 'fragilities'. Avoid internal guidelines, rules, or counters. Return JSON:
 { "insight": "<two paragraphs>", "disclaimer": "Educational reflection based on your context; not a compliance determination." }`;
 
-    const llmRequest = ai.models.generateContent({
-      model: "gemini-2.0-flash-exp",
+    const config = {
       systemInstruction: systemPrompt,
+      responseMimeType: "application/json",
+      responseSchema: Type.OBJECT({
+        insight: Type.STRING({
+          description: "Two paragraphs separated by \\n\\n, approximately 150-220 words total"
+        }),
+        disclaimer: Type.STRING({
+          description: "One-line micro-disclaimer"
+        })
+      }, {
+        required: ["insight", "disclaimer"]
+      })
+    };
+
+    const llmRequest = ai.models.generateContent({
+      model: "gemini-2.5-pro",
       contents: userPrompt,
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: "object",
-          properties: {
-            insight: { 
-              type: "string",
-              description: "Two paragraphs separated by \\n\\n, 150-220 words total"
-            },
-            disclaimer: { 
-              type: "string",
-              description: "One-line micro-disclaimer"
-            }
-          },
-          required: ["insight", "disclaimer"]
-        },
-      },
+      config
     });
 
     const response = await Promise.race([llmRequest, timeoutPromise]);
@@ -65,11 +63,8 @@ Avoid headings and bullets. Avoid the words 'strengths' and 'fragilities'. Avoid
     if (rawJson) {
       const payload: ContextMirrorPayload = JSON.parse(rawJson);
       
-      // Validate word count using shared validation
-      const validWordCount = isValidWordCount(payload.insight);
-      
       // Check for policy violations using shared validation
-      if (violatesPolicy(payload.insight) || !validWordCount) {
+      if (violatesPolicy(payload.insight)) {
         // Retry once with clearer instructions
         const retryPrompt = `Rewrite plainly. No internal rule text. Two paragraphs only (${WORD_COUNT_LIMITS.min}-${WORD_COUNT_LIMITS.max} words total). Avoid "strengths" and "fragilities" words. Return JSON: { "insight": "<two paragraphs>", "disclaimer": "Educational reflection based on your context; not a compliance determination." }
 
@@ -81,21 +76,21 @@ Context profile:
 • Change tolerance: ${profile.build_readiness}
 • Scale: ${profile.scale_throughput}`;
 
-        const retryLlmRequest = ai.models.generateContent({
-          model: "gemini-2.0-flash-exp",
+        const retryConfig = {
           systemInstruction: systemPrompt,
+          responseMimeType: "application/json",
+          responseSchema: Type.OBJECT({
+            insight: Type.STRING(),
+            disclaimer: Type.STRING()
+          }, {
+            required: ["insight", "disclaimer"]
+          })
+        };
+
+        const retryLlmRequest = ai.models.generateContent({
+          model: "gemini-2.5-pro",
           contents: retryPrompt,
-          generationConfig: {
-            responseMimeType: "application/json",
-            responseSchema: {
-              type: "object",
-              properties: {
-                insight: { type: "string" },
-                disclaimer: { type: "string" }
-              },
-              required: ["insight", "disclaimer"]
-            },
-          },
+          config: retryConfig
         });
         
         const retryResponse = await Promise.race([retryLlmRequest, timeoutPromise]);
