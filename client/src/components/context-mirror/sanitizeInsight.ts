@@ -1,3 +1,5 @@
+import { BANNED_PHRASES_REGEX, violatesPolicy, getWordCount, isValidWordCount } from "../../../../shared/context-validation";
+
 export function sanitizeInsight(text: string): string {
   let t = text
     .replace(/\r/g, "")
@@ -7,8 +9,7 @@ export function sanitizeInsight(text: string): string {
     .replace(/^\s*[-•]\s*/gm, "");
 
   // Remove leaked internal rules
-  const banned = /(No Vendor Names|No Benchmarks|Probability[- ]?Based|Under \d+\s*Words)/gi;
-  t = t.replace(banned, "");
+  t = t.replace(BANNED_PHRASES_REGEX, "");
 
   // Enforce exactly two paragraphs
   const parts = t.split(/\n{2,}/).filter(Boolean);
@@ -24,14 +25,8 @@ export function sanitizeInsight(text: string): string {
 }
 
 export function validateWordCount(text: string): boolean {
-  const wordCount = text.trim().split(/\s+/).filter(word => word.length > 0).length;
-  return wordCount >= 150 && wordCount <= 220;
+  return isValidWordCount(text);
 }
 
-export function getWordCount(text: string): number {
-  return text.trim().split(/\s+/).filter(word => word.length > 0).length;
-}
-
-export function violatesPolicy(text: string): boolean {
-  return /\bstrength(s)?\b|\bfragilit(y|ies)\b/i.test(text);
-}
+// Re-export from shared validation for backwards compatibility
+export { getWordCount, violatesPolicy } from "../../../../shared/context-validation";

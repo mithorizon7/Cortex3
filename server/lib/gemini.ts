@@ -1,6 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import type { ContextProfile, ContextMirror, ContextMirrorPayload } from "../../shared/schema";
 import { getContextTemplate } from "./context-templates";
+import { BANNED_PHRASES_REGEX, WORD_COUNT_LIMITS, isValidWordCount, violatesPolicy } from "../../shared/context-validation";
 
 // DON'T DELETE THIS COMMENT
 // Follow these instructions when using this blueprint:
@@ -17,7 +18,7 @@ export async function generateContextMirror(profile: ContextProfile): Promise<Co
   );
 
   try {
-    const systemPrompt = `You are an executive AI strategy advisor. Write in clear, concise prose suitable for senior leaders. Base your analysis *only* on organizational **context** (not internal capabilities). Use probability language ('often', 'tends to', 'commonly'). Vendor-neutral. No metrics or benchmarks. Output exactly two paragraphs of narrative (150–220 words total).`;
+    const systemPrompt = `You are an executive AI strategy advisor. Write in clear, concise prose suitable for senior leaders. Base your analysis *only* on organizational **context** (not internal capabilities). Use probability language ('often', 'tends to', 'commonly'). Vendor-neutral. No metrics or benchmarks. Output exactly two paragraphs of narrative (${WORD_COUNT_LIMITS.min}–${WORD_COUNT_LIMITS.max} words total).`;
 
     const userPrompt = `Context profile:
 
@@ -64,15 +65,13 @@ Avoid headings and bullets. Avoid the words 'strengths' and 'fragilities'. Avoid
     if (rawJson) {
       const payload: ContextMirrorPayload = JSON.parse(rawJson);
       
-      // Validate word count (150-220 words)
-      const wordCount = payload.insight.trim().split(/\s+/).filter(word => word.length > 0).length;
-      const validWordCount = wordCount >= 150 && wordCount <= 220;
+      // Validate word count using shared validation
+      const validWordCount = isValidWordCount(payload.insight);
       
-      // Check for policy violations
-      const banned = /\bstrength(s)?\b|\bfragilit(y|ies)\b|No Vendor Names|No Benchmarks|Probability[- ]?Based|Under \d+\s*Words/i;
-      if (banned.test(payload.insight) || !validWordCount) {
+      // Check for policy violations using shared validation
+      if (violatesPolicy(payload.insight) || !validWordCount) {
         // Retry once with clearer instructions
-        const retryPrompt = `Rewrite plainly. No internal rule text. Two paragraphs only (150-220 words total). Avoid "strengths" and "fragilities" words. Return JSON: { "insight": "<two paragraphs>", "disclaimer": "Educational reflection based on your context; not a compliance determination." }
+        const retryPrompt = `Rewrite plainly. No internal rule text. Two paragraphs only (${WORD_COUNT_LIMITS.min}-${WORD_COUNT_LIMITS.max} words total). Avoid "strengths" and "fragilities" words. Return JSON: { "insight": "<two paragraphs>", "disclaimer": "Educational reflection based on your context; not a compliance determination." }
 
 Context profile:
 • Regulatory intensity: ${profile.regulatory_intensity}

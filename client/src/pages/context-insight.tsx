@@ -194,10 +194,10 @@ function ContextInsightPageContent() {
       {/* Header */}
       <header className="space-y-3 pb-2">
         <h1 className="text-2xl md:text-3xl font-semibold text-foreground">
-          Context Insight
+          Context Reflection
         </h1>
         <p className="text-base text-muted-foreground leading-relaxed">
-          Strategic reflection tailored to your organizational context. Educational insights to inform leadership discussion.
+          Strategic analysis tailored to your organizational context. Executive insights to inform leadership discussion.
         </p>
       </header>
 
