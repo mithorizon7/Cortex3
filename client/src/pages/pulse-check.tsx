@@ -188,9 +188,25 @@ export default function PulseCheckPage() {
             <h1 className="text-3xl font-display font-bold text-foreground">Pulse Check — 18 Questions, 6 Domains</h1>
             <Clock className="h-5 w-5 text-muted-foreground" />
           </div>
-          <p className="text-lg text-muted-foreground mb-4 font-ui">
-            Answer <strong>Yes</strong> only if the statement is <strong>fully true today</strong>. The six domains are: <strong>Clarity & Command (C)</strong>, <strong>Operations & Data (O)</strong>, <strong>Risk/Trust/Security (R)</strong>, <strong>Talent & Culture (T)</strong>, <strong>Ecosystem & Infrastructure (E)</strong>, <strong>Experimentation & Evolution (X)</strong>. Each "Yes" earns a point; your domain score is 0–3.
-          </p>
+          <div className="mb-4 space-y-3">
+            <p className="text-lg text-muted-foreground font-ui">
+              Answer <strong>Yes</strong> only if the statement is <strong>fully true today</strong>. Each "Yes" earns a point; your domain score is 0–3.
+            </p>
+            
+            <div className="bg-primary/5 rounded-lg p-4 border border-primary/15">
+              <p className="text-base text-foreground mb-3 font-ui">
+                The six domains form the <strong className="text-primary text-lg tracking-wider">CORTEX</strong> framework:
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm font-ui">
+                <div><strong className="text-primary">C</strong> - Clarity & Command</div>
+                <div><strong className="text-primary">O</strong> - Operations & Data</div>
+                <div><strong className="text-primary">R</strong> - Risk/Trust/Security</div>
+                <div><strong className="text-primary">T</strong> - Talent & Culture</div>
+                <div><strong className="text-primary">E</strong> - Ecosystem & Infrastructure</div>
+                <div><strong className="text-primary">X</strong> - Experimentation & Evolution</div>
+              </div>
+            </div>
+          </div>
           <div className="max-w-xl mx-auto mb-6 p-4 bg-primary/5 rounded-lg border border-primary/15">
             <h3 className="font-semibold text-primary mb-2 font-ui">A Note on Honesty</h3>
             <p className="text-sm text-foreground/80 font-ui">
