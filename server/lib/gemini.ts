@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import type { ContextProfile, ContextMirror, ContextMirrorPayload } from "../../shared/schema";
 import { getContextTemplate } from "./context-templates";
 
@@ -8,7 +8,7 @@ import { getContextTemplate } from "./context-templates";
 //   - do not change this unless explicitly requested by the user
 
 // This API key is from Gemini Developer API Key, not vertex AI API Key
-const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 
 export async function generateContextMirror(profile: ContextProfile): Promise<ContextMirror> {
   // 7 second timeout as per spec
@@ -34,9 +34,10 @@ Paragraph 2: What this typically **implies** for early AI moves (guardrails, qui
 Avoid headings and bullets. Avoid the words 'strengths' and 'fragilities'. Avoid internal guidelines, rules, or counters. Return JSON:
 { "insight": "<two paragraphs>", "disclaimer": "Educational reflection based on your context; not a compliance determination." }`;
 
-    const model = ai.getGenerativeModel({
-      model: "gemini-2.5-pro",
+    const llmRequest = ai.models.generateContent({
+      model: "gemini-2.0-flash-exp",
       systemInstruction: systemPrompt,
+      contents: userPrompt,
       generationConfig: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -56,11 +57,9 @@ Avoid headings and bullets. Avoid the words 'strengths' and 'fragilities'. Avoid
       },
     });
 
-    const llmRequest = model.generateContent(userPrompt);
-
     const response = await Promise.race([llmRequest, timeoutPromise]);
 
-    const rawJson = response.text;
+    const rawJson = response.response.text();
 
     if (rawJson) {
       const payload: ContextMirrorPayload = JSON.parse(rawJson);
@@ -83,9 +82,10 @@ Context profile:
 • Change tolerance: ${profile.build_readiness}
 • Scale: ${profile.scale_throughput}`;
 
-        const retryModel = ai.getGenerativeModel({
-          model: "gemini-2.5-pro",
+        const retryLlmRequest = ai.models.generateContent({
+          model: "gemini-2.0-flash-exp",
           systemInstruction: systemPrompt,
+          contents: retryPrompt,
           generationConfig: {
             responseMimeType: "application/json",
             responseSchema: {
@@ -98,12 +98,10 @@ Context profile:
             },
           },
         });
-
-        const retryLlmRequest = retryModel.generateContent(retryPrompt);
         
         const retryResponse = await Promise.race([retryLlmRequest, timeoutPromise]);
         
-        const retryJson = retryResponse.text;
+        const retryJson = retryResponse.response.text();
         if (retryJson) {
           const retryPayload: ContextMirrorPayload = JSON.parse(retryJson);
           return {
