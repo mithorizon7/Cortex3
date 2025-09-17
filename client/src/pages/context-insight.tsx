@@ -36,10 +36,10 @@ interface NarrativeReflection {
   disclaimer: string;
 }
 
-// Component for narrative reflection display
-function NarrativeReflectionCard({ mirror }: { mirror: ContextMirror }) {
-  if (!mirror.insight) {
-    // Fallback for legacy format - redirect to structured view or error
+// Component for Context Mirror display (handles both legacy and 2.0 formats)
+function ContextMirrorCard({ mirror }: { mirror: ContextMirror }) {
+  if (!mirror.insight && !mirror.headline) {
+    // No content available
     return (
       <Alert className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950/20">
         <AlertCircle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
@@ -50,24 +50,8 @@ function NarrativeReflectionCard({ mirror }: { mirror: ContextMirror }) {
     );
   }
 
-  // Handle policy violations
-  if (violatesPolicy(mirror.insight)) {
-    return (
-      <div className="space-y-3">
-        <p className="text-base leading-relaxed text-foreground">
-          Your context suggests clear opportunities alongside constraints. We're refreshing this brief to
-          state those implications in narrative form. Please hold for a moment…
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <ContextReflection 
-      insight={mirror.insight} 
-      disclaimer={mirror.disclaimer} 
-    />
-  );
+  // Use the enhanced ContextReflection component that handles both formats
+  return <ContextReflection mirror={mirror} />;
 }
 
 function ErrorFallback({ error }: { error: Error }) {
@@ -240,7 +224,7 @@ function ContextInsightPageContent() {
                 <ErrorFallback error={error} />
               ) : data ? (
                 <div className="animate-in fade-in duration-300">
-                  <NarrativeReflectionCard mirror={data} />
+                  <ContextMirrorCard mirror={data} />
                 </div>
               ) : null}
             </CardContent>

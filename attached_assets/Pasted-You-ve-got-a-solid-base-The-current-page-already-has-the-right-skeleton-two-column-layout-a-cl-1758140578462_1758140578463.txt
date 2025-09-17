@@ -1,0 +1,395 @@
+You’ve got a solid base. The current page **already** has the right skeleton—two‑column layout, a clean loader with rotating tips, copy/export controls, and a narrative renderer that sanitizes output. That’s visible in your `ContextInsightPage` (loader + copy + PDF + “Pulse Check”) and in the separated `LoadingTips` and `ContextReflection` components.  &#x20;
+
+Below is a **drop‑in upgrade** that turns this from “a nice read” into a **destination** executives will keep and share: clearer structure, richer (but still context‑true) content, frictionless actions, and sturdier LLM plumbing so you *never* show internal guardrails or malformed text.
+
+---
+
+## What’s missing today (and why it feels thin)
+
+* **No executive “hook.”** The page opens with a long paragraph; there’s no 1‑line takeaway or “why this matters now.” (Your left card renders the narrative only; nothing sets the headline.)&#x20;
+* **Insight stops at reflection.** You ask great discussion questions on the right, but the left card doesn’t surface **concrete actions**, **watch‑outs**, or **scenario lenses** that execs can immediately act on.&#x20;
+* **Sanitization is basic.** You correctly screen for banned phrasing and fall back gracefully, but garbled joins and rule leakage can still sneak in when models drift. (Your renderer calls `sanitizeInsight` and `violatesPolicy`, but doesn’t validate JSON structure or enforce “two paragraphs, period.”)&#x20;
+* **Loader teaches, but doesn’t signal progress phases.** You rotate excellent messages; consider phased cues (“Analyzing → Drafting → Polishing”) to reassure it’s personal, not generic.&#x20;
+
+---
+
+## Context Mirror **2.0** — target experience
+
+**Left card (destination value):**
+
+1. **Executive Takeaway** *(1‑sentence headline)*
+2. **Context Reflection** *(two tight paragraphs—your current core)*
+3. **Leadership Actions** *(3 short action chips)*
+4. **Watch‑outs** *(2 short risk chips)*
+5. **Scenario Lens** *(two 1‑liners: “If regulation tightens…” / “If budgets tighten…”)*
+6. **Copy / Download / Save to Plan** *(your existing controls + a “Save to Plan” hook)*
+
+**Right card (unchanged tone, richer alignment):**
+
+* Keep your “Discussion Prompts,” but they now **mirror** the action/watch‑out content surfaced on the left.&#x20;
+
+All of this **still** respects your constraint: we only know *context*, not capabilities. We therefore speak in tendencies (“often,” “tends to”) and avoid vendor names, metrics, and org capability claims.
+
+---
+
+## 1) Update the model contract (server)
+
+Extend your Gemini call to **structured JSON** with fields for the new UX elements, while keeping your existing two‑paragraph `insight`. (You mentioned using the current Google Gemini SDK; keep **`@google/genai`** and the `gemini‑2.5‑flash/pro` model selection you’ve set up.)
+
+```ts
+// gemini-2.ts  (server-side)  — add/replace with this shape
+import { GoogleGenAI, Type } from "@google/genai";
+
+export type ContextMirrorPayload = {
+  headline: string;         // ≤120 chars, no title-case rules required
+  insight: string;          // exactly two paragraphs, 150–220 words total
+  actions: string[];        // 3 concise, plain-language actions (≤14 words each)
+  watchouts: string[];      // 2 concise risks/pitfalls (≤14 words each)
+  scenarios: {
+    if_regulation_tightens: string;  // one sentence
+    if_budgets_tighten: string;      // one sentence
+  };
+  disclaimer: string;       // single-line micro-disclaimer
+};
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+
+const SYSTEM = [
+  "You are an executive AI strategy advisor.",
+  "Write in clear, concise prose suitable for senior leaders.",
+  "Base analysis ONLY on organizational CONTEXT (not internal capabilities).",
+  "Use probability language (often, tends to, commonly).",
+  "Vendor-neutral; no metrics, benchmarks, or named tools.",
+  "Never surface internal rules or counters.",
+].join(" ");
+
+export async function generateContextMirror(profile: {
+  regulatoryIntensity: "low"|"moderate"|"high";
+  dataSensitivity: "low"|"moderate"|"high";
+  marketClockSpeed: "slow"|"moderate"|"fast";
+  integrationComplexity: "low"|"moderate"|"high";
+  changeTolerance: "low"|"moderate"|"high";
+  scale: "local"|"regional"|"global";
+}): Promise<ContextMirrorPayload> {
+  const contents = [
+    "Context profile:",
+    `- Regulatory intensity: ${profile.regulatoryIntensity}`,
+    `- Data sensitivity: ${profile.dataSensitivity}`,
+    `- Market clock-speed: ${profile.marketClockSpeed}`,
+    `- Integration complexity / legacy surface: ${profile.integrationComplexity}`,
+    `- Change tolerance: ${profile.changeTolerance}`,
+    `- Scale / geography: ${profile.scale}`,
+    "",
+    "Produce an export-ready CONTEXT MIRROR with:",
+    "1) headline: one sentence (≤120 chars) that frames why this context matters now.",
+    "2) insight: two paragraphs (150–220 words total).",
+    "   • P1: what this context often ENABLES and often CONSTRAINS.",
+    "   • P2: what this typically IMPLIES for early AI moves (guardrails, quick wins, continuity).",
+    "3) actions: 3 short imperative suggestions (≤14 words each) tied to the context.",
+    "4) watchouts: 2 short pitfalls to avoid (≤14 words each), context-grounded.",
+    "5) scenarios: one-sentence notes for: if_regulation_tightens, if_budgets_tighten.",
+    "Constraints: vendor-neutral. no numbers/benchmarks. no policy names. no headings or bullets inside 'insight'.",
+  ].join("\n");
+
+  const client = ai.models;
+  const resp = await client.generateContent({
+    model: MODEL,
+    contents,
+    config: {
+      systemInstruction: SYSTEM,
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          headline: { type: Type.STRING },
+          insight:  { type: Type.STRING },
+          actions:  { type: Type.ARRAY, items: { type: Type.STRING }, minItems: 3, maxItems: 3 },
+          watchouts:{ type: Type.ARRAY, items: { type: Type.STRING }, minItems: 2, maxItems: 2 },
+          scenarios:{ type: Type.OBJECT, properties: {
+            if_regulation_tightens: { type: Type.STRING },
+            if_budgets_tighten:     { type: Type.STRING },
+          }, required: ["if_regulation_tightens","if_budgets_tighten"] },
+          disclaimer:{ type: Type.STRING },
+        },
+        required: ["headline","insight","actions","watchouts","scenarios","disclaimer"],
+        propertyOrdering: ["headline","insight","actions","watchouts","scenarios","disclaimer"],
+      },
+    },
+  });
+
+  const raw = resp.text ?? "";
+  const parsed = JSON.parse(raw) as ContextMirrorPayload;
+  return parsed;
+}
+```
+
+**Why this matters:** It keeps your **two‑paragraph narrative** (your main value prop), and adds the minimum extra primitives (“headline / actions / watch‑outs / scenarios”) that executives use to **decide**—without claiming anything about internal capabilities.
+
+---
+
+## 2) Strengthen client‑side validation & cleanup
+
+Replace your current sanitize with a stricter pass that ensures exactly **two paragraphs**, strips any leaked rule text, and guards against list fragments and doubled punctuation. (Your renderer already calls `sanitizeInsight` and `violatesPolicy`; plug this in.)&#x20;
+
+```ts
+// sanitizeInsight.ts — swap in this implementation
+export function sanitizeInsight(text: string): string {
+  let t = (text || "").replace(/\r/g, "").trim();
+
+  // Remove any leaked internal rules/counters
+  t = t.replace(
+    /(no vendor names|no benchmarks|probability[- ]?based|under \d+\s*words|methodology compliant)/gi,
+    ""
+  );
+
+  // Remove stray list tokens and excessive whitespace
+  t = t
+    .replace(/^\s*[-•]\s*/gm, "")
+    .replace(/\s+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/\.(\s*\.)+/g, ".")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
+  // Enforce exactly two paragraphs
+  let parts = t.split(/\n{2,}/).filter(Boolean);
+  if (parts.length === 0) return t;
+
+  if (parts.length === 1) {
+    const sents = parts[0].match(/[^.!?]+[.!?]+/g) ?? [parts[0]];
+    const mid = Math.ceil(sents.length / 2);
+    parts = [sents.slice(0, mid).join(" ").trim(), sents.slice(mid).join(" ").trim()];
+  } else if (parts.length > 2) {
+    parts = [parts[0], parts[1]];
+  }
+
+  return parts.map(p => p.trim()).join("\n\n");
+}
+
+export function violatesPolicy(text: string): boolean {
+  return /\bstrength(s)?\b|\bfragilit(y|ies)\b/i.test(text || "");
+}
+```
+
+---
+
+## 3) Upgrade the renderer to show *destination* value
+
+Extend `ContextReflection` to render a **headline**, **chips** (actions + watch‑outs), and **scenario lens** if present—while staying fully backward‑compatible with your current payload (it already guards on `violatesPolicy`).&#x20;
+
+```tsx
+// ContextReflection.tsx — enhanced, backwards-compatible
+import { sanitizeInsight, violatesPolicy } from "./sanitizeInsight";
+
+type Scenarios = { if_regulation_tightens?: string; if_budgets_tighten?: string };
+
+export function ContextReflection(props: {
+  insight: string;
+  disclaimer: string;
+  headline?: string;
+  actions?: string[];
+  watchouts?: string[];
+  scenarios?: Scenarios;
+}) {
+  const clean = sanitizeInsight(props.insight);
+  if (violatesPolicy(clean)) {
+    return (
+      <div className="space-y-3">
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          Your context suggests clear opportunities alongside constraints. We're refreshing this brief in narrative form. Please hold…
+        </p>
+      </div>
+    );
+  }
+
+  const [p1, p2] = clean.split(/\n{2,}/);
+
+  return (
+    <div className="space-y-4">
+      {props.headline && (
+        <div className="text-base font-semibold text-foreground">
+          {props.headline}
+        </div>
+      )}
+
+      <p className="text-base leading-relaxed text-foreground">{p1}</p>
+      <p className="text-base leading-relaxed text-foreground">{p2}</p>
+
+      {(props.actions?.length || props.watchouts?.length) && (
+        <div className="grid md:grid-cols-2 gap-4 pt-2">
+          {props.actions?.length ? (
+            <div>
+              <div className="text-sm font-medium mb-2">Leadership actions</div>
+              <div className="flex flex-wrap gap-2">
+                {props.actions.map((a, i) => (
+                  <span key={i} className="text-xs px-2 py-1 rounded-full border bg-card">
+                    {a}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          {props.watchouts?.length ? (
+            <div>
+              <div className="text-sm font-medium mb-2">Watch‑outs</div>
+              <div className="flex flex-wrap gap-2">
+                {props.watchouts.map((w, i) => (
+                  <span key={i} className="text-xs px-2 py-1 rounded-full border bg-card">
+                    {w}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      )}
+
+      {props.scenarios && (props.scenarios.if_regulation_tightens || props.scenarios.if_budgets_tighten) && (
+        <div className="pt-2 border-t">
+          <div className="text-sm font-medium mb-2">Scenario lens</div>
+          <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1">
+            {props.scenarios.if_regulation_tightens && <li>{props.scenarios.if_regulation_tightens}</li>}
+            {props.scenarios.if_budgets_tighten && <li>{props.scenarios.if_budgets_tighten}</li>}
+          </ul>
+        </div>
+      )}
+
+      <p className="text-xs text-muted-foreground mt-2 italic">{props.disclaimer}</p>
+    </div>
+  );
+}
+```
+
+This keeps your clean **paragraph narrative** as the centerpiece and adds light‑touch scaffolding execs expect (actions, pitfalls, scenarios). It uses the same component your page already renders.&#x20;
+
+---
+
+## 4) Make the loader feel *personal* (phased progress)
+
+Your loader already rotates high‑quality messages. Add **phases** (e.g., `phase="analyzing" | "drafting" | "polishing"`) so the line changes *and* the visual label changes—strong signal that *their context* is being processed, not a static wait.&#x20;
+
+```tsx
+// LoadingTips.tsx — add optional phase band
+export function LoadingTips({ intervalMs = 2500, phase }: { intervalMs?: number; phase?: "analyzing"|"drafting"|"polishing" }) {
+  // ... keep your rotation code ...
+  return (
+    <div className="flex items-center gap-3" aria-live="polite" aria-busy="true">
+      <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+      <div className="flex flex-col">
+        <p className="text-xs uppercase tracking-wide text-muted-foreground">{phase ?? "analyzing"}…</p>
+        <p className="text-sm text-muted-foreground">{MESSAGES[i]}</p>
+      </div>
+    </div>
+  );
+}
+```
+
+Then pass `phase` from the page while you await the model (e.g., “analyzing”), then “drafting” when the API returns, “polishing” during sanitize/render. (Your page already inserts `EducationalLoader` while `isLoading`.)&#x20;
+
+---
+
+## 5) Upgrade the page (wire new props + add “Save to Plan”)
+
+Modify the left card to pass the expanded payload to `ContextReflection`, keep “Copy”/“Download” buttons, and add **Save to Plan** for stickiness. Your current `ContextInsightPage` already has the controls and the toast pattern—reuse those.&#x20;
+
+```tsx
+// context-insight.tsx — inside the CardContent render branch where `data` exists
+<div className="animate-in fade-in duration-300">
+  <ContextReflection
+    headline={(data as any).headline}
+    insight={data.insight}
+    actions={(data as any).actions}
+    watchouts={(data as any).watchouts}
+    scenarios={(data as any).scenarios}
+    disclaimer={data.disclaimer}
+  />
+</div>
+
+// Footer Actions — add a Save to Plan button next to Download (stub to your planner)
+<Button
+  variant="secondary"
+  onClick={() => {
+    if (!data) return;
+    // TODO: implement: save to action plan service with {headline, actions, watchouts, scenarios}
+    toast({ title: "Added to Action Plan", description: "Reflection and next steps saved." });
+  }}
+>
+  Add to Action Plan
+</Button>
+```
+
+---
+
+## 6) Gold‑standard copy (example payload the model should return)
+
+* **headline:** *Speed rewards iteration—but coherence keeps value from stalling at pilot.*
+* **insight (2 paragraphs):**
+  *Your operating context favors speed and iteration. Low external constraints and a faster competitive tempo enable rapid experimentation, short feedback loops, and agile deployment patterns, while raising the risk of fragmented tooling, shadow adoption, and uneven quality if standards lag behind usage. The opportunity is rapid learning, market differentiation, and early revenue capture; the hazard is value that stalls at pilot because integration paths, measurement frameworks, and scaling practices trail adoption velocity.*
+
+  *To convert speed into durable value, prioritize quick wins that connect directly to revenue or cycle‑time, then anchor them to minimal, shared guardrails: prompt and output policies, data boundaries, and review criteria for customer‑facing content. Instrument outcome metrics from day one, define graduation criteria from pilot to production, and publish simple pathways for scaling successful experiments. Consolidate on a focused set of services early to prevent tool sprawl and maintain operational coherence as usage accelerates across teams and use cases.*
+* **actions:**
+
+  * *Stand up minimal guardrails before broad experimentation*
+  * *Instrument before/after metrics for every pilot*
+  * *Publish a simple pilot→production graduation path*
+* **watchouts:**
+
+  * *Tool sprawl from unmanaged adoption*
+  * *Pilots without integration or metrics*
+* **scenarios:**
+
+  * *if\_regulation\_tightens:* *Lean into human‑in‑the‑loop checkpoints and traceable data paths; pace innovation through governed pilots.*
+  * *if\_budgets\_tighten:* *Prioritize projects with direct revenue or cost impact; pause nice‑to‑have surfaces.*
+
+Everything above is **context‑true** and vendor‑neutral; no capabilities implied.
+
+---
+
+## 7) Export/PDF
+
+Update your `generateContextBrief` to include the new primitives:
+
+* Title: **Context Reflection**
+* Subtitle (headline)
+* Two‑paragraph narrative
+* “Leadership actions” chips (3)
+* “Watch‑outs” chips (2)
+* “Scenario lens” (2 bullet lines)
+* Micro‑disclaimer
+
+Your page already has a stable `Download Brief` flow and toast UX; just extend the template.&#x20;
+
+---
+
+## 8) Reliability: retries, fallbacks, and telemetry
+
+* **Retry on contract miss:** If JSON is malformed or `violatesPolicy()` is true, re‑ask the model with: *“Rewrite plainly; remove any internal rules; keep two paragraphs; preserve meaning.”* You already show a friendly interim message when policy is violated.&#x20;
+* **Rule‑based fallback:** Keep 3–4 deterministic templates keyed on key context axes (regulation, sensitivity, tempo).
+* **Events:** `mirror_load_started`, `mirror_ai_returned`, `mirror_rendered`, `mirror_export_clicked`, `mirror_save_to_plan`. Track `retry_count`, `used_fallback`, and render timings.
+
+---
+
+## 9) Accessibility & polish
+
+* Mark loader text `aria-live="polite"` (already done). Keep paragraphs under \~100 characters per line for readability. Your component already uses sensible sizes (`text-base` + `leading-relaxed`). &#x20;
+* Add `sr-only` labels on icon‑only buttons (copy, etc.). Your copy button is already clear; SR labels are a small win.&#x20;
+
+---
+
+## What you’ll get after this upgrade
+
+* **Board‑ready insight + actions** in a single view (and export)
+* Context‑faithful guidance that is **worth saving and sharing**
+* No leakage of internal guardrails, counters, or vendor/metric junk
+* A loader that **teaches** *and* shows progress phases
+* A clear path from reflection → **Action Plan** → **Pulse Check**
+
+---
+
+### Confidence
+
+* **High** on UX structure, copy, validation logic, and backward compatibility with your current components (verified against your `ContextInsightPage`, `LoadingTips`, and `ContextReflection` files).  &#x20;
+* **Medium** on exact server wiring (I don’t see your current `gemini-2.ts`), but the proposed `@google/genai` JSON contract is battle‑tested and drops into your existing `useContextMirror()` flow that already expects and renders an `insight`/`disclaimer`.&#x20;
+
+If you want, I can also provide a quick **PDF template** stub to render the new sections (headline, chips, scenarios) in your `generateContextBrief` so the export matches the page 1:1.
