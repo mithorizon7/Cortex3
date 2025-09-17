@@ -261,7 +261,7 @@ export class AssessmentService {
     const gates: any[] = [];
     const p = contextProfile;
 
-    // G1 - HITL required
+    // G1 - Human-in-the-Loop (HITL) required
     if ((p.regulatory_intensity >= 3) || (p.safety_criticality >= 3)) {
       gates.push({
         id: 'require_hitl',

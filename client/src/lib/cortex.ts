@@ -14,7 +14,7 @@ export const PULSE_QUESTIONS = [
   { id: 'C2', pillar: 'C', text: 'One senior leader owns AI success and CoE↔BU roles are clear.' },
   { id: 'C3', pillar: 'C', text: 'AI progress is reviewed on a defined cadence (at least twice per year) and results in resource reallocation (fund/defund) decisions.' },
   
-  { id: 'O1', pillar: 'O', text: 'All AI solutions you operate or consume follow a documented lifecycle with performance logging, alerts for issues/drift, and HITL/QA where risk warrants.' },
+  { id: 'O1', pillar: 'O', text: 'All AI solutions you operate or consume follow a documented lifecycle with performance logging, alerts for issues/drift, and Human-in-the-Loop (HITL) review where risk warrants.' },
   { id: 'O2', pillar: 'O', text: 'Key data or prompts feeding those solutions have documented owners, lineage, and quality standards in an accessible catalogue/register.' },
   { id: 'O3', pillar: 'O', text: 'Every new AI idea—build or buy—passes a standardized value/feasibility gate before major spend or effort.' },
   

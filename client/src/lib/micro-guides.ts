@@ -18,10 +18,10 @@ export const MICRO_GUIDES: Record<string, MicroGuide> = {
     title: 'Human-in-the-Loop (HITL) — When and How to Use It',
     category: 'gate',
     tags: ['regulatory', 'safety', 'oversight'],
-    overview: 'A human reviews, approves, or can intervene in AI-assisted decisions where stakes are high (financial exposure, safety, legal or brand risk). HITL is not a permanent brake; it is a temporary guardrail until you have evidence that automation is safe for specific tasks.',
-    body: `**What it is:** A human reviews, approves, or can intervene in AI-assisted decisions where stakes are high (financial exposure, safety, legal or brand risk). HITL is not a permanent brake; it is a **temporary guardrail** until you have evidence that automation is safe for specific tasks.
+    overview: 'A human reviews, approves, or can intervene in AI-assisted decisions where stakes are high (financial exposure, safety, legal or brand risk). Human-in-the-Loop (HITL) is not a permanent brake; it is a temporary guardrail until you have evidence that automation is safe for specific tasks.',
+    body: `**What it is:** A human reviews, approves, or can intervene in AI-assisted decisions where stakes are high (financial exposure, safety, legal or brand risk). Human-in-the-Loop (HITL) is not a permanent brake; it is a **temporary guardrail** until you have evidence that automation is safe for specific tasks.
 
-**Why it matters:** Complex systems fail in unexpected ways. HITL prevents single-point failures from harming customers or the organization while you learn how the system behaves. It also builds regulator and stakeholder confidence that you are balancing innovation with care.
+**Why it matters:** Complex systems fail in unexpected ways. Human-in-the-Loop (HITL) prevents single-point failures from harming customers or the organization while you learn how the system behaves. It also builds regulator and stakeholder confidence that you are balancing innovation with care.
 
 **Where to apply:**
 • Decisions that affect people's money, health, safety, or legal rights
@@ -32,19 +32,19 @@ export const MICRO_GUIDES: Record<string, MicroGuide> = {
 1. **Define checkpoints:** Identify specific steps where a person must review/approve (e.g., before sending customer-facing messages or changing account status).
 2. **Document criteria:** When is human review mandatory? Use simple rules (risk level, data sensitivity, exception flags).
 3. **Design for intervention:** Provide a clear "stop/correct/escalate" path in the workflow; log every intervention to learn patterns.
-4. **Measure & taper:** Track intervention rates and error types. As quality stabilizes and evidence grows, reduce HITL to spot-checks or exception handling.
+4. **Measure & taper:** Track intervention rates and error types. As quality stabilizes and evidence grows, reduce Human-in-the-Loop (HITL) to spot-checks or exception handling.
 
 **Options by context:**
-• **Regulated/high-safety:** Keep HITL longer and document reviewer qualifications.
+• **Regulated/high-safety:** Keep Human-in-the-Loop (HITL) longer and document reviewer qualifications.
 • **Low-risk internal tasks:** Start with spot-checks on samples; expand only if issues appear.
 • **Vendor tools:** Ensure you can *insert* human review before actions are finalized (e.g., draft-mode outputs).
 
 **Pitfalls to avoid:**
-• "Rubber-stamp" reviews (HITL that no one meaningfully performs)
+• "Rubber-stamp" reviews (Human-in-the-Loop that no one meaningfully performs)
 • No logging—losing the chance to learn from interventions
-• Keeping HITL forever out of habit after evidence supports automation
+• Keeping Human-in-the-Loop (HITL) forever out of habit after evidence supports automation
 
-**Quick checklist:** Decide where HITL applies; write short criteria; enable intervene/escalate; log and review monthly; set conditions for tapering.`
+**Quick checklist:** Decide where Human-in-the-Loop (HITL) applies; write short criteria; enable intervene/escalate; log and review monthly; set conditions for tapering.`
   },
 
   gate_assurance: {

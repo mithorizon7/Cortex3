@@ -59,7 +59,7 @@ export const DOMAIN_INTROS: Record<string, DomainIntroContent> = {
     principles: [
       'Run a documented lifecycle: design → deploy → monitor → update → retire',
       'Track latency, errors, drift, and cost; alert on thresholds',
-      'Add HITL/QA where consequences are high',
+      'Add Human-in-the-Loop (HITL) review and quality assurance where consequences are high',
       'Keep a searchable data catalogue with owners and retention',
       'Screen new ideas with a lightweight value/feasibility gate'
     ],
@@ -72,7 +72,7 @@ export const DOMAIN_INTROS: Record<string, DomainIntroContent> = {
     terms: [
       { term: 'Lifecycle', definition: 'repeatable steps to run and update AI in production' },
       { term: 'Drift', definition: 'performance changes as inputs or behaviors shift' },
-      { term: 'HITL', definition: 'human-in-the-loop review for higher-risk actions' },
+      { term: 'Human-in-the-Loop (HITL)', definition: 'human review and intervention for higher-risk actions' },
       { term: 'Catalogue/lineage', definition: 'what data is used, where it came from, who owns it' },
       { term: 'Value gate', definition: 'quick screen for benefit and feasibility' }
     ],
@@ -121,7 +121,7 @@ export const DOMAIN_INTROS: Record<string, DomainIntroContent> = {
     contextNotes: [
       {
         condition: 'regulated >= 3 || safety >= 3',
-        note: 'Use HITL until evidence supports automation; run checks on a fixed cadence.'
+        note: 'Use Human-in-the-Loop (HITL) until evidence supports automation; run checks on a fixed cadence.'
       }
     ]
   },

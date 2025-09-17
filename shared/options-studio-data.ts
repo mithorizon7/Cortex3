@@ -166,7 +166,7 @@ export const OPTION_CARDS: OptionCard[] = [
     title: "Agentic Workflows & Orchestrators",
     what: "Multi‑step LLM workflows that call tools/APIs, plan subtasks, and verify steps.",
     bestFor: [
-      "Complex processes (intake → classify → retrieve → draft → QA)",
+      "Complex processes (intake → classify → retrieve → draft → quality assurance)",
       "Operations triage, case handling, multi‑tool flows"
     ],
     notIdeal: [
@@ -490,7 +490,7 @@ export const MISCONCEPTION_QUESTIONS: MisconceptionQuestion[] = [
 export const CAUTION_MESSAGES: Record<string, (profile: ContextProfile) => string | null> = {
   regulated: (profile: ContextProfile) => 
     (profile.regulatory_intensity >= 3 || profile.safety_criticality >= 3)
-      ? "Because your profile indicates higher regulation/safety, add HITL and an assurance cadence before scale."
+      ? "Because your profile indicates higher regulation/safety, add Human-in-the-Loop (HITL) and an assurance cadence before scale."
       : null,
       
   highSensitivity: (profile: ContextProfile) =>
@@ -526,7 +526,7 @@ export const ALWAYS_ON_CARDS = [
   {
     id: "assurance_evals",
     title: "Assurance & Evaluations",
-    body: "Guardrails and tests that keep systems safe and useful: HITL where stakes are high, fairness/privacy/drift checks, quarterly red‑team for critical systems, and rollback plans.",
+    body: "Guardrails and tests that keep systems safe and useful: Human-in-the-Loop (HITL) where stakes are high, fairness/privacy/drift checks, quarterly red‑team for critical systems, and rollback plans.",
     doNow: "Define owners, cadence, and a 1‑page incident runbook."
   },
   {
@@ -549,7 +549,7 @@ export const UI_COPY = {
   introBody: "Explore common options, the trade‑offs that matter, and where myths mislead. We'll highlight a few lenses based on your context. We won't prescribe a choice.",
   lensesLegend: "Speed‑to‑Value · Customization & Control · Data Leverage · Risk & Compliance Load · Operational Burden · Portability & Lock‑in · Cost Shape",
   cautionTooltips: {
-    regulated: "Because your profile indicates higher regulation/safety, add HITL and an assurance cadence before scale.",
+    regulated: "Because your profile indicates higher regulation/safety, add Human-in-the-Loop (HITL) and an assurance cadence before scale.",
     high_sensitivity: "Your context suggests sensitive data—apply residency/retention controls and confirm vendor data‑use terms.",
     low_readiness: "Build later—start with Buy/API/RAG while operations and governance mature.",
     edge: "Design for offline/latency; set fallbacks and update/rollback plans."

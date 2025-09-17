@@ -152,20 +152,20 @@ export const METRIC_CATALOG: Metric[] = [
   {
     id: 'r_hitl_coverage',
     pillar: 'R',
-    name: '% high-impact AI systems with HITL active',
+    name: '% high-impact AI systems with Human-in-the-Loop (HITL) active',
     definition: 'Critical AI systems with human-in-the-loop oversight',
     unit: '%',
     unitHint: 'percentage',
     tags: ['oversight', 'safety'],
     howToMeasure: `**Definition:** Count high-impact AI systems (affect >100 users, handle sensitive data, or make significant decisions) that have active human oversight mechanisms.
 
-**Scope:** Include credit decisions, medical recommendations, hiring tools, and content moderation. HITL means human review, approval, or exception handling.
+**Scope:** Include credit decisions, medical recommendations, hiring tools, and content moderation. Human-in-the-Loop (HITL) means human review, approval, or exception handling.
 
 **How to get it:** Inventory AI systems by impact level, then verify human oversight mechanisms are operational (not just designed).
 
 **Quality note:** Focus on active oversight, not passive monitoring. Humans should have authority to intervene and clear escalation paths.
 
-**Cadence:** Quarterly verification of HITL effectiveness.`
+**Cadence:** Quarterly verification of Human-in-the-Loop (HITL) effectiveness.`
   },
   {
     id: 'r_audit_pass_rate',

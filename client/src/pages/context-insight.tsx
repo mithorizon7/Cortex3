@@ -272,7 +272,7 @@ function ContextInsightPageContent() {
                   </li>
                   <li className="flex items-start gap-3 text-sm text-foreground leading-relaxed" data-testid="discussion-prompt-3">
                     <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0" />
-                    <span>What <strong>de-risking guardrails</strong> (HITL, rollback path, audit trail) should be present from day one?</span>
+                    <span>What <strong>de-risking guardrails</strong> (Human-in-the-Loop, rollback path, audit trail) should be present from day one?</span>
                   </li>
                 </ul>
               </div>

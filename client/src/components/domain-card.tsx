@@ -72,7 +72,7 @@ const DOMAIN_GUIDANCE = {
     whatGoodLooks: [
       "A documented lifecycle: design → deploy → monitor → update → retire",
       "Logging, alerts, and simple dashboards for usage, cost, latency, and failure rates",
-      "Human review/QA checkpoints where stakes are high",
+      "Human review and quality assurance checkpoints where stakes are high",
       "A searchable data catalogue with owners, lineage, quality thresholds",
       "A lightweight value/feasibility gate for new use‑cases"
     ],
