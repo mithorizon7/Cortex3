@@ -267,6 +267,39 @@ function ContextInsightPageContent() {
 
       {/* Footer Actions */}
       <footer className="flex items-center justify-end gap-4 pt-8 border-t" data-testid="footer-actions">
+        <Button
+          variant="secondary"
+          onClick={() => {
+            if (!data) return;
+            // Save to Action Plan functionality
+            const contextData = {
+              headline: (data as any).headline,
+              actions: (data as any).actions,
+              watchouts: (data as any).watchouts,
+              scenarios: (data as any).scenarios
+            };
+            
+            // Store in localStorage for now (future: integrate with action plan service)
+            const savedPlans = JSON.parse(localStorage.getItem('cortex_action_plans') || '[]');
+            const newPlan = {
+              id: Date.now().toString(),
+              assessmentId: id,
+              timestamp: new Date().toISOString(),
+              ...contextData
+            };
+            savedPlans.push(newPlan);
+            localStorage.setItem('cortex_action_plans', JSON.stringify(savedPlans));
+            
+            toast({
+              title: "Added to Action Plan",
+              description: "Context reflection and next steps saved for future reference."
+            });
+          }}
+          disabled={!data || isLoading}
+          data-testid="button-save-to-plan"
+        >
+          Save to Plan
+        </Button>
         <Button 
           variant="outline" 
           onClick={handleDownloadBrief}

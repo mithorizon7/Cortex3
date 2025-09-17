@@ -74,74 +74,62 @@ function renderContextMirror2(mirror: ContextMirror) {
         </div>
       )}
 
-      {/* Actions Section */}
-      {sanitized.actions && sanitized.actions.length > 0 && (
-        <div className="space-y-3" data-testid="context-actions">
-          <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <Target className="w-4 h-4" />
-            Immediate Actions
-          </h4>
-          <div className="flex flex-wrap gap-2">
-            {sanitized.actions.map((action, index) => (
-              <Badge 
-                key={index} 
-                variant="secondary" 
-                className="text-xs px-3 py-1 font-medium"
-                data-testid={`action-chip-${index}`}
-              >
-                {action}
-              </Badge>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Watch-outs Section */}
-      {sanitized.watchouts && sanitized.watchouts.length > 0 && (
-        <div className="space-y-3" data-testid="context-watchouts">
-          <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4" />
-            Watch-outs
-          </h4>
-          <div className="flex flex-wrap gap-2">
-            {sanitized.watchouts.map((watchout, index) => (
-              <Badge 
-                key={index} 
-                variant="outline" 
-                className="text-xs px-3 py-1 font-medium border-amber-200 text-amber-800 dark:border-amber-800 dark:text-amber-200"
-                data-testid={`watchout-chip-${index}`}
-              >
-                {watchout}
-              </Badge>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Scenario Planning */}
-      {sanitized.scenarios && (
-        <div className="space-y-3" data-testid="context-scenarios">
-          <h4 className="text-sm font-semibold text-foreground">Scenario Planning</h4>
-          <div className="grid gap-3 text-sm">
-            {sanitized.scenarios.if_regulation_tightens && (
-              <div className="p-3 rounded-md bg-muted/50" data-testid="scenario-regulation">
-                <span className="font-medium text-muted-foreground">If regulation tightens:</span>
-                <p className="mt-1 text-foreground">{sanitized.scenarios.if_regulation_tightens}</p>
+      {/* Actions & Watch-outs Grid - matching plan's layout */}
+      {(sanitized.actions?.length || sanitized.watchouts?.length) && (
+        <div className="grid md:grid-cols-2 gap-4 pt-2" data-testid="context-actions-watchouts">
+          {sanitized.actions?.length ? (
+            <div data-testid="context-actions">
+              <div className="text-sm font-medium mb-2">Leadership actions</div>
+              <div className="flex flex-wrap gap-2">
+                {sanitized.actions.map((action, index) => (
+                  <span 
+                    key={index} 
+                    className="text-xs px-2 py-1 rounded-full border bg-card"
+                    data-testid={`action-chip-${index}`}
+                  >
+                    {action}
+                  </span>
+                ))}
               </div>
+            </div>
+          ) : null}
+          {sanitized.watchouts?.length ? (
+            <div data-testid="context-watchouts">
+              <div className="text-sm font-medium mb-2">Watch‑outs</div>
+              <div className="flex flex-wrap gap-2">
+                {sanitized.watchouts.map((watchout, index) => (
+                  <span 
+                    key={index} 
+                    className="text-xs px-2 py-1 rounded-full border bg-card"
+                    data-testid={`watchout-chip-${index}`}
+                  >
+                    {watchout}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      )}
+
+      {/* Scenario Lens - matching plan's approach */}
+      {sanitized.scenarios && (sanitized.scenarios.if_regulation_tightens || sanitized.scenarios.if_budgets_tighten) && (
+        <div className="pt-2 border-t" data-testid="context-scenarios">
+          <div className="text-sm font-medium mb-2">Scenario lens</div>
+          <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1">
+            {sanitized.scenarios.if_regulation_tightens && (
+              <li data-testid="scenario-regulation">{sanitized.scenarios.if_regulation_tightens}</li>
             )}
             {sanitized.scenarios.if_budgets_tighten && (
-              <div className="p-3 rounded-md bg-muted/50" data-testid="scenario-budget">
-                <span className="font-medium text-muted-foreground">If budgets tighten:</span>
-                <p className="mt-1 text-foreground">{sanitized.scenarios.if_budgets_tighten}</p>
-              </div>
+              <li data-testid="scenario-budget">{sanitized.scenarios.if_budgets_tighten}</li>
             )}
-          </div>
+          </ul>
         </div>
       )}
 
-      {/* Disclaimer */}
+      {/* Disclaimer - simplified styling */}
       {sanitized.disclaimer && (
-        <p className="text-xs text-muted-foreground mt-6 italic border-t pt-3" data-testid="context-disclaimer">
+        <p className="text-xs text-muted-foreground mt-2 italic" data-testid="context-disclaimer">
           {sanitized.disclaimer}
         </p>
       )}
