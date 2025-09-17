@@ -54,7 +54,7 @@ function NarrativeReflectionCard({ mirror }: { mirror: ContextMirror }) {
   if (violatesPolicy(mirror.insight)) {
     return (
       <div className="space-y-3">
-        <p className="text-sm leading-relaxed text-muted-foreground">
+        <p className="text-base leading-relaxed text-foreground">
           Your context suggests clear opportunities alongside constraints. We're refreshing this brief to
           state those implications in narrative form. Please hold for a moment…
         </p>

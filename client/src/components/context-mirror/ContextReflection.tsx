@@ -17,10 +17,10 @@ export function ContextReflection({ insight, disclaimer }: { insight: string; di
 
   const [p1, p2] = clean.split(/\n{2,}/);
   return (
-    <div className="space-y-3">
-      <p className="text-sm leading-relaxed text-muted-foreground">{p1}</p>
-      <p className="text-sm leading-relaxed text-muted-foreground">{p2}</p>
-      <p className="text-xs text-muted-foreground mt-2">{disclaimer}</p>
+    <div className="space-y-4">
+      <p className="text-base leading-relaxed text-foreground font-medium">{p1}</p>
+      <p className="text-base leading-relaxed text-foreground font-medium">{p2}</p>
+      <p className="text-xs text-muted-foreground mt-3 italic border-t pt-3">{disclaimer}</p>
     </div>
   );
 }
