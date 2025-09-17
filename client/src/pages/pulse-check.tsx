@@ -41,6 +41,32 @@ export default function PulseCheckPage() {
     enabled: !!assessmentId,
   });
 
+  // Redirect to domain-based flow on load
+  useEffect(() => {
+    if (assessment && assessmentId) {
+      const skipIntros = localStorage.getItem('cortex_skip_intros') === 'true';
+      
+      // Determine starting domain (first domain with incomplete responses or first domain)
+      let startingDomain = 'C';
+      const existingResponses = (assessment as any)?.pulseResponses || {};
+      
+      for (const group of DOMAIN_GROUPS) {
+        const domainAnswers = group.questions.filter(q => existingResponses[q.id] !== undefined).length;
+        if (domainAnswers < group.questions.length) {
+          startingDomain = group.pillar;
+          break;
+        }
+      }
+      
+      // Redirect to appropriate flow
+      if (skipIntros) {
+        navigate(`/pulse/${startingDomain}/questions/${assessmentId}`);
+      } else {
+        navigate(`/pulse/${startingDomain}/intro/${assessmentId}`);
+      }
+    }
+  }, [assessment, assessmentId, navigate]);
+
   const updatePulse = useMutation({
     mutationFn: async (pulseResponses: Record<string, boolean | null>) => {
       const response = await apiRequest("PATCH", `/api/assessments/${assessmentId}/pulse`, { pulseResponses });
