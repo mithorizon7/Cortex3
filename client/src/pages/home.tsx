@@ -320,11 +320,24 @@ export default function HomePage() {
               
               {/* Level 3 - Strategic */}
               <div className="text-center space-y-3">
-                <div 
-                  className="w-16 h-16 rounded-full mx-auto flex items-center justify-center font-bold text-white text-lg shadow-lg ring-2 ring-primary/20"
-                  style={{ backgroundColor: "hsl(158, 64%, 52%)" }}
-                >
-                  3
+                <div className="relative">
+                  <div 
+                    className="w-16 h-16 rounded-full mx-auto flex items-center justify-center font-bold text-white text-lg shadow-xl relative overflow-hidden"
+                    style={{ 
+                      background: "linear-gradient(135deg, hsl(45, 100%, 51%) 0%, hsl(38, 100%, 45%) 100%)",
+                      boxShadow: "0 8px 25px -5px hsla(45, 100%, 51%, 0.4), 0 4px 12px -2px hsla(45, 100%, 51%, 0.2)"
+                    }}
+                  >
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/20 to-transparent"></div>
+                    <span className="relative z-10">3</span>
+                  </div>
+                  <div 
+                    className="absolute inset-0 w-16 h-16 rounded-full mx-auto animate-pulse"
+                    style={{
+                      boxShadow: "0 0 20px hsla(45, 100%, 51%, 0.3)",
+                      animationDuration: "3s"
+                    }}
+                  ></div>
                 </div>
                 <div>
                   <div className="font-semibold text-base">Strategic</div>
