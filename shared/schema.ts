@@ -108,24 +108,40 @@ export const valueOverlaySchema = z.object({
 export type ValueOverlayPillar = z.infer<typeof valueOverlayPillarSchema>;
 export type ValueOverlay = z.infer<typeof valueOverlaySchema>;
 
-// Context Mirror Types - Support both structured and narrative formats
+// Context Mirror Types - Enhanced 2.0 format with executive dashboard structure
 export const contextMirrorSchema = z.object({
-  // Structured format (legacy)
+  // Legacy structured format (for backward compatibility)
   strengths: z.array(z.string().min(8).max(180)).length(3).optional(),
   fragilities: z.array(z.string().min(8).max(180)).length(3).optional(),
   whatWorks: z.array(z.string().min(10).max(180)).length(2).optional(),
   disclaimer: z.string().min(10).max(140),
   
-  // Narrative format (new)
-  insight: z.string().min(50).optional(), // Two paragraphs of 150-220 words total (no max limit)
+  // Narrative format (current)
+  insight: z.string().min(50).optional(), // Two paragraphs of 150-220 words total
+  
+  // Context Mirror 2.0 - Executive Dashboard Format
+  headline: z.string().max(120).optional(),
+  actions: z.array(z.string().max(84)).length(3).optional(), // ≤14 words each (~6 chars/word)
+  watchouts: z.array(z.string().max(84)).length(2).optional(), // ≤14 words each
+  scenarios: z.object({
+    if_regulation_tightens: z.string().optional(),
+    if_budgets_tighten: z.string().optional(),
+  }).optional(),
 });
 
 export type ContextMirror = z.infer<typeof contextMirrorSchema>;
 
-// Context Mirror Payload (for new narrative format)
+// Context Mirror Payload (Enhanced 2.0 format)
 export const contextMirrorPayloadSchema = z.object({
-  insight: z.string(),       // two paragraphs separated by \n\n
-  disclaimer: z.string(),    // one-line micro-disclaimer
+  headline: z.string().max(120),                           // ≤120 chars executive takeaway
+  insight: z.string(),                                     // two paragraphs separated by \n\n
+  actions: z.array(z.string().max(84)).length(3),         // 3 concise actions (≤14 words each)
+  watchouts: z.array(z.string().max(84)).length(2),       // 2 concise risks (≤14 words each)
+  scenarios: z.object({
+    if_regulation_tightens: z.string(),                    // one sentence scenario
+    if_budgets_tighten: z.string(),                        // one sentence scenario
+  }),
+  disclaimer: z.string(),                                  // one-line micro-disclaimer
 });
 
 export type ContextMirrorPayload = z.infer<typeof contextMirrorPayloadSchema>;
