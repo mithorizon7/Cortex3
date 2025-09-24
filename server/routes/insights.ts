@@ -185,12 +185,15 @@ router.post("/context-mirror",
         // Fall back to rule-based generation - convert to diagnostic format
         const fallbackMirror = generateRuleBasedFallback(contextProfile as any);
         mirrorWithDiagnostics = {
-          headline: fallbackMirror.headline,
-          insight: fallbackMirror.insight,
-          actions: fallbackMirror.actions,
-          watchouts: fallbackMirror.watchouts,
-          scenarios: fallbackMirror.scenarios,
-          disclaimer: fallbackMirror.disclaimer,
+          headline: fallbackMirror.headline || "AI Advisory Temporarily Unavailable",
+          insight: fallbackMirror.insight || "Our AI advisory service is currently experiencing issues. Please try again later for personalized strategic guidance.",
+          actions: fallbackMirror.actions || ["Check system status", "Contact support if issues persist", "Use manual assessment tools"],
+          watchouts: fallbackMirror.watchouts || ["Service disruption may affect strategic planning", "Consider manual backup processes"],
+          scenarios: {
+            if_regulation_tightens: fallbackMirror.scenarios?.if_regulation_tightens || "Engage with compliance team for manual assessment.",
+            if_budgets_tighten: fallbackMirror.scenarios?.if_budgets_tighten || "Prioritize critical initiatives using existing frameworks."
+          },
+          disclaimer: fallbackMirror.disclaimer || "This is a fallback response due to temporary service issues.",
           debug: {
             source: 'fallback' as const,
             attempts: [],
@@ -314,12 +317,15 @@ router.post("/context-mirror",
             const fallbackMirror = generateRuleBasedFallback(assessment[0].contextProfile as any);
             // Convert to diagnostic format for consistency
             const fallbackWithDiagnostics: ContextMirrorWithDiagnostics = {
-              headline: fallbackMirror.headline,
-              insight: fallbackMirror.insight,
-              actions: fallbackMirror.actions,
-              watchouts: fallbackMirror.watchouts,
-              scenarios: fallbackMirror.scenarios,
-              disclaimer: fallbackMirror.disclaimer,
+              headline: fallbackMirror.headline || "Strategic Assessment Unavailable",
+              insight: fallbackMirror.insight || "Our advisory system is currently experiencing issues. Please contact support for manual strategic assessment guidance.",
+              actions: fallbackMirror.actions || ["Contact support team", "Review existing strategic plans", "Use manual assessment frameworks"],
+              watchouts: fallbackMirror.watchouts || ["System unavailability may delay decision-making", "Consider alternative assessment methods"],
+              scenarios: {
+                if_regulation_tightens: fallbackMirror.scenarios?.if_regulation_tightens || "Consult with legal and compliance teams for guidance.",
+                if_budgets_tighten: fallbackMirror.scenarios?.if_budgets_tighten || "Focus on high-ROI initiatives using existing data."
+              },
+              disclaimer: fallbackMirror.disclaimer || "This is an emergency fallback response due to system issues.",
               debug: {
                 source: 'fallback' as const,
                 attempts: [],

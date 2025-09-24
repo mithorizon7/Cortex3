@@ -257,7 +257,7 @@ export const createTestAccount = async (): Promise<{ uid: string; email: string 
         'firebase_get_user_by_email',
         () => adminAuth.getUserByEmail(TEST_EMAIL),
         EXTERNAL_API_RETRY_CONFIG
-      );
+      ) as any; // Type assertion for Firebase UserRecord
       logger.info('Test user already exists', { 
         additionalContext: { 
           operation: 'test_account_exists',
