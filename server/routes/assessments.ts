@@ -49,12 +49,19 @@ router.post('/', requireAuthMiddleware, async (req: Request, res: Response) => {
     );
     
     // Check if it's a Zod validation error
-    const isValidationError = error instanceof Error && (
+    // ZodError gets wrapped by DatabaseError, so check the original error
+    const isZodError = error instanceof Error && error.name === 'ZodError';
+    const isWrappedZodError = error instanceof Error && 
+      error.message.includes('ZodError') ||
+      (error as any).originalError?.name === 'ZodError';
+    
+    const isValidationError = isZodError || isWrappedZodError || (error instanceof Error && (
       error.message.includes('validation') ||
-      error.name === 'ZodError' ||
       error.message.includes('Invalid') ||
-      error.message.includes('Expected')
-    );
+      error.message.includes('Expected') ||
+      error.message.includes('Number must be') ||
+      error.message.includes('Required')
+    ));
     
     const status = isValidationError 
       ? HTTP_STATUS.BAD_REQUEST 
@@ -173,12 +180,19 @@ router.patch('/:id/pulse', requireAuthMiddleware, async (req: Request, res: Resp
     );
     
     // Check if it's a Zod validation error
-    const isValidationError = error instanceof Error && (
+    // ZodError gets wrapped by DatabaseError, so check the original error
+    const isZodError = error instanceof Error && error.name === 'ZodError';
+    const isWrappedZodError = error instanceof Error && 
+      error.message.includes('ZodError') ||
+      (error as any).originalError?.name === 'ZodError';
+    
+    const isValidationError = isZodError || isWrappedZodError || (error instanceof Error && (
       error.message.includes('validation') ||
-      error.name === 'ZodError' ||
       error.message.includes('Invalid') ||
-      error.message.includes('Expected')
-    );
+      error.message.includes('Expected') ||
+      error.message.includes('Number must be') ||
+      error.message.includes('Required')
+    ));
     
     const status = isValidationError 
       ? HTTP_STATUS.BAD_REQUEST 
