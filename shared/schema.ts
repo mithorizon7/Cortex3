@@ -42,8 +42,8 @@ export const contextProfileSchema = z.object({
   data_advantage: z.number().min(0).max(4),
   build_readiness: z.number().min(0).max(4),
   finops_priority: z.number().min(0).max(4),
-  procurement_constraints: z.boolean(),
-  edge_operations: z.boolean(),
+  procurement_constraints: z.boolean().nullable(),
+  edge_operations: z.boolean().nullable(),
 });
 
 export type ContextProfile = z.infer<typeof contextProfileSchema>;

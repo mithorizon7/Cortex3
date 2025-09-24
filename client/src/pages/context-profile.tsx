@@ -44,8 +44,8 @@ export default function ContextProfilePage() {
       data_advantage: 2,
       build_readiness: 2,
       finops_priority: 2,
-      procurement_constraints: false,
-      edge_operations: false,
+      procurement_constraints: null,
+      edge_operations: null,
     }
   });
 
@@ -130,7 +130,17 @@ export default function ContextProfilePage() {
       const item = CONTEXT_ITEMS.find(i => i.key === questionKey);
       if (!item) return false;
       
-      // Both sliders and switches only count as answered when touched by user
+      // For sliders, count as answered when touched
+      if (item.type === 'slider') {
+        return touchedFields.has(questionKey);
+      }
+      
+      // For boolean fields, count as answered when they have a non-null value
+      if (item.type === 'boolean') {
+        const fieldValue = form.getValues()[item.key as keyof ContextProfile];
+        return fieldValue !== null && fieldValue !== undefined;
+      }
+      
       return touchedFields.has(questionKey);
     });
     return answers.filter(Boolean).length;
@@ -299,25 +309,82 @@ export default function ContextProfilePage() {
                                     </div>
                                   </div>
                                 )}
-                                <div className={`flex items-center space-x-5 sm:space-x-4 p-6 sm:p-4 rounded-lg transition-all duration-300 ${
-                                  touchedFields.has(item.key) 
-                                    ? 'bg-primary/10 border-2 border-primary/30' 
-                                    : 'bg-muted/50 border-2 border-transparent'
-                                }`}>
-                                  <Switch
-                                    checked={field.value as boolean}
-                                    onCheckedChange={(checked) => {
-                                      field.onChange(checked);
-                                      handleFieldTouch(item.key);
-                                    }}
-                                    data-testid={`switch-${item.key}`}
-                                  />
-                                  <span className={`text-xl sm:text-lg font-medium transition-colors duration-300 ${
-                                    touchedFields.has(item.key) ? 'text-foreground' : 'text-muted-foreground'
+                                
+                                {/* Neutral state with Yes/No buttons */}
+                                {field.value === null ? (
+                                  <div className="flex flex-col sm:flex-row gap-4 p-6 sm:p-4 bg-muted/50 rounded-lg border-2 border-transparent">
+                                    <p className="text-lg font-medium text-muted-foreground mb-4 sm:mb-0 sm:mr-4 flex-1">
+                                      Please select:
+                                    </p>
+                                    <div className="flex gap-3">
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="lg"
+                                        onClick={() => {
+                                          field.onChange(false);
+                                          handleFieldTouch(item.key);
+                                        }}
+                                        className="flex-1 sm:flex-none"
+                                        data-testid={`button-no-${item.key}`}
+                                      >
+                                        No
+                                      </Button>
+                                      <Button
+                                        type="button"
+                                        variant="outline" 
+                                        size="lg"
+                                        onClick={() => {
+                                          field.onChange(true);
+                                          handleFieldTouch(item.key);
+                                        }}
+                                        className="flex-1 sm:flex-none"
+                                        data-testid={`button-yes-${item.key}`}
+                                      >
+                                        Yes
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  /* Selected state with ability to change */
+                                  <div className={`flex items-center justify-between p-6 sm:p-4 rounded-lg transition-all duration-300 ${
+                                    touchedFields.has(item.key) 
+                                      ? 'bg-primary/10 border-2 border-primary/30' 
+                                      : 'bg-muted/50 border-2 border-transparent'
                                   }`}>
-                                    {field.value ? 'Yes' : 'No'}
-                                  </span>
-                                </div>
+                                    <span className={`text-xl sm:text-lg font-medium transition-colors duration-300 ${
+                                      touchedFields.has(item.key) ? 'text-foreground' : 'text-muted-foreground'
+                                    }`}>
+                                      {field.value ? 'Yes' : 'No'}
+                                    </span>
+                                    <div className="flex gap-2">
+                                      <Button
+                                        type="button"
+                                        variant={field.value === false ? "default" : "outline"}
+                                        size="sm"
+                                        onClick={() => {
+                                          field.onChange(false);
+                                          handleFieldTouch(item.key);
+                                        }}
+                                        data-testid={`button-change-no-${item.key}`}
+                                      >
+                                        No
+                                      </Button>
+                                      <Button
+                                        type="button"
+                                        variant={field.value === true ? "default" : "outline"}
+                                        size="sm"
+                                        onClick={() => {
+                                          field.onChange(true);
+                                          handleFieldTouch(item.key);
+                                        }}
+                                        data-testid={`button-change-yes-${item.key}`}
+                                      >
+                                        Yes
+                                      </Button>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             )}
                           </FormControl>
