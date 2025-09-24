@@ -1,11 +1,11 @@
 import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import type { ContextMirror, ContextMirrorRequest } from "@shared/schema";
+import type { ContextMirror, ContextMirrorWithDiagnostics, ContextMirrorRequest } from "@shared/schema";
 import { contextMirrorRequestSchema } from "@shared/schema";
 
 export interface UseContextMirrorReturn {
-  data: ContextMirror | null;
+  data: ContextMirrorWithDiagnostics | null;
   isLoading: boolean;
   isError: boolean;
   error: Error | null;
@@ -17,7 +17,7 @@ export function useContextMirror(): UseContextMirrorReturn {
   const { toast } = useToast();
 
   const mutation = useMutation({
-    mutationFn: async (assessmentId: string): Promise<ContextMirror> => {
+    mutationFn: async (assessmentId: string): Promise<ContextMirrorWithDiagnostics> => {
       // Validate input before making API call
       const validationResult = contextMirrorRequestSchema.safeParse({ assessmentId });
       
@@ -32,9 +32,25 @@ export function useContextMirror(): UseContextMirrorReturn {
         validationResult.data
       );
 
-      return response.json();
+      const data = await response.json();
+      
+      // Handle backward compatibility - if legacy format received, add minimal diagnostic info
+      if (!data.debug) {
+        return {
+          ...data,
+          debug: {
+            source: 'unknown' as const,
+            attempts: [],
+            finalSource: 'unknown' as const,
+            totalDuration: 0,
+            generatedAt: new Date().toISOString()
+          }
+        };
+      }
+      
+      return data;
     },
-    onSuccess: (data: ContextMirror) => {
+    onSuccess: (data: ContextMirrorWithDiagnostics) => {
       toast({
         title: "Context Mirror Generated",
         description: "Your context mirror analysis is ready.",

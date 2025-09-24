@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "../db";
 import { assessments } from "../../shared/schema";
-import { contextMirrorSchema, contextMirrorRequestSchema, type ContextMirror } from "../../shared/schema";
+import { contextMirrorSchema, contextMirrorRequestSchema, type ContextMirror, type ContextMirrorWithDiagnostics } from "../../shared/schema";
 import { generateContextMirror, generateRuleBasedFallback } from "../lib/gemini";
 import { eq, and } from "drizzle-orm";
 import { requireAuthMiddleware, contextMirrorRateLimitMiddleware } from "../middleware/security";
@@ -11,8 +11,8 @@ import { logger } from "../logger";
 
 const router = Router();
 
-// In-memory cache for context mirrors (24 hour TTL)
-const mirrorCache = new Map<string, { data: ContextMirror; expires: number }>();
+// In-memory cache for context mirrors (24 hour TTL) - supports both legacy and diagnostic formats
+const mirrorCache = new Map<string, { data: ContextMirror | ContextMirrorWithDiagnostics; expires: number }>();
 
 router.post("/context-mirror", 
   requireAuthMiddleware,
@@ -143,20 +143,20 @@ router.post("/context-mirror",
         }
       });
 
-      let mirror: ContextMirror;
+      let mirrorWithDiagnostics: ContextMirrorWithDiagnostics;
 
       try {
-        // Try LLM generation first
-        mirror = await generateContextMirror(contextProfile as any);
+        // Try LLM generation first - this now returns ContextMirrorWithDiagnostics
+        mirrorWithDiagnostics = await generateContextMirror(contextProfile as any);
         
-        // Validate the response
-        const validatedMirror = contextMirrorSchema.parse(mirror);
-        mirror = validatedMirror;
-        
-        logger.info('LLM Context Mirror generation successful', {
+        logger.info('LLM Context Mirror generation successful with diagnostics', {
           additionalContext: {
             operation: 'context_mirror_llm_success',
             assessmentId,
+            source: mirrorWithDiagnostics.debug.source,
+            finalSource: mirrorWithDiagnostics.debug.finalSource,
+            attempts: mirrorWithDiagnostics.debug.attempts.length,
+            totalDuration: mirrorWithDiagnostics.debug.totalDuration,
             incidentId
           }
         });
@@ -170,18 +170,44 @@ router.post("/context-mirror",
             incidentId
           }
         });
-        // Fall back to rule-based generation
-        mirror = generateRuleBasedFallback(contextProfile as any);
+        // Fall back to rule-based generation - convert to diagnostic format
+        const fallbackMirror = generateRuleBasedFallback(contextProfile as any);
+        mirrorWithDiagnostics = {
+          headline: fallbackMirror.headline,
+          insight: fallbackMirror.insight,
+          actions: fallbackMirror.actions,
+          watchouts: fallbackMirror.watchouts,
+          scenarios: fallbackMirror.scenarios,
+          disclaimer: fallbackMirror.disclaimer,
+          debug: {
+            source: 'fallback' as const,
+            attempts: [],
+            finalSource: 'template' as const,
+            templateUsed: 'emergency-fallback',
+            totalDuration: 0,
+            generatedAt: new Date().toISOString()
+          }
+        };
       }
 
-      // 6. Store in both database and memory cache with ownership verification
+      // 6. Store legacy format in database (for backward compatibility) and full format in memory cache
       const now = new Date().toISOString();
+      
+      // Extract legacy format for database storage (without debug info)
+      const legacyMirror: ContextMirror = {
+        headline: mirrorWithDiagnostics.headline,
+        insight: mirrorWithDiagnostics.insight,
+        actions: mirrorWithDiagnostics.actions,
+        watchouts: mirrorWithDiagnostics.watchouts,
+        scenarios: mirrorWithDiagnostics.scenarios,
+        disclaimer: mirrorWithDiagnostics.disclaimer
+      };
       
       try {
         await db
           .update(assessments)
           .set({ 
-            contextMirror: mirror as any,
+            contextMirror: legacyMirror as any,
             contextMirrorUpdatedAt: now
           })
           .where(and(
@@ -193,6 +219,7 @@ router.post("/context-mirror",
           additionalContext: {
             operation: 'context_mirror_saved',
             assessmentId,
+            source: mirrorWithDiagnostics.debug.source,
             incidentId
           }
         });
@@ -206,9 +233,9 @@ router.post("/context-mirror",
         });
       }
 
-      // Update in-memory cache (24 hours TTL)
+      // Update in-memory cache with full diagnostic format (24 hours TTL)
       mirrorCache.set(cacheKey, {
-        data: mirror,
+        data: mirrorWithDiagnostics,
         expires: Date.now() + TTL_MS
       });
 
@@ -216,11 +243,13 @@ router.post("/context-mirror",
         additionalContext: {
           operation: 'context_mirror_generation_complete',
           assessmentId,
+          source: mirrorWithDiagnostics.debug.source,
+          finalSource: mirrorWithDiagnostics.debug.finalSource,
           incidentId
         }
       });
 
-      res.json(mirror);
+      res.json(mirrorWithDiagnostics);
       
     } catch (error) {
       logger.error(
@@ -251,14 +280,32 @@ router.post("/context-mirror",
             
           if (assessment.length && assessment[0].contextProfile) {
             const fallbackMirror = generateRuleBasedFallback(assessment[0].contextProfile as any);
+            // Convert to diagnostic format for consistency
+            const fallbackWithDiagnostics: ContextMirrorWithDiagnostics = {
+              headline: fallbackMirror.headline,
+              insight: fallbackMirror.insight,
+              actions: fallbackMirror.actions,
+              watchouts: fallbackMirror.watchouts,
+              scenarios: fallbackMirror.scenarios,
+              disclaimer: fallbackMirror.disclaimer,
+              debug: {
+                source: 'fallback' as const,
+                attempts: [],
+                finalSource: 'template' as const,
+                templateUsed: 'error-recovery-fallback',
+                totalDuration: 0,
+                generatedAt: new Date().toISOString()
+              }
+            };
             logger.info('Context Mirror fallback generation successful', {
               additionalContext: {
                 operation: 'context_mirror_fallback_success',
                 assessmentId,
+                source: 'fallback',
                 incidentId
               }
             });
-            return res.json(fallbackMirror);
+            return res.json(fallbackWithDiagnostics);
           }
         }
         
