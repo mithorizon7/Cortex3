@@ -78,10 +78,18 @@ function getGateThreshold(gateId: string, dimension: string): string | null {
   return thresholds[gateId]?.[dimension] || null;
 }
 
+// Define types for insights and priorities
+interface ExecutiveInsight {
+  type: string;
+  title: string;
+  description: string;
+  action: string;
+}
+
 // Generate executive insights based on assessment data
 function generateExecutiveInsights(pillarScores: PillarScores, gates: any[], contextProfile: any) {
-  const insights = [];
-  const priorities = [];
+  const insights: ExecutiveInsight[] = [];
+  const priorities: string[] = [];
   
   // Guard against null/undefined pillarScores
   if (!pillarScores) {
