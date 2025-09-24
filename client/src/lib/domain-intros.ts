@@ -35,8 +35,8 @@ export const DOMAIN_INTROS: Record<string, DomainIntroContent> = {
       'Leaders can point to 1–2 measurable AI outcomes this year'
     ],
     terms: [
-      { term: 'CoE', definition: 'small team that sets standards and enables others' },
-      { term: 'BU', definition: 'business unit/function that owns outcomes and adoption' },
+      { term: 'CoE', definition: 'Center of Excellence: small team that sets standards and enables others' },
+      { term: 'BU', definition: 'Business Unit: business unit/function that owns outcomes and adoption' },
       { term: 'Reallocation', definition: 'shifting budget/time based on evidence' }
     ],
     evidence: [
@@ -72,7 +72,7 @@ export const DOMAIN_INTROS: Record<string, DomainIntroContent> = {
     terms: [
       { term: 'Lifecycle', definition: 'repeatable steps to run and update AI in production' },
       { term: 'Drift', definition: 'performance changes as inputs or behaviors shift' },
-      { term: 'Human-in-the-Loop (HITL)', definition: 'human review and intervention for higher-risk actions' },
+      { term: 'HITL', definition: 'Human-in-the-Loop: human review and intervention for higher-risk actions' },
       { term: 'Catalogue/lineage', definition: 'what data is used, where it came from, who owns it' },
       { term: 'Value gate', definition: 'quick screen for benefit and feasibility' }
     ],
@@ -142,7 +142,7 @@ export const DOMAIN_INTROS: Record<string, DomainIntroContent> = {
       'Incentives that reward quality and reliability, not raw usage'
     ],
     terms: [
-      { term: 'SOP', definition: 'standard operating procedure/checklist for a task' },
+      { term: 'SOP', definition: 'Standard Operating Procedure: checklist/procedure for a task' },
       { term: 'Job family', definition: 'a group of similar roles (e.g., CX agents, analysts)' }
     ],
     evidence: [
