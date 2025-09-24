@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Loader2, Brain, Compass, TrendingUp, MessageSquare, FileText, CheckCircle, AlertTriangle, ListTodo, Shield, Copy } from "lucide-react";
-import { generateContextBrief } from "@/lib/pdf-generator";
+import { generateContextBrief, type ContextMirrorData } from "@/lib/pdf-generator";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { LoadingTips } from "@/components/context-mirror/LoadingTips";
 import { ContextReflection } from "@/components/context-mirror/ContextReflection";
@@ -178,10 +178,23 @@ function ContextInsightPageContent() {
   });
 
   const handleDownloadBrief = async () => {
-    if (!data || !assessmentData || !id || !data.insight) {
+    if (!data || !assessmentData || !id) {
       toast({
         title: "Cannot generate PDF",
         description: "Missing required data. Please try refreshing the page.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Check for Context Mirror 2.0 data or legacy format
+    const hasContext2Data = data.headline || data.actions?.length || data.watchouts?.length;
+    const hasLegacyData = data.insight && data.disclaimer;
+    
+    if (!hasContext2Data && !hasLegacyData) {
+      toast({
+        title: "Cannot generate PDF", 
+        description: "Context Mirror data is not available. Please wait for generation to complete.",
         variant: "destructive",
       });
       return;
@@ -190,12 +203,25 @@ function ContextInsightPageContent() {
     setIsGeneratingPDF(true);
     
     try {
-      await generateContextBrief({
-        insight: data.insight,
-        disclaimer: data.disclaimer,
+      // Prepare Context Mirror data for PDF generation
+      const contextMirrorData: ContextMirrorData = {
         contextProfile: assessmentData.contextProfile as ContextProfile,
         assessmentId: id,
-      });
+        // Legacy format for backward compatibility
+        insight: data.insight,
+        disclaimer: data.disclaimer,
+        // Context Mirror 2.0 format - the full personalized data
+        mirror: hasContext2Data ? {
+          headline: data.headline,
+          insight: data.insight,
+          actions: data.actions,
+          watchouts: data.watchouts,
+          scenarios: data.scenarios,
+          disclaimer: data.disclaimer
+        } : undefined
+      };
+      
+      await generateContextBrief(contextMirrorData);
       
       toast({
         title: "PDF downloaded successfully",
