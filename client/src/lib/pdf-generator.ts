@@ -43,6 +43,94 @@ function hexToRgb(hex: string): [number, number, number] {
   ] : [0, 0, 0];
 }
 
+// Helper function to safely split text and fix character spacing issues
+function safeSplitTextToSize(doc: any, text: string, maxWidth: number): string[] {
+  if (!text || typeof text !== 'string') {
+    return [];
+  }
+  
+  // Preprocess text to avoid jsPDF spacing issues
+  const cleanText = text
+    .replace(/\s{2,}/g, ' ')          // Remove multiple spaces
+    .replace(/\u00A0/g, ' ')         // Replace non-breaking spaces
+    .replace(/[\u2000-\u206F]/g, ' ') // Replace unicode spaces
+    .trim();
+  
+  if (!cleanText) {
+    return [];
+  }
+  
+  try {
+    const lines = doc.splitTextToSize(cleanText, maxWidth);
+    
+    // Validate and fix any lines with character spacing issues
+    return (Array.isArray(lines) ? lines : [lines]).map((line: string) => {
+      if (typeof line !== 'string') {
+        return '';
+      }
+      
+      // Detect if line has character spacing issue (characters separated by spaces)
+      // Pattern: single characters followed by spaces, especially at end of lines
+      const hasSpacingIssue = /\b[a-zA-Z]\s+[a-zA-Z]\s+[a-zA-Z]/.test(line) || 
+                             /[a-zA-Z]\s+[a-zA-Z]\s*\.\s*\d*$/.test(line);
+      
+      if (hasSpacingIssue) {
+        // Fix by removing extra spaces between single characters
+        return line
+          .replace(/\b([a-zA-Z])\s+([a-zA-Z])\s+([a-zA-Z])/g, '$1$2$3')
+          .replace(/([a-zA-Z])\s+([a-zA-Z])\s*\.\s*(\d*)$/g, '$1$2.$3')
+          .replace(/\s{2,}/g, ' ')
+          .trim();
+      }
+      
+      return line;
+    }).filter(line => line.length > 0);
+  } catch (error) {
+    console.warn('PDF text splitting error:', error);
+    // Fallback: manual text wrapping
+    return manualTextWrap(cleanText, maxWidth, doc);
+  }
+}
+
+// Fallback manual text wrapping when jsPDF fails
+function manualTextWrap(text: string, maxWidth: number, doc: any): string[] {
+  const words = text.split(' ');
+  const lines: string[] = [];
+  let currentLine = '';
+  
+  for (const word of words) {
+    const testLine = currentLine ? `${currentLine} ${word}` : word;
+    
+    try {
+      const testWidth = doc.getTextWidth(testLine);
+      if (testWidth <= maxWidth) {
+        currentLine = testLine;
+      } else {
+        if (currentLine) {
+          lines.push(currentLine);
+        }
+        currentLine = word;
+      }
+    } catch (error) {
+      // If getTextWidth fails, use character-based estimation
+      if (testLine.length * 2.5 <= maxWidth) { // Rough estimation
+        currentLine = testLine;
+      } else {
+        if (currentLine) {
+          lines.push(currentLine);
+        }
+        currentLine = word;
+      }
+    }
+  }
+  
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+  
+  return lines;
+}
+
 export async function generateContextBrief(data: ContextMirrorData): Promise<void> {
   try {
     // Validate required data first
@@ -143,7 +231,7 @@ export async function generateContextBrief(data: ContextMirrorData): Promise<voi
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-      const headlineLines = doc.splitTextToSize(mirror.headline, contentWidth);
+      const headlineLines = safeSplitTextToSize(doc, mirror.headline, contentWidth);
       headlineLines.forEach((line: string) => {
         checkPageOverflow(6);
         doc.text(line, margin, currentY);
@@ -175,7 +263,7 @@ export async function generateContextBrief(data: ContextMirrorData): Promise<voi
       doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
       
       paragraphs.forEach((paragraph, index) => {
-        const lines = doc.splitTextToSize(paragraph.trim(), columnWidth);
+        const lines = safeSplitTextToSize(doc, paragraph.trim(), columnWidth);
         const requiredHeight = lines.length * 4;
         
         // Check if this paragraph will fit on current page
@@ -321,7 +409,7 @@ export async function generateContextBrief(data: ContextMirrorData): Promise<voi
         // Calculate dynamic height based on content for page-fit check
         let totalActionHeight = 10; // Base padding
         mirror.actions.forEach(action => {
-          const actionLines = doc.splitTextToSize(action, columnWidth - 20);
+          const actionLines = safeSplitTextToSize(doc, action, columnWidth - 20);
           totalActionHeight += actionLines.length * 5 + 3; // Line height + spacing
         });
         
@@ -363,7 +451,7 @@ export async function generateContextBrief(data: ContextMirrorData): Promise<voi
         let actionY = gridLeftY + 2;
         mirror.actions.forEach((action, actionIndex) => {
           // Handle text overflow with proper wrapping
-          const actionLines = doc.splitTextToSize(action, columnWidth - 20);
+          const actionLines = safeSplitTextToSize(doc, action, columnWidth - 20);
           const chipHeight = actionLines.length * 4 + 2;
           
           // Per-item pagination check - if individual action won't fit, break to new page
@@ -416,7 +504,7 @@ export async function generateContextBrief(data: ContextMirrorData): Promise<voi
         // Calculate dynamic height based on content for page-fit check
         let totalWatchoutHeight = 10; // Base padding
         mirror.watchouts.forEach(watchout => {
-          const watchoutLines = doc.splitTextToSize(watchout, columnWidth - 20);
+          const watchoutLines = safeSplitTextToSize(doc, watchout, columnWidth - 20);
           totalWatchoutHeight += watchoutLines.length * 5 + 3; // Line height + spacing
         });
         
@@ -458,7 +546,7 @@ export async function generateContextBrief(data: ContextMirrorData): Promise<voi
         let watchoutY = gridRightY + 2;
         mirror.watchouts.forEach((watchout, watchoutIndex) => {
           // Handle text overflow with proper wrapping
-          const watchoutLines = doc.splitTextToSize(watchout, columnWidth - 20);
+          const watchoutLines = safeSplitTextToSize(doc, watchout, columnWidth - 20);
           const chipHeight = watchoutLines.length * 4 + 2;
           
           // Per-item pagination check - if individual watchout won't fit, break to new page
@@ -510,12 +598,12 @@ export async function generateContextBrief(data: ContextMirrorData): Promise<voi
       
       doc.setFontSize(10);
       if (mirror.scenarios.if_regulation_tightens) {
-        const regLines = doc.splitTextToSize(mirror.scenarios.if_regulation_tightens, contentWidth - 20);
+        const regLines = safeSplitTextToSize(doc, mirror.scenarios.if_regulation_tightens, contentWidth - 20);
         scenarioContentHeight += 4 + (regLines.length * 4) + 2; // Title + content + spacing
       }
       
       if (mirror.scenarios.if_budgets_tighten) {
-        const budgetLines = doc.splitTextToSize(mirror.scenarios.if_budgets_tighten, contentWidth - 20);
+        const budgetLines = safeSplitTextToSize(doc, mirror.scenarios.if_budgets_tighten, contentWidth - 20);
         scenarioContentHeight += 4 + (budgetLines.length * 4) + 2; // Title + content + spacing
       }
       
@@ -541,7 +629,7 @@ export async function generateContextBrief(data: ContextMirrorData): Promise<voi
       if (mirror.scenarios.if_regulation_tightens) {
         doc.text('• If regulation tightens:', margin + 5, scenarioY);
         scenarioY += 4;
-        const regLines = doc.splitTextToSize(mirror.scenarios.if_regulation_tightens, contentWidth - 20);
+        const regLines = safeSplitTextToSize(doc, mirror.scenarios.if_regulation_tightens, contentWidth - 20);
         regLines.forEach((line: string) => {
           doc.text(line, margin + 12, scenarioY);
           scenarioY += 4;
@@ -552,7 +640,7 @@ export async function generateContextBrief(data: ContextMirrorData): Promise<voi
       if (mirror.scenarios.if_budgets_tighten) {
         doc.text('• If budgets tighten:', margin + 5, scenarioY);
         scenarioY += 4;
-        const budgetLines = doc.splitTextToSize(mirror.scenarios.if_budgets_tighten, contentWidth - 20);
+        const budgetLines = safeSplitTextToSize(doc, mirror.scenarios.if_budgets_tighten, contentWidth - 20);
         budgetLines.forEach((line: string) => {
           doc.text(line, margin + 12, scenarioY);
           scenarioY += 4;
@@ -586,7 +674,7 @@ export async function generateContextBrief(data: ContextMirrorData): Promise<voi
       
       let noteY = currentY + 12;
       discussionNotes.forEach(note => {
-        const lines = doc.splitTextToSize(note, contentWidth - 10);
+        const lines = safeSplitTextToSize(doc, note, contentWidth - 10);
         doc.text(lines, margin + 5, noteY);
         noteY += lines.length * 4 + 2;
       });
@@ -603,7 +691,7 @@ export async function generateContextBrief(data: ContextMirrorData): Promise<voi
       `DISCLAIMER: ${disclaimer}\n\nThis brief provides a contextual reflection based on your organizational profile. It is educational content designed to facilitate strategic discussion, not prescriptive recommendations or compliance guidance.` :
       'This brief provides a contextual reflection based on your organizational profile. It is educational content designed to facilitate strategic discussion, not prescriptive recommendations or compliance guidance.';
     
-    const disclaimerLines = doc.splitTextToSize(disclaimerText, contentWidth);
+    const disclaimerLines = safeSplitTextToSize(doc, disclaimerText, contentWidth);
     const disclaimerHeight = disclaimerLines.length * 3;
     
     // Use actual computed height for overflow check
@@ -770,7 +858,7 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
       doc.setFontSize(11);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-      const useCaseLines = doc.splitTextToSize(sessionData.useCase, contentWidth);
+      const useCaseLines = safeSplitTextToSize(doc, sessionData.useCase, contentWidth);
       useCaseLines.forEach((line: string) => {
         checkPageOverflow(6);
         doc.text(line, margin, currentY);
@@ -818,7 +906,7 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
         
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
-        const descLines = doc.splitTextToSize(option.shortDescription || '', contentWidth - 10);
+        const descLines = safeSplitTextToSize(doc, option.shortDescription || '', contentWidth - 10);
         descLines.forEach((line: string) => {
           checkPageOverflow(5);
           doc.text(line, margin + 5, currentY);
@@ -871,7 +959,7 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
           doc.setFontSize(11);
           doc.setFont('helvetica', 'bold');
           doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-          const questionLines = doc.splitTextToSize(questionData.question, contentWidth - 10);
+          const questionLines = safeSplitTextToSize(doc, questionData.question, contentWidth - 10);
           questionLines.forEach((line: string) => {
             checkPageOverflow(5);
             doc.text(line, margin + 5, currentY);
@@ -891,7 +979,7 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
           // Show explanation
           doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
           doc.setFont('helvetica', 'italic');
-          const explanationLines = doc.splitTextToSize(questionData.explanation, contentWidth - 20);
+          const explanationLines = safeSplitTextToSize(doc, questionData.explanation, contentWidth - 20);
           explanationLines.forEach((line: string) => {
             checkPageOverflow(4);
             doc.text(line, margin + 10, currentY);
@@ -957,7 +1045,7 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
         doc.setFontSize(7);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-        const optionTitleLines = doc.splitTextToSize(option.title || option.id || '', cellWidth - 4);
+        const optionTitleLines = safeSplitTextToSize(doc, option.title || option.id || '', cellWidth - 4);
         optionTitleLines.slice(0, 2).forEach((line: string, lineIndex: number) => {
           doc.text(line, margin + 2, currentY + 3 + (lineIndex * 2.5));
         });
@@ -1021,7 +1109,7 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(...hexToRgb('#92400e'));
       sessionData.cautionMessages.forEach(message => {
-        const messageLines = doc.splitTextToSize(`⚠ ${message}`, contentWidth - 10);
+        const messageLines = safeSplitTextToSize(doc, `⚠ ${message}`, contentWidth - 10);
         messageLines.forEach((line: string) => {
           checkPageOverflow(5);
           doc.text(line, margin + 5, currentY);
@@ -1047,7 +1135,7 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
           doc.setFontSize(12);
           doc.setFont('helvetica', 'bold');
           doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-          const promptLines = doc.splitTextToSize(`${index + 1}. ${prompt}`, contentWidth - 10);
+          const promptLines = safeSplitTextToSize(doc, `${index + 1}. ${prompt}`, contentWidth - 10);
           promptLines.forEach((line: string) => {
             checkPageOverflow(5);
             doc.text(line, margin, currentY);
@@ -1057,7 +1145,7 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
           
           doc.setFontSize(10);
           doc.setFont('helvetica', 'normal');
-          const answerLines = doc.splitTextToSize(answer, contentWidth - 10);
+          const answerLines = safeSplitTextToSize(doc, answer, contentWidth - 10);
           answerLines.forEach((line: string) => {
             checkPageOverflow(4);
             doc.text(line, margin + 5, currentY);
@@ -1084,7 +1172,7 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
     const summaryText = `Options explored: ${sessionData.selectedOptions?.length || 0} • Misconceptions tested: ${Object.keys(sessionData.misconceptionResponses || {}).length} • Emphasized lenses: ${sessionData.emphasizedLenses?.length || 0} • Completed: ${sessionData.completed ? 'Yes' : 'No'}`;
-    const summaryLines = doc.splitTextToSize(summaryText, contentWidth - 10);
+    const summaryLines = safeSplitTextToSize(doc, summaryText, contentWidth - 10);
     summaryLines.forEach((line: string, index: number) => {
       doc.text(line, margin + 5, currentY + 14 + (index * 4));
     });
