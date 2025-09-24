@@ -153,6 +153,40 @@ export const contextMirrorRequestSchema = z.object({
 
 export type ContextMirrorRequest = z.infer<typeof contextMirrorRequestSchema>;
 
+// Diagnostic Metadata Types for AI Generation Transparency
+export const generationAttemptSchema = z.object({
+  attemptNumber: z.number().int().min(1),
+  model: z.string(),
+  startTime: z.string(),
+  endTime: z.string().optional(),
+  duration: z.number().min(0).optional(), // milliseconds
+  success: z.boolean(),
+  failureReason: z.enum(['timeout', 'policy_violation', 'parse_error', 'api_error', 'unknown']).optional(),
+  rawResponse: z.string().optional(), // First 500 chars for debugging
+  policyViolation: z.boolean().optional(),
+  parseError: z.string().optional(),
+});
+
+export const generationMetadataSchema = z.object({
+  source: z.enum(['ai', 'fallback', 'retry-fallback']),
+  attempts: z.array(generationAttemptSchema),
+  finalSource: z.enum(['ai', 'template']),
+  templateUsed: z.string().optional(), // Template identifier if fallback was used
+  totalDuration: z.number().min(0), // Total milliseconds from start to finish
+  modelVersion: z.string().optional(),
+  generatedAt: z.string(), // ISO timestamp
+});
+
+export type GenerationAttempt = z.infer<typeof generationAttemptSchema>;
+export type GenerationMetadata = z.infer<typeof generationMetadataSchema>;
+
+// Enhanced Context Mirror Response with Diagnostic Data
+export const contextMirrorWithDiagnosticsSchema = contextMirrorPayloadSchema.extend({
+  debug: generationMetadataSchema,
+});
+
+export type ContextMirrorWithDiagnostics = z.infer<typeof contextMirrorWithDiagnosticsSchema>;
+
 // Options Studio Types - Seven Lenses Framework
 export const lensPositionsSchema = z.object({
   speed: z.number().int().min(0).max(4),               // Speed-to-Value: 0=months+; 2=weeks; 4=days
