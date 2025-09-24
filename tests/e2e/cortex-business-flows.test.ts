@@ -277,7 +277,7 @@ describe('CORTEX Business Logic E2E Validation', () => {
     })
 
     it('should generate contextually appropriate strategic insights', async () => {
-      // Simulate Context Mirror 2.0 logic
+      // Simulate Situation Assessment 2.0 logic
       const generateInsights = (profile: any, scores: any) => {
         const insights = {
           headline: '',

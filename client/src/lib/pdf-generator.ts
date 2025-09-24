@@ -11,12 +11,12 @@ export interface AssessmentResults {
   completedAt: string;
 }
 
-export interface ContextMirrorData {
+export interface SituationAssessmentData {
   // Legacy format (backward compatibility)
   insight?: string; // Two paragraphs separated by \n\n
   disclaimer?: string;
   
-  // Context Mirror 2.0 format
+  // Situation Assessment 2.0 format
   mirror?: {
     headline?: string;
     insight?: string;
@@ -131,14 +131,14 @@ function manualTextWrap(text: string, maxWidth: number, doc: any): string[] {
   return lines;
 }
 
-export async function generateContextBrief(data: ContextMirrorData): Promise<void> {
+export async function generateSituationAssessmentBrief(data: SituationAssessmentData): Promise<void> {
   try {
     // Validate required data first
     if (!data || !data.contextProfile || !data.assessmentId) {
       throw new Error('Missing required data for PDF generation');
     }
     
-    // Validate that we have either legacy format OR Context Mirror 2.0 format
+    // Validate that we have either legacy format OR Situation Assessment 2.0 format
     const hasLegacyData = data.insight && data.disclaimer;
     const hasMirrorData = data.mirror && (data.mirror.headline || data.mirror.insight);
     
@@ -199,7 +199,7 @@ export async function generateContextBrief(data: ContextMirrorData): Promise<voi
     
     doc.setFontSize(12);
     doc.setFont('helvetica', 'normal');
-    doc.text('AI Strategic Maturity Context Brief', margin, 28);
+    doc.text('AI Strategic Maturity Situation Assessment', margin, 28);
     
     // Date and Assessment ID
     doc.setFontSize(10);
@@ -219,7 +219,7 @@ export async function generateContextBrief(data: ContextMirrorData): Promise<voi
     const insight = mirror?.insight || data.insight || '';
     const disclaimer = mirror?.disclaimer || data.disclaimer || '';
     
-    // Context Mirror 2.0: Executive Headline (if available)
+    // Situation Assessment 2.0: Executive Headline (if available)
     if (mirror?.headline) {
       checkPageOverflow(15);
       doc.setFontSize(18);
@@ -383,7 +383,7 @@ export async function generateContextBrief(data: ContextMirrorData): Promise<voi
     // Move to next section using the maximum Y position from both columns
     currentY = Math.max(leftColumnY + 10, rightColumnY + 10);
     
-    // Context Mirror 2.0: Actions & Watchouts Section
+    // Situation Assessment 2.0: Actions & Watchouts Section
     if (mirror && (mirror.actions?.length || mirror.watchouts?.length)) {
       checkPageOverflow(40);
       doc.setFontSize(16);
@@ -591,7 +591,7 @@ export async function generateContextBrief(data: ContextMirrorData): Promise<voi
       currentY = Math.max(gridLeftY, gridRightY) + 5;
     }
     
-    // Context Mirror 2.0: Scenario Lens Section with dynamic height calculation
+    // Situation Assessment 2.0: Scenario Lens Section with dynamic height calculation
     if (mirror?.scenarios && (mirror.scenarios.if_regulation_tightens || mirror.scenarios.if_budgets_tighten)) {
       // Calculate dynamic height based on actual content
       let scenarioContentHeight = 10; // Base padding
@@ -719,8 +719,8 @@ export async function generateContextBrief(data: ContextMirrorData): Promise<voi
     const link = document.createElement('a');
     link.href = url;
     const filename = mirror ? 
-      `cortex-context-mirror-2.0-${data.assessmentId}.pdf` : 
-      `cortex-context-brief-${data.assessmentId}.pdf`;
+      `cortex-situation-assessment-2.0-${data.assessmentId}.pdf` : 
+      `cortex-situation-assessment-${data.assessmentId}.pdf`;
     link.download = filename;
     link.style.display = 'none';
     document.body.appendChild(link);

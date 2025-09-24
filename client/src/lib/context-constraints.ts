@@ -1,5 +1,5 @@
 /**
- * Context Mirror Constraint Enforcement Utilities
+ * Situation Assessment Constraint Enforcement Utilities
  * Implements critical methodology compliance requirements:
  * - Word limit enforcement (220 words)
  * - Content sanitization (vendor names, benchmarks)
@@ -71,7 +71,7 @@ export function countNarrativeWords(content: {
 }
 
 /**
- * Counts total words across structured Context Mirror data
+ * Counts total words across structured Situation Assessment data
  */
 export function countStructuredWords(mirror: {
   strengths: string[];
@@ -128,9 +128,9 @@ export function sanitizeContent(text: string): { sanitized: string; redacted: bo
 }
 
 /**
- * Sanitizes all content in Context Mirror structure
+ * Sanitizes all content in Situation Assessment structure
  */
-export function sanitizeContextMirror(mirror: {
+export function sanitizeSituationAssessment(mirror: {
   strengths: string[];
   fragilities: string[];
   whatWorks: string[];
@@ -226,7 +226,7 @@ export function truncateNarrativeContent(
 }
 
 /**
- * Validates that Context Mirror meets required 3-3-2 structure
+ * Validates that Situation Assessment meets required 3-3-2 structure
  */
 export function validateStructure(mirror: {
   strengths: string[];
@@ -262,7 +262,7 @@ export function validateStructure(mirror: {
 }
 
 /**
- * Comprehensive constraint enforcement for Context Mirror
+ * Comprehensive constraint enforcement for Situation Assessment
  */
 export function enforceConstraints(mirror: {
   strengths: string[];
@@ -281,7 +281,7 @@ export function enforceConstraints(mirror: {
   const structureValidation = validateStructure(mirror);
   
   // Step 2: Sanitize content
-  const sanitizationResult = sanitizeContextMirror(mirror);
+  const sanitizationResult = sanitizeSituationAssessment(mirror);
   
   // Step 3: Check word count and truncate if needed
   const totalWords = countStructuredWords(sanitizationResult.sanitized);

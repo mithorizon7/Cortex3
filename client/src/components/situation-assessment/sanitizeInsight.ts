@@ -1,5 +1,5 @@
 import { BANNED_PHRASES_REGEX, violatesPolicy, getWordCount, isValidWordCount } from "../../../../shared/context-validation";
-import type { ContextMirror } from "../../../../shared/schema";
+import type { SituationAssessment } from "../../../../shared/schema";
 
 export function sanitizeInsight(text: string): string {
   let t = (text || "").replace(/\r/g, "").trim();
@@ -38,7 +38,7 @@ export function sanitizeInsight(text: string): string {
   return parts.map(p => p.trim()).join("\n\n");
 }
 
-// Context Mirror 2.0: Sanitize structured dashboard elements with enhanced rules
+// Situation Assessment 2.0: Sanitize structured dashboard elements with enhanced rules
 export function sanitizeHeadline(headline: string): string {
   let clean = (headline || "")
     .replace(/(no vendor names|no benchmarks|probability[- ]?based|under \d+\s*words|methodology compliant)/gi, "")
@@ -75,9 +75,9 @@ export function sanitizeScenarios(scenarios: { if_regulation_tightens: string; i
   };
 }
 
-// Comprehensive sanitizer for full Context Mirror 2.0
-export function sanitizeContextMirror(mirror: ContextMirror): ContextMirror {
-  const sanitized: ContextMirror = {
+// Comprehensive sanitizer for full Situation Assessment 2.0
+export function sanitizeSituationAssessment(mirror: SituationAssessment): SituationAssessment {
+  const sanitized: SituationAssessment = {
     disclaimer: mirror.disclaimer?.replace(BANNED_PHRASES_REGEX, "").trim() || "",
     insight: mirror.insight ? sanitizeInsight(mirror.insight) : undefined,
     // Legacy fields (maintain for backwards compatibility)
@@ -86,7 +86,7 @@ export function sanitizeContextMirror(mirror: ContextMirror): ContextMirror {
     whatWorks: mirror.whatWorks,
   };
 
-  // Context Mirror 2.0 fields (optional)
+  // Situation Assessment 2.0 fields (optional)
   if (mirror.headline) {
     sanitized.headline = sanitizeHeadline(mirror.headline);
   }
@@ -110,7 +110,7 @@ export function validateWordCount(text: string): boolean {
   return isValidWordCount(text);
 }
 
-// Enhanced sanitization for Context Mirror 2.0 structured fields
+// Enhanced sanitization for Situation Assessment 2.0 structured fields
 export function sanitizeStructuredField(field: string, maxLength?: number): string {
   let clean = (field || "")
     .replace(/(no vendor names|no benchmarks|probability[- ]?based|under \d+\s*words|methodology compliant)/gi, "")

@@ -1,7 +1,7 @@
 import type { ContextProfile } from "../../shared/schema";
 
-// Enhanced Context Mirror 2.0 Payload with executive dashboard elements
-export interface ContextMirrorPayload {
+// Enhanced Situation Assessment 2.0 Payload with executive dashboard elements
+export interface SituationAssessmentPayload {
   headline: string;         // ≤120 chars, no title-case rules required
   insight: string;          // exactly two paragraphs separated by \n\n (150–220 words total)
   actions: string[];        // 3 concise, plain-language actions (≤14 words each)
@@ -16,7 +16,7 @@ export interface ContextMirrorPayload {
 /**
  * Rule-based fallback templates for different organizational contexts
  */
-export function getContextTemplate(profile: ContextProfile): ContextMirrorPayload {
+export function getContextTemplate(profile: ContextProfile): SituationAssessmentPayload {
   const isHighlyRegulated = profile.regulatory_intensity >= 3;
   const isDataSensitive = profile.data_sensitivity >= 3;
   const isFastPaced = profile.clock_speed >= 3;

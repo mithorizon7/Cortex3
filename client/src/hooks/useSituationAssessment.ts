@@ -1,25 +1,25 @@
 import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import type { ContextMirror, ContextMirrorWithDiagnostics, ContextMirrorRequest } from "@shared/schema";
-import { contextMirrorRequestSchema } from "@shared/schema";
+import type { SituationAssessment, SituationAssessmentWithDiagnostics, SituationAssessmentRequest } from "@shared/schema";
+import { situationAssessmentRequestSchema } from "@shared/schema";
 
-export interface UseContextMirrorReturn {
-  data: ContextMirrorWithDiagnostics | null;
+export interface UseSituationAssessmentReturn {
+  data: SituationAssessmentWithDiagnostics | null;
   isLoading: boolean;
   isError: boolean;
   error: Error | null;
-  generateMirror: (assessmentId: string) => void;
+  generateSituationAssessment: (assessmentId: string) => void;
   reset: () => void;
 }
 
-export function useContextMirror(): UseContextMirrorReturn {
+export function useSituationAssessment(): UseSituationAssessmentReturn {
   const { toast } = useToast();
 
   const mutation = useMutation({
-    mutationFn: async (assessmentId: string): Promise<ContextMirrorWithDiagnostics> => {
+    mutationFn: async (assessmentId: string): Promise<SituationAssessmentWithDiagnostics> => {
       // Validate input before making API call
-      const validationResult = contextMirrorRequestSchema.safeParse({ assessmentId });
+      const validationResult = situationAssessmentRequestSchema.safeParse({ assessmentId });
       
       if (!validationResult.success) {
         const errors = validationResult.error.errors.map(e => e.message).join(", ");
@@ -28,7 +28,7 @@ export function useContextMirror(): UseContextMirrorReturn {
 
       const response = await apiRequest(
         "POST",
-        "/api/insight/context-mirror",
+        "/api/insight/situation-assessment",
         validationResult.data
       );
 
@@ -50,17 +50,17 @@ export function useContextMirror(): UseContextMirrorReturn {
       
       return data;
     },
-    onSuccess: (data: ContextMirrorWithDiagnostics) => {
+    onSuccess: (data: SituationAssessmentWithDiagnostics) => {
       toast({
-        title: "Context Mirror Generated",
-        description: "Your context mirror analysis is ready.",
+        title: "Situation Assessment Generated",
+        description: "Your situation assessment analysis is ready.",
       });
     },
     onError: (error: any) => {
-      console.error("Context Mirror generation failed:", error);
+      console.error("Situation Assessment generation failed:", error);
       
       // Handle specific error types
-      let errorMessage = "Failed to generate context mirror. Please try again.";
+      let errorMessage = "Failed to generate situation assessment. Please try again.";
       
       if (error?.message?.includes("404")) {
         errorMessage = "Assessment not found. Please ensure you have completed the context profile.";
@@ -97,12 +97,12 @@ export function useContextMirror(): UseContextMirrorReturn {
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
   });
 
-  const generateMirror = (assessmentId: string) => {
+  const generateSituationAssessment = (assessmentId: string) => {
     // Additional client-side validation
     if (!assessmentId || typeof assessmentId !== 'string') {
       toast({
         title: "Invalid Input",
-        description: "Assessment ID is required to generate a context mirror.",
+        description: "Assessment ID is required to generate a situation assessment.",
         variant: "destructive"
       });
       return;
@@ -129,7 +129,7 @@ export function useContextMirror(): UseContextMirrorReturn {
     isLoading: mutation.isPending,
     isError: mutation.isError,
     error: mutation.error as Error | null,
-    generateMirror,
+    generateSituationAssessment,
     reset,
   };
 }

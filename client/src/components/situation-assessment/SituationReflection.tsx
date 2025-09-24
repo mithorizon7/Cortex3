@@ -1,28 +1,28 @@
-import { sanitizeInsight, sanitizeContextMirror, violatesPolicy } from "./sanitizeInsight";
+import { sanitizeInsight, sanitizeSituationAssessment, violatesPolicy } from "./sanitizeInsight";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Target } from "lucide-react";
-import type { ContextMirror, ContextMirrorWithDiagnostics, GenerationMetadata } from "@shared/schema";
+import type { SituationAssessment, SituationAssessmentWithDiagnostics, GenerationMetadata } from "@shared/schema";
 import { DiagnosticModal } from "./DiagnosticModal";
 
-interface ContextReflectionProps {
+interface SituationReflectionProps {
   // Legacy format (backward compatibility)
   insight?: string;
   disclaimer?: string;
   
-  // Context Mirror 2.0 format
-  mirror?: ContextMirror;
+  // Situation Assessment 2.0 format
+  mirror?: SituationAssessment;
   
   // Enhanced format with diagnostics
-  mirrorWithDiagnostics?: ContextMirrorWithDiagnostics;
+  mirrorWithDiagnostics?: SituationAssessmentWithDiagnostics;
   
   // Retry callback for diagnostic modal
   onRetry?: () => void;
 }
 
-export function ContextReflection(props: ContextReflectionProps) {
+export function SituationReflection(props: SituationReflectionProps) {
   // Prioritize enhanced format with diagnostics
   if (props.mirrorWithDiagnostics) {
-    return renderContextMirrorWithDiagnostics(props.mirrorWithDiagnostics, props.onRetry);
+    return renderSituationAssessmentWithDiagnostics(props.mirrorWithDiagnostics, props.onRetry);
   }
   
   // Handle legacy format for backward compatibility
@@ -30,9 +30,9 @@ export function ContextReflection(props: ContextReflectionProps) {
     return renderLegacyFormat(props.insight, props.disclaimer);
   }
   
-  // Handle Context Mirror 2.0 format
+  // Handle Situation Assessment 2.0 format
   if (props.mirror) {
-    return renderContextMirror2(props.mirror);
+    return renderSituationAssessment2(props.mirror);
   }
   
   return null;
@@ -55,29 +55,29 @@ function renderLegacyFormat(insight: string, disclaimer: string) {
   );
 }
 
-function renderContextMirror2(mirror: ContextMirror) {
-  const sanitized = sanitizeContextMirror(mirror);
+function renderSituationAssessment2(mirror: SituationAssessment) {
+  const sanitized = sanitizeSituationAssessment(mirror);
   
   // Policy violation check
   if (sanitized.insight && violatesPolicy(sanitized.insight)) {
     return renderFallbackMessage();
   }
 
-  // Render Context Mirror 2.0 executive dashboard
+  // Render Situation Assessment 2.0 executive dashboard
   return (
     <div className="space-y-6">
       {/* Executive Headline */}
       {sanitized.headline && (
-        <div className="space-y-1" data-testid="context-headline">
+        <div className="space-y-1" data-testid="situation-headline">
           <h3 className="text-lg font-semibold text-foreground leading-tight">
             {sanitized.headline}
           </h3>
         </div>
       )}
 
-      {/* Context Insight (Core narrative) */}
+      {/* Situation Insight (Core narrative) */}
       {sanitized.insight && (
-        <div className="space-y-4" data-testid="context-insight">
+        <div className="space-y-4" data-testid="situation-insight">
           {sanitized.insight.split(/\n{2,}/).map((paragraph, index) => (
             <p key={index} className="text-base leading-relaxed text-foreground font-medium">
               {paragraph.trim()}
@@ -88,9 +88,9 @@ function renderContextMirror2(mirror: ContextMirror) {
 
       {/* Actions & Watch-outs Grid - matching plan's layout */}
       {(sanitized.actions?.length || sanitized.watchouts?.length) && (
-        <div className="grid md:grid-cols-2 gap-4 pt-2" data-testid="context-actions-watchouts">
+        <div className="grid md:grid-cols-2 gap-4 pt-2" data-testid="situation-actions-watchouts">
           {sanitized.actions?.length ? (
-            <div data-testid="context-actions">
+            <div data-testid="situation-actions">
               <div className="text-sm font-medium mb-2">Leadership actions</div>
               <div className="flex flex-wrap gap-2">
                 {sanitized.actions.map((action, index) => (
@@ -106,7 +106,7 @@ function renderContextMirror2(mirror: ContextMirror) {
             </div>
           ) : null}
           {sanitized.watchouts?.length ? (
-            <div data-testid="context-watchouts">
+            <div data-testid="situation-watchouts">
               <div className="text-sm font-medium mb-2">Watch‑outs</div>
               <div className="flex flex-wrap gap-2">
                 {sanitized.watchouts.map((watchout, index) => (
@@ -126,7 +126,7 @@ function renderContextMirror2(mirror: ContextMirror) {
 
       {/* Scenario Lens - matching plan's approach */}
       {sanitized.scenarios && (sanitized.scenarios.if_regulation_tightens || sanitized.scenarios.if_budgets_tighten) && (
-        <div className="pt-2 border-t" data-testid="context-scenarios">
+        <div className="pt-2 border-t" data-testid="situation-scenarios">
           <div className="text-sm font-medium mb-2">Scenario lens</div>
           <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1">
             {sanitized.scenarios.if_regulation_tightens && (
@@ -141,7 +141,7 @@ function renderContextMirror2(mirror: ContextMirror) {
 
       {/* Disclaimer - simplified styling */}
       {sanitized.disclaimer && (
-        <p className="text-xs text-muted-foreground mt-2 italic" data-testid="context-disclaimer">
+        <p className="text-xs text-muted-foreground mt-2 italic" data-testid="situation-disclaimer">
           {sanitized.disclaimer}
         </p>
       )}
@@ -149,8 +149,8 @@ function renderContextMirror2(mirror: ContextMirror) {
   );
 }
 
-function renderContextMirrorWithDiagnostics(mirrorWithDiagnostics: ContextMirrorWithDiagnostics, onRetry?: () => void) {
-  const mirror: ContextMirror = {
+function renderSituationAssessmentWithDiagnostics(mirrorWithDiagnostics: SituationAssessmentWithDiagnostics, onRetry?: () => void) {
+  const mirror: SituationAssessment = {
     headline: mirrorWithDiagnostics.headline,
     insight: mirrorWithDiagnostics.insight,
     actions: mirrorWithDiagnostics.actions,
@@ -159,28 +159,28 @@ function renderContextMirrorWithDiagnostics(mirrorWithDiagnostics: ContextMirror
     disclaimer: mirrorWithDiagnostics.disclaimer
   };
   
-  const sanitized = sanitizeContextMirror(mirror);
+  const sanitized = sanitizeSituationAssessment(mirror);
   
   // Policy violation check
   if (sanitized.insight && violatesPolicy(sanitized.insight)) {
     return renderFallbackMessage();
   }
 
-  // Render Context Mirror 2.0 executive dashboard with diagnostic source button
+  // Render Situation Assessment 2.0 executive dashboard with diagnostic source button
   return (
     <div className="space-y-6">
       {/* Executive Headline */}
       {sanitized.headline && (
-        <div className="space-y-1" data-testid="context-headline">
+        <div className="space-y-1" data-testid="situation-headline">
           <h3 className="text-lg font-semibold text-foreground leading-tight">
             {sanitized.headline}
           </h3>
         </div>
       )}
 
-      {/* Context Insight (Core narrative) */}
+      {/* Situation Insight (Core narrative) */}
       {sanitized.insight && (
-        <div className="space-y-4" data-testid="context-insight">
+        <div className="space-y-4" data-testid="situation-insight">
           {sanitized.insight.split(/\n{2,}/).map((paragraph, index) => (
             <p key={index} className="text-base leading-relaxed text-foreground font-medium">
               {paragraph.trim()}
@@ -191,9 +191,9 @@ function renderContextMirrorWithDiagnostics(mirrorWithDiagnostics: ContextMirror
 
       {/* Actions & Watch-outs Grid - matching plan's layout */}
       {(sanitized.actions?.length || sanitized.watchouts?.length) && (
-        <div className="grid md:grid-cols-2 gap-4 pt-2" data-testid="context-actions-watchouts">
+        <div className="grid md:grid-cols-2 gap-4 pt-2" data-testid="situation-actions-watchouts">
           {sanitized.actions?.length ? (
-            <div data-testid="context-actions">
+            <div data-testid="situation-actions">
               <div className="text-sm font-medium mb-2">Leadership actions</div>
               <div className="flex flex-wrap gap-2">
                 {sanitized.actions.map((action, index) => (
@@ -209,7 +209,7 @@ function renderContextMirrorWithDiagnostics(mirrorWithDiagnostics: ContextMirror
             </div>
           ) : null}
           {sanitized.watchouts?.length ? (
-            <div data-testid="context-watchouts">
+            <div data-testid="situation-watchouts">
               <div className="text-sm font-medium mb-2">Watch‑outs</div>
               <div className="flex flex-wrap gap-2">
                 {sanitized.watchouts.map((watchout, index) => (
@@ -229,7 +229,7 @@ function renderContextMirrorWithDiagnostics(mirrorWithDiagnostics: ContextMirror
 
       {/* Scenario Lens - matching plan's approach */}
       {sanitized.scenarios && (sanitized.scenarios.if_regulation_tightens || sanitized.scenarios.if_budgets_tighten) && (
-        <div className="pt-2 border-t" data-testid="context-scenarios">
+        <div className="pt-2 border-t" data-testid="situation-scenarios">
           <div className="text-sm font-medium mb-2">Scenario lens</div>
           <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1">
             {sanitized.scenarios.if_regulation_tightens && (
@@ -246,7 +246,7 @@ function renderContextMirrorWithDiagnostics(mirrorWithDiagnostics: ContextMirror
       <div className="flex items-end justify-between">
         <div className="flex-1">
           {sanitized.disclaimer && (
-            <p className="text-xs text-muted-foreground italic" data-testid="context-disclaimer">
+            <p className="text-xs text-muted-foreground italic" data-testid="situation-disclaimer">
               {sanitized.disclaimer}
             </p>
           )}

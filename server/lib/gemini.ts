@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
-import type { ContextProfile, ContextMirror, ContextMirrorPayload, ContextMirrorWithDiagnostics, GenerationAttempt, GenerationMetadata } from "../../shared/schema";
+import type { ContextProfile, SituationAssessment, SituationAssessmentPayload, SituationAssessmentWithDiagnostics, GenerationAttempt, GenerationMetadata } from "../../shared/schema";
 import { getContextTemplate } from "./context-templates";
 import { BANNED_PHRASES_REGEX, WORD_COUNT_LIMITS, violatesPolicy } from "../../shared/context-validation";
 import { logger } from "../logger";
@@ -174,16 +174,16 @@ function analyzeContextArchetype(profile: ContextProfile): ContextArchetype {
   };
 }
 
-export async function generateContextMirror(profile: ContextProfile): Promise<ContextMirrorWithDiagnostics> {
+export async function generateSituationAssessment(profile: ContextProfile): Promise<SituationAssessmentWithDiagnostics> {
   // Initialize diagnostic tracking
   const startTime = new Date();
   const generationId = Math.random().toString(36).substring(7);
   const incidentId = generateIncidentId();
   const attempts: GenerationAttempt[] = [];
   
-  logger.info('Starting Context Mirror generation', {
+  logger.info('Starting Situation Assessment generation', {
     additionalContext: {
-      operation: 'context_mirror_generation_start',
+      operation: 'situation_assessment_generation_start',
       generationId,
       incidentId,
       profileDimensions: {
@@ -195,12 +195,12 @@ export async function generateContextMirror(profile: ContextProfile): Promise<Co
     }
   });
   
-  console.log(`[CONTEXT_MIRROR] Starting generation ${generationId} for profile: reg=${profile.regulatory_intensity}, data=${profile.data_sensitivity}, clock=${profile.clock_speed}`);
+  console.log(`[SITUATION_ASSESSMENT] Starting generation ${generationId} for profile: reg=${profile.regulatory_intensity}, data=${profile.data_sensitivity}, clock=${profile.clock_speed}`);
   
   // Analyze strategic context archetype
   const archetype = analyzeContextArchetype(profile);
   
-  // 25 second timeout for complex Context Mirror 2.0 prompts with structured JSON schema
+  // 25 second timeout for complex Situation Assessment 2.0 prompts with structured JSON schema
   const timeoutPromise = new Promise<never>((_, reject) => 
     setTimeout(() => reject(new Error('LLM request timed out after 25 seconds')), 25000)
   );
@@ -260,7 +260,7 @@ Then, map these forces to CORTEX STRATEGIC PILLARS implications:
 - Ecosystem & Infrastructure: How does context guide technology stack and vendor selection?
 - Experimentation & Evolution: What experimentation and scaling approach fits this context?
 
-Produce CONTEXT MIRROR 2.0 strategic advisory:
+Produce SITUATION ASSESSMENT 2.0 strategic advisory:
 
 1) HEADLINE (≤120 chars): Strategic frame explaining why this specific context signature matters for AI strategy now.
 
@@ -292,7 +292,7 @@ REQUIREMENTS:
     systemInstruction: systemPrompt 
   });
   
-  console.log(`[CONTEXT_MIRROR] ${generationId} - Attempt 1: Starting AI generation with gemini-2.0-flash-exp`);
+  console.log(`[SITUATION_ASSESSMENT] ${generationId} - Attempt 1: Starting AI generation with gemini-2.0-flash-exp`);
   
   // Attempt 1: Initial AI generation
   const attempt1: GenerationAttempt = {
@@ -332,7 +332,7 @@ REQUIREMENTS:
     const response = await callGeminiWithRetry(
       model, 
       llmRequest, 
-      'context_mirror_generation_primary'
+      'situation_assessment_generation_primary'
     );
     attempt1.endTime = new Date().toISOString();
     attempt1.duration = new Date().getTime() - new Date(attempt1.startTime).getTime();
@@ -340,7 +340,7 @@ REQUIREMENTS:
     const rawJson = response.response.text();
     attempt1.rawResponse = rawJson?.substring(0, 500); // First 500 chars for debugging
     
-    console.log(`[CONTEXT_MIRROR] ${generationId} - Attempt 1: Received response in ${attempt1.duration}ms`);
+    console.log(`[SITUATION_ASSESSMENT] ${generationId} - Attempt 1: Received response in ${attempt1.duration}ms`);
 
     if (rawJson) {
       // Clean the response - remove markdown code block wrapper if present
@@ -349,29 +349,29 @@ REQUIREMENTS:
         .replace(/\n?```$/, '')        // Remove closing ```
         .trim();                       // Remove extra whitespace
       
-      let payload: ContextMirrorPayload;
+      let payload: SituationAssessmentPayload;
       try {
         payload = JSON.parse(cleanedJson);
-        logger.debug('Context Mirror JSON parsed successfully', {
+        logger.debug('Situation Assessment JSON parsed successfully', {
           additionalContext: {
-            operation: 'context_mirror_json_parse_success',
+            operation: 'situation_assessment_json_parse_success',
             generationId,
             incidentId,
             attemptNumber: 1
           }
         });
-        console.log(`[CONTEXT_MIRROR] ${generationId} - Attempt 1: JSON parsed successfully`);
+        console.log(`[SITUATION_ASSESSMENT] ${generationId} - Attempt 1: JSON parsed successfully`);
       } catch (parseError) {
         attempt1.failureReason = 'parse_error';
         attempt1.parseError = parseError instanceof Error ? parseError.message : 'Unknown parse error';
         attempts.push(attempt1);
         
         logger.error(
-          'Context Mirror JSON parsing failed',
+          'Situation Assessment JSON parsing failed',
           parseError instanceof Error ? parseError : new Error(String(parseError)),
           {
             additionalContext: {
-              operation: 'context_mirror_json_parse_error',
+              operation: 'situation_assessment_json_parse_error',
               generationId,
               incidentId,
               attemptNumber: 1,
@@ -381,7 +381,7 @@ REQUIREMENTS:
           }
         );
         
-        console.warn(`[CONTEXT_MIRROR] ${generationId} - Attempt 1: JSON parsing failed:`, parseError);
+        console.warn(`[SITUATION_ASSESSMENT] ${generationId} - Attempt 1: JSON parsing failed:`, parseError);
         throw new Error(`Failed to parse JSON response from Gemini. Incident ID: ${incidentId}`);
       }
       
@@ -392,14 +392,14 @@ REQUIREMENTS:
       if (policyViolation) {
         attempt1.failureReason = 'policy_violation';
         attempts.push(attempt1);
-        console.log(`[CONTEXT_MIRROR] ${generationId} - Attempt 1: Policy violation detected, starting retry`);
+        console.log(`[SITUATION_ASSESSMENT] ${generationId} - Attempt 1: Policy violation detected, starting retry`);
         
         // Attempt 2: Retry with enhanced contextual analysis
         const retryPrompt = `RETRY: Enhanced contextual analysis required. Use the complete organizational context signature.
 
 ${userPrompt}
 
-Focus on specific contextual combinations rather than generic advice. Ensure strategic reasoning connects directly to the organization's unique context profile. Return complete Context Mirror 2.0 JSON format.`;
+Focus on specific contextual combinations rather than generic advice. Ensure strategic reasoning connects directly to the organization's unique context profile. Return complete Situation Assessment 2.0 JSON format.`;
 
         const attempt2: GenerationAttempt = {
           attemptNumber: 2,
@@ -408,7 +408,7 @@ Focus on specific contextual combinations rather than generic advice. Ensure str
           success: false
         };
         
-        console.log(`[CONTEXT_MIRROR] ${generationId} - Attempt 2: Starting retry with cleaner prompt`);
+        console.log(`[SITUATION_ASSESSMENT] ${generationId} - Attempt 2: Starting retry with cleaner prompt`);
 
         try {
           const retryModel = genAI.getGenerativeModel({ 
@@ -445,7 +445,7 @@ Focus on specific contextual combinations rather than generic advice. Ensure str
           const retryResponse = await callGeminiWithRetry(
             retryModel,
             retryRequest,
-            'context_mirror_generation_retry'
+            'situation_assessment_generation_retry'
           );
           attempt2.endTime = new Date().toISOString();
           attempt2.duration = new Date().getTime() - new Date(attempt2.startTime).getTime();
@@ -453,7 +453,7 @@ Focus on specific contextual combinations rather than generic advice. Ensure str
           const retryJson = retryResponse.response.text();
           attempt2.rawResponse = retryJson?.substring(0, 500);
           
-          console.log(`[CONTEXT_MIRROR] ${generationId} - Attempt 2: Received retry response in ${attempt2.duration}ms`);
+          console.log(`[SITUATION_ASSESSMENT] ${generationId} - Attempt 2: Received retry response in ${attempt2.duration}ms`);
           
           if (retryJson) {
             // Clean the retry response - remove markdown code block wrapper if present
@@ -462,15 +462,15 @@ Focus on specific contextual combinations rather than generic advice. Ensure str
               .replace(/\n?```$/, '')        // Remove closing ```
               .trim();                       // Remove extra whitespace
             
-            let retryPayload: ContextMirrorPayload;
+            let retryPayload: SituationAssessmentPayload;
             try {
               retryPayload = JSON.parse(cleanedRetryJson);
-              console.log(`[CONTEXT_MIRROR] ${generationId} - Attempt 2: Retry JSON parsed successfully`);
+              console.log(`[SITUATION_ASSESSMENT] ${generationId} - Attempt 2: Retry JSON parsed successfully`);
             } catch (retryParseError) {
               attempt2.failureReason = 'parse_error';
               attempt2.parseError = retryParseError instanceof Error ? retryParseError.message : 'Unknown parse error';
               attempts.push(attempt2);
-              console.warn(`[CONTEXT_MIRROR] ${generationId} - Attempt 2: Retry JSON parsing failed:`, retryParseError);
+              console.warn(`[SITUATION_ASSESSMENT] ${generationId} - Attempt 2: Retry JSON parsing failed:`, retryParseError);
               throw new Error('Failed to parse retry JSON response from Gemini');
             }
             
@@ -483,7 +483,7 @@ Focus on specific contextual combinations rather than generic advice. Ensure str
               attempts.push(attempt2);
               
               const totalDuration = new Date().getTime() - startTime.getTime();
-              console.log(`[CONTEXT_MIRROR] ${generationId} - SUCCESS: AI response after retry in ${totalDuration}ms total`);
+              console.log(`[SITUATION_ASSESSMENT] ${generationId} - SUCCESS: AI response after retry in ${totalDuration}ms total`);
               
               return {
                 headline: retryPayload.headline,
@@ -504,7 +504,7 @@ Focus on specific contextual combinations rather than generic advice. Ensure str
             } else {
               attempt2.failureReason = 'policy_violation';
               attempts.push(attempt2);
-              console.warn(`[CONTEXT_MIRROR] ${generationId} - Attempt 2: Retry also violated policy`);
+              console.warn(`[SITUATION_ASSESSMENT] ${generationId} - Attempt 2: Retry also violated policy`);
             }
           }
         } catch (retryError) {
@@ -512,18 +512,18 @@ Focus on specific contextual combinations rather than generic advice. Ensure str
           attempt2.duration = new Date().getTime() - new Date(attempt2.startTime).getTime();
           attempt2.failureReason = retryError instanceof Error && retryError.message.includes('timeout') ? 'timeout' : 'api_error';
           attempts.push(attempt2);
-          console.warn(`[CONTEXT_MIRROR] ${generationId} - Attempt 2: Retry failed:`, retryError);
+          console.warn(`[SITUATION_ASSESSMENT] ${generationId} - Attempt 2: Retry failed:`, retryError);
         }
         
         // If retry violates policy or fails, use fallback template
-        console.warn(`[CONTEXT_MIRROR] ${generationId} - Using fallback template after policy violations`);
+        console.warn(`[SITUATION_ASSESSMENT] ${generationId} - Using fallback template after policy violations`);
       } else {
         // Success on first attempt
         attempt1.success = true;
         attempts.push(attempt1);
         
         const totalDuration = new Date().getTime() - startTime.getTime();
-        console.log(`[CONTEXT_MIRROR] ${generationId} - SUCCESS: AI response on first attempt in ${totalDuration}ms`);
+        console.log(`[SITUATION_ASSESSMENT] ${generationId} - SUCCESS: AI response on first attempt in ${totalDuration}ms`);
         
         return {
           headline: payload.headline,
@@ -547,7 +547,7 @@ Focus on specific contextual combinations rather than generic advice. Ensure str
       attempt1.endTime = new Date().toISOString();
       attempt1.duration = new Date().getTime() - new Date(attempt1.startTime).getTime();
       attempts.push(attempt1);
-      console.warn(`[CONTEXT_MIRROR] ${generationId} - Attempt 1: Empty response received from Gemini API`);
+      console.warn(`[SITUATION_ASSESSMENT] ${generationId} - Attempt 1: Empty response received from Gemini API`);
       throw new Error("Empty response from Gemini");
     }
   } catch (error) {
@@ -559,11 +559,11 @@ Focus on specific contextual combinations rather than generic advice. Ensure str
       attempts.push(attempt1);
       
       logger.error(
-        'Context Mirror generation attempt 1 failed',
+        'Situation Assessment generation attempt 1 failed',
         error instanceof Error ? error : new Error(String(error)),
         {
           additionalContext: {
-            operation: 'context_mirror_attempt1_failed',
+            operation: 'situation_assessment_attempt1_failed',
             generationId,
             incidentId,
             attemptNumber: 1,
@@ -574,16 +574,16 @@ Focus on specific contextual combinations rather than generic advice. Ensure str
         }
       );
     }
-    console.warn(`[CONTEXT_MIRROR] ${generationId} - Attempt 1: API error:`, error);
+    console.warn(`[SITUATION_ASSESSMENT] ${generationId} - Attempt 1: API error:`, error);
   }
   
   // Fallback template path
   const totalDuration = new Date().getTime() - startTime.getTime();
-  console.log(`[CONTEXT_MIRROR] ${generationId} - FALLBACK: Using template after ${totalDuration}ms`);
+  console.log(`[SITUATION_ASSESSMENT] ${generationId} - FALLBACK: Using template after ${totalDuration}ms`);
   
-  logger.warn('Context Mirror falling back to template', {
+  logger.warn('Situation Assessment falling back to template', {
     additionalContext: {
-      operation: 'context_mirror_fallback_template',
+      operation: 'situation_assessment_fallback_template',
       generationId,
       incidentId,
       totalDuration,
@@ -595,9 +595,9 @@ Focus on specific contextual combinations rather than generic advice. Ensure str
   try {
     const fallback = getContextTemplate(profile);
     
-    logger.info('Context Mirror template fallback successful', {
+    logger.info('Situation Assessment template fallback successful', {
       additionalContext: {
-        operation: 'context_mirror_template_success',
+        operation: 'situation_assessment_template_success',
         generationId,
         incidentId,
         totalDuration
@@ -622,11 +622,11 @@ Focus on specific contextual combinations rather than generic advice. Ensure str
     };
   } catch (templateError) {
     logger.error(
-      'Context Mirror template fallback failed',
+      'Situation Assessment template fallback failed',
       templateError instanceof Error ? templateError : new Error(String(templateError)),
       {
         additionalContext: {
-          operation: 'context_mirror_template_failed',
+          operation: 'situation_assessment_template_failed',
           generationId,
           incidentId,
           totalDuration
@@ -635,16 +635,16 @@ Focus on specific contextual combinations rather than generic advice. Ensure str
     );
     
     // Last resort - throw error with incident ID
-    throw new Error(`Context Mirror generation completely failed. Incident ID: ${incidentId}`);
+    throw new Error(`Situation Assessment generation completely failed. Incident ID: ${incidentId}`);
   }
 }
 
-export function generateRuleBasedFallback(profile: ContextProfile): ContextMirror {
+export function generateRuleBasedFallback(profile: ContextProfile): SituationAssessment {
   // Use the enhanced context template system for fallback
   const template = getContextTemplate(profile);
   
   return {
-    // Context Mirror 2.0 format
+    // Situation Assessment 2.0 format
     headline: template.headline,
     insight: template.insight,
     actions: template.actions,

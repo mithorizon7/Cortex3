@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-// Context Mirror 2.0: Phased loading with executive focus
+// Situation Assessment 2.0: Phased loading with executive focus
 const PHASE_MESSAGES = {
   analyzing: [
     "Analyzing your context profile (regulation, data posture, market tempo)…",
@@ -18,7 +18,7 @@ const PHASE_MESSAGES = {
     "Polishing insights for executive consumption…",
     "Linking context to next-step strategy implications…",
     "Ensuring compliance with leadership communication standards…",
-    "Finalizing your Context Mirror 2.0 dashboard…",
+    "Finalizing your Situation Assessment 2.0 dashboard…",
   ]
 };
 
@@ -49,7 +49,7 @@ export function LoadingTips({ intervalMs = 2500, usePhased = true }: { intervalM
       // Legacy behavior - cycle through all messages
       timer.current = window.setInterval(() => setI((v) => (v + 1) % LEGACY_MESSAGES.length), intervalMs);
     } else {
-      // Context Mirror 2.0: Phased loading
+      // Situation Assessment 2.0: Phased loading
       const phaseMessages = PHASE_MESSAGES[phase];
       timer.current = window.setInterval(() => {
         setI((v) => (v + 1) % phaseMessages.length);
@@ -75,7 +75,7 @@ export function LoadingTips({ intervalMs = 2500, usePhased = true }: { intervalM
   const currentMessages = usePhased ? PHASE_MESSAGES[phase] : LEGACY_MESSAGES;
   const currentMessage = currentMessages[i];
   
-  // Phase indicator for Context Mirror 2.0
+  // Phase indicator for Situation Assessment 2.0
   const phaseLabels = {
     analyzing: 'Analyzing',
     drafting: 'Drafting', 

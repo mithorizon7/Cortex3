@@ -160,23 +160,23 @@ export function requireAuthMiddleware(req: Request, res: Response, next: NextFun
 }
 
 /**
- * Context Mirror specific rate limiting middleware
+ * Situation Assessment specific rate limiting middleware
  * Stricter limits for expensive LLM operations
  */
-const contextMirrorRequests = new Map<string, { count: number; resetTime: number }>();
+const situationAssessmentRequests = new Map<string, { count: number; resetTime: number }>();
 
-export function contextMirrorRateLimitMiddleware(req: Request, res: Response, next: NextFunction) {
+export function situationAssessmentRateLimitMiddleware(req: Request, res: Response, next: NextFunction) {
   const userId = req.userId || 'anonymous';
   const now = Date.now();
   // 10 minutes window with max 5 requests per user (stricter than general rate limit)
   const windowMs = 10 * 60 * 1000; // 10 minutes
   const maxRequests = process.env.NODE_ENV === 'development' ? 20 : 5; // Higher limit in development
   
-  const userKey = `contextmirror:${userId}`;
-  const userData = contextMirrorRequests.get(userKey);
+  const userKey = `situationassessment:${userId}`;
+  const userData = situationAssessmentRequests.get(userKey);
   
   if (!userData || now > userData.resetTime) {
-    contextMirrorRequests.set(userKey, {
+    situationAssessmentRequests.set(userKey, {
       count: 1,
       resetTime: now + windowMs
     });
@@ -187,7 +187,7 @@ export function contextMirrorRateLimitMiddleware(req: Request, res: Response, ne
   if (userData.count >= maxRequests) {
     const incidentId = generateIncidentId();
     
-    logger.warn('Context Mirror rate limit exceeded', {
+    logger.warn('Situation Assessment rate limit exceeded', {
       additionalContext: {
         userId,
         ip: req.ip,
@@ -200,7 +200,7 @@ export function contextMirrorRateLimitMiddleware(req: Request, res: Response, ne
     });
     
     const errorResponse = createUserError(
-      'Too many Context Mirror requests. Please wait before requesting another analysis.',
+      'Too many Situation Assessment requests. Please wait before requesting another analysis.',
       incidentId,
       HTTP_STATUS.TOO_MANY_REQUESTS
     );

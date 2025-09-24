@@ -7,8 +7,8 @@ export const assessments = pgTable("assessments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull(), // Firebase user ID for ownership tracking
   contextProfile: jsonb("context_profile").notNull(),
-  contextMirror: jsonb("context_mirror"),
-  contextMirrorUpdatedAt: text("context_mirror_updated_at"),
+  situationAssessment: jsonb("context_mirror"),
+  situationAssessmentUpdatedAt: text("context_mirror_updated_at"),
   pulseResponses: jsonb("pulse_responses"),
   pillarScores: jsonb("pillar_scores"),
   confidenceGaps: jsonb("confidence_gaps"),
@@ -108,8 +108,8 @@ export const valueOverlaySchema = z.object({
 export type ValueOverlayPillar = z.infer<typeof valueOverlayPillarSchema>;
 export type ValueOverlay = z.infer<typeof valueOverlaySchema>;
 
-// Context Mirror Types - Enhanced 2.0 format with executive dashboard structure
-export const contextMirrorSchema = z.object({
+// Situation Assessment Types - Enhanced 2.0 format with executive dashboard structure
+export const situationAssessmentSchema = z.object({
   // Legacy structured format (for backward compatibility)
   strengths: z.array(z.string().min(8).max(180)).length(3).optional(),
   fragilities: z.array(z.string().min(8).max(180)).length(3).optional(),
@@ -119,7 +119,7 @@ export const contextMirrorSchema = z.object({
   // Narrative format (current)
   insight: z.string().min(50).optional(), // Two paragraphs of 150-220 words total
   
-  // Context Mirror 2.0 - Executive Dashboard Format
+  // Situation Assessment 2.0 - Executive Dashboard Format
   headline: z.string().max(120).optional(),
   actions: z.array(z.string().max(84)).length(3).optional(), // ≤14 words each (~6 chars/word)
   watchouts: z.array(z.string().max(84)).length(2).optional(), // ≤14 words each
@@ -129,10 +129,10 @@ export const contextMirrorSchema = z.object({
   }).optional(),
 });
 
-export type ContextMirror = z.infer<typeof contextMirrorSchema>;
+export type SituationAssessment = z.infer<typeof situationAssessmentSchema>;
 
-// Context Mirror Payload (Enhanced 2.0 format)
-export const contextMirrorPayloadSchema = z.object({
+// Situation Assessment Payload (Enhanced 2.0 format)
+export const situationAssessmentPayloadSchema = z.object({
   headline: z.string().max(120),                           // ≤120 chars executive takeaway
   insight: z.string(),                                     // two paragraphs separated by \n\n
   actions: z.array(z.string().max(84)).length(3),         // 3 concise actions (≤14 words each)
@@ -144,14 +144,14 @@ export const contextMirrorPayloadSchema = z.object({
   disclaimer: z.string(),                                  // one-line micro-disclaimer
 });
 
-export type ContextMirrorPayload = z.infer<typeof contextMirrorPayloadSchema>;
+export type SituationAssessmentPayload = z.infer<typeof situationAssessmentPayloadSchema>;
 
-// Context Mirror Request Validation Schema
-export const contextMirrorRequestSchema = z.object({
+// Situation Assessment Request Validation Schema
+export const situationAssessmentRequestSchema = z.object({
   assessmentId: z.string().uuid("Assessment ID must be a valid UUID"),
 });
 
-export type ContextMirrorRequest = z.infer<typeof contextMirrorRequestSchema>;
+export type SituationAssessmentRequest = z.infer<typeof situationAssessmentRequestSchema>;
 
 // Diagnostic Metadata Types for AI Generation Transparency
 export const generationAttemptSchema = z.object({
@@ -180,12 +180,12 @@ export const generationMetadataSchema = z.object({
 export type GenerationAttempt = z.infer<typeof generationAttemptSchema>;
 export type GenerationMetadata = z.infer<typeof generationMetadataSchema>;
 
-// Enhanced Context Mirror Response with Diagnostic Data
-export const contextMirrorWithDiagnosticsSchema = contextMirrorPayloadSchema.extend({
+// Enhanced Situation Assessment Response with Diagnostic Data
+export const situationAssessmentWithDiagnosticsSchema = situationAssessmentPayloadSchema.extend({
   debug: generationMetadataSchema,
 });
 
-export type ContextMirrorWithDiagnostics = z.infer<typeof contextMirrorWithDiagnosticsSchema>;
+export type SituationAssessmentWithDiagnostics = z.infer<typeof situationAssessmentWithDiagnosticsSchema>;
 
 // Options Studio Types - Seven Lenses Framework
 export const lensPositionsSchema = z.object({

@@ -1,19 +1,19 @@
 import { useParams, Link } from "wouter";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useContextMirror } from "@/hooks/useContextMirror";
+import { useSituationAssessment } from "@/hooks/useSituationAssessment";
 import { useToast } from "@/hooks/use-toast";
-import type { Assessment, ContextProfile, ContextMirror, ContextMirrorWithDiagnostics } from "../../../shared/schema";
+import type { Assessment, ContextProfile, SituationAssessment, SituationAssessmentWithDiagnostics } from "../../../shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Loader2, Brain, Compass, TrendingUp, MessageSquare, FileText, CheckCircle, AlertTriangle, ListTodo, Shield, Copy } from "lucide-react";
-import { generateContextBrief, type ContextMirrorData } from "@/lib/pdf-generator";
+import { generateSituationAssessmentBrief, type SituationAssessmentData } from "@/lib/pdf-generator";
 import { ProtectedRoute } from "@/components/auth/protected-route";
-import { LoadingTips } from "@/components/context-mirror/LoadingTips";
-import { ContextReflection } from "@/components/context-mirror/ContextReflection";
-import { violatesPolicy, sanitizeInsight } from "@/components/context-mirror/sanitizeInsight";
+import { LoadingTips } from "@/components/situation-assessment/LoadingTips";
+import { SituationReflection } from "@/components/situation-assessment/SituationReflection";
+import { violatesPolicy, sanitizeInsight } from "@/components/situation-assessment/sanitizeInsight";
 
 
 function EducationalLoader() {
@@ -36,8 +36,8 @@ interface NarrativeReflection {
   disclaimer: string;
 }
 
-// Component for Context Mirror display (handles both legacy and 2.0 formats)  
-function ContextMirrorCard({ mirror, onRetry }: { mirror: ContextMirror | ContextMirrorWithDiagnostics, onRetry?: () => void }) {
+// Component for Situation Assessment display (handles both legacy and 2.0 formats)  
+function SituationAssessmentCard({ mirror, onRetry }: { mirror: SituationAssessment | SituationAssessmentWithDiagnostics, onRetry?: () => void }) {
   if (!mirror.insight && !mirror.headline) {
     // No content available
     return (
@@ -52,11 +52,11 @@ function ContextMirrorCard({ mirror, onRetry }: { mirror: ContextMirror | Contex
 
   // Check if this has diagnostic information
   if ('debug' in mirror) {
-    return <ContextReflection mirrorWithDiagnostics={mirror as ContextMirrorWithDiagnostics} onRetry={onRetry} />;
+    return <SituationReflection mirrorWithDiagnostics={mirror as SituationAssessmentWithDiagnostics} onRetry={onRetry} />;
   }
 
-  // Use the enhanced ContextReflection component for regular mirror format
-  return <ContextReflection mirror={mirror as ContextMirror} />;
+  // Use the enhanced SituationReflection component for regular mirror format
+  return <SituationReflection mirror={mirror as SituationAssessment} />;
 }
 
 function ErrorFallback({ error }: { error: Error }) {
@@ -68,7 +68,7 @@ function ErrorFallback({ error }: { error: Error }) {
       <AlertDescription className="text-orange-700 dark:text-orange-300">
         {isLLMFailure ? (
           <>
-            Advanced analysis unavailable. Using rule-based Context Mirror framework to provide structured insights from your assessment responses.
+            Advanced analysis unavailable. Using rule-based Situation Assessment framework to provide structured insights from your assessment responses.
             <br />
             <span className="text-xs opacity-75">The structured approach still offers valuable strategic reflection for leadership discussion.</span>
           </>
@@ -84,20 +84,20 @@ function ErrorFallback({ error }: { error: Error }) {
   );
 }
 
-function renderDiscussionPrompts(contextMirror: ContextMirror | null) {
-  // Check if we have Context Mirror 2.0 data with specific actions and watchouts
-  const hasActions = contextMirror?.actions && contextMirror.actions.length > 0;
-  const hasWatchouts = contextMirror?.watchouts && contextMirror.watchouts.length > 0;
+function renderDiscussionPrompts(situationAssessment: SituationAssessment | null) {
+  // Check if we have Situation Assessment 2.0 data with specific actions and watchouts
+  const hasActions = situationAssessment?.actions && situationAssessment.actions.length > 0;
+  const hasWatchouts = situationAssessment?.watchouts && situationAssessment.watchouts.length > 0;
   
   if (hasActions || hasWatchouts) {
-    // Generate targeted prompts based on actual context mirror data
+    // Generate targeted prompts based on actual situation assessment data
     const prompts = [];
     
     // Prompt 1: Focus on prioritizing actions
     if (hasActions) {
       prompts.push({
         id: "action-priority",
-        text: `Of the ${contextMirror.actions!.length} leadership actions identified, which one could deliver the clearest <strong>customer impact</strong> within 60-90 days?`
+        text: `Of the ${situationAssessment.actions!.length} leadership actions identified, which one could deliver the clearest <strong>customer impact</strong> within 60-90 days?`
       });
     } else {
       prompts.push({
@@ -165,16 +165,16 @@ function renderDiscussionPrompts(contextMirror: ContextMirror | null) {
 
 function ContextInsightPageContent() {
   const { id } = useParams();
-  const { data, isLoading, isError, error, generateMirror, reset } = useContextMirror();
+  const { data, isLoading, isError, error, generateSituationAssessment, reset } = useSituationAssessment();
   const { toast } = useToast();
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   
   // Generate the context mirror when the component mounts and we have an id
   useEffect(() => {
     if (id && !data && !isLoading && !isError) {
-      generateMirror(id);
+      generateSituationAssessment(id);
     }
-  }, [id, data, isLoading, isError, generateMirror]);
+  }, [id, data, isLoading, isError, generateSituationAssessment]);
   
   // Fetch the full assessment data to get contextProfile
   const { data: assessmentData, isLoading: assessmentLoading } = useQuery<Assessment>({
@@ -208,14 +208,14 @@ function ContextInsightPageContent() {
     setIsGeneratingPDF(true);
     
     try {
-      // Prepare Context Mirror data for PDF generation
-      const contextMirrorData: ContextMirrorData = {
+      // Prepare Situation Assessment data for PDF generation
+      const situationAssessmentData: SituationAssessmentData = {
         contextProfile: assessmentData.contextProfile as ContextProfile,
         assessmentId: id,
         // Legacy format for backward compatibility
         insight: data.insight,
         disclaimer: data.disclaimer,
-        // Context Mirror 2.0 format - the full personalized data
+        // Situation Assessment 2.0 format - the full personalized data
         mirror: hasContext2Data ? {
           headline: data.headline,
           insight: data.insight,
@@ -226,7 +226,7 @@ function ContextInsightPageContent() {
         } : undefined
       };
       
-      await generateContextBrief(contextMirrorData);
+      await generateSituationAssessmentBrief(situationAssessmentData);
       
       toast({
         title: "PDF downloaded successfully",
@@ -288,7 +288,7 @@ function ContextInsightPageContent() {
       {/* Header */}
       <header className="space-y-3 pb-2">
         <h1 className="text-2xl md:text-3xl font-semibold text-foreground">
-          Context Reflection
+          Situation Assessment
         </h1>
         <p className="text-base text-muted-foreground leading-relaxed">
           Strategic analysis tailored to your organizational context. Executive insights to inform leadership discussion.
@@ -299,12 +299,12 @@ function ContextInsightPageContent() {
       <div className="grid lg:grid-cols-3 gap-8 items-start">
         {/* Left Card: Context Reflection (Main) - Takes 2 columns */}
         <div className="lg:col-span-2">
-          <Card className="w-full" data-testid="card-context-reflection">
+          <Card className="w-full" data-testid="card-situation-assessment">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-3 text-xl">
                   <Brain className="h-5 w-5 text-primary" />
-                  Context Reflection
+                  Situation Assessment
                 </CardTitle>
                 <div className="flex items-center gap-2">
                   <Button 
@@ -334,7 +334,7 @@ function ContextInsightPageContent() {
                 <ErrorFallback error={error} />
               ) : data ? (
                 <div className="animate-in fade-in duration-300">
-                  <ContextMirrorCard mirror={data} onRetry={() => generateMirror(id!)} />
+                  <SituationAssessmentCard mirror={data} onRetry={() => generateSituationAssessment(id!)} />
                 </div>
               ) : null}
             </CardContent>
@@ -353,7 +353,7 @@ function ContextInsightPageContent() {
             <CardContent className="space-y-6 pt-0">
               <div className="space-y-5">
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  Strategic questions for executive discussion based on your context reflection:
+                  Strategic questions for executive discussion based on your situation assessment:
                 </p>
                 {renderDiscussionPrompts(data)}
               </div>
@@ -389,7 +389,7 @@ function ContextInsightPageContent() {
             
             toast({
               title: "Added to Action Plan",
-              description: "Context reflection and next steps saved for future reference."
+              description: "Situation assessment and next steps saved for future reference."
             });
           }}
           disabled={!data || isLoading}
