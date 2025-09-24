@@ -209,7 +209,7 @@ export default function DomainIntroPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2 text-lg">
                     <CheckSquare className="h-5 w-5 text-primary" />
-                    <span>What Good Looks Like</span>
+                    <span>What Good Can Look Like</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>

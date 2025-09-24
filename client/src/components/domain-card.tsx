@@ -6,7 +6,7 @@ import { CORTEX_PILLARS, MATURITY_STAGES, getStageColor } from "@/lib/cortex";
 import { getMicroGuidesByPillar, getMicroGuidesByTags } from "@/lib/micro-guides";
 import { getMetricById, getContextAwareDefaults, getDefaultMetricForPillar } from "@/lib/value-overlay";
 import { ValueMetricChip, ValueInputFields, HowToMeasureDialog } from "@/components/value-overlay";
-import { Star, Info, Target, Cog, Shield, Users, Network, Lightbulb, TrendingUp, ArrowRight, BookOpen, ChevronDown, HelpCircle } from "lucide-react";
+import { Star, Info, Target, Cog, Shield, Users, Network, Lightbulb, TrendingUp, ArrowRight, BookOpen, ChevronDown, HelpCircle, CheckSquare } from "lucide-react";
 import { useState } from "react";
 import type { ValueOverlay, ValueOverlayPillar, ContextProfile, ConfidenceGaps } from "@shared/schema";
 
@@ -305,12 +305,20 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
           </div>
           
           <div>
-            <h4 className="font-medium mb-2 text-primary font-display">What Good Looks Like</h4>
-            <ul className="text-sm text-muted-foreground space-y-1 font-ui">
+            <h4 className="font-medium mb-3 text-primary font-display flex items-center space-x-2">
+              <CheckSquare className="h-4 w-4" />
+              <span>What Good Can Look Like</span>
+            </h4>
+            <div className="space-y-2">
               {(guidance.what_good_looks_like || guidance.whatGoodLooks || []).map((item: string, index: number) => (
-                <li key={index}>• {item}</li>
+                <div key={index} className="flex items-start space-x-2 p-2 bg-green-50 dark:bg-green-950/20 rounded-md border border-green-200 dark:border-green-800">
+                  <div className="text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0">
+                    <CheckSquare className="h-3.5 w-3.5" />
+                  </div>
+                  <span className="text-sm text-foreground font-ui leading-relaxed">{item}</span>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
           
           <div>
