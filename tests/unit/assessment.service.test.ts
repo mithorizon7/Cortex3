@@ -113,7 +113,7 @@ describe('AssessmentService', () => {
 
       const result = await assessmentService.getAssessment('test-id')
 
-      expect(storage.getAssessment).toHaveBeenCalledWith('test-id')
+      expect(storage.getAssessment).toHaveBeenCalledWith('test-id', undefined)
       expect(result).toEqual(mockAssessment)
     })
 
@@ -178,6 +178,14 @@ describe('AssessmentService', () => {
       expect(storage.updateAssessment).toHaveBeenCalledWith('test-id', {
         pulseResponses,
         pillarScores: expectedPillarScores,
+        confidenceGaps: {
+          'C': 0, // No null responses in C1, C2, C3
+          'O': 0, // No null responses in O1, O2, O3
+          'R': 0, // No null responses in R1, R2, R3
+          'T': 0, // No null responses in T1, T2, T3
+          'E': 0, // No null responses in E1, E2, E3
+          'X': 0, // No null responses in X1, X2, X3
+        },
       })
 
       expect(result).toEqual(mockAssessment)
