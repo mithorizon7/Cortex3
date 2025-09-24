@@ -44,8 +44,8 @@ export default function ContextProfilePage() {
       data_advantage: 2,
       build_readiness: 2,
       finops_priority: 2,
-      procurement_constraints: null,
-      edge_operations: null,
+      procurement_constraints: false,
+      edge_operations: false,
     }
   });
 
@@ -135,10 +135,9 @@ export default function ContextProfilePage() {
         return touchedFields.has(questionKey);
       }
       
-      // For boolean fields, count as answered when they have a non-null value
+      // For boolean fields, count as answered when user has touched them
       if (item.type === 'boolean') {
-        const fieldValue = form.getValues()[item.key as keyof ContextProfile];
-        return fieldValue !== null && fieldValue !== undefined;
+        return touchedFields.has(questionKey);
       }
       
       return touchedFields.has(questionKey);
@@ -310,8 +309,8 @@ export default function ContextProfilePage() {
                                   </div>
                                 )}
                                 
-                                {/* Neutral state with Yes/No buttons */}
-                                {field.value === null ? (
+                                {/* Neutral state with Yes/No buttons when not touched */}
+                                {!touchedFields.has(item.key) ? (
                                   <div className="flex flex-col sm:flex-row gap-4 p-6 sm:p-4 bg-muted/50 rounded-lg border-2 border-transparent">
                                     <p className="text-lg font-medium text-muted-foreground mb-4 sm:mb-0 sm:mr-4 flex-1">
                                       Please select:
