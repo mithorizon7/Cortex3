@@ -3,6 +3,7 @@ import { db } from "../db";
 import { assessments } from "../../shared/schema";
 import { contextMirrorSchema, contextMirrorRequestSchema, type ContextMirror, type ContextMirrorWithDiagnostics } from "../../shared/schema";
 import { generateContextMirror, generateRuleBasedFallback } from "../lib/gemini";
+import { createTestAccount } from "../lib/firebase-admin";
 import { eq, and } from "drizzle-orm";
 import { requireAuthMiddleware, contextMirrorRateLimitMiddleware } from "../middleware/security";
 import { generateIncidentId, createUserError, sanitizeErrorForUser } from "../utils/incident";
@@ -328,5 +329,49 @@ router.post("/context-mirror",
     }
   });
 
+// Test account creation endpoint (development only)
+router.post("/create-test-account", async (req, res) => {
+  try {
+    // Only allow in development environment
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(HTTP_STATUS.FORBIDDEN).json({ 
+        success: false,
+        error: 'Test account creation not allowed in production' 
+      });
+    }
+
+    logger.info('Creating test account via API endpoint');
+    const result = await createTestAccount();
+    
+    res.json({
+      success: true,
+      message: 'Test account created successfully',
+      credentials: {
+        email: 'test.user@cortexapp.dev',
+        password: 'TestUser2024!'
+      },
+      userId: result.uid
+    });
+  } catch (error: any) {
+    logger.error('Test account creation error via API:', error);
+    
+    if (error.code === 'auth/email-already-in-use') {
+      return res.json({
+        success: true,
+        message: 'Test account already exists',
+        credentials: {
+          email: 'test.user@cortexapp.dev',
+          password: 'TestUser2024!'
+        },
+        note: 'Account already exists, you can use the provided credentials'
+      });
+    }
+    
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      error: error.message || 'Failed to create test account'
+    });
+  }
+});
 
 export default router;

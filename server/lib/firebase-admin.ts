@@ -133,6 +133,64 @@ export const verifyFirebaseToken = async (idToken: string): Promise<{ uid: strin
 };
 
 /**
+ * Create a test user account using Firebase Admin SDK
+ * Only works in development environment with proper admin credentials
+ */
+export const createTestAccount = async (): Promise<{ uid: string; email: string }> => {
+  const TEST_EMAIL = 'test.user@cortexapp.dev';
+  const TEST_PASSWORD = 'TestUser2024!';
+  const TEST_DISPLAY_NAME = 'CORTEX Test User';
+
+  try {
+    if (!adminAuth) {
+      const { adminAuth: auth } = initializeFirebaseAdmin();
+      if (!auth) {
+        throw new Error('Firebase Admin not initialized - cannot create users');
+      }
+      adminAuth = auth;
+    }
+
+    // Check if user already exists
+    try {
+      const existingUser = await adminAuth.getUserByEmail(TEST_EMAIL);
+      logger.info('Test user already exists', { 
+        additionalContext: { 
+          operation: 'test_account_creation',
+          uid: existingUser.uid,
+          email: existingUser.email 
+        }
+      });
+      return { uid: existingUser.uid, email: existingUser.email };
+    } catch (error) {
+      // User doesn't exist, create them
+      logger.info('Creating new test user account');
+    }
+
+    // Create the test user
+    const userRecord = await adminAuth.createUser({
+      email: TEST_EMAIL,
+      password: TEST_PASSWORD,
+      displayName: TEST_DISPLAY_NAME,
+      emailVerified: true, // Auto-verify for test account
+    });
+
+    logger.info('Test user account created successfully', {
+      additionalContext: {
+        operation: 'test_account_creation',
+        uid: userRecord.uid,
+        email: userRecord.email
+      }
+    });
+
+    return { uid: userRecord.uid, email: userRecord.email };
+    
+  } catch (error) {
+    logger.error('Failed to create test user account', error instanceof Error ? error : new Error(String(error)));
+    throw error;
+  }
+};
+
+/**
  * Check if Firebase Admin is properly configured
  */
 export const isFirebaseAdminConfigured = (): boolean => {
