@@ -4,6 +4,7 @@ import { generateIncidentId, createUserError, sanitizeErrorForUser } from '../ut
 import { USER_ERROR_MESSAGES, HTTP_STATUS } from '../constants';
 import { logger } from '../logger';
 import { requireAuthMiddleware } from '../middleware/security';
+import { withDatabaseErrorHandling } from '../utils/database-errors';
 
 const router = Router();
 
@@ -22,10 +23,13 @@ router.post('/', requireAuthMiddleware, async (req: Request, res: Response) => {
       }
     });
     
-    const assessment = await assessmentService.createAssessment({
-      contextProfile: req.body.contextProfile,
-      userId: req.userId!
-    });
+    const assessment = await withDatabaseErrorHandling(
+      'create_assessment_database',
+      () => assessmentService.createAssessment({
+        contextProfile: req.body.contextProfile,
+        userId: req.userId!
+      })
+    );
     
     res.status(HTTP_STATUS.CREATED).json(assessment);
     
@@ -80,7 +84,10 @@ router.get('/:id', requireAuthMiddleware, async (req: Request, res: Response) =>
       }
     });
     
-    const assessment = await assessmentService.getAssessment(assessmentId, req.userId!);
+    const assessment = await withDatabaseErrorHandling(
+      'get_assessment_database',
+      () => assessmentService.getAssessment(assessmentId, req.userId!)
+    );
     
     if (!assessment) {
       logger.warn('Assessment not found', {
@@ -134,9 +141,12 @@ router.patch('/:id/pulse', requireAuthMiddleware, async (req: Request, res: Resp
       }
     });
     
-    const assessment = await assessmentService.updatePulseResponses(
-      assessmentId,
-      req.body.pulseResponses
+    const assessment = await withDatabaseErrorHandling(
+      'update_pulse_responses_database',
+      () => assessmentService.updatePulseResponses(
+        assessmentId,
+        req.body.pulseResponses
+      )
     );
     
     if (!assessment) {
@@ -199,9 +209,12 @@ router.patch('/:id', requireAuthMiddleware, async (req: Request, res: Response) 
       }
     });
     
-    const assessment = await assessmentService.updateAssessmentData(
-      assessmentId,
-      req.body
+    const assessment = await withDatabaseErrorHandling(
+      'update_assessment_data_database',
+      () => assessmentService.updateAssessmentData(
+        assessmentId,
+        req.body
+      )
     );
     
     if (!assessment) {
@@ -262,7 +275,10 @@ router.patch('/:id/complete', requireAuthMiddleware, async (req: Request, res: R
       }
     });
     
-    const assessment = await assessmentService.completeAssessment(assessmentId);
+    const assessment = await withDatabaseErrorHandling(
+      'complete_assessment_database',
+      () => assessmentService.completeAssessment(assessmentId)
+    );
     
     if (!assessment) {
       return res.status(HTTP_STATUS.NOT_FOUND)

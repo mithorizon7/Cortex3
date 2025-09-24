@@ -2,6 +2,44 @@ import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import type { ContextProfile, ContextMirror, ContextMirrorPayload, ContextMirrorWithDiagnostics, GenerationAttempt, GenerationMetadata } from "../../shared/schema";
 import { getContextTemplate } from "./context-templates";
 import { BANNED_PHRASES_REGEX, WORD_COUNT_LIMITS, violatesPolicy } from "../../shared/context-validation";
+import { logger } from "../logger";
+import { generateIncidentId } from "../utils/incident";
+import { executeWithRetry, EXTERNAL_API_RETRY_CONFIG } from "../utils/retry";
+
+/**
+ * Resilient wrapper for Gemini API calls with retry logic
+ * Handles transient failures with exponential backoff
+ */
+async function callGeminiWithRetry(
+  model: any,
+  request: any,
+  operationName: string,
+  timeoutMs: number = 45000
+): Promise<any> {
+  return executeWithRetry(
+    operationName,
+    async (context) => {
+      logger.debug(`Gemini API call attempt ${context.attempt}`, {
+        additionalContext: {
+          operation: operationName,
+          incidentId: context.incidentId,
+          attempt: context.attempt,
+          maxAttempts: context.maxAttempts
+        }
+      });
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Request timeout')), timeoutMs)
+      );
+
+      return await Promise.race([
+        model.generateContent(request),
+        timeoutPromise
+      ]);
+    },
+    EXTERNAL_API_RETRY_CONFIG
+  );
+}
 
 // DON'T DELETE THIS COMMENT
 // Follow these instructions when using this blueprint:
@@ -140,7 +178,22 @@ export async function generateContextMirror(profile: ContextProfile): Promise<Co
   // Initialize diagnostic tracking
   const startTime = new Date();
   const generationId = Math.random().toString(36).substring(7);
+  const incidentId = generateIncidentId();
   const attempts: GenerationAttempt[] = [];
+  
+  logger.info('Starting Context Mirror generation', {
+    additionalContext: {
+      operation: 'context_mirror_generation_start',
+      generationId,
+      incidentId,
+      profileDimensions: {
+        regulatory_intensity: profile.regulatory_intensity,
+        data_sensitivity: profile.data_sensitivity,
+        clock_speed: profile.clock_speed,
+        safety_criticality: profile.safety_criticality
+      }
+    }
+  });
   
   console.log(`[CONTEXT_MIRROR] Starting generation ${generationId} for profile: reg=${profile.regulatory_intensity}, data=${profile.data_sensitivity}, clock=${profile.clock_speed}`);
   
@@ -250,7 +303,7 @@ REQUIREMENTS:
   };
   
   try {
-    const llmRequest = model.generateContent({
+    const llmRequest = {
       contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
       generationConfig: {
         responseMimeType: "application/json",
@@ -274,9 +327,13 @@ REQUIREMENTS:
           required: ["headline", "insight", "actions", "watchouts", "scenarios", "disclaimer"]
         }
       }
-    });
+    };
 
-    const response = await Promise.race([llmRequest, timeoutPromise]);
+    const response = await callGeminiWithRetry(
+      model, 
+      llmRequest, 
+      'context_mirror_generation_primary'
+    );
     attempt1.endTime = new Date().toISOString();
     attempt1.duration = new Date().getTime() - new Date(attempt1.startTime).getTime();
     
@@ -295,13 +352,37 @@ REQUIREMENTS:
       let payload: ContextMirrorPayload;
       try {
         payload = JSON.parse(cleanedJson);
+        logger.debug('Context Mirror JSON parsed successfully', {
+          additionalContext: {
+            operation: 'context_mirror_json_parse_success',
+            generationId,
+            incidentId,
+            attemptNumber: 1
+          }
+        });
         console.log(`[CONTEXT_MIRROR] ${generationId} - Attempt 1: JSON parsed successfully`);
       } catch (parseError) {
         attempt1.failureReason = 'parse_error';
         attempt1.parseError = parseError instanceof Error ? parseError.message : 'Unknown parse error';
         attempts.push(attempt1);
+        
+        logger.error(
+          'Context Mirror JSON parsing failed',
+          parseError instanceof Error ? parseError : new Error(String(parseError)),
+          {
+            additionalContext: {
+              operation: 'context_mirror_json_parse_error',
+              generationId,
+              incidentId,
+              attemptNumber: 1,
+              rawResponseLength: cleanedJson?.length || 0,
+              rawResponsePreview: cleanedJson?.substring(0, 200)
+            }
+          }
+        );
+        
         console.warn(`[CONTEXT_MIRROR] ${generationId} - Attempt 1: JSON parsing failed:`, parseError);
-        throw new Error('Failed to parse JSON response from Gemini');
+        throw new Error(`Failed to parse JSON response from Gemini. Incident ID: ${incidentId}`);
       }
       
       // Check for policy violations using shared validation
@@ -335,7 +416,7 @@ Focus on specific contextual combinations rather than generic advice. Ensure str
             systemInstruction: systemPrompt 
           });
           
-          const retryLlmRequest = retryModel.generateContent({
+          const retryRequest = {
             contents: [{ role: 'user', parts: [{ text: retryPrompt }] }],
             generationConfig: {
               responseMimeType: "application/json",
@@ -359,9 +440,13 @@ Focus on specific contextual combinations rather than generic advice. Ensure str
                 required: ["headline", "insight", "actions", "watchouts", "scenarios", "disclaimer"]
               }
             }
-          });
+          };
           
-          const retryResponse = await Promise.race([retryLlmRequest, timeoutPromise]);
+          const retryResponse = await callGeminiWithRetry(
+            retryModel,
+            retryRequest,
+            'context_mirror_generation_retry'
+          );
           attempt2.endTime = new Date().toISOString();
           attempt2.duration = new Date().getTime() - new Date(attempt2.startTime).getTime();
           
@@ -469,8 +554,25 @@ Focus on specific contextual combinations rather than generic advice. Ensure str
     if (!attempt1.endTime) {
       attempt1.endTime = new Date().toISOString();
       attempt1.duration = new Date().getTime() - new Date(attempt1.startTime).getTime();
-      attempt1.failureReason = error instanceof Error && error.message.includes('timeout') ? 'timeout' : 'api_error';
+      const isTimeout = error instanceof Error && error.message.includes('timeout');
+      attempt1.failureReason = isTimeout ? 'timeout' : 'api_error';
       attempts.push(attempt1);
+      
+      logger.error(
+        'Context Mirror generation attempt 1 failed',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          additionalContext: {
+            operation: 'context_mirror_attempt1_failed',
+            generationId,
+            incidentId,
+            attemptNumber: 1,
+            duration: attempt1.duration,
+            failureReason: attempt1.failureReason,
+            isTimeout
+          }
+        }
+      );
     }
     console.warn(`[CONTEXT_MIRROR] ${generationId} - Attempt 1: API error:`, error);
   }
@@ -479,23 +581,62 @@ Focus on specific contextual combinations rather than generic advice. Ensure str
   const totalDuration = new Date().getTime() - startTime.getTime();
   console.log(`[CONTEXT_MIRROR] ${generationId} - FALLBACK: Using template after ${totalDuration}ms`);
   
-  const fallback = getContextTemplate(profile);
-  return {
-    headline: fallback.headline,
-    insight: fallback.insight,
-    actions: fallback.actions,
-    watchouts: fallback.watchouts,
-    scenarios: fallback.scenarios,
-    disclaimer: fallback.disclaimer,
-    debug: {
-      source: 'fallback' as const,
-      attempts,
-      finalSource: 'template' as const,
-      templateUsed: 'context-template', // This would be the template identifier
+  logger.warn('Context Mirror falling back to template', {
+    additionalContext: {
+      operation: 'context_mirror_fallback_template',
+      generationId,
+      incidentId,
       totalDuration,
-      generatedAt: new Date().toISOString()
+      attemptCount: attempts.length,
+      failureReasons: attempts.map(a => a.failureReason).filter(Boolean)
     }
-  };
+  });
+  
+  try {
+    const fallback = getContextTemplate(profile);
+    
+    logger.info('Context Mirror template fallback successful', {
+      additionalContext: {
+        operation: 'context_mirror_template_success',
+        generationId,
+        incidentId,
+        totalDuration
+      }
+    });
+    
+    return {
+      headline: fallback.headline,
+      insight: fallback.insight,
+      actions: fallback.actions,
+      watchouts: fallback.watchouts,
+      scenarios: fallback.scenarios,
+      disclaimer: fallback.disclaimer,
+      debug: {
+        source: 'fallback' as const,
+        attempts,
+        finalSource: 'template' as const,
+        templateUsed: 'context-template', // This would be the template identifier
+        totalDuration,
+        generatedAt: new Date().toISOString()
+      }
+    };
+  } catch (templateError) {
+    logger.error(
+      'Context Mirror template fallback failed',
+      templateError instanceof Error ? templateError : new Error(String(templateError)),
+      {
+        additionalContext: {
+          operation: 'context_mirror_template_failed',
+          generationId,
+          incidentId,
+          totalDuration
+        }
+      }
+    );
+    
+    // Last resort - throw error with incident ID
+    throw new Error(`Context Mirror generation completely failed. Incident ID: ${incidentId}`);
+  }
 }
 
 export function generateRuleBasedFallback(profile: ContextProfile): ContextMirror {

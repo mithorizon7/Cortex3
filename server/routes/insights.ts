@@ -9,6 +9,7 @@ import { requireAuthMiddleware, contextMirrorRateLimitMiddleware } from "../midd
 import { generateIncidentId, createUserError, sanitizeErrorForUser } from "../utils/incident";
 import { USER_ERROR_MESSAGES, HTTP_STATUS } from "../constants";
 import { logger } from "../logger";
+import { withDatabaseErrorHandling } from "../utils/database-errors";
 
 const router = Router();
 
@@ -63,14 +64,24 @@ router.post("/context-mirror",
       }
 
       // 3. Fetch assessment from database with ownership verification
-      const assessment = await db
-        .select()
-        .from(assessments)
-        .where(and(
-          eq(assessments.id, assessmentId),
-          eq(assessments.userId, userId) // Ownership verification
-        ))
-        .limit(1);
+      const assessment = await withDatabaseErrorHandling(
+        'fetchAssessmentForContextMirror',
+        async () => {
+          return await db
+            .select()
+            .from(assessments)
+            .where(and(
+              eq(assessments.id, assessmentId),
+              eq(assessments.userId, userId) // Ownership verification
+            ))
+            .limit(1);
+        },
+        { 
+          functionArgs: { assessmentId, userId },
+          requestId: req.requestId,
+          userId 
+        }
+      );
 
       if (!assessment.length) {
         logger.warn('Assessment not found or access denied', {
@@ -205,16 +216,26 @@ router.post("/context-mirror",
       };
       
       try {
-        await db
-          .update(assessments)
-          .set({ 
-            contextMirror: legacyMirror as any,
-            contextMirrorUpdatedAt: now
-          })
-          .where(and(
-            eq(assessments.id, assessmentId),
-            eq(assessments.userId, userId) // Ownership verification on update
-          ));
+        await withDatabaseErrorHandling(
+          'storeContextMirrorInDatabase',
+          async () => {
+            return await db
+              .update(assessments)
+              .set({ 
+                contextMirror: legacyMirror as any,
+                contextMirrorUpdatedAt: now
+              })
+              .where(and(
+                eq(assessments.id, assessmentId),
+                eq(assessments.userId, userId) // Ownership verification on update
+              ));
+          },
+          {
+            functionArgs: { assessmentId, userId },
+            requestId: req.requestId,
+            userId
+          }
+        );
           
         logger.info('Context Mirror saved to database', {
           additionalContext: {
@@ -270,14 +291,24 @@ router.post("/context-mirror",
         const validationResult = contextMirrorRequestSchema.safeParse(req.body);
         if (validationResult.success) {
           const { assessmentId } = validationResult.data;
-          const assessment = await db
-            .select()
-            .from(assessments)
-            .where(and(
-              eq(assessments.id, assessmentId),
-              eq(assessments.userId, userId) // Ownership verification
-            ))
-            .limit(1);
+          const assessment = await withDatabaseErrorHandling(
+            'fetchAssessmentForFallback',
+            async () => {
+              return await db
+                .select()
+                .from(assessments)
+                .where(and(
+                  eq(assessments.id, assessmentId),
+                  eq(assessments.userId, userId) // Ownership verification
+                ))
+                .limit(1);
+            },
+            {
+              functionArgs: { assessmentId, userId },
+              requestId: req.requestId,
+              userId
+            }
+          );
             
           if (assessment.length && assessment[0].contextProfile) {
             const fallbackMirror = generateRuleBasedFallback(assessment[0].contextProfile as any);

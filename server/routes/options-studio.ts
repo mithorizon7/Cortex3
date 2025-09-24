@@ -4,6 +4,7 @@ import { generateIncidentId, createUserError, sanitizeErrorForUser } from '../ut
 import { USER_ERROR_MESSAGES, HTTP_STATUS } from '../constants';
 import { logger } from '../logger';
 import { optionsStudioSessionSchema, type OptionsStudioSession } from '@shared/schema';
+import { withDatabaseErrorHandling } from '../utils/database-errors';
 
 const router = Router();
 
@@ -24,7 +25,10 @@ router.get('/:assessmentId', async (req: Request, res: Response) => {
     });
     
     // First verify assessment ownership before allowing Options Studio access
-    const assessment = await storage.getAssessment(assessmentId, req.userId);
+    const assessment = await withDatabaseErrorHandling(
+      'get_assessment_for_options_studio',
+      () => storage.getAssessment(assessmentId, req.userId)
+    );
     
     if (!assessment) {
       logger.warn('Assessment not found or access denied for Options Studio session', {
@@ -41,7 +45,10 @@ router.get('/:assessmentId', async (req: Request, res: Response) => {
     }
     
     // Now that we've verified ownership, get the Options Studio session
-    const session = await storage.getOptionsStudioSession(assessmentId, req.userId);
+    const session = await withDatabaseErrorHandling(
+      'get_options_studio_session',
+      () => storage.getOptionsStudioSession(assessmentId, req.userId)
+    );
     
     if (!session) {
       logger.debug('No Options Studio session found for authorized assessment', {
@@ -126,7 +133,10 @@ router.put('/:assessmentId', async (req: Request, res: Response) => {
     const sessionData = validationResult.data;
     
     // Check if assessment exists and user owns it
-    const assessment = await storage.getAssessment(assessmentId, req.userId);
+    const assessment = await withDatabaseErrorHandling(
+      'get_assessment_for_options_studio_update',
+      () => storage.getAssessment(assessmentId, req.userId)
+    );
     
     if (!assessment) {
       logger.warn('Assessment not found or access denied for Options Studio session', {
@@ -142,10 +152,13 @@ router.put('/:assessmentId', async (req: Request, res: Response) => {
         .json(createUserError(USER_ERROR_MESSAGES.NOT_FOUND, incidentId, HTTP_STATUS.NOT_FOUND));
     }
     
-    const updatedAssessment = await storage.createOrUpdateOptionsStudioSession(
-      assessmentId, 
-      sessionData,
-      req.userId
+    const updatedAssessment = await withDatabaseErrorHandling(
+      'create_or_update_options_studio_session',
+      () => storage.createOrUpdateOptionsStudioSession(
+        assessmentId, 
+        sessionData,
+        req.userId
+      )
     );
     
     if (!updatedAssessment) {
@@ -210,7 +223,10 @@ router.patch('/:assessmentId', async (req: Request, res: Response) => {
     });
     
     // First verify assessment ownership before allowing Options Studio access
-    const assessment = await storage.getAssessment(assessmentId, req.userId);
+    const assessment = await withDatabaseErrorHandling(
+      'get_assessment_for_options_studio_patch',
+      () => storage.getAssessment(assessmentId, req.userId)
+    );
     
     if (!assessment) {
       logger.warn('Assessment not found or access denied for Options Studio session patch', {
@@ -227,7 +243,10 @@ router.patch('/:assessmentId', async (req: Request, res: Response) => {
     }
     
     // Now that we've verified ownership, get the existing session
-    const existingSession = await storage.getOptionsStudioSession(assessmentId, req.userId);
+    const existingSession = await withDatabaseErrorHandling(
+      'get_existing_options_studio_session',
+      () => storage.getOptionsStudioSession(assessmentId, req.userId)
+    );
     
     if (!existingSession) {
       // If no existing session, initialize with empty structure (only for authorized assessments)
@@ -259,10 +278,13 @@ router.patch('/:assessmentId', async (req: Request, res: Response) => {
           .json(createUserError(USER_ERROR_MESSAGES.VALIDATION_ERROR, incidentId, HTTP_STATUS.BAD_REQUEST));
       }
       
-      const updatedAssessment = await storage.createOrUpdateOptionsStudioSession(
-        assessmentId, 
-        validationResult.data,
-        req.userId
+      const updatedAssessment = await withDatabaseErrorHandling(
+        'update_options_studio_session_partial',
+        () => storage.createOrUpdateOptionsStudioSession(
+          assessmentId, 
+          validationResult.data,
+          req.userId
+        )
       );
       
       if (!updatedAssessment) {
@@ -292,10 +314,13 @@ router.patch('/:assessmentId', async (req: Request, res: Response) => {
         .json(createUserError(USER_ERROR_MESSAGES.VALIDATION_ERROR, incidentId, HTTP_STATUS.BAD_REQUEST));
     }
     
-    const updatedAssessment = await storage.createOrUpdateOptionsStudioSession(
-      assessmentId, 
-      validationResult.data,
-      req.userId
+    const updatedAssessment = await withDatabaseErrorHandling(
+      'update_options_studio_session_full',
+      () => storage.createOrUpdateOptionsStudioSession(
+        assessmentId, 
+        validationResult.data,
+        req.userId
+      )
     );
     
     if (!updatedAssessment) {

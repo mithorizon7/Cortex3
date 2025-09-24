@@ -8,8 +8,20 @@ import { eq, and } from "drizzle-orm";
 let _db: any = null;
 async function getDb() {
   if (!_db) {
-    const { db } = await import("./db");
-    _db = db;
+    try {
+      const { db } = await import("./db");
+      _db = db;
+      logger.debug('Database connection initialized successfully');
+    } catch (error) {
+      logger.error(
+        'Failed to initialize database connection',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          additionalContext: { operation: 'database_initialization' }
+        }
+      );
+      throw error;
+    }
   }
   return _db;
 }
