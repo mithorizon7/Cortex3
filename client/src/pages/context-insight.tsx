@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useContextMirror } from "@/hooks/useContextMirror";
 import { useToast } from "@/hooks/use-toast";
-import type { Assessment, ContextProfile, ContextMirror } from "../../../shared/schema";
+import type { Assessment, ContextProfile, ContextMirror, ContextMirrorWithDiagnostics } from "../../../shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -36,8 +36,8 @@ interface NarrativeReflection {
   disclaimer: string;
 }
 
-// Component for Context Mirror display (handles both legacy and 2.0 formats)
-function ContextMirrorCard({ mirror }: { mirror: ContextMirror }) {
+// Component for Context Mirror display (handles both legacy and 2.0 formats)  
+function ContextMirrorCard({ mirror, onRetry }: { mirror: ContextMirror | ContextMirrorWithDiagnostics, onRetry?: () => void }) {
   if (!mirror.insight && !mirror.headline) {
     // No content available
     return (
@@ -50,8 +50,13 @@ function ContextMirrorCard({ mirror }: { mirror: ContextMirror }) {
     );
   }
 
-  // Use the enhanced ContextReflection component that handles both formats
-  return <ContextReflection mirror={mirror} />;
+  // Check if this has diagnostic information
+  if ('debug' in mirror) {
+    return <ContextReflection mirrorWithDiagnostics={mirror as ContextMirrorWithDiagnostics} onRetry={onRetry} />;
+  }
+
+  // Use the enhanced ContextReflection component for regular mirror format
+  return <ContextReflection mirror={mirror as ContextMirror} />;
 }
 
 function ErrorFallback({ error }: { error: Error }) {
@@ -329,7 +334,7 @@ function ContextInsightPageContent() {
                 <ErrorFallback error={error} />
               ) : data ? (
                 <div className="animate-in fade-in duration-300">
-                  <ContextMirrorCard mirror={data} />
+                  <ContextMirrorCard mirror={data} onRetry={() => generateMirror(id!)} />
                 </div>
               ) : null}
             </CardContent>
