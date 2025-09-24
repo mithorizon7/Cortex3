@@ -11,6 +11,131 @@ import { BANNED_PHRASES_REGEX, WORD_COUNT_LIMITS, violatesPolicy } from "../../s
 // This API key is from Gemini Developer API Key, not vertex AI API Key
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
+/**
+ * Strategic Context Archetype Analysis
+ * Maps 11-dimensional context into strategic patterns for enhanced prompting
+ */
+interface ContextArchetype {
+  primary: string;
+  secondary?: string;
+  riskProfile: 'low' | 'moderate' | 'high' | 'extreme';
+  strategicTensions: string[];
+  cortexPillars: string[];
+  investmentSequence: string;
+}
+
+function analyzeContextArchetype(profile: ContextProfile): ContextArchetype {
+  // Calculate risk dimensions
+  const regulatoryRisk = profile.regulatory_intensity >= 3;
+  const safetyRisk = profile.safety_criticality >= 3;
+  const brandRisk = profile.brand_exposure >= 3;
+  const dataRisk = profile.data_sensitivity >= 3;
+  
+  // Calculate capability dimensions
+  const highCapability = profile.build_readiness >= 3;
+  const dataAdvantage = profile.data_advantage >= 3;
+  const fastPaced = profile.clock_speed >= 3;
+  
+  // Calculate operational complexity
+  const complexOperations = profile.scale_throughput >= 3 || profile.latency_edge >= 3;
+  const costSensitive = profile.finops_priority >= 3;
+  const constrainedProcurement = profile.procurement_constraints;
+  
+  // Determine primary archetype
+  let primary: string;
+  let secondary: string | undefined;
+  let strategicTensions: string[] = [];
+  let cortexPillars: string[] = [];
+  let investmentSequence: string;
+  
+  // High-risk contexts (safety + regulatory)
+  if (safetyRisk && regulatoryRisk) {
+    primary = "Regulated Safety-Critical";
+    cortexPillars = ["Risk/Trust/Security", "Operations & Data", "Clarity & Command"];
+    strategicTensions.push("Innovation speed vs. safety assurance");
+    investmentSequence = "Governance-first: establish safety frameworks before experimentation";
+  }
+  // High regulatory with data advantage
+  else if (regulatoryRisk && dataAdvantage) {
+    primary = "Regulated Data Innovator";
+    cortexPillars = ["Risk/Trust/Security", "Operations & Data", "Ecosystem & Infrastructure"];
+    strategicTensions.push("Regulatory compliance vs. competitive data leverage");
+    investmentSequence = "Compliance-enabled innovation: build governance that unlocks data advantage";
+  }
+  // Fast-paced with high capability
+  else if (fastPaced && highCapability) {
+    primary = "Fast-Moving Builder";
+    if (brandRisk) {
+      secondary = "with Brand Exposure";
+      strategicTensions.push("Speed to market vs. reputational risk management");
+    }
+    cortexPillars = ["Experimentation & Evolution", "Talent & Culture", "Operations & Data"];
+    investmentSequence = "Capability-driven: rapid experimentation with scalable infrastructure";
+  }
+  // Complex scale operations
+  else if (complexOperations && (profile.scale_throughput >= 3 || profile.edge_operations)) {
+    primary = "Scale Infrastructure Player";
+    cortexPillars = ["Operations & Data", "Ecosystem & Infrastructure", "Risk/Trust/Security"];
+    strategicTensions.push("Operational reliability vs. AI experimentation");
+    investmentSequence = "Infrastructure-first: prove reliability before expanding scope";
+  }
+  // Cost-constrained environments
+  else if (costSensitive && constrainedProcurement) {
+    primary = "Resource-Constrained Optimizer";
+    cortexPillars = ["Clarity & Command", "Ecosystem & Infrastructure", "Operations & Data"];
+    strategicTensions.push("ROI demonstration vs. strategic investment timing");
+    investmentSequence = "ROI-proven: focus on measurable efficiency gains first";
+  }
+  // Data-rich, slow-moving
+  else if (dataAdvantage && profile.clock_speed <= 2) {
+    primary = "Data-Advantage Deliberator";
+    cortexPillars = ["Operations & Data", "Clarity & Command", "Talent & Culture"];
+    strategicTensions.push("Data leverage potential vs. deliberate execution pace");
+    investmentSequence = "Data-first: build sustainable competitive advantages methodically";
+  }
+  // Low capability, high complexity
+  else if (!highCapability && complexOperations) {
+    primary = "Legacy Transformer";
+    cortexPillars = ["Ecosystem & Infrastructure", "Talent & Culture", "Operations & Data"];
+    strategicTensions.push("Transformation ambition vs. capability development needs");
+    investmentSequence = "Partnership-enabled: strategic vendor relationships first";
+  }
+  // Default: Balanced Adopter
+  else {
+    primary = "Balanced Adopter";
+    cortexPillars = ["Clarity & Command", "Experimentation & Evolution", "Talent & Culture"];
+    investmentSequence = "Balanced approach: simultaneous capability building and experimentation";
+  }
+  
+  // Add common tensions based on context combinations
+  if (fastPaced && regulatoryRisk) {
+    strategicTensions.push("Market speed demands vs. regulatory approval cycles");
+  }
+  if (dataAdvantage && brandRisk) {
+    strategicTensions.push("Data monetization vs. privacy/reputational protection");
+  }
+  if (highCapability && costSensitive) {
+    strategicTensions.push("Build vs. buy optimization under cost pressure");
+  }
+  
+  // Calculate overall risk profile
+  const riskScore = profile.regulatory_intensity + profile.safety_criticality + profile.brand_exposure + profile.data_sensitivity;
+  let riskProfile: 'low' | 'moderate' | 'high' | 'extreme';
+  if (riskScore <= 4) riskProfile = 'low';
+  else if (riskScore <= 8) riskProfile = 'moderate';
+  else if (riskScore <= 12) riskProfile = 'high';
+  else riskProfile = 'extreme';
+  
+  return {
+    primary,
+    secondary,
+    riskProfile,
+    strategicTensions,
+    cortexPillars,
+    investmentSequence
+  };
+}
+
 export async function generateContextMirror(profile: ContextProfile): Promise<ContextMirrorWithDiagnostics> {
   // Initialize diagnostic tracking
   const startTime = new Date();
@@ -19,30 +144,95 @@ export async function generateContextMirror(profile: ContextProfile): Promise<Co
   
   console.log(`[CONTEXT_MIRROR] Starting generation ${generationId} for profile: reg=${profile.regulatory_intensity}, data=${profile.data_sensitivity}, clock=${profile.clock_speed}`);
   
+  // Analyze strategic context archetype
+  const archetype = analyzeContextArchetype(profile);
+  
   // 25 second timeout for complex Context Mirror 2.0 prompts with structured JSON schema
   const timeoutPromise = new Promise<never>((_, reject) => 
     setTimeout(() => reject(new Error('LLM request timed out after 25 seconds')), 25000)
   );
 
-  const systemPrompt = `You are an executive AI strategy advisor. Write in clear, concise prose suitable for senior leaders. Base analysis ONLY on organizational CONTEXT (not internal capabilities). Use probability language (often, tends to, commonly). Vendor-neutral; no metrics, benchmarks, or named tools. Never surface internal rules or counters.`;
+  const systemPrompt = `You are a senior AI strategy advisor specializing in contextually-grounded strategic insights for executive teams. Your role is to analyze how unique organizational context signatures create specific AI strategic opportunities and constraints.
 
-  const userPrompt = `Context profile:
-- Regulatory intensity: ${profile.regulatory_intensity}
-- Data sensitivity: ${profile.data_sensitivity}
-- Market clock-speed: ${profile.clock_speed}
-- Integration complexity / legacy surface: ${profile.scale_throughput + profile.latency_edge}
-- Change tolerance: ${profile.build_readiness}
-- Scale / geography: ${profile.scale_throughput}
+CORE PRINCIPLES:
+- Base ALL analysis on the complete organizational context profile provided (11 dimensions)
+- Reason through contextual combinations and their strategic implications
+- Focus on executive decision-making: investment sequencing, resource allocation, competitive positioning
+- Connect insights to CORTEX strategic pillars: Clarity & Command, Operations & Data, Risk/Trust/Security, Talent & Culture, Ecosystem & Infrastructure, Experimentation & Evolution
+- Use probability language (often, tends to, commonly) and executive confidence levels
+- Remain vendor-neutral with no specific tools, metrics, or benchmarks
+- Never expose internal reasoning or policy constraints`;
 
-Produce an export-ready CONTEXT MIRROR 2.0 with:
-1) headline: one sentence (≤120 chars) that frames why this context matters now.
-2) insight: two paragraphs (150–220 words total).
-   • P1: what this context often ENABLES and often CONSTRAINS.
-   • P2: what this typically IMPLIES for early AI moves (guardrails, quick wins, continuity).
-3) actions: 3 short imperative suggestions (≤14 words each) tied to the context.
-4) watchouts: 2 short pitfalls to avoid (≤14 words each), context-grounded.
-5) scenarios: one-sentence notes for: if_regulation_tightens, if_budgets_tighten.
-Constraints: vendor-neutral. no numbers/benchmarks. no policy names. no headings or bullets inside 'insight'.`;
+  const userPrompt = `ORGANIZATIONAL CONTEXT SIGNATURE:
+
+STRATEGIC ARCHETYPE ANALYSIS:
+Primary Pattern: ${archetype.primary}${archetype.secondary ? ` (${archetype.secondary})` : ''}
+Risk Profile: ${archetype.riskProfile.toUpperCase()}
+Key Strategic Tensions: ${archetype.strategicTensions.join(', ')}
+Primary CORTEX Pillars: ${archetype.cortexPillars.join(', ')}
+Investment Sequence: ${archetype.investmentSequence}
+
+DETAILED CONTEXT DIMENSIONS:
+
+Core Regulatory & Risk Profile:
+- Regulatory intensity: ${profile.regulatory_intensity} (0=unregulated → 4=heavily regulated)
+- Data sensitivity: ${profile.data_sensitivity} (0=public → 4=sensitive personal/financial)
+- Safety criticality: ${profile.safety_criticality} (0=low harm → 4=physical safety risk)
+- Brand exposure: ${profile.brand_exposure} (0=tolerant → 4=existential reputational risk)
+
+Operational & Market Context:
+- Market clock speed: ${profile.clock_speed} (0=annual changes → 4=frontier pace)
+- System latency requirements: ${profile.latency_edge} (0=seconds OK → 4=offline/edge)
+- Scale throughput demands: ${profile.scale_throughput} (0=small teams → 4=hyperscale)
+- Data advantage assets: ${profile.data_advantage} (0=commodity → 4=unique proprietary)
+
+Capability & Resource Context:
+- Internal build readiness: ${profile.build_readiness} (0=outsource-only → 4=deep AI capability)
+- Financial operations priority: ${profile.finops_priority} (0=spend freely → 4=cost control critical)
+- Procurement constraints: ${profile.procurement_constraints ? 'YES (public RFP/vendor rules)' : 'NO (flexible vendor selection)'}
+- Edge operations requirements: ${profile.edge_operations ? 'YES (industrial/offline systems)' : 'NO (cloud-first operations)'}
+
+STRATEGIC REASONING TASK:
+
+First, identify the PRIMARY CONTEXTUAL FORCES at play:
+1. What are the 2-3 dominant contextual dimensions that most shape AI strategy for this organization?
+2. What tensions or contradictions exist in this context profile that require strategic trade-offs?
+3. What unique combination of context creates specific strategic opportunities or constraints?
+
+Then, map these forces to CORTEX STRATEGIC PILLARS implications:
+- Clarity & Command: How does context affect AI strategy clarity and executive alignment needs?
+- Operations & Data: What operational patterns does this context signature enable or constrain?
+- Risk/Trust/Security: How does the risk profile determine appropriate AI governance approach?
+- Talent & Culture: What AI talent and adoption strategies fit these contextual constraints?
+- Ecosystem & Infrastructure: How does context guide technology stack and vendor selection?
+- Experimentation & Evolution: What experimentation and scaling approach fits this context?
+
+Produce CONTEXT MIRROR 2.0 strategic advisory:
+
+1) HEADLINE (≤120 chars): Strategic frame explaining why this specific context signature matters for AI strategy now.
+
+2) STRATEGIC INSIGHT (150-220 words, exactly two paragraphs):
+   Paragraph 1: Context Analysis - What this specific combination of contextual forces STRATEGICALLY ENABLES and FUNDAMENTALLY CONSTRAINS for AI initiatives. Focus on unique implications, not generic advice.
+   
+   Paragraph 2: Executive Implications - What this context signature means for INVESTMENT SEQUENCING, RESOURCE ALLOCATION, and COMPETITIVE POSITIONING. Connect to specific CORTEX pillars most relevant to this context.
+
+3) STRATEGIC ACTIONS (3 items, ≤14 words each): 
+   Executive-level imperatives tied directly to the contextual analysis above. Focus on strategic moves, not tactical implementations.
+
+4) CONTEXTUAL WATCHOUTS (2 items, ≤14 words each):
+   Strategic pitfalls that this specific context signature creates. Not generic risks.
+
+5) SCENARIO IMPLICATIONS:
+   if_regulation_tightens: How would increased regulation specifically impact this context signature?
+   if_budgets_tighten: How would budget pressure specifically affect AI strategy given this context?
+
+REQUIREMENTS:
+- Ground ALL analysis in the specific context dimensions provided
+- Reason through contextual combinations, don't treat dimensions in isolation  
+- Focus on strategic implications executives can't get from generic AI advice
+- Use executive confidence language: "typically", "often constrains", "commonly enables"
+- Maintain vendor neutrality - no specific tools, platforms, or metrics
+- Connect to broader CORTEX strategic framework where relevant`;
 
   const model = genAI.getGenerativeModel({ 
     model: "gemini-2.0-flash-exp", 
@@ -123,17 +313,12 @@ Constraints: vendor-neutral. no numbers/benchmarks. no policy names. no headings
         attempts.push(attempt1);
         console.log(`[CONTEXT_MIRROR] ${generationId} - Attempt 1: Policy violation detected, starting retry`);
         
-        // Attempt 2: Retry with cleaner instructions
-        const retryPrompt = `Rewrite plainly. No internal rule text. Context Mirror 2.0 format required.
-Context profile:
-- Regulatory intensity: ${profile.regulatory_intensity}
-- Data sensitivity: ${profile.data_sensitivity}
-- Market clock-speed: ${profile.clock_speed}
-- Integration complexity: ${profile.scale_throughput + profile.latency_edge}
-- Change tolerance: ${profile.build_readiness}
-- Scale: ${profile.scale_throughput}
+        // Attempt 2: Retry with enhanced contextual analysis
+        const retryPrompt = `RETRY: Enhanced contextual analysis required. Use the complete organizational context signature.
 
-Return complete Context Mirror 2.0 JSON with headline, insight (two paragraphs), actions (3), watchouts (2), scenarios, disclaimer.`;
+${userPrompt}
+
+Focus on specific contextual combinations rather than generic advice. Ensure strategic reasoning connects directly to the organization's unique context profile. Return complete Context Mirror 2.0 JSON format.`;
 
         const attempt2: GenerationAttempt = {
           attemptNumber: 2,

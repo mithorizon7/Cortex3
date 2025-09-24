@@ -4,6 +4,7 @@ import {
   auth, 
   onAuthStateChange, 
   signInWithGoogle, 
+  signInWithEmail as firebaseSignInWithEmail,
   signOut as firebaseSignOut,
   handleRedirectResult,
   getAuthErrorMessage,
@@ -15,6 +16,7 @@ interface AuthContextType {
   loading: boolean;
   error: string | null;
   signIn: (usePopup?: boolean) => Promise<void>;
+  signInWithEmail: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   clearError: () => void;
 }
@@ -59,6 +61,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setError(getAuthErrorMessage(error));
         setLoading(false); // Only set loading to false on error
       }
+    }
+  }, []);
+
+  const signInWithEmail = useCallback(async (email: string, password: string) => {
+    if (!isFirebaseConfigured()) {
+      setError('Authentication is not available. Please configure Firebase.');
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      setError(null);
+      await firebaseSignInWithEmail(email, password);
+      // Don't set loading to false here - let the auth state listener handle it
+    } catch (error: any) {
+      console.error('Email sign-in error:', error);
+      setError(getAuthErrorMessage(error));
+      setLoading(false); // Only set loading to false on error
     }
   }, []);
 
@@ -117,6 +137,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     loading,
     error,
     signIn,
+    signInWithEmail,
     signOut,
     clearError,
   };

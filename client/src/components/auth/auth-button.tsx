@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/auth-context';
 import { LogIn, LogOut, User, Loader2 } from 'lucide-react';
@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
+import { EnhancedSignInModal } from './enhanced-sign-in-modal';
 
 interface AuthButtonProps {
   variant?: 'default' | 'outline' | 'ghost';
@@ -24,21 +25,13 @@ export const AuthButton: React.FC<AuthButtonProps> = ({
   size = 'default',
   className = ''
 }) => {
-  const { user, loading, error, signIn, signOut, clearError } = useAuth();
+  const { user, loading, error, signOut, clearError } = useAuth();
   const { toast } = useToast();
+  const [showSignInModal, setShowSignInModal] = useState(false);
 
-  const handleSignIn = async () => {
-    try {
-      clearError();
-      await signIn(true); // Use popup by default
-      toast({
-        title: 'Welcome!',
-        description: 'You have been successfully signed in.',
-      });
-    } catch (error) {
-      // Error is already handled in the auth context
-      console.error('Sign-in button error:', error);
-    }
+  const handleSignInClick = () => {
+    clearError();
+    setShowSignInModal(true);
   };
 
   const handleSignOut = async () => {
@@ -134,15 +127,22 @@ export const AuthButton: React.FC<AuthButtonProps> = ({
 
   // User is not signed in - show sign in button
   return (
-    <Button 
-      variant={variant} 
-      size={size} 
-      onClick={handleSignIn}
-      className={className}
-      data-testid="auth-button-sign-in"
-    >
-      <LogIn className="h-4 w-4 mr-2" />
-      Sign In
-    </Button>
+    <>
+      <Button 
+        variant={variant} 
+        size={size} 
+        onClick={handleSignInClick}
+        className={className}
+        data-testid="auth-button-sign-in"
+      >
+        <LogIn className="h-4 w-4 mr-2" />
+        Sign In
+      </Button>
+      
+      <EnhancedSignInModal 
+        open={showSignInModal}
+        onOpenChange={setShowSignInModal}
+      />
+    </>
   );
 };

@@ -10,7 +10,10 @@ import {
   onAuthStateChanged,
   User,
   AuthError,
-  UserCredential
+  UserCredential,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile
 } from 'firebase/auth';
 
 // Firebase configuration with environment variables
@@ -102,6 +105,40 @@ export const signInWithGoogle = async (usePopup = true): Promise<UserCredential>
   }
 };
 
+// Email/Password Authentication for testing
+export const signInWithEmail = async (email: string, password: string): Promise<UserCredential> => {
+  if (!firebaseAuth) {
+    throw new Error('Firebase authentication not configured');
+  }
+  
+  try {
+    return await signInWithEmailAndPassword(firebaseAuth, email, password);
+  } catch (error) {
+    console.error('Email sign-in failed:', error);
+    throw error;
+  }
+};
+
+export const createTestAccount = async (email: string, password: string, displayName?: string): Promise<UserCredential> => {
+  if (!firebaseAuth) {
+    throw new Error('Firebase authentication not configured');
+  }
+  
+  try {
+    const userCredential = await createUserWithEmailAndPassword(firebaseAuth, email, password);
+    
+    // Update profile with display name if provided
+    if (displayName && userCredential.user) {
+      await updateProfile(userCredential.user, { displayName });
+    }
+    
+    return userCredential;
+  } catch (error) {
+    console.error('Account creation failed:', error);
+    throw error;
+  }
+};
+
 export const handleRedirectResult = async (): Promise<UserCredential | null> => {
   if (!firebaseAuth) {
     return null;
@@ -155,6 +192,19 @@ export const getAuthErrorMessage = (error: AuthError): string => {
       return 'This account has been disabled. Please contact support.';
     case 'auth/operation-not-allowed':
       return 'Google sign-in is not enabled. Please contact support.';
+    // Email/Password specific errors
+    case 'auth/user-not-found':
+      return 'No account found with this email address.';
+    case 'auth/wrong-password':
+      return 'Incorrect password. Please try again.';
+    case 'auth/invalid-email':
+      return 'Please enter a valid email address.';
+    case 'auth/weak-password':
+      return 'Password should be at least 6 characters long.';
+    case 'auth/email-already-in-use':
+      return 'An account with this email already exists.';
+    case 'auth/invalid-credential':
+      return 'Invalid email or password. Please try again.';
     default:
       return 'Sign-in failed. Please try again.';
   }
