@@ -22,6 +22,7 @@ import { exportJSONResults } from "@/lib/pdf-generator";
 import { getNetworkError } from "@/lib/queryClient";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { generateEnhancedExecutiveInsights, getBusinessImpactSummary } from "@/lib/insight-engine";
 import { 
   AlertTriangle, 
   CheckCircle, 
@@ -78,89 +79,6 @@ function getGateThreshold(gateId: string, dimension: string): string | null {
   return thresholds[gateId]?.[dimension] || null;
 }
 
-// Define types for insights and priorities
-interface ExecutiveInsight {
-  type: string;
-  title: string;
-  description: string;
-  action: string;
-}
-
-// Generate executive insights based on assessment data
-function generateExecutiveInsights(pillarScores: PillarScores, gates: any[], contextProfile: any) {
-  const insights: ExecutiveInsight[] = [];
-  const priorities: string[] = [];
-  
-  // Guard against null/undefined pillarScores
-  if (!pillarScores) {
-    return { insights, priorities };
-  }
-  
-  // Analyze overall maturity
-  const avgScore = Object.values(pillarScores).reduce((sum, score) => sum + score, 0) / 6;
-  const weakestPillars = Object.entries(pillarScores)
-    .sort(([,a], [,b]) => a - b)
-    .slice(0, 2);
-  
-  if (avgScore < 1.5) {
-    insights.push({
-      type: 'foundation',
-      title: 'Focus on Strategic Maturity Foundations',
-      description: 'Your organization needs foundational AI capabilities before scaling initiatives.',
-      action: 'Invest in data infrastructure, governance, and talent development first.'
-    });
-    priorities.push('Build foundational AI capabilities');
-  } else if (avgScore < 2.5) {
-    insights.push({
-      type: 'development',
-      title: 'Develop Systematic AI Practices',
-      description: 'You have basic capabilities but need systematic approaches to scale effectively.',
-      action: 'Establish AI governance, standardize processes, and expand pilot programs.'
-    });
-    priorities.push('Systematize AI development practices');
-  } else {
-    insights.push({
-      type: 'optimization',
-      title: 'Optimize and Scale AI Operations',
-      description: 'Strong AI foundations enable focus on optimization and strategic scaling.',
-      action: 'Enhance monitoring, expand use cases, and drive competitive advantage through AI.'
-    });
-    priorities.push('Optimize existing AI systems for scale');
-  }
-
-  // Critical gates insight
-  if (gates.length > 0) {
-    insights.push({
-      type: 'compliance',
-      title: `${gates.length} Critical Requirements Must Be Addressed`,
-      description: 'Your risk profile requires specific measures before AI scaling.',
-      action: `Prioritize ${gates[0]?.title} and related compliance requirements.`
-    });
-    priorities.push('Address critical compliance requirements');
-  } else {
-    insights.push({
-      type: 'acceleration',
-      title: 'Clear to Accelerate AI Adoption',
-      description: 'No major compliance blockers - focus on capability development.',
-      action: 'Accelerate AI initiatives while maintaining good governance practices.'
-    });
-  }
-
-  // Weak areas insight  
-  const [weakestName] = weakestPillars;
-  const pillarName = CORTEX_PILLARS[weakestName[0].toUpperCase() as keyof typeof CORTEX_PILLARS]?.name;
-  if (pillarName) {
-    insights.push({
-      type: 'improvement',
-      title: `Strengthen ${pillarName}`,
-      description: 'This is your biggest opportunity for AI capability improvement.',
-      action: `Invest in ${pillarName.toLowerCase()} capabilities to unlock broader AI value.`
-    });
-    priorities.push(`Strengthen ${pillarName}`);
-  }
-
-  return { insights: insights.slice(0, 3), priorities: priorities.slice(0, 3) };
-}
 
 export default function ResultsPage() {
   const { toast } = useToast();
@@ -320,7 +238,7 @@ export default function ResultsPage() {
   // Check if assessment data is incomplete
   const isDataIncomplete = !assessment.pillarScores || Object.values(assessment.pillarScores).every(score => score === 0);
   
-  const { insights, priorities } = generateExecutiveInsights(pillarScores, triggeredGates, contextProfile);
+  const { insights, priorities } = generateEnhancedExecutiveInsights(pillarScores, triggeredGates, contextProfile);
   
   // Guard against null/undefined pillarScores
   const avgScore = pillarScores ? Object.values(pillarScores).reduce((sum, score) => sum + score, 0) / 6 : 0;
@@ -408,9 +326,17 @@ export default function ResultsPage() {
                 <div className="space-y-4">
                   {insights.map((insight, index) => (
                     <div key={index} className="border-l-4 border-primary pl-4">
-                      <h4 className="font-semibold text-lg mb-2 font-ui">{insight.title}</h4>
-                      <p className="text-muted-foreground mb-2 font-ui">{insight.description}</p>
-                      <p className="text-sm font-medium text-primary font-ui">{insight.action}</p>
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-semibold text-lg font-ui">{insight.title}</h4>
+                        <Badge variant={insight.urgency === 'high' ? 'destructive' : insight.urgency === 'medium' ? 'secondary' : 'outline'} className="text-xs">
+                          {insight.urgency} priority
+                        </Badge>
+                      </div>
+                      <p className="text-muted-foreground mb-2 font-ui">{insight.description} <span className="italic text-sm">{insight.reasoning}</span></p>
+                      <p className="text-sm font-medium text-primary mb-2 font-ui">{insight.action}</p>
+                      <p className="text-xs text-muted-foreground bg-muted/30 p-2 rounded font-ui">
+                        <strong>Business Impact:</strong> {insight.businessImpact}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -429,7 +355,14 @@ export default function ResultsPage() {
                         {index + 1}
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium font-ui">{priority}</p>
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="font-medium font-ui">{priority.title}</p>
+                          <Badge variant={priority.urgency === 'high' ? 'destructive' : priority.urgency === 'medium' ? 'secondary' : 'outline'} className="text-xs">
+                            {priority.timeframe}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground font-ui">{priority.description}</p>
+                        <p className="text-xs text-muted-foreground mt-1 font-ui">{priority.reasoning}</p>
                       </div>
                     </div>
                   ))}
