@@ -83,7 +83,6 @@ function getGateThreshold(gateId: string, dimension: string): string | null {
 export default function ResultsPage() {
   const { toast } = useToast();
   const { id: assessmentId } = useParams();
-  const [remindQuarterly, setRemindQuarterly] = useState(false);
   const [showDetailedView, setShowDetailedView] = useState(false);
   const [valueOverlay, setValueOverlay] = useState<ValueOverlay | null>(null);
   
@@ -593,18 +592,7 @@ export default function ResultsPage() {
         {/* Actions */}
         <Card>
           <CardContent className="p-6">
-            <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 sm:space-x-4">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="quarterly-reminder"
-                  checked={remindQuarterly}
-                  onCheckedChange={(checked) => setRemindQuarterly(checked === true)}
-                />
-                <label htmlFor="quarterly-reminder" className="text-sm">
-                  Email me quarterly strategic maturity updates
-                </label>
-              </div>
-              
+            <div className="flex justify-center sm:justify-end">
               <div className="flex space-x-3">
                 <Button variant="outline" onClick={handleExportJSON}>
                   Export Data
