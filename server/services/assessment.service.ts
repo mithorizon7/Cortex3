@@ -54,6 +54,23 @@ export class AssessmentService {
   }
   
   /**
+   * Get all assessments for a user
+   */
+  async getUserAssessments(userId: string): Promise<Assessment[]> {
+    const assessments = await storage.getUserAssessments(userId);
+    
+    logger.debug('User assessments retrieved', {
+      additionalContext: { 
+        userId, 
+        assessmentCount: assessments.length,
+        operation: 'get_user_assessments'
+      }
+    });
+    
+    return assessments;
+  }
+  
+  /**
    * Update assessment data (e.g., value overlay, pulse responses, pillar scores)
    */
   async updateAssessmentData(assessmentId: string, data: any): Promise<Assessment | null> {

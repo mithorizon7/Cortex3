@@ -86,7 +86,7 @@ export default function Dashboard() {
   const { user } = useAuth();
   
   const { data: assessments, isLoading, error } = useQuery({
-    queryKey: ['user-assessments', user?.uid],
+    queryKey: ['/api/assessments', user?.uid],
     enabled: !!user?.uid,
   });
 
