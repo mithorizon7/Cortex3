@@ -307,13 +307,19 @@ export default function ResultsPage() {
     );
   }
 
-  const pillarScores = assessment.pillarScores as PillarScores;
-  const confidenceGaps = assessment.confidenceGaps as ConfidenceGaps;
+  // Create default pillar scores if missing to ensure consistent UI
+  const defaultPillarScores: PillarScores = { C: 0, O: 0, R: 0, T: 0, E: 0, X: 0 };
+  const pillarScores = assessment.pillarScores as PillarScores || defaultPillarScores;
+  const confidenceGaps = assessment.confidenceGaps as ConfidenceGaps || { C: 0, O: 0, R: 0, T: 0, E: 0, X: 0 };
   const triggeredGates = (assessment.triggeredGates as any[]) || [];
   const contextProfile = assessment.contextProfile as ContextProfile;
   const priorityMoves = (assessment as any).priorityMoves?.moves || [];
   const contextGuidance = (assessment as any).contextGuidance || {};
   const contentTags = (assessment as any).contentTags || [];
+  
+  // Check if assessment data is incomplete
+  const isDataIncomplete = !assessment.pillarScores || Object.values(assessment.pillarScores).every(score => score === 0);
+  
   const { insights, priorities } = generateExecutiveInsights(pillarScores, triggeredGates, contextProfile);
   
   // Guard against null/undefined pillarScores
@@ -331,6 +337,33 @@ export default function ResultsPage() {
         <ProgressHeader currentStep={4} />
       
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Data Incomplete Warning */}
+        {isDataIncomplete && (
+          <Card className="mb-8 border-warning/50 bg-warning/10">
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-3">
+                <AlertTriangle className="h-6 w-6 text-warning flex-shrink-0" />
+                <div>
+                  <h3 className="font-semibold text-warning-foreground mb-2">Assessment Data Incomplete</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Your assessment appears to be missing pulse check data. The results shown below use default values. 
+                    Please complete your pulse check assessment to see accurate results.
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-3"
+                    onClick={() => window.location.href = "/pulse-check"}
+                    data-testid="button-complete-pulse-check"
+                  >
+                    Complete Pulse Check
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Executive Header */}
         <div className="text-center mb-8 sm:mb-12">
           <div className="flex items-center justify-center space-x-2 mb-4">

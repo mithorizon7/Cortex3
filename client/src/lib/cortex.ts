@@ -209,6 +209,11 @@ export function getStageColor(stage: number): string {
 }
 
 export function getPriorityLevel(pillarScores: PillarScores, contextProfile: ContextProfile): { pillar: string; priority: number }[] {
+  // Guard against null/undefined pillarScores
+  if (!pillarScores) {
+    return [];
+  }
+  
   const priorities = Object.entries(pillarScores)
     .map(([pillar, score]) => ({ pillar, score }))
     .sort((a, b) => a.score - b.score); // Lowest scores first (highest priority)
