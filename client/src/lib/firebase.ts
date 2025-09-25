@@ -75,6 +75,15 @@ export const googleProvider = new GoogleAuthProvider();
 if (validateConfig()) {
   googleProvider.addScope('email');
   googleProvider.addScope('profile');
+  
+  // Production-specific OAuth configuration
+  if (import.meta.env.PROD) {
+    // Set custom parameters for production environment
+    googleProvider.setCustomParameters({
+      'prompt': 'consent',
+      'access_type': 'online'
+    });
+  }
 }
 
 // Initialize Firebase when module loads
@@ -92,15 +101,30 @@ export const signInWithGoogle = async (usePopup = true): Promise<UserCredential>
   }
   
   try {
-    if (usePopup) {
+    // For production, prefer redirect flow over popup to avoid blocking issues
+    const shouldUseRedirect = import.meta.env.PROD && window.location.hostname !== 'localhost';
+    
+    if (usePopup && !shouldUseRedirect) {
       return await signInWithPopup(firebaseAuth, googleProvider);
     } else {
+      // Use redirect flow for production
       await signInWithRedirect(firebaseAuth, googleProvider);
       // For redirect, we need to handle the result elsewhere
       throw new Error('Redirect initiated - result will be available after redirect');
     }
   } catch (error) {
     console.error('Google sign-in failed:', error);
+    
+    // Enhanced error logging for production debugging
+    if (import.meta.env.PROD) {
+      console.error('Production OAuth Error Details:', {
+        code: (error as any)?.code,
+        message: (error as any)?.message,
+        domain: window.location.hostname,
+        url: window.location.href
+      });
+    }
+    
     throw error;
   }
 };
