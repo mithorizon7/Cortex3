@@ -46,8 +46,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const signIn = useCallback(async (usePopup = true) => {
     if (!isFirebaseConfigured()) {
-      setError('Authentication is not available. Please configure Firebase.');
-      return;
+      const errorMsg = 'Authentication is not available. Please configure Firebase.';
+      setError(errorMsg);
+      throw new Error(errorMsg);
     }
     
     try {
@@ -60,14 +61,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (error.message !== 'Redirect initiated - result will be available after redirect') {
         setError(getAuthErrorMessage(error));
         setLoading(false); // Only set loading to false on error
+        throw error; // Re-throw so UI components can handle the error
       }
     }
   }, []);
 
   const signInWithEmail = useCallback(async (email: string, password: string) => {
     if (!isFirebaseConfigured()) {
-      setError('Authentication is not available. Please configure Firebase.');
-      return;
+      const errorMsg = 'Authentication is not available. Please configure Firebase.';
+      setError(errorMsg);
+      throw new Error(errorMsg);
     }
     
     try {
@@ -79,6 +82,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.error('Email sign-in error:', error);
       setError(getAuthErrorMessage(error));
       setLoading(false); // Only set loading to false on error
+      throw error; // Re-throw so UI components can handle the error
     }
   }, []);
 

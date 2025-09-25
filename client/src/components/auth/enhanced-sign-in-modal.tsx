@@ -30,6 +30,7 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
     try {
       clearError();
       await signIn(true);
+      // Success toast and modal closing will be handled by auth state change
       toast({
         title: 'Welcome!',
         description: 'You have been successfully signed in.',
@@ -37,6 +38,11 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
       onOpenChange(false);
     } catch (error) {
       console.error('Google sign-in error:', error);
+      toast({
+        title: 'Sign In Failed',
+        description: 'There was a problem signing you in with Google. Please try again.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -58,6 +64,11 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
       setPassword('');
     } catch (error) {
       console.error('Email sign-in error:', error);
+      toast({
+        title: 'Sign In Failed',
+        description: 'Invalid email or password. Please check your credentials and try again.',
+        variant: 'destructive',
+      });
     } finally {
       setEmailLoading(false);
     }
