@@ -5,6 +5,7 @@ import {
   onAuthStateChange, 
   signInWithGoogle, 
   signInWithEmail as firebaseSignInWithEmail,
+  signUpWithEmail as firebaseSignUpWithEmail,
   signOut as firebaseSignOut,
   handleRedirectResult,
   getAuthErrorMessage,
@@ -17,6 +18,7 @@ interface AuthContextType {
   error: string | null;
   signIn: (usePopup?: boolean) => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
+  signUpWithEmail: (email: string, password: string, displayName?: string) => Promise<void>;
   signOut: () => Promise<void>;
   clearError: () => void;
 }
@@ -86,6 +88,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, []);
 
+  const signUpWithEmail = useCallback(async (email: string, password: string, displayName?: string) => {
+    if (!isFirebaseConfigured()) {
+      const errorMsg = 'Authentication is not available. Please configure Firebase.';
+      setError(errorMsg);
+      throw new Error(errorMsg);
+    }
+    
+    try {
+      setLoading(true);
+      setError(null);
+      await firebaseSignUpWithEmail(email, password, displayName);
+      // Don't set loading to false here - let the auth state listener handle it
+    } catch (error: any) {
+      console.error('Email sign-up error:', error);
+      setError(getAuthErrorMessage(error));
+      setLoading(false); // Only set loading to false on error
+      throw error; // Re-throw so UI components can handle the error
+    }
+  }, []);
+
   const signOut = useCallback(async () => {
     if (!isFirebaseConfigured()) {
       setError('Authentication is not available. Please configure Firebase.');
@@ -142,6 +164,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     error,
     signIn,
     signInWithEmail,
+    signUpWithEmail,
     signOut,
     clearError,
   };

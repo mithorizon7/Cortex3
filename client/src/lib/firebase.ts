@@ -188,6 +188,27 @@ export const createTestAccount = async (email: string, password: string, display
   }
 };
 
+// General sign-up function for new user accounts
+export const signUpWithEmail = async (email: string, password: string, displayName?: string): Promise<UserCredential> => {
+  if (!firebaseAuth) {
+    throw new Error('Firebase authentication not configured');
+  }
+  
+  try {
+    const userCredential = await createUserWithEmailAndPassword(firebaseAuth, email, password);
+    
+    // Update profile with display name if provided
+    if (displayName && userCredential.user) {
+      await updateProfile(userCredential.user, { displayName });
+    }
+    
+    return userCredential;
+  } catch (error) {
+    console.error('Account creation failed:', error);
+    throw error;
+  }
+};
+
 export const handleRedirectResult = async (): Promise<UserCredential | null> => {
   if (!firebaseAuth) {
     return null;

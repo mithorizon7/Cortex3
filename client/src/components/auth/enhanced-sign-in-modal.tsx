@@ -19,12 +19,14 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
   open, 
   onOpenChange 
 }) => {
-  const { signIn, signInWithEmail, loading, error, clearError } = useAuth();
+  const { signIn, signInWithEmail, signUpWithEmail, loading, error, clearError } = useAuth();
   const { toast } = useToast();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [emailLoading, setEmailLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
 
   const handleGoogleSignIn = async () => {
     try {
@@ -46,29 +48,49 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
     }
   };
 
-  const handleEmailSignIn = async (e: React.FormEvent) => {
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) return;
 
     try {
       setEmailLoading(true);
       clearError();
-      await signInWithEmail(email, password);
-      toast({
-        title: 'Welcome!',
-        description: 'You have been successfully signed in.',
-      });
+      
+      if (isSignUp) {
+        await signUpWithEmail(email, password, displayName || undefined);
+        toast({
+          title: 'Account Created!',
+          description: 'Your account has been created successfully and you are now signed in.',
+        });
+      } else {
+        await signInWithEmail(email, password);
+        toast({
+          title: 'Welcome!',
+          description: 'You have been successfully signed in.',
+        });
+      }
+      
       onOpenChange(false);
       // Clear form
       setEmail('');
       setPassword('');
+      setDisplayName('');
     } catch (error) {
-      console.error('Email sign-in error:', error);
-      toast({
-        title: 'Sign In Failed',
-        description: 'Invalid email or password. Please check your credentials and try again.',
-        variant: 'destructive',
-      });
+      console.error('Email authentication error:', error);
+      
+      if (isSignUp) {
+        toast({
+          title: 'Sign Up Failed',
+          description: 'Unable to create your account. Please check your information and try again.',
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Sign In Failed',
+          description: 'Invalid email or password. Please check your credentials and try again.',
+          variant: 'destructive',
+        });
+      }
     } finally {
       setEmailLoading(false);
     }
@@ -83,9 +105,9 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[400px]" data-testid="enhanced-sign-in-modal">
         <DialogHeader>
-          <DialogTitle>Sign in to CORTEX</DialogTitle>
+          <DialogTitle>Access CORTEX</DialogTitle>
           <DialogDescription>
-            Choose your preferred sign-in method to access your AI readiness assessments.
+            Sign in to your existing account or create a new one to access your AI readiness assessments.
           </DialogDescription>
         </DialogHeader>
 
@@ -131,25 +153,47 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
           <TabsContent value="email" className="mt-6">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Sign in with Email</CardTitle>
+                <CardTitle className="text-lg">
+                  {isSignUp ? 'Create Account' : 'Sign in with Email'}
+                </CardTitle>
                 <CardDescription>
-                  Use your email and password to sign in
+                  {isSignUp 
+                    ? 'Create a new account with your email and password'
+                    : 'Use your email and password to sign in'
+                  }
                 </CardDescription>
-                <div className="flex items-center gap-2 pt-2">
-                  <Badge variant="secondary" className="text-xs">Test Account Available</Badge>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={fillTestCredentials}
-                    className="h-auto p-0 text-xs hover:bg-transparent text-primary underline-offset-4 hover:underline"
-                    data-testid="fill-test-credentials-button"
-                  >
-                    Use Test Account
-                  </Button>
-                </div>
+                {!isSignUp && (
+                  <div className="flex items-center gap-2 pt-2">
+                    <Badge variant="secondary" className="text-xs">Test Account Available</Badge>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={fillTestCredentials}
+                      className="h-auto p-0 text-xs hover:bg-transparent text-primary underline-offset-4 hover:underline"
+                      data-testid="fill-test-credentials-button"
+                    >
+                      Use Test Account
+                    </Button>
+                  </div>
+                )}
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <form onSubmit={handleEmailSubmit} className="space-y-4">
+                  {isSignUp && (
+                    <div className="space-y-2">
+                      <Label htmlFor="displayName">Name (Optional)</Label>
+                      <Input
+                        id="displayName"
+                        type="text"
+                        placeholder="Enter your full name"
+                        value={displayName}
+                        onChange={(e) => setDisplayName(e.target.value)}
+                        disabled={emailLoading}
+                        data-testid="display-name-input"
+                      />
+                    </div>
+                  )}
+                  
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
                     <Input
@@ -159,6 +203,7 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="Enter your email address"
                       required
+                      disabled={emailLoading}
                       data-testid="email-input"
                     />
                   </div>
@@ -170,28 +215,48 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Enter your password"
+                      placeholder={isSignUp ? "Create a password (min 6 characters)" : "Enter your password"}
+                      minLength={isSignUp ? 6 : undefined}
                       required
+                      disabled={emailLoading}
                       data-testid="password-input"
                     />
                   </div>
                   
                   <Button 
-                    type="button"
-                    onClick={(e) => handleEmailSignIn(e)}
-                    disabled={emailLoading || !email || !password}
+                    type="submit"
+                    disabled={emailLoading || !email || !password || (isSignUp && password.length < 6)}
                     className="w-full"
                     size="lg"
-                    data-testid="email-signin-button"
+                    data-testid={isSignUp ? "email-signup-button" : "email-signin-button"}
                   >
                     {emailLoading ? (
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
                     ) : (
                       <LogIn className="h-4 w-4 mr-2" />
                     )}
-                    {emailLoading ? 'Signing in...' : 'Sign in'}
+                    {emailLoading 
+                      ? (isSignUp ? 'Creating Account...' : 'Signing in...') 
+                      : (isSignUp ? 'Create Account' : 'Sign in')
+                    }
                   </Button>
-                </div>
+                  
+                  <div className="text-center">
+                    <Button 
+                      type="button"
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => setIsSignUp(!isSignUp)}
+                      className="text-sm hover:bg-transparent text-primary underline-offset-4 hover:underline"
+                      data-testid="toggle-signup-mode"
+                    >
+                      {isSignUp 
+                        ? 'Already have an account? Sign in instead' 
+                        : 'Need an account? Create one here'
+                      }
+                    </Button>
+                  </div>
+                </form>
                 
                 {error && (
                   <p className="text-sm text-destructive text-center mt-4" data-testid="auth-error">
