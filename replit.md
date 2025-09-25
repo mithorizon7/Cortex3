@@ -75,6 +75,13 @@ The project follows a structured documentation update process:
 
 ## Recent Changes
 
+### User Dashboard Implementation (September 2025)
+- **Assessment History Dashboard**: Created a comprehensive user dashboard at `/dashboard` route displaying assessment history with completed and in-progress sections
+- **Enhanced User Experience**: Users can now easily access previous assessments, view completion status, and see overall maturity scores without bookmarking URLs
+- **Secure API Integration**: Added authenticated `/api/assessments` endpoint with proper Firebase token validation to fetch user-specific assessment data
+- **Storage Layer Enhancement**: Extended both DatabaseStorage and MemStorage with `getUserAssessments()` method for consistent data retrieval across storage implementations
+- **Navigation Improvements**: Dashboard includes direct links to resume in-progress assessments and view completed results, significantly improving returning user experience
+
 ### Documentation & Agent Guidelines (September 2025)
 - **AGENTS.md Creation**: Added comprehensive agent guidelines covering coding standards, workflows, testing, security, and project-specific requirements
 - **Documentation Process**: Established structured maintenance process for keeping documentation current with system changes

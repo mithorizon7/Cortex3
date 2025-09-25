@@ -28,6 +28,7 @@ async function getDb() {
 
 export interface IStorage {
   getAssessment(id: string, userId?: string): Promise<Assessment | null>;
+  getUserAssessments(userId: string): Promise<Assessment[]>;
   createAssessment(assessment: InsertAssessment): Promise<Assessment>;
   updateAssessment(id: string, updates: Partial<InsertAssessment>, userId?: string): Promise<Assessment | null>;
   
@@ -88,6 +89,30 @@ export class DatabaseStorage implements IStorage {
         return assessment;
       },
       { functionArgs: { insertAssessment } }
+    );
+  }
+
+  async getUserAssessments(userId: string): Promise<Assessment[]> {
+    return withDatabaseErrorHandling(
+      'getUserAssessments',
+      async () => {
+        const db = await getDb();
+        const userAssessments = await db
+          .select()
+          .from(assessments)
+          .where(eq(assessments.userId, userId))
+          .orderBy(assessments.createdAt);
+        
+        logger.debug('User assessments retrieved successfully', {
+          additionalContext: { 
+            userId, 
+            assessmentCount: userAssessments.length 
+          }
+        });
+        
+        return userAssessments;
+      },
+      { functionArgs: { userId } }
     );
   }
 
@@ -255,6 +280,27 @@ export class MemStorage implements IStorage {
         }
       },
       { functionArgs: { id, userId } }
+    );
+  }
+
+  async getUserAssessments(userId: string): Promise<Assessment[]> {
+    return withErrorHandling(
+      'getUserAssessments',
+      async () => {
+        const userAssessments = Array.from(this.assessments.values())
+          .filter(assessment => assessment.userId === userId)
+          .sort((a, b) => new Date(a.createdAt!).getTime() - new Date(b.createdAt!).getTime());
+        
+        logger.debug('User assessments retrieved successfully', {
+          additionalContext: { 
+            userId, 
+            assessmentCount: userAssessments.length 
+          }
+        });
+        
+        return userAssessments;
+      },
+      { functionArgs: { userId } }
     );
   }
 

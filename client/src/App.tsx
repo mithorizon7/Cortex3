@@ -16,11 +16,19 @@ import DomainIntro from "@/pages/domain-intro";
 import DomainQuestions from "@/pages/domain-questions";
 import Results from "@/pages/results";
 import OptionsStudio from "@/pages/options-studio";
+import Dashboard from "@/pages/dashboard";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/dashboard">
+        {() => (
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        )}
+      </Route>
       <Route path="/context-profile">
         {() => (
           <ProtectedRoute>

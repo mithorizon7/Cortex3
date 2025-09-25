@@ -9,6 +9,47 @@ import { withDatabaseErrorHandling } from '../utils/database-errors';
 const router = Router();
 
 /**
+ * Get all assessments for the authenticated user
+ */
+router.get('/', requireAuthMiddleware, async (req: Request, res: Response) => {
+  const incidentId = generateIncidentId();
+  
+  try {
+    logger.info('Fetching user assessments', {
+      additionalContext: {
+        operation: 'get_user_assessments',
+        incidentId,
+        userId: req.userId
+      }
+    });
+    
+    const assessments = await withDatabaseErrorHandling(
+      'get_user_assessments_database',
+      () => assessmentService.getUserAssessments(req.userId!)
+    );
+    
+    res.json(assessments);
+    
+  } catch (error) {
+    logger.error(
+      'Failed to fetch user assessments',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        additionalContext: {
+          operation: 'get_user_assessments_error',
+          requestId: req.requestId,
+          userId: req.userId,
+          incidentId
+        }
+      }
+    );
+    
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(createUserError(USER_ERROR_MESSAGES.SERVER_ERROR, incidentId, HTTP_STATUS.INTERNAL_SERVER_ERROR));
+  }
+});
+
+/**
  * Create new assessment
  */
 router.post('/', requireAuthMiddleware, async (req: Request, res: Response) => {
