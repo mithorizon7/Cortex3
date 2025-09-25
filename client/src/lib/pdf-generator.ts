@@ -164,54 +164,142 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
     const doc = new jsPDF('p', 'mm', 'a4');
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 20;
+    const margin = 24; // Increased margin for premium feel
     const contentWidth = pageWidth - (margin * 2);
-    const columnWidth = (contentWidth - 10) / 2; // 10mm gap between columns
-    const maxY = pageHeight - 30; // Reserve space for footer
+    const columnWidth = (contentWidth - 12) / 2; // 12mm gap between columns
+    const maxY = pageHeight - 32; // Reserve more space for footer
     
     let currentY = margin;
     
-    // Brand Colors (RGB tuples for jsPDF compatibility)
-    const primaryColor = hexToRgb('#1a1a1a');
-    const accentColor = hexToRgb('#6366f1');
-    const lightGray = hexToRgb('#f3f4f6');
-    const whiteColor = [255, 255, 255] as [number, number, number];
+    // Premium Color Palette (RGB tuples for jsPDF compatibility)
+    const colors = {
+      primary: [15, 23, 42],      // slate-900 - Deep charcoal
+      secondary: [51, 65, 85],    // slate-700 - Medium gray
+      accent: [99, 102, 241],     // indigo-500 - Professional blue
+      accentLight: [129, 140, 248], // indigo-400 - Lighter blue
+      surface: [248, 250, 252],   // slate-50 - Light surface
+      border: [226, 232, 240],    // slate-200 - Subtle border
+      success: [34, 197, 94],     // emerald-500 - Success green
+      warning: [245, 158, 11],    // amber-500 - Warning amber
+      error: [239, 68, 68],       // red-500 - Error red
+      white: [255, 255, 255],     // Pure white
+      gradient: {
+        start: [79, 70, 229],     // indigo-600
+        end: [139, 92, 246]       // violet-500
+      }
+    } as const;
     
-    // Enhanced page overflow check with column awareness
-    const checkPageOverflow = (additionalHeight: number, isColumnContent = false): boolean => {
-      const safeMaxY = isColumnContent ? maxY - 20 : maxY; // More conservative for column content
-      if (currentY + additionalHeight > safeMaxY) {
+    // Premium Typography System
+    const typography = {
+      hero: { size: 28, weight: 'bold' as const },
+      h1: { size: 20, weight: 'bold' as const },
+      h2: { size: 16, weight: 'bold' as const },
+      h3: { size: 14, weight: 'bold' as const },
+      body: { size: 11, weight: 'normal' as const },
+      small: { size: 9, weight: 'normal' as const },
+      caption: { size: 8, weight: 'normal' as const }
+    } as const;
+    
+    // Helper functions for premium design
+    const addPageFooter = () => {
+      const footerY = pageHeight - 15;
+      doc.setFontSize(typography.caption.size);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...colors.secondary);
+      doc.text('CORTEX™ Executive AI Readiness Assessment', margin, footerY);
+      doc.text(`Page ${doc.getCurrentPageInfo().pageNumber}`, pageWidth - margin - 15, footerY);
+    };
+    
+    const drawGradientHeader = () => {
+      // Simulate gradient with multiple rectangles
+      const headerHeight = 60;
+      const steps = 20;
+      const stepHeight = headerHeight / steps;
+      
+      for (let i = 0; i < steps; i++) {
+        const ratio = i / (steps - 1);
+        const r = Math.round(colors.gradient.start[0] + (colors.gradient.end[0] - colors.gradient.start[0]) * ratio);
+        const g = Math.round(colors.gradient.start[1] + (colors.gradient.end[1] - colors.gradient.start[1]) * ratio);
+        const b = Math.round(colors.gradient.start[2] + (colors.gradient.end[2] - colors.gradient.start[2]) * ratio);
+        
+        doc.setFillColor(r, g, b);
+        doc.rect(0, i * stepHeight, pageWidth, stepHeight, 'F');
+      }
+    };
+    
+    const drawCard = (x: number, y: number, width: number, height: number, elevated = false) => {
+      if (elevated) {
+        // Draw shadow
+        doc.setFillColor(0, 0, 0, 0.1);
+        doc.rect(x + 1, y + 1, width, height, 'F');
+      }
+      
+      // Draw card background
+      doc.setFillColor(...colors.white);
+      doc.setDrawColor(...colors.border);
+      doc.setLineWidth(0.5);
+      doc.rect(x, y, width, height, 'FD');
+    };
+    
+    const addDivider = (y: number, style: 'full' | 'accent' = 'full') => {
+      if (style === 'accent') {
+        doc.setDrawColor(...colors.accent);
+        doc.setLineWidth(1);
+        doc.line(margin, y, margin + 60, y);
+      } else {
+        doc.setDrawColor(...colors.border);
+        doc.setLineWidth(0.3);
+        doc.line(margin, y, pageWidth - margin, y);
+      }
+    };
+    
+    // Enhanced page overflow check
+    const checkPageOverflow = (additionalHeight: number): boolean => {
+      if (currentY + additionalHeight > maxY) {
         doc.addPage();
+        addPageFooter();
         currentY = margin;
         return true;
       }
       return false;
     };
     
-    // Header with CORTEX™ branding
-    doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-    doc.rect(0, 0, pageWidth, 35, 'F');
+    // Premium Header Design
+    drawGradientHeader();
     
-    doc.setTextColor(whiteColor[0], whiteColor[1], whiteColor[2]);
-    doc.setFontSize(24);
-    doc.setFont('helvetica', 'bold');
-    doc.text('CORTEX™', margin, 20);
+    // Header content with enhanced typography
+    doc.setTextColor(...colors.white);
+    doc.setFontSize(typography.hero.size);
+    doc.setFont('helvetica', typography.hero.weight);
+    doc.text('CORTEX™', margin, 25);
     
-    doc.setFontSize(12);
+    doc.setFontSize(typography.body.size);
     doc.setFont('helvetica', 'normal');
-    doc.text('AI Strategic Maturity Situation Assessment', margin, 28);
+    doc.text('EXECUTIVE AI READINESS ASSESSMENT', margin, 35);
     
-    // Date and Assessment ID
-    doc.setFontSize(10);
-    const dateText = `Generated: ${new Date().toLocaleDateString()}`;
-    const idText = `Assessment ID: ${data.assessmentId}`;
-    doc.text(dateText, pageWidth - margin - doc.getTextWidth(dateText), 20);
-    doc.text(idText, pageWidth - margin - doc.getTextWidth(idText), 28);
+    // Header metadata with better positioning
+    doc.setFontSize(typography.small.size);
+    const currentDate = new Date().toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    const dateText = `Generated: ${currentDate}`;
+    const idText = `ID: ${data.assessmentId.slice(0, 8).toUpperCase()}`;
     
-    currentY = 50;
+    doc.text(dateText, pageWidth - margin - doc.getTextWidth(dateText), 25);
+    doc.text(idText, pageWidth - margin - doc.getTextWidth(idText), 33);
+    
+    // Premium status indicator
+    doc.setFillColor(...colors.success);
+    doc.circle(pageWidth - margin - 8, 45, 2, 'F');
+    doc.setFontSize(typography.caption.size);
+    doc.text('COMPLETED', pageWidth - margin - 25, 47);
+    
+    currentY = 75;
     
     // Reset text color for content
-    doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+    doc.setTextColor(...colors.primary);
     
     // Determine which format to use
     const mirror = data.mirror;
@@ -219,85 +307,82 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
     const insight = mirror?.insight || data.insight || '';
     const disclaimer = mirror?.disclaimer || data.disclaimer || '';
     
-    // Situation Assessment 2.0: Executive Headline (if available)
+    // Premium Executive Summary Section
     if (mirror?.headline) {
-      checkPageOverflow(15);
-      doc.setFontSize(18);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
-      doc.text('EXECUTIVE BRIEF', margin, currentY);
-      currentY += 8;
+      checkPageOverflow(50);
       
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-      const headlineLines = safeSplitTextToSize(doc, mirror.headline, contentWidth);
+      // Executive Summary Card
+      drawCard(margin, currentY, contentWidth, 45, true);
+      
+      // Section header with accent line
+      addDivider(currentY + 8, 'accent');
+      doc.setFontSize(typography.h2.size);
+      doc.setFont('helvetica', typography.h2.weight);
+      doc.setTextColor(...colors.accent);
+      doc.text('EXECUTIVE SUMMARY', margin + 8, currentY + 15);
+      
+      // Headline content
+      doc.setFontSize(typography.h3.size);
+      doc.setFont('helvetica', typography.h3.weight);
+      doc.setTextColor(...colors.primary);
+      const headlineLines = safeSplitTextToSize(doc, mirror.headline, contentWidth - 16);
+      let headlineY = currentY + 25;
       headlineLines.forEach((line: string) => {
-        checkPageOverflow(6);
-        doc.text(line, margin, currentY);
-        currentY += 6;
+        doc.text(line, margin + 8, headlineY);
+        headlineY += 5;
       });
-      currentY += 8;
+      
+      currentY += 55;
     }
 
-    // Main Content Section - Two Column Layout
+    // Premium Two-Column Layout with Enhanced Design
     const leftColumnX = margin;
-    const rightColumnX = margin + columnWidth + 10;
+    const rightColumnX = margin + columnWidth + 12;
     
     // Track Y positions for both columns
     let leftColumnY = currentY + 10;
     let rightColumnY = currentY + 10;
     
-    // Left Column: Context Insight
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
-    doc.text(isLegacyFormat ? 'CONTEXT REFLECTION' : 'STRATEGIC CONTEXT', leftColumnX, currentY);
+    // Premium Left Column: Strategic Context  
+    drawCard(leftColumnX, currentY, columnWidth, Math.max(150, leftColumnY - currentY + 20), false);
+    
+    doc.setFontSize(typography.h2.size);
+    doc.setFont('helvetica', typography.h2.weight);
+    doc.setTextColor(...colors.accent);
+    doc.text(isLegacyFormat ? 'CONTEXT REFLECTION' : 'STRATEGIC CONTEXT', leftColumnX + 8, currentY + 12);
     
     if (insight) {
       // Split insight into paragraphs
       const paragraphs = insight.split(/\n{2,}/).filter(p => p.trim().length > 0);
       
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.setFontSize(typography.body.size);
+      doc.setFont('helvetica', typography.body.weight);
+      doc.setTextColor(...colors.primary);
       
+      let contentY = currentY + 20;
       paragraphs.forEach((paragraph, index) => {
-        const lines = safeSplitTextToSize(doc, paragraph.trim(), columnWidth);
-        const requiredHeight = lines.length * 4;
+        const lines = safeSplitTextToSize(doc, paragraph.trim(), columnWidth - 16);
         
-        // Check if this paragraph will fit on current page
-        if (leftColumnY + requiredHeight > maxY - 20) {
-          doc.addPage();
-          leftColumnY = margin;
-          rightColumnY = margin;
-          
-          // Re-add column header after page break
-          doc.setFontSize(16);
-          doc.setFont('helvetica', 'bold');
-          doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
-          doc.text('STRATEGIC CONTEXT (continued)', leftColumnX, leftColumnY);
-          leftColumnY += 10;
-          
-          doc.setFontSize(10);
-          doc.setFont('helvetica', 'normal');
-          doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-        }
+        lines.forEach((line: string) => {
+          doc.text(line, leftColumnX + 8, contentY);
+          contentY += 5;
+        });
         
-        doc.text(lines, leftColumnX, leftColumnY);
-        leftColumnY += requiredHeight + (index < paragraphs.length - 1 ? 6 : 0);
+        if (index < paragraphs.length - 1) contentY += 6;
       });
       
-      leftColumnY += 8;
+      leftColumnY = contentY + 10;
     }
     
-    // Right Column: Context Profile
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
-    doc.text('ORGANIZATIONAL CONTEXT', rightColumnX, currentY);
+    // Premium Right Column: Organizational Context
+    drawCard(rightColumnX, currentY, columnWidth, Math.max(200, rightColumnY - currentY + 40), false);
     
-    doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+    doc.setFontSize(typography.h2.size);
+    doc.setFont('helvetica', typography.h2.weight);
+    doc.setTextColor(...colors.accent);
+    doc.text('ORGANIZATIONAL CONTEXT', rightColumnX + 8, currentY + 12);
+    
+    doc.setTextColor(...colors.primary);
     
     // Context Profile Sections
     const profileSections = [
