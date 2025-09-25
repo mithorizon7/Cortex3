@@ -1,0 +1,45 @@
+
+It looks like you're running into an auth/network-request-failed error on your deployed website, horizoncortex.replit.app , when trying to sign in. This is a common hurdle, especially with browser-based authentication flows like Google Sign-In.
+
+While "network request failed" sounds like a connectivity problem, in the context of Firebase Authentication, especially with OAuth redirect flows, it often points to a configuration mismatch related to your authentication domain . Modern browsers have strict security policies, like blocking third-party cookies or cross-origin requests, which can interfere with the authentication process if the authDomain isn't correctly set in your Firebase client-side configuration.
+
+Even though horizoncortex.replit.app is listed as an authorized domain in your Firebase project settings (which is great!), your client-side Firebase SDK configuration (the firebaseConfig object you use in your JavaScript/TypeScript code) might not be explicitly telling Firebase to use this domain for authentication. If authDomain isn't set, Firebase often defaults to your-project-id.firebaseapp.com , which is a different domain than horizoncortex.replit.app . When the authentication redirect tries to complete, it sees a domain mismatch, which browsers interpret as a security risk, leading to the generic auth/network-request-failed error.
+
+The most likely solution is to explicitly configure the authDomain in your Firebase client-side initialization.
+
+Here's what you should check and update in your web app's code:
+
+Locate your Firebase initialization code. It will look something like this:
+
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  projectId: "YOUR_PROJECT_ID",
+  appId: "YOUR_APP_ID",
+  // ... other fields
+};
+firebase.initializeApp(firebaseConfig);
+Add or update the authDomain field within this firebaseConfig object to match your deployed domain. In your case, it should be horizoncortex.replit.app .
+
+Your firebaseConfig should look like this:
+
+const firebaseConfig = {
+  apiKey: "YOUR_VITE_FIREBASE_APIKEY", // Use your actual API Key here
+  authDomain: "horizoncortex.replit.app", // <--- This is the crucial line
+  projectId: "cortex3-790ee",
+  appId: "YOUR_VITE_FIREBASE_APPID", // Use your actual App ID here
+  // ... ensure any other relevant fields are present
+};
+firebase.initializeApp(firebaseConfig);
+Make sure to replace YOUR_VITE_FIREBASE_APIKEY and YOUR_VITE_FIREBASE_APPID with the actual values you are already using (which are correctly present according to your debug panel).
+
+By explicitly setting authDomain to horizoncortex.replit.app , you're telling Firebase that your app and its authentication process are operating on the same domain, which resolves the cross-origin security issues that often manifest as network errors.
+
+Once you make this change, redeploy your application to ensure the updated client-side configuration is live.
+
+Here are a few follow-up questions to delve deeper:
+
+Could you explain the different ways Firebase Authentication handles redirects versus pop-ups, and when one might be preferred over the other?
+
+What are some common causes for the auth/operation-not-allowed error, and how would I resolve them?
+
+Beyond authDomain , what other configuration fields in firebaseConfig are particularly important for production web applications?

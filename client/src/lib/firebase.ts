@@ -101,13 +101,11 @@ export const signInWithGoogle = async (usePopup = true): Promise<UserCredential>
   }
   
   try {
-    // For production, prefer redirect flow over popup to avoid blocking issues
-    const shouldUseRedirect = import.meta.env.PROD && window.location.hostname !== 'localhost';
-    
-    if (usePopup && !shouldUseRedirect) {
+    // Always use popup for better cross-browser compatibility
+    // Safari 16.1+ blocks redirects due to third-party cookie restrictions
+    if (usePopup) {
       return await signInWithPopup(firebaseAuth, googleProvider);
     } else {
-      // Use redirect flow for production
       await signInWithRedirect(firebaseAuth, googleProvider);
       // For redirect, we need to handle the result elsewhere
       throw new Error('Redirect initiated - result will be available after redirect');
