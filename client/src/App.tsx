@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/auth-context";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { AuthDebug } from "@/components/debug/auth-debug";
+import { Footer } from "@/components/footer";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import ContextProfile from "@/pages/context-profile";
@@ -110,19 +111,22 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
-          {/* Skip to main content for screen readers */}
-          <a 
-            href="#main-content" 
-            className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 z-50 bg-primary text-primary-foreground px-4 py-2 rounded-md"
-            data-testid="skip-to-main"
-          >
-            Skip to main content
-          </a>
-          <Toaster />
-          <main id="main-content" role="main">
-            <Router />
-          </main>
-          <AuthDebug />
+          <div className="flex flex-col min-h-screen">
+            {/* Skip to main content for screen readers */}
+            <a 
+              href="#main-content" 
+              className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 z-50 bg-primary text-primary-foreground px-4 py-2 rounded-md"
+              data-testid="skip-to-main"
+            >
+              Skip to main content
+            </a>
+            <Toaster />
+            <main id="main-content" role="main" className="flex-1">
+              <Router />
+            </main>
+            <Footer />
+            <AuthDebug />
+          </div>
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>
