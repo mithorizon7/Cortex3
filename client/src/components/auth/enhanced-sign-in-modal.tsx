@@ -138,7 +138,7 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
                 </div>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleEmailSignIn} className="space-y-4">
+                <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
                     <Input
@@ -166,7 +166,8 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
                   </div>
                   
                   <Button 
-                    type="submit"
+                    type="button"
+                    onClick={(e) => handleEmailSignIn(e)}
                     disabled={emailLoading || !email || !password}
                     className="w-full"
                     size="lg"
@@ -179,7 +180,7 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
                     )}
                     {emailLoading ? 'Signing in...' : 'Sign in'}
                   </Button>
-                </form>
+                </div>
                 
                 {error && (
                   <p className="text-sm text-destructive text-center mt-4" data-testid="auth-error">
