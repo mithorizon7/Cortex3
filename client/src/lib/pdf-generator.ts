@@ -343,23 +343,43 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
     let leftColumnY = currentY + 10;
     let rightColumnY = currentY + 10;
     
-    // Premium Left Column: Strategic Context  
-    drawCard(leftColumnX, currentY, columnWidth, Math.max(150, leftColumnY - currentY + 20), false);
+    // Premium Left Column: Strategic Context
+    // First calculate content height, then draw card
+    const leftColumnStartY = currentY;
+    let contentEndY = currentY + 20; // Start after header
     
+    if (insight) {
+      // Split insight into paragraphs and calculate total height needed
+      const paragraphs = insight.split(/\n{2,}/).filter(p => p.trim().length > 0);
+      
+      paragraphs.forEach((paragraph, index) => {
+        const lines = safeSplitTextToSize(doc, paragraph.trim(), columnWidth - 16);
+        contentEndY += lines.length * 5; // 5 units per line
+        if (index < paragraphs.length - 1) contentEndY += 6; // paragraph spacing
+      });
+    }
+    
+    // Calculate proper card height based on actual content
+    const leftColumnHeight = Math.max(150, contentEndY - leftColumnStartY + 10);
+    
+    // Now draw the card with correct height
+    drawCard(leftColumnX, leftColumnStartY, columnWidth, leftColumnHeight, false);
+    
+    // Add header
     doc.setFontSize(typography.h2.size);
     doc.setFont('helvetica', typography.h2.weight);
     doc.setTextColor(...colors.accent);
-    doc.text(isLegacyFormat ? 'CONTEXT REFLECTION' : 'STRATEGIC CONTEXT', leftColumnX + 8, currentY + 12);
+    doc.text(isLegacyFormat ? 'CONTEXT REFLECTION' : 'STRATEGIC CONTEXT', leftColumnX + 8, leftColumnStartY + 12);
     
     if (insight) {
-      // Split insight into paragraphs
+      // Now render the actual content
       const paragraphs = insight.split(/\n{2,}/).filter(p => p.trim().length > 0);
       
       doc.setFontSize(typography.body.size);
       doc.setFont('helvetica', typography.body.weight);
       doc.setTextColor(...colors.primary);
       
-      let contentY = currentY + 20;
+      let contentY = leftColumnStartY + 20;
       paragraphs.forEach((paragraph, index) => {
         const lines = safeSplitTextToSize(doc, paragraph.trim(), columnWidth - 16);
         
@@ -372,6 +392,8 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
       });
       
       leftColumnY = contentY + 10;
+    } else {
+      leftColumnY = leftColumnStartY + leftColumnHeight;
     }
     
     // Define profile sections first
