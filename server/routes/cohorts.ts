@@ -13,7 +13,7 @@ const router = Router();
 
 // Schema for joining a cohort
 const joinCohortSchema = z.object({
-  code: z.string().min(6).max(6, 'Cohort code must be exactly 6 characters'),
+  code: z.string().min(6).max(8, 'Cohort code must be 6-8 characters'),
 });
 
 /**
@@ -476,9 +476,9 @@ router.post('/validate-access-code', async (req: Request, res: Response) => {
     
     const { accessCode } = req.body;
     
-    if (!accessCode || typeof accessCode !== 'string' || accessCode.length !== 6) {
+    if (!accessCode || typeof accessCode !== 'string' || accessCode.length < 6 || accessCode.length > 8) {
       res.status(HTTP_STATUS.BAD_REQUEST)
-        .json(createUserError('Access code must be exactly 6 characters', incidentId, HTTP_STATUS.BAD_REQUEST));
+        .json(createUserError('Access code must be 6-8 characters', incidentId, HTTP_STATUS.BAD_REQUEST));
       return;
     }
     
@@ -623,12 +623,27 @@ router.post('/join', requireAuthMiddleware, async (req: Request, res: Response) 
     
     if (!user) {
       // Create user profile if it doesn't exist (first time joining a cohort)
-      // For now, use a placeholder email - in production this would come from Firebase token
+      // Extract email from Firebase token - if not available, require re-authentication
+      const userEmail = (req as any).userEmail;
+      if (!userEmail) {
+        logger.warn('User email not available during cohort join', {
+          additionalContext: {
+            operation: 'join_cohort_no_email',
+            userId: req.userId,
+            incidentId
+          }
+        });
+        
+        res.status(HTTP_STATUS.BAD_REQUEST)
+          .json(createUserError('Email address is required. Please sign in again.', incidentId, HTTP_STATUS.BAD_REQUEST));
+        return;
+      }
+      
       user = await withDatabaseErrorHandling(
         'create_user_database',
         () => storage.createUser({
           userId: req.userId!,
-          email: `user-${req.userId}@cortex.example`,  // Placeholder until Firebase token extraction is implemented
+          email: userEmail,
           role: 'user'
         })
       );

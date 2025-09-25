@@ -6,12 +6,12 @@ import { z } from "zod";
 // Cohorts table for managing access groups
 export const cohorts = pgTable("cohorts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  code: varchar("code", { length: 8 }).notNull().unique(), // 8-character unique access code
+  code: varchar("code", { length: 8 }).notNull().unique(), // 8-character unique access code (supports 6-8 digit codes)
   name: text("name").notNull(), // Admin-friendly name for the cohort
   description: text("description"), // Optional description
   allowedSlots: integer("allowed_slots").notNull(), // Maximum number of members
   usedSlots: integer("used_slots").notNull().default(0), // Current number of members
-  status: text("status").notNull().default("active"), // active, archived
+  status: text("status").notNull().default("active"), // active, inactive
   createdAt: text("created_at").default(sql`now()`),
 });
 
@@ -28,7 +28,7 @@ export const users = pgTable("users", {
 
 export const assessments = pgTable("assessments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull(), // Firebase user ID for ownership tracking - FK added later after data migration
+  userId: text("user_id").notNull().references(() => users.userId), // Firebase user ID for ownership tracking
   contextProfile: jsonb("context_profile").notNull(),
   situationAssessment: jsonb("context_mirror"),
   situationAssessmentUpdatedAt: text("context_mirror_updated_at"),
