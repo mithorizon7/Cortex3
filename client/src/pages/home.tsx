@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/sheet";
 import { AppHeader } from "@/components/navigation/app-header";
 import { ExecutiveCortexHero } from "@/components/executive-cortex-hero";
-import { AuthRequiredModal } from "@/components/auth-required-modal";
+import { EnhancedSignInModal } from "@/components/auth/enhanced-sign-in-modal";
 import { useAuth } from "@/contexts/auth-context";
 import type { Assessment, PillarScores } from "@shared/schema";
 import { 
@@ -149,6 +149,15 @@ export default function HomePage() {
     }
   };
 
+  // Handle authentication success for the enhanced modal
+  useEffect(() => {
+    if (user && authModalOpen) {
+      // User just authenticated and modal is open
+      setAuthModalOpen(false);
+      handleAuthSuccess();
+    }
+  }, [user, authModalOpen]);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Skip to main content - accessibility */}
@@ -168,10 +177,9 @@ export default function HomePage() {
       />
       
       {/* Authentication Required Modal */}
-      <AuthRequiredModal 
+      <EnhancedSignInModal 
         open={authModalOpen}
         onOpenChange={setAuthModalOpen}
-        onAuthSuccess={handleAuthSuccess}
       />
       
       {/* Methodology Sheet - moved from identity strip */}

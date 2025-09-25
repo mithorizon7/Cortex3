@@ -27,7 +27,7 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
   const [displayName, setDisplayName] = useState('');
   const [cohortAccessCode, setCohortAccessCode] = useState('');
   const [emailLoading, setEmailLoading] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(true);
 
   const handleGoogleSignIn = async () => {
     try {
@@ -116,24 +116,26 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[400px]" data-testid="enhanced-sign-in-modal">
         <DialogHeader>
-          <DialogTitle>Access CORTEX</DialogTitle>
-          <DialogDescription>
-            Sign in to your existing account or create a new one to access your AI readiness assessments.
+          <DialogTitle className="text-xl font-semibold text-center">
+            Create Account to Get Started
+          </DialogTitle>
+          <DialogDescription className="text-center text-muted-foreground">
+            Sign up to save your progress and access your personalized strategic maturity results
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="google" className="w-full">
+        <Tabs defaultValue="email" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="google" data-testid="google-signin-tab">Google</TabsTrigger>
-            <TabsTrigger value="email" data-testid="email-signin-tab">Email</TabsTrigger>
+            <TabsTrigger value="email" data-testid="email-signup-tab">Email</TabsTrigger>
+            <TabsTrigger value="google" data-testid="google-signup-tab">Google</TabsTrigger>
           </TabsList>
 
           <TabsContent value="google" className="mt-6">
             <Card>
               <CardHeader className="text-center">
-                <CardTitle className="text-lg">Sign in with Google</CardTitle>
+                <CardTitle className="text-lg">Sign up with Google</CardTitle>
                 <CardDescription>
-                  Use your Google account for quick and secure access
+                  Use your Google account for quick and secure account creation
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -149,7 +151,7 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
                   ) : (
                     <Mail className="h-4 w-4 mr-2" />
                   )}
-                  {loading ? 'Signing in...' : 'Continue with Google'}
+                  {loading ? 'Creating account...' : 'Create Account with Google'}
                 </Button>
                 
                 {error && (
@@ -282,7 +284,7 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
                       data-testid="toggle-signup-mode"
                     >
                       {isSignUp 
-                        ? 'Already have an account? Sign in instead' 
+                        ? 'Already have an account? Login here' 
                         : 'Need an account? Create one here'
                       }
                     </Button>
