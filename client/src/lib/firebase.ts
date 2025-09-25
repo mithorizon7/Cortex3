@@ -18,10 +18,6 @@ import {
 
 // Dynamic authDomain detection for multiple production domains
 const getAuthDomain = (): string => {
-  console.log("Checking environment. PROD:", import.meta.env.PROD); // <--- Debug line!
-  console.log("Current hostname:", window.location.hostname); // <--- Debug line!
-  console.log("Current origin:", window.location.origin); // <--- Debug line!
-
   const currentDomain = window.location.hostname;
 
   // List of known production domains that should use themselves as authDomain
@@ -33,7 +29,6 @@ const getAuthDomain = (): string => {
 
   // Check if we're on a known production domain (regardless of PROD env var)
   if (productionDomains.includes(currentDomain)) {
-    console.log("Returning matched production authDomain:", currentDomain);
     return currentDomain;
   }
 
@@ -41,12 +36,10 @@ const getAuthDomain = (): string => {
   if (currentDomain === 'localhost' || currentDomain.includes('.replit.dev')) {
     // Use default Firebase domain for development
     const devAuthDomain = `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`;
-    console.log("Returning dev authDomain:", devAuthDomain);
     return devAuthDomain;
   }
 
   // For any other domain, fallback to Replit domain
-  console.log("Returning fallback authDomain: horizoncortex.replit.app");
   return 'horizoncortex.replit.app';
 };
 

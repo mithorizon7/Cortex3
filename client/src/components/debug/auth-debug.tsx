@@ -23,7 +23,8 @@ export function AuthDebug() {
         projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'Missing',
         appId: import.meta.env.VITE_FIREBASE_APP_ID ? 'Set' : 'Missing',
         expectedAuthDomain: window.location.hostname,
-        expectedRedirectURI: `${window.location.origin}/__/auth/handler`
+        expectedRedirectURI: `${window.location.origin}/__/auth/handler`,
+        geminiModel: 'gemini-2.5-flash'
       };
       
       console.log('🔧 Environment:', env);

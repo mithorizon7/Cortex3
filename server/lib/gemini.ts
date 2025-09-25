@@ -200,9 +200,9 @@ export async function generateSituationAssessment(profile: ContextProfile): Prom
   // Analyze strategic context archetype
   const archetype = analyzeContextArchetype(profile);
   
-  // 25 second timeout for complex Situation Assessment 2.0 prompts with structured JSON schema
+  // 60 second timeout for complex Situation Assessment 2.0 prompts with structured JSON schema
   const timeoutPromise = new Promise<never>((_, reject) => 
-    setTimeout(() => reject(new Error('LLM request timed out after 25 seconds')), 25000)
+    setTimeout(() => reject(new Error('LLM request timed out after 60 seconds')), 60000)
   );
 
   const systemPrompt = `You are a senior AI strategy advisor specializing in contextually-grounded strategic insights for executive teams. Your role is to analyze how unique organizational context signatures create specific AI strategic opportunities and constraints.
@@ -288,16 +288,16 @@ REQUIREMENTS:
 - Connect to broader CORTEX strategic framework where relevant`;
 
   const model = genAI.getGenerativeModel({ 
-    model: "gemini-2.0-flash-exp", 
+    model: "gemini-2.5-flash", 
     systemInstruction: systemPrompt 
   });
   
-  console.log(`[SITUATION_ASSESSMENT] ${generationId} - Attempt 1: Starting AI generation with gemini-2.0-flash-exp`);
+  console.log(`[SITUATION_ASSESSMENT] ${generationId} - Attempt 1: Starting AI generation with gemini-2.5-flash`);
   
   // Attempt 1: Initial AI generation
   const attempt1: GenerationAttempt = {
     attemptNumber: 1,
-    model: "gemini-2.0-flash-exp",
+    model: "gemini-2.5-flash",
     startTime: new Date().toISOString(),
     success: false
   };
@@ -403,7 +403,7 @@ Focus on specific contextual combinations rather than generic advice. Ensure str
 
         const attempt2: GenerationAttempt = {
           attemptNumber: 2,
-          model: "gemini-2.0-flash-exp",
+          model: "gemini-2.5-flash",
           startTime: new Date().toISOString(),
           success: false
         };
@@ -412,7 +412,7 @@ Focus on specific contextual combinations rather than generic advice. Ensure str
 
         try {
           const retryModel = genAI.getGenerativeModel({ 
-            model: "gemini-2.0-flash-exp", 
+            model: "gemini-2.5-flash", 
             systemInstruction: systemPrompt 
           });
           
@@ -497,7 +497,7 @@ Focus on specific contextual combinations rather than generic advice. Ensure str
                   attempts,
                   finalSource: 'ai' as const,
                   totalDuration,
-                  modelVersion: 'gemini-2.0-flash-exp',
+                  modelVersion: 'gemini-2.5-flash',
                   generatedAt: new Date().toISOString()
                 }
               };
@@ -537,7 +537,7 @@ Focus on specific contextual combinations rather than generic advice. Ensure str
             attempts,
             finalSource: 'ai' as const,
             totalDuration,
-            modelVersion: 'gemini-2.0-flash-exp',
+            modelVersion: 'gemini-2.5-flash',
             generatedAt: new Date().toISOString()
           }
         };
