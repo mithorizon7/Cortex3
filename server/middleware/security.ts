@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { APP_CONFIG, USER_ERROR_MESSAGES, HTTP_STATUS } from '../constants';
 import { generateIncidentId, createUserError } from '../utils/incident';
 import { logger } from '../logger';
+import { storage } from '../storage';
 
 /**
  * Basic CORS middleware implementation
@@ -157,6 +158,232 @@ export function requireAuthMiddleware(req: Request, res: Response, next: NextFun
   
   // User is authenticated, proceed
   next();
+}
+
+/**
+ * Admin authentication middleware - ensures user is authenticated and has admin or super_admin role
+ */
+export async function requireAdminMiddleware(req: Request, res: Response, next: NextFunction) {
+  try {
+    // First check if user is authenticated
+    const userId = req.userId;
+    
+    if (!userId || userId === 'anonymous') {
+      const incidentId = generateIncidentId();
+      
+      logger.warn('Admin access denied - authentication required', {
+        additionalContext: {
+          path: req.path,
+          method: req.method,
+          userAgent: req.get('User-Agent'),
+          ip: req.ip,
+          incidentId
+        }
+      });
+      
+      const errorResponse = createUserError(
+        'Authentication required. Please sign in and try again.',
+        incidentId,
+        HTTP_STATUS.UNAUTHORIZED
+      );
+      
+      res.status(HTTP_STATUS.UNAUTHORIZED).json(errorResponse);
+      return;
+    }
+    
+    // Fetch user profile to check role
+    const user = await storage.getUser(userId);
+    
+    if (!user) {
+      const incidentId = generateIncidentId();
+      
+      logger.warn('Admin access denied - user profile not found', {
+        additionalContext: {
+          userId,
+          path: req.path,
+          method: req.method,
+          ip: req.ip,
+          incidentId
+        }
+      });
+      
+      const errorResponse = createUserError(
+        'User profile not found. Please contact support.',
+        incidentId,
+        HTTP_STATUS.FORBIDDEN
+      );
+      
+      res.status(HTTP_STATUS.FORBIDDEN).json(errorResponse);
+      return;
+    }
+    
+    // Check if user has admin or super_admin role
+    if (user.role !== 'admin' && user.role !== 'super_admin') {
+      const incidentId = generateIncidentId();
+      
+      logger.warn('Admin access denied - insufficient privileges', {
+        additionalContext: {
+          userId,
+          userRole: user.role,
+          path: req.path,
+          method: req.method,
+          ip: req.ip,
+          incidentId
+        }
+      });
+      
+      const errorResponse = createUserError(
+        'Admin privileges required to access this resource.',
+        incidentId,
+        HTTP_STATUS.FORBIDDEN
+      );
+      
+      res.status(HTTP_STATUS.FORBIDDEN).json(errorResponse);
+      return;
+    }
+    
+    // User has admin privileges, proceed
+    logger.debug('Admin access granted', {
+      additionalContext: {
+        userId,
+        userRole: user.role,
+        path: req.path
+      }
+    });
+    
+    next();
+  } catch (error) {
+    const incidentId = generateIncidentId();
+    
+    logger.error('Error checking admin privileges', error instanceof Error ? error : new Error(String(error)), {
+      additionalContext: {
+        userId: req.userId,
+        path: req.path,
+        incidentId
+      }
+    });
+    
+    const errorResponse = createUserError(
+      'Unable to verify admin privileges. Please try again.',
+      incidentId,
+      HTTP_STATUS.INTERNAL_SERVER_ERROR
+    );
+    
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(errorResponse);
+  }
+}
+
+/**
+ * Super admin authentication middleware - ensures user is authenticated and has super_admin role
+ */
+export async function requireSuperAdminMiddleware(req: Request, res: Response, next: NextFunction) {
+  try {
+    // First check if user is authenticated
+    const userId = req.userId;
+    
+    if (!userId || userId === 'anonymous') {
+      const incidentId = generateIncidentId();
+      
+      logger.warn('Super admin access denied - authentication required', {
+        additionalContext: {
+          path: req.path,
+          method: req.method,
+          userAgent: req.get('User-Agent'),
+          ip: req.ip,
+          incidentId
+        }
+      });
+      
+      const errorResponse = createUserError(
+        'Authentication required. Please sign in and try again.',
+        incidentId,
+        HTTP_STATUS.UNAUTHORIZED
+      );
+      
+      res.status(HTTP_STATUS.UNAUTHORIZED).json(errorResponse);
+      return;
+    }
+    
+    // Fetch user profile to check role
+    const user = await storage.getUser(userId);
+    
+    if (!user) {
+      const incidentId = generateIncidentId();
+      
+      logger.warn('Super admin access denied - user profile not found', {
+        additionalContext: {
+          userId,
+          path: req.path,
+          method: req.method,
+          ip: req.ip,
+          incidentId
+        }
+      });
+      
+      const errorResponse = createUserError(
+        'User profile not found. Please contact support.',
+        incidentId,
+        HTTP_STATUS.FORBIDDEN
+      );
+      
+      res.status(HTTP_STATUS.FORBIDDEN).json(errorResponse);
+      return;
+    }
+    
+    // Check if user has super_admin role
+    if (user.role !== 'super_admin') {
+      const incidentId = generateIncidentId();
+      
+      logger.warn('Super admin access denied - insufficient privileges', {
+        additionalContext: {
+          userId,
+          userRole: user.role,
+          path: req.path,
+          method: req.method,
+          ip: req.ip,
+          incidentId
+        }
+      });
+      
+      const errorResponse = createUserError(
+        'Super admin privileges required to access this resource.',
+        incidentId,
+        HTTP_STATUS.FORBIDDEN
+      );
+      
+      res.status(HTTP_STATUS.FORBIDDEN).json(errorResponse);
+      return;
+    }
+    
+    // User has super admin privileges, proceed
+    logger.debug('Super admin access granted', {
+      additionalContext: {
+        userId,
+        userRole: user.role,
+        path: req.path
+      }
+    });
+    
+    next();
+  } catch (error) {
+    const incidentId = generateIncidentId();
+    
+    logger.error('Error checking super admin privileges', error instanceof Error ? error : new Error(String(error)), {
+      additionalContext: {
+        userId: req.userId,
+        path: req.path,
+        incidentId
+      }
+    });
+    
+    const errorResponse = createUserError(
+      'Unable to verify super admin privileges. Please try again.',
+      incidentId,
+      HTTP_STATUS.INTERNAL_SERVER_ERROR
+    );
+    
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json(errorResponse);
+  }
 }
 
 /**

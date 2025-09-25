@@ -1,8 +1,8 @@
-import { type Assessment, type InsertAssessment, type OptionsStudioSession, assessments, optionsStudioSessionSchema } from "@shared/schema";
+import { type Assessment, type InsertAssessment, type OptionsStudioSession, type User, type InsertUser, type Cohort, type InsertCohort, assessments, users, cohorts, optionsStudioSessionSchema } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { logger, withErrorHandling } from "./logger";
 import { withDatabaseErrorHandling } from "./utils/database-errors";
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 
 // Lazy-load database connection to avoid initialization errors in tests
 let _db: any = null;
@@ -27,6 +27,7 @@ async function getDb() {
 }
 
 export interface IStorage {
+  // Assessment operations
   getAssessment(id: string, userId?: string): Promise<Assessment | null>;
   getUserAssessments(userId: string): Promise<Assessment[]>;
   createAssessment(assessment: InsertAssessment): Promise<Assessment>;
@@ -35,6 +36,19 @@ export interface IStorage {
   // Options Studio Session Operations
   getOptionsStudioSession(assessmentId: string, userId?: string): Promise<OptionsStudioSession | null>;
   createOrUpdateOptionsStudioSession(assessmentId: string, sessionData: OptionsStudioSession, userId?: string): Promise<Assessment | null>;
+  
+  // User operations
+  getUser(userId: string): Promise<User | null>;
+  createUser(user: InsertUser): Promise<User>;
+  updateUser(userId: string, updates: Partial<InsertUser>): Promise<User | null>;
+  
+  // Cohort operations
+  getCohort(id: string): Promise<Cohort | null>;
+  getCohortByCode(code: string): Promise<Cohort | null>;
+  createCohort(cohort: InsertCohort): Promise<Cohort>;
+  updateCohort(id: string, updates: Partial<InsertCohort>): Promise<Cohort | null>;
+  joinCohort(userId: string, cohortId: string): Promise<User | null>;
+  getCohortUsers(cohortId: string): Promise<User[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -244,13 +258,247 @@ export class DatabaseStorage implements IStorage {
       { functionArgs: { assessmentId, sessionData, userId } }
     );
   }
+
+  // User operations
+  async getUser(userId: string): Promise<User | null> {
+    return withDatabaseErrorHandling(
+      'getUser',
+      async () => {
+        const db = await getDb();
+        const [user] = await db.select().from(users).where(eq(users.userId, userId));
+        
+        if (user) {
+          logger.debug('User retrieved successfully', {
+            additionalContext: { userId }
+          });
+          return user;
+        } else {
+          logger.debug('User not found', {
+            additionalContext: { userId }
+          });
+          return null;
+        }
+      },
+      { functionArgs: { userId } }
+    );
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    return withDatabaseErrorHandling(
+      'createUser',
+      async () => {
+        const db = await getDb();
+        const [user] = await db
+          .insert(users)
+          .values(insertUser)
+          .returning();
+        
+        logger.info('User created successfully', {
+          additionalContext: { 
+            userId: user.userId,
+            email: user.email,
+            role: user.role
+          }
+        });
+        
+        return user;
+      },
+      { functionArgs: { insertUser } }
+    );
+  }
+
+  async updateUser(userId: string, updates: Partial<InsertUser>): Promise<User | null> {
+    return withDatabaseErrorHandling(
+      'updateUser',
+      async () => {
+        const db = await getDb();
+        const [updated] = await db
+          .update(users)
+          .set(updates)
+          .where(eq(users.userId, userId))
+          .returning();
+        
+        if (updated) {
+          logger.info('User updated successfully', {
+            additionalContext: { 
+              userId,
+              updateKeys: Object.keys(updates)
+            }
+          });
+          return updated;
+        } else {
+          logger.warn('Cannot update user - not found', {
+            additionalContext: { userId }
+          });
+          return null;
+        }
+      },
+      { functionArgs: { userId, updates } }
+    );
+  }
+
+  // Cohort operations
+  async getCohort(id: string): Promise<Cohort | null> {
+    return withDatabaseErrorHandling(
+      'getCohort',
+      async () => {
+        const db = await getDb();
+        const [cohort] = await db.select().from(cohorts).where(eq(cohorts.id, id));
+        
+        if (cohort) {
+          logger.debug('Cohort retrieved successfully', {
+            additionalContext: { cohortId: id }
+          });
+          return cohort;
+        } else {
+          logger.debug('Cohort not found', {
+            additionalContext: { cohortId: id }
+          });
+          return null;
+        }
+      },
+      { functionArgs: { id } }
+    );
+  }
+
+  async getCohortByCode(code: string): Promise<Cohort | null> {
+    return withDatabaseErrorHandling(
+      'getCohortByCode',
+      async () => {
+        const db = await getDb();
+        const [cohort] = await db.select().from(cohorts).where(eq(cohorts.code, code));
+        
+        if (cohort) {
+          logger.debug('Cohort retrieved by code successfully', {
+            additionalContext: { code }
+          });
+          return cohort;
+        } else {
+          logger.debug('Cohort not found by code', {
+            additionalContext: { code }
+          });
+          return null;
+        }
+      },
+      { functionArgs: { code } }
+    );
+  }
+
+  async createCohort(insertCohort: InsertCohort): Promise<Cohort> {
+    return withDatabaseErrorHandling(
+      'createCohort',
+      async () => {
+        const db = await getDb();
+        const [cohort] = await db
+          .insert(cohorts)
+          .values(insertCohort)
+          .returning();
+        
+        logger.info('Cohort created successfully', {
+          additionalContext: { 
+            cohortId: cohort.id,
+            code: cohort.code,
+            name: cohort.name
+          }
+        });
+        
+        return cohort;
+      },
+      { functionArgs: { insertCohort } }
+    );
+  }
+
+  async updateCohort(id: string, updates: Partial<InsertCohort>): Promise<Cohort | null> {
+    return withDatabaseErrorHandling(
+      'updateCohort',
+      async () => {
+        const db = await getDb();
+        const [updated] = await db
+          .update(cohorts)
+          .set(updates)
+          .where(eq(cohorts.id, id))
+          .returning();
+        
+        if (updated) {
+          logger.info('Cohort updated successfully', {
+            additionalContext: { 
+              cohortId: id,
+              updateKeys: Object.keys(updates)
+            }
+          });
+          return updated;
+        } else {
+          logger.warn('Cannot update cohort - not found', {
+            additionalContext: { cohortId: id }
+          });
+          return null;
+        }
+      },
+      { functionArgs: { id, updates } }
+    );
+  }
+
+  async joinCohort(userId: string, cohortId: string): Promise<User | null> {
+    return withDatabaseErrorHandling(
+      'joinCohort',
+      async () => {
+        const db = await getDb();
+        const [updated] = await db
+          .update(users)
+          .set({ cohortId })
+          .where(eq(users.userId, userId))
+          .returning();
+        
+        if (updated) {
+          logger.info('User joined cohort successfully', {
+            additionalContext: { userId, cohortId }
+          });
+          return updated;
+        } else {
+          logger.warn('Cannot join cohort - user not found', {
+            additionalContext: { userId, cohortId }
+          });
+          return null;
+        }
+      },
+      { functionArgs: { userId, cohortId } }
+    );
+  }
+
+  async getCohortUsers(cohortId: string): Promise<User[]> {
+    return withDatabaseErrorHandling(
+      'getCohortUsers',
+      async () => {
+        const db = await getDb();
+        const cohortUsers = await db
+          .select()
+          .from(users)
+          .where(eq(users.cohortId, cohortId))
+          .orderBy(desc(users.createdAt));
+        
+        logger.debug('Cohort users retrieved successfully', {
+          additionalContext: { 
+            cohortId, 
+            userCount: cohortUsers.length 
+          }
+        });
+        
+        return cohortUsers;
+      },
+      { functionArgs: { cohortId } }
+    );
+  }
 }
 
 export class MemStorage implements IStorage {
   private assessments: Map<string, Assessment>;
+  private users: Map<string, User>;
+  private cohorts: Map<string, Cohort>;
 
   constructor() {
     this.assessments = new Map();
+    this.users = new Map();
+    this.cohorts = new Map();
   }
 
   async getAssessment(id: string, userId?: string): Promise<Assessment | null> {
@@ -447,6 +695,235 @@ export class MemStorage implements IStorage {
         return updated;
       },
       { functionArgs: { assessmentId, sessionData, userId } }
+    );
+  }
+
+  // User operations
+  async getUser(userId: string): Promise<User | null> {
+    return withErrorHandling(
+      'getUser',
+      async () => {
+        const user = this.users.get(userId);
+        
+        if (user) {
+          logger.debug('User retrieved successfully', {
+            additionalContext: { userId }
+          });
+          return user;
+        } else {
+          logger.debug('User not found', {
+            additionalContext: { userId }
+          });
+          return null;
+        }
+      },
+      { functionArgs: { userId } }
+    );
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    return withErrorHandling(
+      'createUser',
+      async () => {
+        const user: User = { 
+          ...insertUser,
+          role: insertUser.role || 'user', // Default to 'user' role
+          createdAt: new Date().toISOString(),
+          lastActiveAt: insertUser.lastActiveAt || null,
+          invitedBy: insertUser.invitedBy || null,
+          cohortId: insertUser.cohortId || null
+        };
+        
+        this.users.set(user.userId, user);
+        
+        logger.info('User created successfully', {
+          additionalContext: { 
+            userId: user.userId,
+            email: user.email,
+            role: user.role
+          }
+        });
+        
+        return user;
+      },
+      { functionArgs: { insertUser } }
+    );
+  }
+
+  async updateUser(userId: string, updates: Partial<InsertUser>): Promise<User | null> {
+    return withErrorHandling(
+      'updateUser',
+      async () => {
+        const existing = this.users.get(userId);
+        if (!existing) {
+          logger.warn('Cannot update user - not found', {
+            additionalContext: { userId }
+          });
+          return null;
+        }
+        
+        const updated: User = { ...existing, ...updates };
+        this.users.set(userId, updated);
+        
+        logger.info('User updated successfully', {
+          additionalContext: { 
+            userId,
+            updateKeys: Object.keys(updates)
+          }
+        });
+        
+        return updated;
+      },
+      { functionArgs: { userId, updates } }
+    );
+  }
+
+  // Cohort operations
+  async getCohort(id: string): Promise<Cohort | null> {
+    return withErrorHandling(
+      'getCohort',
+      async () => {
+        const cohort = this.cohorts.get(id);
+        
+        if (cohort) {
+          logger.debug('Cohort retrieved successfully', {
+            additionalContext: { cohortId: id }
+          });
+          return cohort;
+        } else {
+          logger.debug('Cohort not found', {
+            additionalContext: { cohortId: id }
+          });
+          return null;
+        }
+      },
+      { functionArgs: { id } }
+    );
+  }
+
+  async getCohortByCode(code: string): Promise<Cohort | null> {
+    return withErrorHandling(
+      'getCohortByCode',
+      async () => {
+        const cohort = Array.from(this.cohorts.values()).find(c => c.code === code);
+        
+        if (cohort) {
+          logger.debug('Cohort retrieved by code successfully', {
+            additionalContext: { code }
+          });
+          return cohort;
+        } else {
+          logger.debug('Cohort not found by code', {
+            additionalContext: { code }
+          });
+          return null;
+        }
+      },
+      { functionArgs: { code } }
+    );
+  }
+
+  async createCohort(insertCohort: InsertCohort): Promise<Cohort> {
+    return withErrorHandling(
+      'createCohort',
+      async () => {
+        const id = randomUUID();
+        const cohort: Cohort = { 
+          ...insertCohort,
+          id,
+          description: insertCohort.description || null,
+          status: insertCohort.status || 'active',
+          usedSlots: 0,
+          createdAt: new Date().toISOString()
+        };
+        
+        this.cohorts.set(id, cohort);
+        
+        logger.info('Cohort created successfully', {
+          additionalContext: { 
+            cohortId: cohort.id,
+            code: cohort.code,
+            name: cohort.name
+          }
+        });
+        
+        return cohort;
+      },
+      { functionArgs: { insertCohort } }
+    );
+  }
+
+  async updateCohort(id: string, updates: Partial<InsertCohort>): Promise<Cohort | null> {
+    return withErrorHandling(
+      'updateCohort',
+      async () => {
+        const existing = this.cohorts.get(id);
+        if (!existing) {
+          logger.warn('Cannot update cohort - not found', {
+            additionalContext: { cohortId: id }
+          });
+          return null;
+        }
+        
+        const updated: Cohort = { ...existing, ...updates };
+        this.cohorts.set(id, updated);
+        
+        logger.info('Cohort updated successfully', {
+          additionalContext: { 
+            cohortId: id,
+            updateKeys: Object.keys(updates)
+          }
+        });
+        
+        return updated;
+      },
+      { functionArgs: { id, updates } }
+    );
+  }
+
+  async joinCohort(userId: string, cohortId: string): Promise<User | null> {
+    return withErrorHandling(
+      'joinCohort',
+      async () => {
+        const existing = this.users.get(userId);
+        if (!existing) {
+          logger.warn('Cannot join cohort - user not found', {
+            additionalContext: { userId, cohortId }
+          });
+          return null;
+        }
+        
+        const updated: User = { ...existing, cohortId };
+        this.users.set(userId, updated);
+        
+        logger.info('User joined cohort successfully', {
+          additionalContext: { userId, cohortId }
+        });
+        
+        return updated;
+      },
+      { functionArgs: { userId, cohortId } }
+    );
+  }
+
+  async getCohortUsers(cohortId: string): Promise<User[]> {
+    return withErrorHandling(
+      'getCohortUsers',
+      async () => {
+        const cohortUsers = Array.from(this.users.values())
+          .filter(user => user.cohortId === cohortId)
+          .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
+        
+        logger.debug('Cohort users retrieved successfully', {
+          additionalContext: { 
+            cohortId, 
+            userCount: cohortUsers.length 
+          }
+        });
+        
+        return cohortUsers;
+      },
+      { functionArgs: { cohortId } }
     );
   }
 }
