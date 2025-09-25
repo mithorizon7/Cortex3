@@ -11,7 +11,8 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Plus, Users, Settings, BarChart3, Shield, AlertCircle, Edit, Trash2, MoreHorizontal, TrendingUp, Activity, Target, Clock } from 'lucide-react';
+import { Plus, Users, Settings, BarChart3, Shield, AlertCircle, Edit, Trash2, MoreHorizontal, TrendingUp, Activity, Target, Clock, Key } from 'lucide-react';
+import { BootstrapInviteManagement } from '@/components/admin/bootstrap-invite-management';
 import { useToast } from '@/hooks/use-toast';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { useForm } from 'react-hook-form';
@@ -296,7 +297,7 @@ export default function AdminDashboard() {
 
           {/* Admin Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
+            <TabsList className={`grid w-full ${isSuperAdmin ? 'grid-cols-4 lg:w-[500px]' : 'grid-cols-3 lg:w-[400px]'}`}>
               <TabsTrigger value="cohorts" className="flex items-center space-x-2">
                 <Users className="h-4 w-4" />
                 <span>Cohorts</span>
@@ -309,6 +310,12 @@ export default function AdminDashboard() {
                 <Settings className="h-4 w-4" />
                 <span>Settings</span>
               </TabsTrigger>
+              {isSuperAdmin && (
+                <TabsTrigger value="bootstrap-invites" className="flex items-center space-x-2">
+                  <Key className="h-4 w-4" />
+                  <span>Bootstrap</span>
+                </TabsTrigger>
+              )}
             </TabsList>
 
             {/* Cohorts Tab */}
@@ -467,6 +474,13 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
             </TabsContent>
+
+            {/* Bootstrap Invites Tab (Super Admin Only) */}
+            {isSuperAdmin && (
+              <TabsContent value="bootstrap-invites" className="space-y-6">
+                <BootstrapInviteManagement />
+              </TabsContent>
+            )}
           </Tabs>
         </main>
 
