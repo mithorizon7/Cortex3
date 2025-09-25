@@ -1032,11 +1032,13 @@ export class MemStorage implements IStorage {
   private assessments: Map<string, Assessment>;
   private users: Map<string, User>;
   private cohorts: Map<string, Cohort>;
+  private bootstrapInvites: Map<string, BootstrapInvite>;
 
   constructor() {
     this.assessments = new Map();
     this.users = new Map();
     this.cohorts = new Map();
+    this.bootstrapInvites = new Map();
   }
 
   async getAssessment(id: string, userId?: string): Promise<Assessment | null> {
@@ -1717,6 +1719,184 @@ export class MemStorage implements IStorage {
         return analytics.length > 0 ? analytics[0] : null;
       },
       { functionArgs: { cohortId } }
+    );
+  }
+
+  // Bootstrap invite operations
+  async getBootstrapInvite(code: string): Promise<BootstrapInvite | null> {
+    return withErrorHandling(
+      'getBootstrapInvite',
+      async () => {
+        const invite = Array.from(this.bootstrapInvites.values())
+          .find(inv => inv.code === code);
+        
+        if (invite) {
+          logger.debug('Bootstrap invite retrieved successfully', {
+            additionalContext: { code, status: invite.status }
+          });
+          return invite;
+        } else {
+          logger.debug('Bootstrap invite not found', {
+            additionalContext: { code }
+          });
+          return null;
+        }
+      },
+      { functionArgs: { code } }
+    );
+  }
+
+  async createBootstrapInvite(insertInvite: InsertBootstrapInvite): Promise<BootstrapInvite> {
+    return withErrorHandling(
+      'createBootstrapInvite',
+      async () => {
+        const id = randomUUID();
+        const invite: BootstrapInvite = {
+          ...insertInvite,
+          id,
+          createdAt: new Date().toISOString(),
+          lastUsedAt: null,
+          usedBy: []
+        };
+        
+        this.bootstrapInvites.set(id, invite);
+        
+        logger.info('Bootstrap invite created successfully', {
+          additionalContext: { 
+            inviteId: invite.id,
+            code: invite.code,
+            role: invite.role,
+            allowedUses: invite.allowedUses
+          }
+        });
+        
+        return invite;
+      },
+      { functionArgs: { insertInvite } }
+    );
+  }
+
+  async updateBootstrapInvite(id: string, updates: Partial<InsertBootstrapInvite>): Promise<BootstrapInvite | null> {
+    return withErrorHandling(
+      'updateBootstrapInvite',
+      async () => {
+        const existing = this.bootstrapInvites.get(id);
+        if (!existing) {
+          logger.warn('Cannot update bootstrap invite - not found', {
+            additionalContext: { inviteId: id }
+          });
+          return null;
+        }
+        
+        const updated = { ...existing, ...updates };
+        this.bootstrapInvites.set(id, updated);
+        
+        logger.info('Bootstrap invite updated successfully', {
+          additionalContext: { 
+            inviteId: id,
+            updateKeys: Object.keys(updates)
+          }
+        });
+        
+        return updated;
+      },
+      { functionArgs: { id, updates } }
+    );
+  }
+
+  async useBootstrapInvite(code: string, userId: string): Promise<BootstrapInvite | null> {
+    return withErrorHandling(
+      'useBootstrapInvite',
+      async () => {
+        const invite = Array.from(this.bootstrapInvites.values())
+          .find(inv => inv.code === code);
+        
+        if (!invite) {
+          throw new Error('Bootstrap invite not found');
+        }
+        
+        // Check if invite is still valid
+        if (invite.status !== 'active') {
+          throw new Error('Bootstrap invite is not active');
+        }
+        
+        if (invite.remainingUses <= 0) {
+          throw new Error('Bootstrap invite has no remaining uses');
+        }
+        
+        if (new Date() > new Date(invite.expiresAt)) {
+          throw new Error('Bootstrap invite has expired');
+        }
+        
+        // Update the invite
+        const usedByArray = [...(invite.usedBy as string[])];
+        usedByArray.push(userId);
+        
+        const updatedInvite: BootstrapInvite = {
+          ...invite,
+          remainingUses: invite.remainingUses - 1,
+          lastUsedAt: new Date().toISOString(),
+          usedBy: usedByArray,
+          status: invite.remainingUses - 1 <= 0 ? 'expired' : 'active'
+        };
+        
+        this.bootstrapInvites.set(invite.id, updatedInvite);
+        
+        logger.info('Bootstrap invite used successfully', {
+          additionalContext: { 
+            code,
+            userId,
+            remainingUses: updatedInvite.remainingUses
+          }
+        });
+        
+        return updatedInvite;
+      },
+      { functionArgs: { code, userId } }
+    );
+  }
+
+  async getAllBootstrapInvites(): Promise<BootstrapInvite[]> {
+    return withErrorHandling(
+      'getAllBootstrapInvites',
+      async () => {
+        const invites = Array.from(this.bootstrapInvites.values())
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        
+        logger.debug('All bootstrap invites retrieved successfully', {
+          additionalContext: { 
+            inviteCount: invites.length 
+          }
+        });
+        
+        return invites;
+      },
+      { functionArgs: {} }
+    );
+  }
+
+  async revokeBootstrapInvite(id: string): Promise<BootstrapInvite | null> {
+    return withErrorHandling(
+      'revokeBootstrapInvite',
+      async () => {
+        const existing = this.bootstrapInvites.get(id);
+        if (!existing) {
+          logger.warn('Cannot revoke bootstrap invite - not found', {
+            additionalContext: { inviteId: id }
+          });
+          return null;
+        }
+        
+        const revoked = { ...existing, status: 'revoked' as const };
+        this.bootstrapInvites.set(id, revoked);
+        
+        logger.info('Bootstrap invite revoked successfully', {
+          additionalContext: { inviteId: id }
+        });
+        
+        return revoked;
+      },
+      { functionArgs: { id } }
     );
   }
 }
