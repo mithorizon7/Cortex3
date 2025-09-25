@@ -114,11 +114,25 @@ export default function DomainQuestionsPage() {
     updatePulse.mutate(responses);
   };
 
-  const handlePrevious = () => {
+  const handlePrevious = async () => {
     const currentIndex = DOMAIN_ORDER.indexOf(domain as string);
     const skipIntros = localStorage.getItem('cortex_skip_intros') === 'true';
     
     if (currentIndex > 0) {
+      // Save current responses before navigating backward
+      try {
+        if (Object.keys(responses).length > 0) {
+          await apiRequest("PATCH", `/api/assessments/${assessmentId}/pulse`, { pulseResponses: responses });
+        }
+      } catch (error) {
+        console.error("Failed to save responses before navigating:", error);
+        toast({
+          title: "Save Warning",
+          description: "Some responses may not have been saved. Please check your answers in the next screen.",
+          variant: "destructive",
+        });
+      }
+      
       const prevDomain = DOMAIN_ORDER[currentIndex - 1];
       if (skipIntros) {
         navigate(`/pulse/${prevDomain}/questions/${assessmentId}`);
