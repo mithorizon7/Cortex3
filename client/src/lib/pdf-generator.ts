@@ -256,8 +256,8 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
     // Enhanced page overflow check
     const checkPageOverflow = (additionalHeight: number): boolean => {
       if (currentY + additionalHeight > maxY) {
-        doc.addPage();
         addPageFooter();
+        doc.addPage();
         currentY = margin;
         return true;
       }
@@ -374,20 +374,11 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
       leftColumnY = contentY + 10;
     }
     
-    // Premium Right Column: Organizational Context
-    drawCard(rightColumnX, currentY, columnWidth, Math.max(200, rightColumnY - currentY + 40), false);
-    
-    doc.setFontSize(typography.h2.size);
-    doc.setFont('helvetica', typography.h2.weight);
-    doc.setTextColor(...colors.accent);
-    doc.text('ORGANIZATIONAL CONTEXT', rightColumnX + 8, currentY + 12);
-    
-    doc.setTextColor(...colors.primary);
-    
-    // Context Profile Sections
+    // Define profile sections first
     const profileSections = [
       {
         title: 'Risk & Compliance',
+        color: colors.error,
         items: [
           { key: 'regulatory_intensity', label: 'Regulatory Intensity', value: data.contextProfile.regulatory_intensity },
           { key: 'data_sensitivity', label: 'Data Sensitivity', value: data.contextProfile.data_sensitivity },
@@ -397,6 +388,7 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
       },
       {
         title: 'Operations & Performance',
+        color: colors.accent,
         items: [
           { key: 'clock_speed', label: 'Clock Speed', value: data.contextProfile.clock_speed },
           { key: 'latency_edge', label: 'Latency Edge', value: data.contextProfile.latency_edge },
@@ -405,6 +397,7 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
       },
       {
         title: 'Strategic Assets',
+        color: colors.success,
         items: [
           { key: 'data_advantage', label: 'Data Advantage', value: data.contextProfile.data_advantage },
           { key: 'build_readiness', label: 'Build Readiness', value: data.contextProfile.build_readiness },
@@ -413,69 +406,171 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
       }
     ];
     
+    // Calculate actual content height for Organizational Context
+    let estimatedContextHeight = 20; // Header space
     profileSections.forEach(section => {
-      // Check if section will fit
-      const sectionHeight = 6 + (section.items.length * 4) + 3;
-      if (rightColumnY + sectionHeight > maxY - 20) {
-        doc.addPage();
-        leftColumnY = margin;
-        rightColumnY = margin;
-        
-        // Re-add column header after page break
-        doc.setFontSize(16);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
-        doc.text('ORGANIZATIONAL CONTEXT (continued)', rightColumnX, rightColumnY);
-        rightColumnY += 10;
-        doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-      }
-      
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
-      doc.text(section.title, rightColumnX, rightColumnY);
-      rightColumnY += 6;
-      
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
-      section.items.forEach(item => {
-        const valueText = formatScaleValue(item.key || '', item.value);
-        doc.text(`${item.label}: ${valueText}`, rightColumnX + 3, rightColumnY);
-        rightColumnY += 4;
-      });
-      rightColumnY += 3;
+      estimatedContextHeight += 12; // Section header
+      estimatedContextHeight += section.items.length * 4; // Items
+      estimatedContextHeight += 6; // Section spacing
     });
+    estimatedContextHeight += 20; // Constraints section space
     
-    // Constraints
-    const constraintsHeight = 6 + 8; // Title + 2 constraint items
-    if (rightColumnY + constraintsHeight > maxY - 20) {
+    // Check if entire context section will fit on current page
+    if (currentY + estimatedContextHeight > maxY - 20) {
+      addPageFooter();
       doc.addPage();
-      leftColumnY = margin;
-      rightColumnY = margin;
-    }
-    
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Constraints', rightColumnX, rightColumnY);
-    rightColumnY += 6;
-    
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Procurement Constraints: ${data.contextProfile.procurement_constraints ? 'Yes' : 'No'}`, rightColumnX + 3, rightColumnY);
-    rightColumnY += 4;
-    doc.text(`Edge Operations: ${data.contextProfile.edge_operations ? 'Yes' : 'No'}`, rightColumnX + 3, rightColumnY);
-    rightColumnY += 4;
-    
-    // Move to next section using the maximum Y position from both columns
-    currentY = Math.max(leftColumnY + 10, rightColumnY + 10);
-    
-    // Situation Assessment 2.0: Actions & Watchouts Section
-    if (mirror && (mirror.actions?.length || mirror.watchouts?.length)) {
-      checkPageOverflow(40);
+      currentY = margin;
+      
+      // Re-add assessment header on new page
       doc.setFontSize(16);
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
+      doc.setTextColor(...colors.accent);
+      doc.text('ASSESSMENT RESULTS (continued)', margin, currentY);
+      currentY += 15;
+    }
+    
+    // Premium Right Column: Organizational Context with dynamic height
+    drawCard(rightColumnX, currentY, columnWidth, estimatedContextHeight, false);
+    
+    doc.setFontSize(typography.h2.size);
+    doc.setFont('helvetica', typography.h2.weight);
+    doc.setTextColor(...colors.accent);
+    doc.text('ORGANIZATIONAL CONTEXT', rightColumnX + 8, currentY + 12);
+    
+    doc.setTextColor(...colors.primary);
+    
+    // Premium Context Profile with Visual Indicators
+    let rightContentY = currentY + 20;
+    
+    profileSections.forEach((section, sectionIndex) => {
+      // Pagination check for section header
+      if (rightContentY + 12 + (section.items.length * 4) + 6 > maxY - 20) {
+        // Add footer before page break
+        addPageFooter();
+        doc.addPage();
+        rightContentY = margin + 15;
+        
+        // Calculate remaining content height for new page card
+        let remainingHeight = 20; // Base height
+        for (let i = sectionIndex; i < profileSections.length; i++) {
+          remainingHeight += 12; // Section header
+          remainingHeight += profileSections[i].items.length * 4; // Items
+          remainingHeight += 6; // Section spacing
+        }
+        
+        // Redraw premium card on new page
+        drawCard(rightColumnX, rightContentY, columnWidth, remainingHeight, false);
+        
+        // Re-add context header on new page
+        doc.setFontSize(typography.h2.size);
+        doc.setFont('helvetica', typography.h2.weight);
+        doc.setTextColor(...colors.accent);
+        doc.text('ORGANIZATIONAL CONTEXT (continued)', rightColumnX + 8, rightContentY + 12);
+        rightContentY += 25;
+      }
+      
+      // Section header with color indicator
+      doc.setFillColor(...section.color);
+      doc.circle(rightColumnX + 10, rightContentY + 2, 2, 'F');
+      
+      doc.setFontSize(typography.h3.size);
+      doc.setFont('helvetica', typography.h3.weight);
+      doc.setTextColor(...colors.primary);
+      doc.text(section.title, rightColumnX + 18, rightContentY + 4);
+      rightContentY += 12;
+      
+      // Items with enhanced typography
+      doc.setFontSize(typography.small.size);
+      doc.setFont('helvetica', typography.small.weight);
+      section.items.forEach((item, itemIndex) => {
+        // Pagination check for each item
+        if (rightContentY + 4 > maxY - 20) {
+          // Add footer before page break
+          addPageFooter();
+          doc.addPage();
+          rightContentY = margin + 15;
+          
+          // Calculate remaining content height for new page card
+          let remainingHeight = 20; // Base height
+          // Add remaining items in current section
+          remainingHeight += (section.items.length - itemIndex) * 4;
+          // Add remaining sections
+          for (let i = sectionIndex + 1; i < profileSections.length; i++) {
+            remainingHeight += 12; // Section header
+            remainingHeight += profileSections[i].items.length * 4; // Items
+            remainingHeight += 6; // Section spacing
+          }
+          
+          // Redraw premium card on new page
+          drawCard(rightColumnX, rightContentY, columnWidth, remainingHeight, false);
+          
+          // Re-add context header on new page
+          doc.setFontSize(typography.h2.size);
+          doc.setFont('helvetica', typography.h2.weight);
+          doc.setTextColor(...colors.accent);
+          doc.text('ORGANIZATIONAL CONTEXT (continued)', rightColumnX + 8, rightContentY + 12);
+          rightContentY += 25;
+          
+          // Reset font for items
+          doc.setFontSize(typography.small.size);
+          doc.setFont('helvetica', typography.small.weight);
+        }
+        
+        const valueText = formatScaleValue(item.key || '', item.value);
+        const highValue = item.value >= 3;
+        
+        // Color code high values
+        doc.setTextColor(...(highValue ? section.color : colors.secondary));
+        doc.text(`${item.label}:`, rightColumnX + 12, rightContentY);
+        doc.setTextColor(...colors.primary);
+        doc.text(valueText, rightColumnX + 50, rightContentY);
+        rightContentY += 4;
+      });
+      rightContentY += 6;
+    });
+    
+    // Premium Constraints Section
+    addDivider(rightContentY, 'accent');
+    rightContentY += 8;
+    
+    doc.setFontSize(typography.h3.size);
+    doc.setFont('helvetica', typography.h3.weight);
+    doc.setTextColor(...colors.primary);
+    doc.text('Operational Constraints', rightColumnX + 8, rightContentY);
+    rightContentY += 8;
+    
+    const constraints = [
+      { label: 'Procurement Constraints', value: data.contextProfile.procurement_constraints },
+      { label: 'Edge Operations', value: data.contextProfile.edge_operations }
+    ];
+    
+    constraints.forEach(constraint => {
+      doc.setFillColor(...(constraint.value ? colors.warning : colors.success));
+      doc.circle(rightColumnX + 12, rightContentY - 1, 1.5, 'F');
+      
+      doc.setFontSize(typography.small.size);
+      doc.setFont('helvetica', typography.small.weight);
+      doc.setTextColor(...colors.primary);
+      doc.text(`${constraint.label}: ${constraint.value ? 'Yes' : 'No'}`, rightColumnX + 18, rightContentY);
+      rightContentY += 5;
+    });
+    
+    // Move to next section using the maximum Y position from both columns  
+    currentY = Math.max(leftColumnY + 10, rightContentY + 20);
+    
+    // Premium Leadership Guidance Section
+    if (mirror && (mirror.actions?.length || mirror.watchouts?.length)) {
+      checkPageOverflow(60);
+      
+      // Section header with premium styling
+      addDivider(currentY, 'accent');
+      currentY += 8;
+      
+      doc.setFontSize(typography.h1.size);
+      doc.setFont('helvetica', typography.h1.weight);
+      doc.setTextColor(...colors.accent);
       doc.text('LEADERSHIP GUIDANCE', margin, currentY);
-      currentY += 12;
+      currentY += 18;
       
       // Actions & Watchouts Grid Layout
       const gridLeftX = leftColumnX;
@@ -483,194 +578,208 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
       let gridLeftY = currentY;
       let gridRightY = currentY;
       
-      // Actions (Left Column)
+      // Premium Actions (Left Column)
       if (mirror.actions?.length) {
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-        doc.text('Leadership Actions', gridLeftX, gridLeftY);
-        gridLeftY += 8;
-        
-        // Calculate dynamic height based on content for page-fit check
-        let totalActionHeight = 10; // Base padding
+        // Calculate dynamic height for actions
+        let estimatedActionsHeight = 22; // Header space
         mirror.actions.forEach(action => {
-          const actionLines = safeSplitTextToSize(doc, action, columnWidth - 20);
-          totalActionHeight += actionLines.length * 5 + 3; // Line height + spacing
+          const actionLines = safeSplitTextToSize(doc, action, columnWidth - 16);
+          estimatedActionsHeight += actionLines.length * 4 + 8; // Content + spacing
         });
+        estimatedActionsHeight += 10; // Bottom padding
         
-        const actionsHeight = Math.max(totalActionHeight, 25);
-        const totalActionsContainerHeight = actionsHeight + 8; // Include title space
-        
-        // Check if entire actions container will fit on current page
-        if (gridLeftY + totalActionsContainerHeight > maxY - 20) {
+        // Check if entire actions section will fit on current page
+        if (gridLeftY + estimatedActionsHeight > maxY - 20) {
+          addPageFooter();
           doc.addPage();
-          gridLeftY = margin;
-          gridRightY = margin;
+          gridLeftY = margin + 15;
+          gridRightY = margin + 15;
           currentY = margin;
           
-          // Re-add section header after page break
+          // Re-add section header on new page
           doc.setFontSize(16);
           doc.setFont('helvetica', 'bold');
-          doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
+          doc.setTextColor(...colors.accent);
           doc.text('LEADERSHIP GUIDANCE (continued)', margin, gridLeftY);
-          gridLeftY += 12;
-          gridRightY += 12;
-          
-          // Re-add actions title
-          doc.setFontSize(12);
-          doc.setFont('helvetica', 'bold');
-          doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-          doc.text('Leadership Actions', gridLeftX, gridLeftY);
-          gridLeftY += 8;
+          gridLeftY += 15;
         }
         
-        // Create bordered container for actions
-        doc.setDrawColor(...hexToRgb('#e5e7eb'));
-        doc.setFillColor(...hexToRgb('#f9fafb'));
-        doc.rect(gridLeftX, gridLeftY - 3, columnWidth, actionsHeight, 'FD');
+        // Premium Actions Card with dynamic height
+        drawCard(gridLeftX, gridLeftY, columnWidth, estimatedActionsHeight, true);
         
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+        // Actions header with icon
+        doc.setFillColor(...colors.success);
+        doc.circle(gridLeftX + 10, gridLeftY + 8, 3, 'F');
         
-        let actionY = gridLeftY + 2;
+        doc.setFontSize(typography.h3.size);
+        doc.setFont('helvetica', typography.h3.weight);
+        doc.setTextColor(...colors.primary);
+        doc.text('Leadership Actions', gridLeftX + 18, gridLeftY + 12);
+        
+        // Premium action items with enhanced styling
+        let actionContentY = gridLeftY + 22;
+        doc.setFontSize(typography.small.size);
+        doc.setFont('helvetica', typography.small.weight);
+        doc.setTextColor(...colors.primary);
+        
         mirror.actions.forEach((action, actionIndex) => {
           // Handle text overflow with proper wrapping
-          const actionLines = safeSplitTextToSize(doc, action, columnWidth - 20);
-          const chipHeight = actionLines.length * 4 + 2;
+          const actionLines = safeSplitTextToSize(doc, action, columnWidth - 16);
+          const chipHeight = actionLines.length * 4 + 4;
           
-          // Per-item pagination check - if individual action won't fit, break to new page
-          if (actionY + chipHeight > maxY - 25) {
+          // Pagination check for each action
+          if (actionContentY + chipHeight > maxY - 20) {
+            // Add footer before page break
+            addPageFooter();
             doc.addPage();
-            actionY = margin + 15; // Leave space for potential header
+            actionContentY = margin + 15;
             gridLeftY = margin + 15;
             gridRightY = margin + 15;
             
-            // Re-create container background on new page
-            doc.setDrawColor(...hexToRgb('#e5e7eb'));
-            doc.setFillColor(...hexToRgb('#f9fafb'));
-            const remainingHeight = (mirror.actions!.length - actionIndex) * 20; // Estimate
-            doc.rect(gridLeftX, actionY - 3, columnWidth, Math.min(remainingHeight, maxY - actionY - 20), 'FD');
+            // Calculate remaining actions height for new page card
+            let remainingActionsHeight = 22; // Header space
+            for (let i = actionIndex; i < mirror.actions.length; i++) {
+              const remainingActionLines = safeSplitTextToSize(doc, mirror.actions[i], columnWidth - 16);
+              remainingActionsHeight += remainingActionLines.length * 4 + 8; // Content + spacing
+            }
+            remainingActionsHeight += 10; // Bottom padding
             
-            doc.setFontSize(9);
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+            // Redraw premium actions card on new page
+            drawCard(gridLeftX, actionContentY, columnWidth, remainingActionsHeight, true);
+            
+            // Actions header with icon on new page
+            doc.setFillColor(...colors.success);
+            doc.circle(gridLeftX + 10, actionContentY + 8, 3, 'F');
+            
+            // Re-add actions header on new page
+            doc.setFontSize(typography.h3.size);
+            doc.setFont('helvetica', typography.h3.weight);
+            doc.setTextColor(...colors.primary);
+            doc.text('Leadership Actions (continued)', gridLeftX + 18, actionContentY + 12);
+            actionContentY += 25;
+            
+            // Reset font for actions
+            doc.setFontSize(typography.small.size);
+            doc.setFont('helvetica', typography.small.weight);
           }
           
-          // Action chip styling with overflow handling
-          doc.setFillColor(...hexToRgb('#dbeafe'));
-          doc.setDrawColor(...hexToRgb('#3b82f6'));
+          // Premium action chip with elevated design
+          doc.setFillColor(...colors.surface);
+          doc.setDrawColor(...colors.accent);
+          doc.setLineWidth(0.5);
+          doc.rect(gridLeftX + 8, actionContentY, columnWidth - 16, chipHeight, 'FD');
           
-          if (doc.roundedRect) {
-            doc.roundedRect(gridLeftX + 3, actionY - 1, columnWidth - 10, chipHeight, 1, 1, 'FD');
-          } else {
-            doc.rect(gridLeftX + 3, actionY - 1, columnWidth - 10, chipHeight, 'FD');
-          }
-          
-          doc.setTextColor(...hexToRgb('#1e40af'));
+          // Action text
           actionLines.forEach((line: string, lineIndex: number) => {
-            doc.text(line, gridLeftX + 5, actionY + 2 + (lineIndex * 4));
+            doc.text(line, gridLeftX + 12, actionContentY + 4 + (lineIndex * 4));
           });
           
-          actionY += chipHeight + 3;
+          actionContentY += chipHeight + 4;
         });
         
-        gridLeftY += actionsHeight + 5;
+        gridLeftY = actionContentY + 10;
       }
       
-      // Watchouts (Right Column)  
+      // Premium Watchouts (Right Column)  
       if (mirror.watchouts?.length) {
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-        doc.text('Watch-outs', gridRightX, gridRightY);
-        gridRightY += 8;
-        
-        // Calculate dynamic height based on content for page-fit check
-        let totalWatchoutHeight = 10; // Base padding
+        // Calculate dynamic height for watchouts
+        let estimatedWatchoutsHeight = 22; // Header space
         mirror.watchouts.forEach(watchout => {
-          const watchoutLines = safeSplitTextToSize(doc, watchout, columnWidth - 20);
-          totalWatchoutHeight += watchoutLines.length * 5 + 3; // Line height + spacing
+          const watchoutLines = safeSplitTextToSize(doc, watchout, columnWidth - 16);
+          estimatedWatchoutsHeight += watchoutLines.length * 4 + 8; // Content + spacing
         });
+        estimatedWatchoutsHeight += 10; // Bottom padding
         
-        const watchoutsHeight = Math.max(totalWatchoutHeight, 25);
-        const totalWatchoutsContainerHeight = watchoutsHeight + 8; // Include title space
-        
-        // Check if entire watchouts container will fit on current page
-        if (gridRightY + totalWatchoutsContainerHeight > maxY - 20) {
+        // Check if entire watchouts section will fit on current page
+        if (gridRightY + estimatedWatchoutsHeight > maxY - 20) {
+          addPageFooter();
           doc.addPage();
-          gridLeftY = margin;
-          gridRightY = margin;
+          gridLeftY = margin + 15;
+          gridRightY = margin + 15;
           currentY = margin;
           
-          // Re-add section header after page break
+          // Re-add section header on new page
           doc.setFontSize(16);
           doc.setFont('helvetica', 'bold');
-          doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
+          doc.setTextColor(...colors.accent);
           doc.text('LEADERSHIP GUIDANCE (continued)', margin, gridRightY);
-          gridLeftY += 12;
-          gridRightY += 12;
-          
-          // Re-add watchouts title
-          doc.setFontSize(12);
-          doc.setFont('helvetica', 'bold');
-          doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-          doc.text('Watch-outs', gridRightX, gridRightY);
-          gridRightY += 8;
+          gridRightY += 15;
         }
         
-        // Create bordered container for watchouts
-        doc.setDrawColor(...hexToRgb('#e5e7eb'));
-        doc.setFillColor(...hexToRgb('#fef3c7'));
-        doc.rect(gridRightX, gridRightY - 3, columnWidth, watchoutsHeight, 'FD');
+        // Premium Watchouts Card with dynamic height
+        drawCard(gridRightX, gridRightY, columnWidth, estimatedWatchoutsHeight, true);
         
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+        // Watchouts header with icon
+        doc.setFillColor(...colors.warning);
+        doc.circle(gridRightX + 10, gridRightY + 8, 3, 'F');
         
-        let watchoutY = gridRightY + 2;
+        doc.setFontSize(typography.h3.size);
+        doc.setFont('helvetica', typography.h3.weight);
+        doc.setTextColor(...colors.primary);
+        doc.text('Watch-outs', gridRightX + 18, gridRightY + 12);
+        
+        // Premium watchout items with enhanced styling
+        let watchoutContentY = gridRightY + 22;
+        doc.setFontSize(typography.small.size);
+        doc.setFont('helvetica', typography.small.weight);
+        doc.setTextColor(...colors.primary);
+        
         mirror.watchouts.forEach((watchout, watchoutIndex) => {
           // Handle text overflow with proper wrapping
-          const watchoutLines = safeSplitTextToSize(doc, watchout, columnWidth - 20);
-          const chipHeight = watchoutLines.length * 4 + 2;
+          const watchoutLines = safeSplitTextToSize(doc, watchout, columnWidth - 16);
+          const chipHeight = watchoutLines.length * 4 + 4;
           
-          // Per-item pagination check - if individual watchout won't fit, break to new page
-          if (watchoutY + chipHeight > maxY - 25) {
+          // Pagination check for each watchout
+          if (watchoutContentY + chipHeight > maxY - 20) {
+            // Add footer before page break
+            addPageFooter();
             doc.addPage();
-            watchoutY = margin + 15; // Leave space for potential header
+            watchoutContentY = margin + 15;
             gridLeftY = margin + 15;
             gridRightY = margin + 15;
             
-            // Re-create container background on new page
-            doc.setDrawColor(...hexToRgb('#e5e7eb'));
-            doc.setFillColor(...hexToRgb('#fef3c7'));
-            const remainingHeight = (mirror.watchouts!.length - watchoutIndex) * 20; // Estimate
-            doc.rect(gridRightX, watchoutY - 3, columnWidth, Math.min(remainingHeight, maxY - watchoutY - 20), 'FD');
+            // Calculate remaining watchouts height for new page card
+            let remainingWatchoutsHeight = 22; // Header space
+            for (let i = watchoutIndex; i < mirror.watchouts.length; i++) {
+              const remainingWatchoutLines = safeSplitTextToSize(doc, mirror.watchouts[i], columnWidth - 16);
+              remainingWatchoutsHeight += remainingWatchoutLines.length * 4 + 8; // Content + spacing
+            }
+            remainingWatchoutsHeight += 10; // Bottom padding
             
-            doc.setFontSize(9);
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+            // Redraw premium watchouts card on new page
+            drawCard(gridRightX, watchoutContentY, columnWidth, remainingWatchoutsHeight, true);
+            
+            // Watchouts header with icon on new page
+            doc.setFillColor(...colors.warning);
+            doc.circle(gridRightX + 10, watchoutContentY + 8, 3, 'F');
+            
+            // Re-add watchouts header on new page
+            doc.setFontSize(typography.h3.size);
+            doc.setFont('helvetica', typography.h3.weight);
+            doc.setTextColor(...colors.primary);
+            doc.text('Watch-outs (continued)', gridRightX + 18, watchoutContentY + 12);
+            watchoutContentY += 25;
+            
+            // Reset font for watchouts
+            doc.setFontSize(typography.small.size);
+            doc.setFont('helvetica', typography.small.weight);
           }
           
-          // Watchout chip styling with overflow handling
-          doc.setFillColor(...hexToRgb('#fed7aa'));
-          doc.setDrawColor(...hexToRgb('#f59e0b'));
+          // Premium watchout chip with elevated design
+          doc.setFillColor(...colors.surface);
+          doc.setDrawColor(...colors.warning);
+          doc.setLineWidth(0.5);
+          doc.rect(gridRightX + 8, watchoutContentY, columnWidth - 16, chipHeight, 'FD');
           
-          if (doc.roundedRect) {
-            doc.roundedRect(gridRightX + 3, watchoutY - 1, columnWidth - 10, chipHeight, 1, 1, 'FD');
-          } else {
-            doc.rect(gridRightX + 3, watchoutY - 1, columnWidth - 10, chipHeight, 'FD');
-          }
-          
-          doc.setTextColor(...hexToRgb('#92400e'));
+          // Watchout text
           watchoutLines.forEach((line: string, lineIndex: number) => {
-            doc.text(line, gridRightX + 5, watchoutY + 2 + (lineIndex * 4));
+            doc.text(line, gridRightX + 12, watchoutContentY + 4 + (lineIndex * 4));
           });
           
-          watchoutY += chipHeight + 3;
+          watchoutContentY += chipHeight + 4;
         });
         
-        gridRightY += watchoutsHeight + 5;
+        gridRightY = watchoutContentY + 10;
       }
       
       currentY = Math.max(gridLeftY, gridRightY) + 5;
@@ -697,7 +806,7 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
       checkPageOverflow(totalScenarioHeight);
       doc.setFontSize(16);
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
+      doc.setTextColor(...colors.accent);
       doc.text('SCENARIO LENS', margin, currentY);
       currentY += 12;
       
@@ -708,7 +817,7 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
       
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.setTextColor(...colors.primary);
       
       let scenarioY = currentY + 2;
       if (mirror.scenarios.if_regulation_tightens) {
@@ -739,17 +848,17 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
     if (isLegacyFormat) {
       checkPageOverflow(40);
       // Background for discussion section
-      doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
+      doc.setFillColor(...colors.surface);
       doc.rect(margin, currentY - 5, contentWidth, 35, 'F');
       
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
+      doc.setTextColor(...colors.accent);
       doc.text('NOTES FOR YOUR DISCUSSION', margin + 5, currentY + 5);
       
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.setTextColor(...colors.primary);
       
       const discussionNotes = [
         '• Underline one advantage and one constraint that surprised you.',
@@ -901,6 +1010,7 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
     // Enhanced page overflow check
     const checkPageOverflow = (additionalHeight: number): boolean => {
       if (currentY + additionalHeight > maxY) {
+        addPageFooter();
         doc.addPage();
         currentY = margin;
         return true;
@@ -963,7 +1073,7 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
       
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.setTextColor(...colors.primary);
       sessionData.goals.forEach(goal => {
         checkPageOverflow(6);
         doc.text(`• ${goal}`, margin + 5, currentY);
@@ -1012,7 +1122,7 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
       
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.setTextColor(...colors.primary);
       sessionData.emphasizedLenses.forEach(lens => {
         checkPageOverflow(6);
         doc.text(`• ${lens}`, margin + 5, currentY);
