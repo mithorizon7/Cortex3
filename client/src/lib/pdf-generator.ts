@@ -167,7 +167,7 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
     const margin = 24; // Increased margin for premium feel
     const contentWidth = pageWidth - (margin * 2);
     const columnWidth = (contentWidth - 12) / 2; // 12mm gap between columns
-    const maxY = pageHeight - 32; // Reserve more space for footer
+    const maxY = pageHeight - 40; // Reserve space for footer and padding
     
     let currentY = margin;
     
@@ -202,7 +202,7 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
     
     // Helper functions for premium design
     const addPageFooter = () => {
-      const footerY = pageHeight - 15;
+      const footerY = pageHeight - 25; // Match reserved space with padding
       doc.setFontSize(typography.caption.size);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(...colors.secondary);
@@ -916,12 +916,10 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
     doc.text(disclaimerLines, margin, currentY);
     currentY += disclaimerHeight;
     
-    // Footer
-    const footerY = pageHeight - 15;
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...hexToRgb('#888888'));
-    doc.text('© 2024 CORTEX™ AI Strategic Maturity Program', margin, footerY);
+    // Final page footer (only add if not already added by page break)
+    if (currentY < maxY) {
+      addPageFooter();
+    }
     
     // Generate and download PDF
     const pdfBlob = doc.output('blob');
@@ -1028,6 +1026,24 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
     const accentColor = hexToRgb('#6366f1');
     const lightGray = hexToRgb('#f3f4f6');
     const whiteColor = [255, 255, 255] as [number, number, number];
+
+    // Colors object for consistency with situation assessment
+    const colors = {
+      primary: primaryColor,
+      secondary: hexToRgb('#666666'),
+      accent: accentColor,
+      muted: lightGray
+    };
+
+    // Add page footer function for options studio
+    const addPageFooter = () => {
+      const footerY = pageHeight - 15;
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...colors.secondary);
+      doc.text('CORTEX™ Options Studio Report', margin, footerY);
+      doc.text(`Page ${doc.getCurrentPageInfo().pageNumber}`, pageWidth - margin - 15, footerY);
+    };
 
     // Enhanced page overflow check
     const checkPageOverflow = (additionalHeight: number): boolean => {
