@@ -21,7 +21,9 @@ export function AuthDebug() {
         currentOrigin: window.location.origin,
         apiKey: import.meta.env.VITE_FIREBASE_API_KEY ? 'Set' : 'Missing',
         projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'Missing',
-        appId: import.meta.env.VITE_FIREBASE_APP_ID ? 'Set' : 'Missing'
+        appId: import.meta.env.VITE_FIREBASE_APP_ID ? 'Set' : 'Missing',
+        expectedAuthDomain: window.location.hostname,
+        expectedRedirectURI: `${window.location.origin}/__/auth/handler`
       };
       
       console.log('🔧 Environment:', env);
