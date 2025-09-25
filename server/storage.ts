@@ -2,7 +2,8 @@ import { type Assessment, type InsertAssessment, type OptionsStudioSession, type
 import { randomUUID } from "crypto";
 import { logger, withErrorHandling } from "./logger";
 import { withDatabaseErrorHandling } from "./utils/database-errors";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
+import type { PgTransaction } from 'drizzle-orm/pg-core';
 
 // Lazy-load database connection to avoid initialization errors in tests
 let _db: any = null;
@@ -45,9 +46,11 @@ export interface IStorage {
   // Cohort operations
   getCohort(id: string): Promise<Cohort | null>;
   getCohortByCode(code: string): Promise<Cohort | null>;
+  getAllCohorts(): Promise<Cohort[]>;
   createCohort(cohort: InsertCohort): Promise<Cohort>;
   updateCohort(id: string, updates: Partial<InsertCohort>): Promise<Cohort | null>;
   joinCohort(userId: string, cohortId: string): Promise<User | null>;
+  joinCohortAtomic(userId: string, cohortId: string): Promise<{ user: User; cohort: Cohort } | null>;
   getCohortUsers(cohortId: string): Promise<User[]>;
 }
 
@@ -460,6 +463,113 @@ export class DatabaseStorage implements IStorage {
           });
           return null;
         }
+      },
+      { functionArgs: { userId, cohortId } }
+    );
+  }
+
+  async getAllCohorts(): Promise<Cohort[]> {
+    return withDatabaseErrorHandling(
+      'getAllCohorts',
+      async () => {
+        const db = await getDb();
+        const allCohorts = await db
+          .select()
+          .from(cohorts)
+          .orderBy(desc(cohorts.createdAt));
+        
+        logger.debug('All cohorts retrieved successfully', {
+          additionalContext: { 
+            cohortCount: allCohorts.length 
+          }
+        });
+        
+        return allCohorts;
+      },
+      { functionArgs: {} }
+    );
+  }
+
+  async joinCohortAtomic(userId: string, cohortId: string): Promise<{ user: User; cohort: Cohort } | null> {
+    return withDatabaseErrorHandling(
+      'joinCohortAtomic',
+      async () => {
+        const db = await getDb();
+        
+        // Use a database transaction to ensure atomicity with proper business logic checks
+        const result = await db.transaction(async (tx: PgTransaction<any, any, any>) => {
+          // First, get current cohort state with FOR UPDATE lock to prevent race conditions
+          const [currentCohort] = await tx
+            .select()
+            .from(cohorts)
+            .where(eq(cohorts.id, cohortId))
+            .for('update');
+          
+          if (!currentCohort) {
+            throw new Error('Cohort not found');
+          }
+          
+          // Check if cohort has available slots
+          if (currentCohort.usedSlots >= currentCohort.allowedSlots) {
+            throw new Error('Cohort is full');
+          }
+          
+          // Get current user state with FOR UPDATE lock
+          const [currentUser] = await tx
+            .select()
+            .from(users)
+            .where(eq(users.userId, userId))
+            .for('update');
+          
+          if (!currentUser) {
+            throw new Error('User not found');
+          }
+          
+          // Check if user is already in this cohort (prevent duplicate joins)
+          if (currentUser.cohortId === cohortId) {
+            throw new Error('User is already a member of this cohort');
+          }
+          
+          // Check if user is in any other cohort (enforce single cohort membership)
+          if (currentUser.cohortId !== null) {
+            throw new Error('User is already a member of another cohort');
+          }
+          
+          // All checks passed - now perform the updates atomically
+          // Update the user's cohort membership first
+          const [updatedUser] = await tx
+            .update(users)
+            .set({ cohortId })
+            .where(eq(users.userId, userId))
+            .returning();
+          
+          if (!updatedUser) {
+            throw new Error('Failed to update user cohort membership');
+          }
+          
+          // Then increment the cohort's used slots
+          const [updatedCohort] = await tx
+            .update(cohorts)
+            .set({ usedSlots: currentCohort.usedSlots + 1 })
+            .where(eq(cohorts.id, cohortId))
+            .returning();
+          
+          if (!updatedCohort) {
+            throw new Error('Failed to update cohort slots');
+          }
+          
+          return { user: updatedUser, cohort: updatedCohort };
+        });
+        
+        logger.info('User joined cohort atomically', {
+          additionalContext: { 
+            userId, 
+            cohortId,
+            newUsedSlots: result.cohort.usedSlots
+          }
+        });
+        
+        return result;
       },
       { functionArgs: { userId, cohortId } }
     );
@@ -901,6 +1011,77 @@ export class MemStorage implements IStorage {
         });
         
         return updated;
+      },
+      { functionArgs: { userId, cohortId } }
+    );
+  }
+
+  async getAllCohorts(): Promise<Cohort[]> {
+    return withErrorHandling(
+      'getAllCohorts',
+      async () => {
+        const allCohorts = Array.from(this.cohorts.values())
+          .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
+        
+        logger.debug('All cohorts retrieved successfully', {
+          additionalContext: { 
+            cohortCount: allCohorts.length 
+          }
+        });
+        
+        return allCohorts;
+      },
+      { functionArgs: {} }
+    );
+  }
+
+  async joinCohortAtomic(userId: string, cohortId: string): Promise<{ user: User; cohort: Cohort } | null> {
+    return withErrorHandling(
+      'joinCohortAtomic',
+      async () => {
+        const user = this.users.get(userId);
+        const cohort = this.cohorts.get(cohortId);
+        
+        if (!user) {
+          throw new Error('User not found');
+        }
+        
+        if (!cohort) {
+          throw new Error('Cohort not found');
+        }
+        
+        // Check if cohort has available slots
+        if (cohort.usedSlots >= cohort.allowedSlots) {
+          throw new Error('Cohort is full');
+        }
+        
+        // Check if user is already in this cohort (prevent duplicate joins)
+        if (user.cohortId === cohortId) {
+          throw new Error('User is already a member of this cohort');
+        }
+        
+        // Check if user is in any other cohort (enforce single cohort membership)
+        if (user.cohortId !== null) {
+          throw new Error('User is already a member of another cohort');
+        }
+        
+        // All checks passed - perform the updates
+        const updatedUser: User = { ...user, cohortId };
+        const updatedCohort: Cohort = { ...cohort, usedSlots: cohort.usedSlots + 1 };
+        
+        // Update both in memory
+        this.users.set(userId, updatedUser);
+        this.cohorts.set(cohortId, updatedCohort);
+        
+        logger.info('User joined cohort atomically', {
+          additionalContext: { 
+            userId, 
+            cohortId,
+            newUsedSlots: updatedCohort.usedSlots
+          }
+        });
+        
+        return { user: updatedUser, cohort: updatedCohort };
       },
       { functionArgs: { userId, cohortId } }
     );
