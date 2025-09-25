@@ -624,7 +624,7 @@ router.post('/join', requireAuthMiddleware, async (req: Request, res: Response) 
     if (!user) {
       // Create user profile if it doesn't exist (first time joining a cohort)
       // Extract email from Firebase token - if not available, require re-authentication
-      const userEmail = (req as any).userEmail;
+      const userEmail = req.userEmail;
       if (!userEmail) {
         logger.warn('User email not available during cohort join', {
           additionalContext: {
