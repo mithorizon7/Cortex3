@@ -110,51 +110,9 @@ router.post('/', requireSuperAdminMiddleware, async (req: Request, res: Response
     // Validate request body
     const validatedData = insertCohortSchema.parse(req.body);
     
-    // Generate secure unique 6-digit access code
-    let code: string;
-    let attempts = 0;
-    const maxAttempts = 10;
-    
-    do {
-      // Generate cryptographically secure 6-digit code
-      const randomBytes = require('crypto').randomBytes(3);
-      code = (parseInt(randomBytes.toString('hex'), 16) % 1000000).toString().padStart(6, '0');
-      attempts++;
-      
-      // Check if code already exists
-      const existingCohort = await withDatabaseErrorHandling(
-        'check_cohort_code_uniqueness',
-        () => storage.getCohortByCode(code)
-      );
-      
-      if (!existingCohort) break;
-      
-    } while (attempts < maxAttempts);
-    
-    if (attempts >= maxAttempts) {
-      logger.error(
-        'Failed to generate unique cohort code after maximum attempts',
-        new Error('Code generation failed'),
-        {
-          additionalContext: {
-            operation: 'create_cohort_code_generation_failed',
-            attempts,
-            incidentId
-          }
-        }
-      );
-      
-      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        .json(createUserError('Unable to generate unique access code. Please try again.', incidentId, HTTP_STATUS.INTERNAL_SERVER_ERROR));
-      return;
-    }
-    
     const cohort = await withDatabaseErrorHandling(
       'create_cohort_database',
-      () => storage.createCohort({
-        ...validatedData,
-        code
-      })
+      () => storage.createCohort(validatedData)
     );
     
     res.status(HTTP_STATUS.CREATED).json(cohort);

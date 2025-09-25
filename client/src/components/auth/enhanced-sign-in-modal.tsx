@@ -212,11 +212,11 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
                         <Input
                           id="cohortAccessCode"
                           type="text"
-                          placeholder="Enter 6-digit access code"
+                          placeholder="Enter 6-8 digit access code"
                           value={cohortAccessCode}
                           onChange={(e) => setCohortAccessCode(e.target.value.toUpperCase())}
                           disabled={emailLoading}
-                          maxLength={6}
+                          maxLength={8}
                           required
                           data-testid="cohort-access-code-input"
                         />
@@ -258,7 +258,7 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
                   
                   <Button 
                     type="submit"
-                    disabled={emailLoading || !email || !password || (isSignUp && (password.length < 6 || !cohortAccessCode || cohortAccessCode.length !== 6))}
+                    disabled={emailLoading || !email || !password || (isSignUp && (password.length < 6 || !cohortAccessCode || cohortAccessCode.length < 6 || cohortAccessCode.length > 8))}
                     className="w-full"
                     size="lg"
                     data-testid={isSignUp ? "email-signup-button" : "email-signin-button"}

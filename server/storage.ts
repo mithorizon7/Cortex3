@@ -445,9 +445,29 @@ export class DatabaseStorage implements IStorage {
       'createCohort',
       async () => {
         const db = await getDb();
+        
+        // Generate unique 6-digit code (same logic as in routes and memory storage)
+        let code: string;
+        let attempts = 0;
+        const maxAttempts = 10;
+        
+        do {
+          const randomBytes = require('crypto').randomBytes(3);
+          code = (parseInt(randomBytes.toString('hex'), 16) % 1000000).toString().padStart(6, '0');
+          attempts++;
+          
+          // Check if code already exists in database
+          const [existingCohort] = await db.select().from(cohorts).where(eq(cohorts.code, code));
+          if (!existingCohort) break;
+          
+          if (attempts >= maxAttempts) {
+            throw new Error('Failed to generate unique cohort code');
+          }
+        } while (true);
+        
         const [cohort] = await db
           .insert(cohorts)
-          .values(insertCohort)
+          .values({ ...insertCohort, code })
           .returning();
         
         logger.info('Cohort created successfully', {
@@ -1159,9 +1179,30 @@ export class MemStorage implements IStorage {
       'createCohort',
       async () => {
         const id = randomUUID();
+        
+        // Generate unique 6-digit code (same logic as in routes)
+        let code: string;
+        let attempts = 0;
+        const maxAttempts = 10;
+        
+        do {
+          const randomBytes = require('crypto').randomBytes(3);
+          code = (parseInt(randomBytes.toString('hex'), 16) % 1000000).toString().padStart(6, '0');
+          attempts++;
+          
+          // Check if code already exists in memory storage
+          const existingCohort = Array.from(this.cohorts.values()).find(c => c.code === code);
+          if (!existingCohort) break;
+          
+          if (attempts >= maxAttempts) {
+            throw new Error('Failed to generate unique cohort code');
+          }
+        } while (true);
+        
         const cohort: Cohort = { 
           ...insertCohort,
           id,
+          code,
           description: insertCohort.description || null,
           status: insertCohort.status || 'active',
           usedSlots: 0,
