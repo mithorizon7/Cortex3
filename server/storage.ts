@@ -67,6 +67,7 @@ export interface IStorage {
   getUser(userId: string): Promise<User | null>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(userId: string, updates: Partial<InsertUser>): Promise<User | null>;
+  getSuperAdminCount(): Promise<number>;
   
   // Cohort operations
   getCohort(id: string): Promise<Cohort | null>;
@@ -367,6 +368,28 @@ export class DatabaseStorage implements IStorage {
         }
       },
       { functionArgs: { userId, updates } }
+    );
+  }
+
+  async getSuperAdminCount(): Promise<number> {
+    return withDatabaseErrorHandling(
+      'getSuperAdminCount',
+      async () => {
+        const db = await getDb();
+        const [result] = await db
+          .select({ count: count() })
+          .from(users)
+          .where(eq(users.role, 'super_admin'));
+        
+        const adminCount = result.count;
+        
+        logger.debug('Super admin count retrieved', {
+          additionalContext: { count: adminCount }
+        });
+        
+        return adminCount;
+      },
+      { functionArgs: {} }
     );
   }
 
@@ -1066,6 +1089,23 @@ export class MemStorage implements IStorage {
         return updated;
       },
       { functionArgs: { userId, updates } }
+    );
+  }
+
+  async getSuperAdminCount(): Promise<number> {
+    return withErrorHandling(
+      'getSuperAdminCount',
+      async () => {
+        const adminCount = Array.from(this.users.values())
+          .filter(user => user.role === 'super_admin').length;
+        
+        logger.debug('Super admin count retrieved', {
+          additionalContext: { count: adminCount }
+        });
+        
+        return adminCount;
+      },
+      { functionArgs: {} }
     );
   }
 

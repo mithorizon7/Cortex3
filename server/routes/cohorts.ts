@@ -482,6 +482,51 @@ router.post('/validate-access-code', async (req: Request, res: Response) => {
       return;
     }
     
+    // Check for bootstrap admin code first - only if no super admin exists yet
+    const bootstrapCode = process.env.BOOTSTRAP_ADMIN_CODE;
+    if (bootstrapCode && accessCode === bootstrapCode) {
+      // Check if any super admin already exists
+      const existingSuperAdmin = await withDatabaseErrorHandling(
+        'check_existing_super_admin',
+        () => storage.getSuperAdminCount()
+      );
+      
+      if (existingSuperAdmin > 0) {
+        logger.warn('Bootstrap code rejected - super admin already exists', {
+          additionalContext: {
+            operation: 'bootstrap_admin_already_exists',
+            incidentId
+          }
+        });
+        
+        res.status(HTTP_STATUS.FORBIDDEN).json({ 
+          valid: false,
+          error: 'Bootstrap access is no longer available'
+        });
+        return;
+      }
+      
+      logger.info('Bootstrap admin code validated', {
+        additionalContext: {
+          operation: 'bootstrap_admin_access',
+          incidentId
+        }
+      });
+      
+      // Return generic response to avoid revealing bootstrap details
+      res.json({ 
+        valid: true,
+        cohort: {
+          id: 'special-access',
+          name: 'Administrative Access',
+          description: 'Special administrative access',
+          allowedSlots: 1,
+          usedSlots: 0
+        }
+      });
+      return;
+    }
+    
     // Find cohort by access code
     const cohort = await withDatabaseErrorHandling(
       'get_cohort_by_code_validation',
@@ -561,6 +606,105 @@ router.post('/join', requireAuthMiddleware, async (req: Request, res: Response) 
     
     // Validate request body
     const { code } = joinCohortSchema.parse(req.body);
+    
+    // Check for bootstrap admin code first - only if no super admin exists yet
+    const bootstrapCode = process.env.BOOTSTRAP_ADMIN_CODE;
+    if (bootstrapCode && code === bootstrapCode) {
+      // Check if any super admin already exists
+      const existingSuperAdmin = await withDatabaseErrorHandling(
+        'check_existing_super_admin',
+        () => storage.getSuperAdminCount()
+      );
+      
+      if (existingSuperAdmin > 0) {
+        logger.warn('Bootstrap admin join rejected - super admin already exists', {
+          additionalContext: {
+            operation: 'bootstrap_admin_join_rejected',
+            incidentId,
+            userId: req.userId
+          }
+        });
+        
+        res.status(HTTP_STATUS.FORBIDDEN)
+          .json(createUserError('Bootstrap access is no longer available', incidentId, HTTP_STATUS.FORBIDDEN));
+        return;
+      }
+      
+      // Handle bootstrap super admin creation
+      logger.info('Bootstrap admin joining - creating first super admin user', {
+        additionalContext: {
+          operation: 'bootstrap_admin_join',
+          incidentId,
+          userId: req.userId
+        }
+      });
+      
+      // Get or create user profile with super admin role
+      let user = await withDatabaseErrorHandling(
+        'get_user_database',
+        () => storage.getUser(req.userId!)
+      );
+      
+      if (!user) {
+        // Create super admin user profile
+        const userEmail = req.userEmail;
+        if (!userEmail) {
+          logger.warn('User email not available during bootstrap admin creation', {
+            additionalContext: {
+              operation: 'bootstrap_admin_no_email',
+              userId: req.userId,
+              incidentId
+            }
+          });
+          
+          res.status(HTTP_STATUS.BAD_REQUEST)
+            .json(createUserError('Email address is required. Please sign in again.', incidentId, HTTP_STATUS.BAD_REQUEST));
+          return;
+        }
+        
+        user = await withDatabaseErrorHandling(
+          'create_super_admin_user_database',
+          () => storage.createUser({
+            userId: req.userId!,
+            email: userEmail,
+            role: 'super_admin'
+          })
+        );
+        
+        logger.info('First super admin user created successfully', {
+          additionalContext: {
+            operation: 'bootstrap_super_admin_created',
+            userId: req.userId,
+            email: userEmail,
+            incidentId
+          }
+        });
+      } else {
+        // Update existing user to super admin
+        user = await withDatabaseErrorHandling(
+          'update_user_to_super_admin',
+          () => storage.updateUser(req.userId!, { role: 'super_admin' })
+        );
+        
+        logger.info('User upgraded to first super admin', {
+          additionalContext: {
+            operation: 'user_upgraded_to_super_admin',
+            userId: req.userId,
+            incidentId
+          }
+        });
+      }
+      
+      res.json({ 
+        success: true, 
+        message: 'Super admin account created successfully',
+        user: {
+          role: user?.role,
+          email: user?.email
+        }
+      });
+      return;
+    }
     
     // Find cohort by access code
     const cohort = await withDatabaseErrorHandling(
