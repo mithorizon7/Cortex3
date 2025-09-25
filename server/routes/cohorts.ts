@@ -485,6 +485,61 @@ router.post('/validate-access-code', async (req: Request, res: Response) => {
       return;
     }
     
+    // Check for reusable bootstrap invite code
+    const bootstrapInvite = await withDatabaseErrorHandling(
+      'get_bootstrap_invite_validation',
+      () => storage.getBootstrapInvite(accessCode)
+    );
+    
+    if (bootstrapInvite) {
+      // Validate bootstrap invite without using it
+      if (bootstrapInvite.status !== 'active') {
+        res.status(HTTP_STATUS.FORBIDDEN).json({ 
+          valid: false,
+          error: 'This bootstrap invite is no longer active'
+        });
+        return;
+      }
+      
+      if (bootstrapInvite.remainingUses <= 0) {
+        res.status(HTTP_STATUS.FORBIDDEN).json({ 
+          valid: false,
+          error: 'This bootstrap invite has been fully used'
+        });
+        return;
+      }
+      
+      if (new Date() > new Date(bootstrapInvite.expiresAt)) {
+        res.status(HTTP_STATUS.FORBIDDEN).json({ 
+          valid: false,
+          error: 'This bootstrap invite has expired'
+        });
+        return;
+      }
+      
+      logger.info('Bootstrap invite code validated', {
+        additionalContext: {
+          operation: 'bootstrap_invite_validation',
+          inviteId: bootstrapInvite.id,
+          role: bootstrapInvite.role,
+          remainingUses: bootstrapInvite.remainingUses,
+          incidentId
+        }
+      });
+      
+      res.json({ 
+        valid: true,
+        invite: {
+          id: bootstrapInvite.id,
+          role: bootstrapInvite.role,
+          description: `Bootstrap invite for ${bootstrapInvite.role} access`,
+          remainingUses: bootstrapInvite.remainingUses,
+          expiresAt: bootstrapInvite.expiresAt
+        }
+      });
+      return;
+    }
+    
     // Find cohort by access code
     const cohort = await withDatabaseErrorHandling(
       'get_cohort_by_code_validation',
@@ -662,6 +717,165 @@ router.post('/join', requireAuthMiddleware, async (req: Request, res: Response) 
         }
       });
       return;
+    }
+    
+    // Check for reusable bootstrap invite code
+    const bootstrapInvite = await withDatabaseErrorHandling(
+      'get_bootstrap_invite_by_code',
+      () => storage.getBootstrapInvite(code)
+    );
+    
+    if (bootstrapInvite) {
+      logger.info('Bootstrap invite code detected', {
+        additionalContext: {
+          operation: 'bootstrap_invite_join_attempt',
+          inviteId: bootstrapInvite.id,
+          role: bootstrapInvite.role,
+          remainingUses: bootstrapInvite.remainingUses,
+          incidentId,
+          userId: req.userId
+        }
+      });
+      
+      try {
+        // Use the bootstrap invite (validates expiry, remaining uses, etc.)
+        const usedInvite = await withDatabaseErrorHandling(
+          'use_bootstrap_invite_database',
+          () => storage.useBootstrapInvite(code, req.userId!)
+        );
+        
+        if (!usedInvite) {
+          logger.warn('Failed to use bootstrap invite', {
+            additionalContext: {
+              operation: 'bootstrap_invite_use_failed',
+              code,
+              userId: req.userId,
+              incidentId
+            }
+          });
+          
+          res.status(HTTP_STATUS.FORBIDDEN)
+            .json(createUserError('Bootstrap invite could not be used', incidentId, HTTP_STATUS.FORBIDDEN));
+          return;
+        }
+        
+        // Get or create user profile with the invite's role
+        let user = await withDatabaseErrorHandling(
+          'get_user_database',
+          () => storage.getUser(req.userId!)
+        );
+        
+        if (!user) {
+          // Create user profile with the bootstrap invite role
+          const userEmail = req.userEmail;
+          if (!userEmail) {
+            logger.warn('User email not available during bootstrap invite join', {
+              additionalContext: {
+                operation: 'bootstrap_invite_join_no_email',
+                userId: req.userId,
+                incidentId
+              }
+            });
+            
+            res.status(HTTP_STATUS.BAD_REQUEST)
+              .json(createUserError('Email address is required. Please sign in again.', incidentId, HTTP_STATUS.BAD_REQUEST));
+            return;
+          }
+          
+          user = await withDatabaseErrorHandling(
+            'create_user_with_bootstrap_role',
+            () => storage.createUser({
+              userId: req.userId!,
+              email: userEmail,
+              role: usedInvite.role,
+              invitedBy: usedInvite.issuedBy
+            })
+          );
+          
+          logger.info('User created with bootstrap invite role', {
+            additionalContext: {
+              operation: 'bootstrap_invite_user_created',
+              userId: req.userId,
+              email: userEmail,
+              role: usedInvite.role,
+              inviteId: usedInvite.id,
+              incidentId
+            }
+          });
+        } else {
+          // Update existing user with the bootstrap invite role
+          user = await withDatabaseErrorHandling(
+            'update_user_with_bootstrap_role',
+            () => storage.updateUser(req.userId!, { 
+              role: usedInvite.role,
+              invitedBy: usedInvite.issuedBy
+            })
+          );
+          
+          logger.info('User updated with bootstrap invite role', {
+            additionalContext: {
+              operation: 'bootstrap_invite_user_updated',
+              userId: req.userId,
+              role: usedInvite.role,
+              inviteId: usedInvite.id,
+              incidentId
+            }
+          });
+        }
+        
+        res.json({ 
+          success: true, 
+          message: `${usedInvite.role === 'super_admin' ? 'Super admin' : 'Admin'} account created successfully via bootstrap invite`,
+          user: {
+            role: user?.role,
+            email: user?.email
+          },
+          invite: {
+            role: usedInvite.role,
+            remainingUses: usedInvite.remainingUses
+          }
+        });
+        return;
+        
+      } catch (error) {
+        // Handle specific bootstrap invite errors
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        
+        if (errorMessage.includes('not active')) {
+          res.status(HTTP_STATUS.FORBIDDEN)
+            .json(createUserError('This bootstrap invite is no longer active', incidentId, HTTP_STATUS.FORBIDDEN));
+          return;
+        }
+        
+        if (errorMessage.includes('no remaining uses')) {
+          res.status(HTTP_STATUS.FORBIDDEN)
+            .json(createUserError('This bootstrap invite has been fully used', incidentId, HTTP_STATUS.FORBIDDEN));
+          return;
+        }
+        
+        if (errorMessage.includes('expired')) {
+          res.status(HTTP_STATUS.FORBIDDEN)
+            .json(createUserError('This bootstrap invite has expired', incidentId, HTTP_STATUS.FORBIDDEN));
+          return;
+        }
+        
+        logger.error(
+          'Bootstrap invite usage failed',
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            additionalContext: {
+              operation: 'bootstrap_invite_usage_error',
+              code,
+              userId: req.userId,
+              incidentId
+            }
+          }
+        );
+        
+        res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+          .json(createUserError('Failed to process bootstrap invite', incidentId, HTTP_STATUS.INTERNAL_SERVER_ERROR));
+        return;
+      }
     }
     
     // Find cohort by access code
