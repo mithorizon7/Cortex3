@@ -16,10 +16,35 @@ import {
   updateProfile
 } from 'firebase/auth';
 
+// Dynamic authDomain detection for multiple production domains
+const getAuthDomain = (): string => {
+  if (!import.meta.env.PROD) {
+    // Use default Firebase domain for development
+    return `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`;
+  }
+  
+  // For production, use the current domain to avoid cross-origin issues
+  const currentDomain = window.location.hostname;
+  
+  // List of known production domains that should use themselves as authDomain
+  const productionDomains = [
+    'horizoncortex.replit.app',
+    'cortexindex.com',
+    'www.cortexindex.com'
+  ];
+  
+  if (productionDomains.includes(currentDomain)) {
+    return currentDomain;
+  }
+  
+  // Fallback to Replit domain for unknown domains
+  return 'horizoncortex.replit.app';
+};
+
 // Firebase configuration with environment variables
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.PROD ? "horizoncortex.replit.app" : `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`,
+  authDomain: getAuthDomain(),
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
   storageBucket: `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebasestorage.app`,
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
