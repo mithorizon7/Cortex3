@@ -19,7 +19,7 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
   open, 
   onOpenChange 
 }) => {
-  const { signIn, signInWithEmail, signUpWithEmail, signUpWithCohort, loading, error, clearError } = useAuth();
+  const { signIn, signInWithEmail, signUpWithEmail, signUpWithCohort, signUpWithGoogleAndCohort, loading, error, clearError } = useAuth();
   const { toast } = useToast();
   
   const [email, setEmail] = useState('');
@@ -32,17 +32,28 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
   const handleGoogleSignIn = async () => {
     try {
       clearError();
-      await signIn(true);
-      // Success toast and modal closing will be handled by auth state change
-      toast({
-        title: 'Welcome!',
-        description: 'You have been successfully signed in.',
-      });
+      
+      if (isSignUp && cohortAccessCode) {
+        // For signup with cohort code
+        await signUpWithGoogleAndCohort(cohortAccessCode, true);
+        toast({
+          title: 'Account Created!',
+          description: 'Your Google account has been created and you have joined the cohort.',
+        });
+      } else {
+        // Regular sign-in
+        await signIn(true);
+        toast({
+          title: 'Welcome!',
+          description: 'You have been successfully signed in.',
+        });
+      }
+      
       onOpenChange(false);
     } catch (error) {
       console.error('Google sign-in error:', error);
       toast({
-        title: 'Sign In Failed',
+        title: isSignUp ? 'Sign Up Failed' : 'Sign In Failed',
         description: 'There was a problem signing you in with Google. Please try again.',
         variant: 'destructive',
       });
@@ -139,9 +150,26 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                {isSignUp && (
+                  <div className="space-y-2">
+                    <Label htmlFor="google-cohort-code">Cohort Access Code *</Label>
+                    <Input
+                      id="google-cohort-code"
+                      type="text"
+                      placeholder="Enter your cohort access code"
+                      value={cohortAccessCode}
+                      onChange={(e) => setCohortAccessCode(e.target.value)}
+                      maxLength={8}
+                      data-testid="input-google-cohort-code"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      You must have a valid access code to join CORTEX assessments
+                    </p>
+                  </div>
+                )}
                 <Button 
                   onClick={handleGoogleSignIn}
-                  disabled={loading}
+                  disabled={loading || (isSignUp && !cohortAccessCode)}
                   className="w-full"
                   size="lg"
                   data-testid="google-signin-button"
@@ -151,7 +179,7 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
                   ) : (
                     <Mail className="h-4 w-4 mr-2" />
                   )}
-                  {loading ? 'Creating account...' : 'Create Account with Google'}
+                  {loading ? 'Creating account...' : isSignUp ? 'Create Account with Google' : 'Sign in with Google'}
                 </Button>
                 
                 {error && (

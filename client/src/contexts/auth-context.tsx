@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { User } from 'firebase/auth';
+import { User, getAdditionalUserInfo } from 'firebase/auth';
 import { 
   auth, 
   onAuthStateChange, 
@@ -20,6 +20,7 @@ interface AuthContextType {
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmail: (email: string, password: string, displayName?: string) => Promise<void>;
   signUpWithCohort: (email: string, password: string, cohortAccessCode: string, displayName?: string) => Promise<void>;
+  signUpWithGoogleAndCohort: (cohortAccessCode: string, usePopup?: boolean) => Promise<void>;
   signOut: () => Promise<void>;
   clearError: () => void;
 }
@@ -180,6 +181,85 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, []);
 
+  const signUpWithGoogleAndCohort = useCallback(async (cohortAccessCode: string, usePopup = true) => {
+    if (!isFirebaseConfigured()) {
+      const errorMsg = 'Authentication is not available. Please configure Firebase.';
+      setError(errorMsg);
+      throw new Error(errorMsg);
+    }
+    
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // First, validate the cohort access code
+      const validateResponse = await fetch('/api/cohorts/validate-access-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ accessCode: cohortAccessCode }),
+      });
+      
+      const validationResult = await validateResponse.json();
+      
+      if (!validationResult.valid) {
+        throw new Error(validationResult.error || 'Invalid cohort access code');
+      }
+      
+      // Create Firebase user account with Google OAuth
+      const userCredential = await signInWithGoogle(usePopup);
+      const firebaseUser = userCredential.user;
+      // Use Firebase's official API to determine if this is a new user account
+      const additionalUserInfo = getAdditionalUserInfo(userCredential);
+      const isNewUser = additionalUserInfo?.isNewUser ?? false;
+      
+      try {
+        // Get Firebase ID token for authentication with our API
+        const idToken = await firebaseUser.getIdToken();
+        
+        // Join the cohort using the validated access code
+        const joinResponse = await fetch('/api/cohorts/join', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`,
+          },
+          body: JSON.stringify({ code: cohortAccessCode }),
+        });
+        
+        if (!joinResponse.ok) {
+          const joinError = await joinResponse.json();
+          throw new Error(joinError.error || 'Failed to join cohort');
+        }
+      } catch (joinError) {
+        // Only delete the Firebase account if it's a newly created account
+        // Do NOT delete existing accounts that just failed to join a cohort
+        if (isNewUser) {
+          try {
+            await firebaseUser.delete();
+            console.log('Deleted newly created Firebase account after failed cohort join');
+          } catch (deleteError) {
+            console.error('Failed to delete Firebase account after cohort join failure:', deleteError);
+            // Note: We still throw the original join error, not the delete error
+          }
+        } else {
+          console.log('Cohort join failed for existing account - not deleting Firebase account');
+        }
+        
+        // Re-throw the original cohort join error
+        throw joinError;
+      }
+      
+      // Don't set loading to false here - let the auth state listener handle it
+    } catch (error: any) {
+      console.error('Google cohort sign-up error:', error);
+      setError(getAuthErrorMessage(error));
+      setLoading(false); // Only set loading to false on error
+      throw error; // Re-throw so UI components can handle the error
+    }
+  }, []);
+
   const signOut = useCallback(async () => {
     if (!isFirebaseConfigured()) {
       setError('Authentication is not available. Please configure Firebase.');
@@ -238,6 +318,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     signInWithEmail,
     signUpWithEmail,
     signUpWithCohort,
+    signUpWithGoogleAndCohort,
     signOut,
     clearError,
   };
