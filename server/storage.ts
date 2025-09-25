@@ -2,8 +2,33 @@ import { type Assessment, type InsertAssessment, type OptionsStudioSession, type
 import { randomUUID } from "crypto";
 import { logger, withErrorHandling } from "./logger";
 import { withDatabaseErrorHandling } from "./utils/database-errors";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, sql, count, avg, isNotNull } from "drizzle-orm";
 import type { PgTransaction } from 'drizzle-orm/pg-core';
+
+// Analytics types
+export interface CohortAnalytics {
+  cohortId: string;
+  cohortName: string;
+  cohortCode: string;
+  cohortStatus: string;
+  totalMembers: number;
+  allowedSlots: number;
+  activeMembers: number;
+  totalAssessments: number;
+  completedAssessments: number;
+  completionRate: number;
+  averageCompletionTime: number | null;
+  averagePillarScores: {
+    C: number | null;
+    O: number | null;
+    R: number | null;
+    T: number | null;
+    E: number | null;
+    X: number | null;
+  };
+  lastActivity: string | null;
+  createdAt: string;
+}
 
 // Lazy-load database connection to avoid initialization errors in tests
 let _db: any = null;
@@ -49,9 +74,14 @@ export interface IStorage {
   getAllCohorts(): Promise<Cohort[]>;
   createCohort(cohort: InsertCohort): Promise<Cohort>;
   updateCohort(id: string, updates: Partial<InsertCohort>): Promise<Cohort | null>;
+  deleteCohort(id: string): Promise<boolean>;
   joinCohort(userId: string, cohortId: string): Promise<User | null>;
   joinCohortAtomic(userId: string, cohortId: string): Promise<{ user: User; cohort: Cohort } | null>;
   getCohortUsers(cohortId: string): Promise<User[]>;
+  
+  // Analytics operations
+  getCohortAnalytics(cohortId?: string | null): Promise<CohortAnalytics[]>;
+  getCohortAnalyticsById(cohortId: string): Promise<CohortAnalytics | null>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -598,6 +628,157 @@ export class DatabaseStorage implements IStorage {
       { functionArgs: { cohortId } }
     );
   }
+
+  async deleteCohort(id: string): Promise<boolean> {
+    return withDatabaseErrorHandling(
+      'deleteCohort',
+      async () => {
+        const db = await getDb();
+        
+        // First check if cohort exists
+        const [existing] = await db.select().from(cohorts).where(eq(cohorts.id, id));
+        if (!existing) {
+          logger.warn('Cannot delete cohort - not found', {
+            additionalContext: { cohortId: id }
+          });
+          return false;
+        }
+        
+        // Delete the cohort (cascade should handle foreign keys)
+        const [deleted] = await db
+          .delete(cohorts)
+          .where(eq(cohorts.id, id))
+          .returning();
+        
+        if (deleted) {
+          logger.info('Cohort deleted successfully', {
+            additionalContext: { cohortId: id, cohortName: existing.name }
+          });
+          return true;
+        }
+        
+        return false;
+      },
+      { functionArgs: { id } }
+    );
+  }
+
+  async getCohortAnalytics(cohortId?: string | null): Promise<CohortAnalytics[]> {
+    return withDatabaseErrorHandling(
+      'getCohortAnalytics',
+      async () => {
+        const db = await getDb();
+        
+        // Build base query for cohorts
+        let cohortQuery = db.select().from(cohorts);
+        
+        if (cohortId) {
+          cohortQuery = cohortQuery.where(eq(cohorts.id, cohortId));
+        }
+        
+        const cohortsData = await cohortQuery;
+        const analyticsResults: CohortAnalytics[] = [];
+        
+        for (const cohort of cohortsData) {
+          // Get user counts for this cohort
+          const [userCounts] = await db
+            .select({
+              total: count(users.userId),
+              active: sql<number>`COUNT(CASE WHEN ${users.lastActiveAt} IS NOT NULL THEN 1 END)`
+            })
+            .from(users)
+            .where(eq(users.cohortId, cohort.id));
+          
+          // Get assessment counts and completion data
+          const [assessmentCounts] = await db
+            .select({
+              total: count(assessments.id),
+              completed: sql<number>`COUNT(CASE WHEN ${assessments.completedAt} IS NOT NULL THEN 1 END)`
+            })
+            .from(assessments)
+            .innerJoin(users, eq(assessments.userId, users.userId))
+            .where(eq(users.cohortId, cohort.id));
+          
+          // Get average pillar scores
+          const [pillarAvgs] = await db
+            .select({
+              avgC: avg(sql<number>`CAST((${assessments.pillarScores}->>'C') AS NUMERIC)`),
+              avgO: avg(sql<number>`CAST((${assessments.pillarScores}->>'O') AS NUMERIC)`),
+              avgR: avg(sql<number>`CAST((${assessments.pillarScores}->>'R') AS NUMERIC)`),
+              avgT: avg(sql<number>`CAST((${assessments.pillarScores}->>'T') AS NUMERIC)`),
+              avgE: avg(sql<number>`CAST((${assessments.pillarScores}->>'E') AS NUMERIC)`),
+              avgX: avg(sql<number>`CAST((${assessments.pillarScores}->>'X') AS NUMERIC)`)
+            })
+            .from(assessments)
+            .innerJoin(users, eq(assessments.userId, users.userId))
+            .where(and(
+              eq(users.cohortId, cohort.id),
+              isNotNull(assessments.pillarScores)
+            ));
+          
+          // Get last activity timestamp
+          const [lastActivity] = await db
+            .select({
+              lastActivity: sql<string>`MAX(GREATEST(${users.lastActiveAt}, ${assessments.createdAt}))`
+            })
+            .from(users)
+            .leftJoin(assessments, eq(assessments.userId, users.userId))
+            .where(eq(users.cohortId, cohort.id));
+          
+          const totalMembers = userCounts?.total || 0;
+          const completedAssessments = assessmentCounts?.completed || 0;
+          const totalAssessments = assessmentCounts?.total || 0;
+          
+          const analytics: CohortAnalytics = {
+            cohortId: cohort.id,
+            cohortName: cohort.name,
+            cohortCode: cohort.code,
+            cohortStatus: cohort.status,
+            totalMembers,
+            allowedSlots: cohort.allowedSlots,
+            activeMembers: userCounts?.active || 0,
+            totalAssessments,
+            completedAssessments,
+            completionRate: totalAssessments > 0 ? (completedAssessments / totalAssessments) * 100 : 0,
+            averageCompletionTime: null, // Would require more complex calculation
+            averagePillarScores: {
+              C: pillarAvgs?.avgC ? Number(pillarAvgs.avgC) : null,
+              O: pillarAvgs?.avgO ? Number(pillarAvgs.avgO) : null,
+              R: pillarAvgs?.avgR ? Number(pillarAvgs.avgR) : null,
+              T: pillarAvgs?.avgT ? Number(pillarAvgs.avgT) : null,
+              E: pillarAvgs?.avgE ? Number(pillarAvgs.avgE) : null,
+              X: pillarAvgs?.avgX ? Number(pillarAvgs.avgX) : null,
+            },
+            lastActivity: lastActivity?.lastActivity || null,
+            createdAt: cohort.createdAt || new Date().toISOString()
+          };
+          
+          analyticsResults.push(analytics);
+        }
+        
+        logger.info('Cohort analytics retrieved successfully', {
+          additionalContext: { 
+            cohortCount: analyticsResults.length,
+            specificCohortId: cohortId
+          }
+        });
+        
+        return analyticsResults;
+      },
+      { functionArgs: { cohortId } }
+    );
+  }
+
+  async getCohortAnalyticsById(cohortId: string): Promise<CohortAnalytics | null> {
+    return withDatabaseErrorHandling(
+      'getCohortAnalyticsById',
+      async () => {
+        const analytics = await this.getCohortAnalytics(cohortId);
+        return analytics.length > 0 ? analytics[0] : null;
+      },
+      { functionArgs: { cohortId } }
+    );
+  }
 }
 
 export class MemStorage implements IStorage {
@@ -1103,6 +1284,152 @@ export class MemStorage implements IStorage {
         });
         
         return cohortUsers;
+      },
+      { functionArgs: { cohortId } }
+    );
+  }
+
+  async deleteCohort(id: string): Promise<boolean> {
+    return withErrorHandling(
+      'deleteCohort',
+      async () => {
+        const existing = this.cohorts.get(id);
+        if (!existing) {
+          logger.warn('Cannot delete cohort - not found', {
+            additionalContext: { cohortId: id }
+          });
+          return false;
+        }
+        
+        // Remove cohort from memory
+        this.cohorts.delete(id);
+        
+        // Remove users from this cohort
+        for (const [userId, user] of this.users) {
+          if (user.cohortId === id) {
+            const updatedUser = { ...user, cohortId: null };
+            this.users.set(userId, updatedUser);
+          }
+        }
+        
+        logger.info('Cohort deleted successfully', {
+          additionalContext: { cohortId: id, cohortName: existing.name }
+        });
+        
+        return true;
+      },
+      { functionArgs: { id } }
+    );
+  }
+
+  async getCohortAnalytics(cohortId?: string | null): Promise<CohortAnalytics[]> {
+    return withErrorHandling(
+      'getCohortAnalytics',
+      async () => {
+        const analyticsResults: CohortAnalytics[] = [];
+        
+        // Get cohorts to analyze
+        const cohortsToAnalyze = cohortId 
+          ? [this.cohorts.get(cohortId)].filter(Boolean) as Cohort[]
+          : Array.from(this.cohorts.values());
+        
+        for (const cohort of cohortsToAnalyze) {
+          // Get users in this cohort
+          const cohortUsers = Array.from(this.users.values())
+            .filter(user => user.cohortId === cohort.id);
+          
+          // Get assessments for cohort users
+          const cohortAssessments = Array.from(this.assessments.values())
+            .filter(assessment => cohortUsers.some(user => user.userId === assessment.userId));
+          
+          // Calculate metrics
+          const totalMembers = cohortUsers.length;
+          const activeMembers = cohortUsers.filter(user => user.lastActiveAt).length;
+          const totalAssessments = cohortAssessments.length;
+          const completedAssessments = cohortAssessments.filter(a => a.completedAt).length;
+          
+          // Calculate average pillar scores
+          const completedWithScores = cohortAssessments.filter(a => a.pillarScores);
+          const averagePillarScores = {
+            C: null as number | null,
+            O: null as number | null,
+            R: null as number | null,
+            T: null as number | null,
+            E: null as number | null,
+            X: null as number | null,
+          };
+          
+          if (completedWithScores.length > 0) {
+            const sumScores = { C: 0, O: 0, R: 0, T: 0, E: 0, X: 0 };
+            for (const assessment of completedWithScores) {
+              const scores = assessment.pillarScores as any;
+              if (scores) {
+                sumScores.C += scores.C || 0;
+                sumScores.O += scores.O || 0;
+                sumScores.R += scores.R || 0;
+                sumScores.T += scores.T || 0;
+                sumScores.E += scores.E || 0;
+                sumScores.X += scores.X || 0;
+              }
+            }
+            
+            averagePillarScores.C = sumScores.C / completedWithScores.length;
+            averagePillarScores.O = sumScores.O / completedWithScores.length;
+            averagePillarScores.R = sumScores.R / completedWithScores.length;
+            averagePillarScores.T = sumScores.T / completedWithScores.length;
+            averagePillarScores.E = sumScores.E / completedWithScores.length;
+            averagePillarScores.X = sumScores.X / completedWithScores.length;
+          }
+          
+          // Find last activity
+          let lastActivity: string | null = null;
+          const allDates = [
+            ...cohortUsers.map(u => u.lastActiveAt).filter(Boolean),
+            ...cohortAssessments.map(a => a.createdAt).filter(Boolean)
+          ];
+          if (allDates.length > 0) {
+            lastActivity = allDates.sort().pop()!;
+          }
+          
+          const analytics: CohortAnalytics = {
+            cohortId: cohort.id,
+            cohortName: cohort.name,
+            cohortCode: cohort.code,
+            cohortStatus: cohort.status,
+            totalMembers,
+            allowedSlots: cohort.allowedSlots,
+            activeMembers,
+            totalAssessments,
+            completedAssessments,
+            completionRate: totalAssessments > 0 ? (completedAssessments / totalAssessments) * 100 : 0,
+            averageCompletionTime: null, // Would require more complex calculation
+            averagePillarScores,
+            lastActivity,
+            createdAt: cohort.createdAt || new Date().toISOString()
+          };
+          
+          analyticsResults.push(analytics);
+        }
+        
+        logger.info('Cohort analytics retrieved successfully', {
+          additionalContext: { 
+            cohortCount: analyticsResults.length,
+            specificCohortId: cohortId
+          }
+        });
+        
+        return analyticsResults;
+      },
+      { functionArgs: { cohortId } }
+    );
+  }
+
+  async getCohortAnalyticsById(cohortId: string): Promise<CohortAnalytics | null> {
+    return withErrorHandling(
+      'getCohortAnalyticsById',
+      async () => {
+        const analytics = await this.getCohortAnalytics(cohortId);
+        return analytics.length > 0 ? analytics[0] : null;
       },
       { functionArgs: { cohortId } }
     );

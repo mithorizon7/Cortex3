@@ -11,8 +11,9 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Plus, Users, Settings, BarChart3, Shield, AlertCircle, Edit, Trash2, MoreHorizontal } from 'lucide-react';
+import { Plus, Users, Settings, BarChart3, Shield, AlertCircle, Edit, Trash2, MoreHorizontal, TrendingUp, Activity, Target, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -443,23 +444,7 @@ export default function AdminDashboard() {
 
             {/* Analytics Tab */}
             <TabsContent value="analytics" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Analytics Overview</CardTitle>
-                  <CardDescription>
-                    View assessment performance and insights across cohorts
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8">
-                    <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-medium mb-2">Analytics Coming Soon</h3>
-                    <p className="text-muted-foreground">
-                      Comprehensive analytics and reporting features will be available here
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+              <AnalyticsOverview />
             </TabsContent>
 
             {/* Settings Tab */}
@@ -682,5 +667,271 @@ export default function AdminDashboard() {
         </Dialog>
       </div>
     </ProtectedRoute>
+  );
+}
+
+// Analytics Overview Component
+function AnalyticsOverview() {
+  const { toast } = useToast();
+
+  // Fetch analytics data
+  const { data: analyticsData, isLoading: analyticsLoading, error: analyticsError } = useQuery({
+    queryKey: ['/api/cohorts/analytics/overview'],
+    enabled: true
+  });
+
+  if (analyticsLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <div className="h-4 w-20 bg-muted rounded animate-pulse" />
+                <div className="h-4 w-4 bg-muted rounded animate-pulse" />
+              </CardHeader>
+              <CardContent>
+                <div className="h-8 w-16 bg-muted rounded animate-pulse mb-1" />
+                <div className="h-3 w-24 bg-muted rounded animate-pulse" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (analyticsError) {
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <div className="text-center py-8">
+            <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+            <h3 className="text-lg font-medium mb-2">Failed to Load Analytics</h3>
+            <p className="text-muted-foreground">
+              Unable to fetch analytics data. Please try again later.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!analyticsData || analyticsData.length === 0) {
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <div className="text-center py-8">
+            <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium mb-2">No Analytics Data</h3>
+            <p className="text-muted-foreground">
+              Create cohorts and assessments to view analytics
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Calculate aggregate metrics
+  const totalMembers = analyticsData.reduce((sum: number, cohort: any) => sum + cohort.totalMembers, 0);
+  const totalAssessments = analyticsData.reduce((sum: number, cohort: any) => sum + cohort.totalAssessments, 0);
+  const completedAssessments = analyticsData.reduce((sum: number, cohort: any) => sum + cohort.completedAssessments, 0);
+  const avgCompletionRate = analyticsData.length > 0 
+    ? analyticsData.reduce((sum: number, cohort: any) => sum + cohort.completionRate, 0) / analyticsData.length 
+    : 0;
+
+  // Prepare chart data
+  const cohortCompletionData = analyticsData.map((cohort: any) => ({
+    name: cohort.cohortName,
+    completionRate: Math.round(cohort.completionRate),
+    total: cohort.totalAssessments,
+    completed: cohort.completedAssessments,
+  }));
+
+  const pillarData = [
+    { pillar: 'Clarity', avg: analyticsData.reduce((sum: number, c: any) => sum + (c.averagePillarScores.C || 0), 0) / analyticsData.length },
+    { pillar: 'Operations', avg: analyticsData.reduce((sum: number, c: any) => sum + (c.averagePillarScores.O || 0), 0) / analyticsData.length },
+    { pillar: 'Risk/Trust', avg: analyticsData.reduce((sum: number, c: any) => sum + (c.averagePillarScores.R || 0), 0) / analyticsData.length },
+    { pillar: 'Talent', avg: analyticsData.reduce((sum: number, c: any) => sum + (c.averagePillarScores.T || 0), 0) / analyticsData.length },
+    { pillar: 'Ecosystem', avg: analyticsData.reduce((sum: number, c: any) => sum + (c.averagePillarScores.E || 0), 0) / analyticsData.length },
+    { pillar: 'Evolution', avg: analyticsData.reduce((sum: number, c: any) => sum + (c.averagePillarScores.X || 0), 0) / analyticsData.length },
+  ];
+
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
+
+  return (
+    <div className="space-y-6">
+      {/* Key Metrics */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Members</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold" data-testid="metric-total-members">{totalMembers}</div>
+            <p className="text-xs text-muted-foreground">
+              Across {analyticsData.length} cohort{analyticsData.length !== 1 ? 's' : ''}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Assessments</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold" data-testid="metric-total-assessments">{totalAssessments}</div>
+            <p className="text-xs text-muted-foreground">
+              {completedAssessments} completed
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Avg Completion Rate</CardTitle>
+            <Target className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold" data-testid="metric-completion-rate">{Math.round(avgCompletionRate)}%</div>
+            <p className="text-xs text-muted-foreground">
+              {completedAssessments} of {totalAssessments} assessments
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Cohorts</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold" data-testid="metric-active-cohorts">
+              {analyticsData.filter((c: any) => c.cohortStatus === 'active').length}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {analyticsData.filter((c: any) => c.cohortStatus !== 'active').length} inactive
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts Section */}
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Completion Rate by Cohort */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Completion Rate by Cohort</CardTitle>
+            <CardDescription>Assessment completion percentage per cohort</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={cohortCompletionData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip formatter={(value: any, name: string) => [`${value}%`, 'Completion Rate']} />
+                <Bar dataKey="completionRate" fill="#8884d8" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Average Pillar Scores */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Average Pillar Scores</CardTitle>
+            <CardDescription>Performance across assessment domains</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={pillarData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="pillar" />
+                <YAxis domain={[0, 3]} />
+                <Tooltip formatter={(value: any) => [value?.toFixed(2), 'Average Score']} />
+                <Bar dataKey="avg" fill="#82ca9d" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Cohort Details Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Cohort Performance Details</CardTitle>
+          <CardDescription>Detailed analytics for each cohort</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-2">Cohort</th>
+                  <th className="text-left py-2">Members</th>
+                  <th className="text-left py-2">Assessments</th>
+                  <th className="text-left py-2">Completion Rate</th>
+                  <th className="text-left py-2">Status</th>
+                  <th className="text-left py-2">Last Activity</th>
+                </tr>
+              </thead>
+              <tbody>
+                {analyticsData.map((cohort: any) => (
+                  <tr key={cohort.cohortId} className="border-b">
+                    <td className="py-2">
+                      <div>
+                        <div className="font-medium" data-testid={`cohort-name-${cohort.cohortId}`}>
+                          {cohort.cohortName}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          Code: {cohort.cohortCode}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-2" data-testid={`cohort-members-${cohort.cohortId}`}>
+                      {cohort.totalMembers}/{cohort.allowedSlots}
+                    </td>
+                    <td className="py-2" data-testid={`cohort-assessments-${cohort.cohortId}`}>
+                      {cohort.completedAssessments}/{cohort.totalAssessments}
+                    </td>
+                    <td className="py-2">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-full bg-gray-200 rounded-full h-2 max-w-[60px]">
+                          <div 
+                            className="bg-blue-600 h-2 rounded-full" 
+                            style={{ width: `${Math.min(cohort.completionRate, 100)}%` }}
+                          />
+                        </div>
+                        <span className="text-sm" data-testid={`cohort-completion-${cohort.cohortId}`}>
+                          {Math.round(cohort.completionRate)}%
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-2">
+                      <Badge 
+                        variant={cohort.cohortStatus === 'active' ? 'default' : 'secondary'}
+                        data-testid={`cohort-status-${cohort.cohortId}`}
+                      >
+                        {cohort.cohortStatus}
+                      </Badge>
+                    </td>
+                    <td className="py-2 text-sm text-muted-foreground" data-testid={`cohort-activity-${cohort.cohortId}`}>
+                      {cohort.lastActivity 
+                        ? new Date(cohort.lastActivity).toLocaleDateString()
+                        : 'No activity'
+                      }
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

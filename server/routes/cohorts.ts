@@ -192,6 +192,66 @@ router.post('/', requireSuperAdminMiddleware, async (req: Request, res: Response
 });
 
 /**
+ * Get cohort analytics overview (admin/super admin only) 
+ */
+router.get('/analytics/overview', requireAdminMiddleware, async (req: Request, res: Response) => {
+  const incidentId = generateIncidentId();
+  
+  try {
+    logger.info('Fetching cohort analytics overview', {
+      additionalContext: {
+        operation: 'get_cohort_analytics_overview',
+        incidentId,
+        userId: req.userId
+      }
+    });
+    
+    // Get user to check role for access control
+    const user = await withDatabaseErrorHandling(
+      'get_user_for_analytics',
+      () => storage.getUser(req.userId!)
+    );
+    
+    if (!user) {
+      logger.warn('User not found when fetching analytics', {
+        additionalContext: {
+          operation: 'get_analytics_user_not_found',
+          userId: req.userId,
+          incidentId
+        }
+      });
+      
+      res.status(HTTP_STATUS.FORBIDDEN)
+        .json(createUserError('User profile not found', incidentId, HTTP_STATUS.FORBIDDEN));
+      return;
+    }
+    
+    const analytics = await withDatabaseErrorHandling(
+      'get_cohort_analytics_database',
+      () => storage.getCohortAnalytics(user.role === 'super_admin' ? null : user.cohortId)
+    );
+    
+    res.json(analytics);
+    
+  } catch (error) {
+    logger.error(
+      'Failed to fetch cohort analytics overview',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        additionalContext: {
+          operation: 'get_cohort_analytics_overview_error',
+          userId: req.userId,
+          incidentId
+        }
+      }
+    );
+    
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(createUserError(USER_ERROR_MESSAGES.SERVER_ERROR, incidentId, HTTP_STATUS.INTERNAL_SERVER_ERROR));
+  }
+});
+
+/**
  * Get specific cohort (admin/super admin only)
  */
 router.get('/:id', requireAdminMiddleware, async (req: Request, res: Response) => {
@@ -729,6 +789,166 @@ router.get('/:id/users', requireAdminMiddleware, async (req: Request, res: Respo
       {
         additionalContext: {
           operation: 'get_cohort_users_error',
+          cohortId,
+          userId: req.userId,
+          incidentId
+        }
+      }
+    );
+    
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(createUserError(USER_ERROR_MESSAGES.SERVER_ERROR, incidentId, HTTP_STATUS.INTERNAL_SERVER_ERROR));
+  }
+});
+
+/**
+ * Delete cohort (super admin only)
+ */
+router.delete('/:id', requireSuperAdminMiddleware, async (req: Request, res: Response) => {
+  const incidentId = generateIncidentId();
+  const cohortId = req.params.id;
+  
+  try {
+    logger.info('Deleting cohort', {
+      additionalContext: {
+        operation: 'delete_cohort',
+        incidentId,
+        userId: req.userId,
+        cohortId
+      }
+    });
+    
+    // Check if cohort exists
+    const cohort = await withDatabaseErrorHandling(
+      'get_cohort_for_deletion',
+      () => storage.getCohort(cohortId)
+    );
+    
+    if (!cohort) {
+      logger.warn('Cohort not found for deletion', {
+        additionalContext: {
+          operation: 'delete_cohort_not_found',
+          cohortId,
+          incidentId
+        }
+      });
+      
+      res.status(HTTP_STATUS.NOT_FOUND)
+        .json(createUserError('Cohort not found', incidentId, HTTP_STATUS.NOT_FOUND));
+      return;
+    }
+    
+    // Delete the cohort
+    await withDatabaseErrorHandling(
+      'delete_cohort_database',
+      () => storage.deleteCohort(cohortId)
+    );
+    
+    res.json({ success: true });
+    
+  } catch (error) {
+    logger.error(
+      'Failed to delete cohort',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        additionalContext: {
+          operation: 'delete_cohort_error',
+          cohortId,
+          userId: req.userId,
+          incidentId
+        }
+      }
+    );
+    
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(createUserError(USER_ERROR_MESSAGES.SERVER_ERROR, incidentId, HTTP_STATUS.INTERNAL_SERVER_ERROR));
+  }
+});
+
+/**
+ * Get specific cohort analytics (admin/super admin only)
+ */
+router.get('/:id/analytics', requireAdminMiddleware, async (req: Request, res: Response) => {
+  const incidentId = generateIncidentId();
+  const cohortId = req.params.id;
+  
+  try {
+    logger.info('Fetching cohort analytics for specific cohort', {
+      additionalContext: {
+        operation: 'get_cohort_specific_analytics',
+        incidentId,
+        userId: req.userId,
+        cohortId
+      }
+    });
+    
+    // Access control: Check if user can access this cohort
+    const user = await withDatabaseErrorHandling(
+      'get_user_for_cohort_analytics',
+      () => storage.getUser(req.userId!)
+    );
+    
+    if (!user) {
+      logger.warn('User not found when accessing cohort analytics', {
+        additionalContext: {
+          operation: 'get_cohort_analytics_user_not_found',
+          userId: req.userId,
+          cohortId,
+          incidentId
+        }
+      });
+      
+      res.status(HTTP_STATUS.FORBIDDEN)
+        .json(createUserError('User profile not found', incidentId, HTTP_STATUS.FORBIDDEN));
+      return;
+    }
+    
+    // Super admins can access any cohort, regular admins only their own
+    if (user.role !== 'super_admin' && user.cohortId !== cohortId) {
+      logger.warn('Admin attempting to access unauthorized cohort analytics', {
+        additionalContext: {
+          operation: 'get_cohort_analytics_unauthorized_access',
+          userId: req.userId,
+          userRole: user.role,
+          userCohortId: user.cohortId,
+          requestedCohortId: cohortId,
+          incidentId
+        }
+      });
+      
+      res.status(HTTP_STATUS.FORBIDDEN)
+        .json(createUserError('Access denied. You can only view analytics for your own cohort.', incidentId, HTTP_STATUS.FORBIDDEN));
+      return;
+    }
+    
+    const analytics = await withDatabaseErrorHandling(
+      'get_cohort_analytics_by_id_database',
+      () => storage.getCohortAnalyticsById(cohortId)
+    );
+    
+    if (!analytics) {
+      logger.warn('Cohort not found for analytics', {
+        additionalContext: {
+          operation: 'get_cohort_analytics_not_found',
+          cohortId,
+          incidentId
+        }
+      });
+      
+      res.status(HTTP_STATUS.NOT_FOUND)
+        .json(createUserError('Cohort not found', incidentId, HTTP_STATUS.NOT_FOUND));
+      return;
+    }
+    
+    res.json(analytics);
+    
+  } catch (error) {
+    logger.error(
+      'Failed to fetch cohort analytics',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        additionalContext: {
+          operation: 'get_cohort_specific_analytics_error',
           cohortId,
           userId: req.userId,
           incidentId
