@@ -199,11 +199,6 @@ export async function generateSituationAssessment(profile: ContextProfile): Prom
   
   // Analyze strategic context archetype
   const archetype = analyzeContextArchetype(profile);
-  
-  // 60 second timeout for complex Situation Assessment 2.0 prompts with structured JSON schema
-  const timeoutPromise = new Promise<never>((_, reject) => 
-    setTimeout(() => reject(new Error('LLM request timed out after 60 seconds')), 60000)
-  );
 
   const systemPrompt = `You are a senior AI strategy advisor specializing in contextually-grounded strategic insights for executive teams. Your role is to analyze how unique organizational context signatures create specific AI strategic opportunities and constraints.
 
