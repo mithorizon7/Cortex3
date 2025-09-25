@@ -1,6 +1,8 @@
 import { formatScaleValue } from "@shared/scale-utils";
 import type { ContextProfile, ExtendedOptionCard, OptionsStudioSession } from "@shared/schema";
 import { MISCONCEPTION_QUESTIONS } from "@shared/options-studio-data";
+import { generateEnhancedExecutiveInsights, type ExecutiveInsight, type ActionPriority } from "./insight-engine";
+import { CORTEX_PILLARS } from "./cortex";
 
 export interface AssessmentResults {
   contextProfile: ContextProfile;
@@ -503,7 +505,7 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
       }
       
       // Section header with color indicator
-      doc.setFillColor(...section.color);
+      doc.setFillColor(section.color[0], section.color[1], section.color[2]);
       doc.circle(rightColumnX + 10, rightContentY + 2, 2, 'F');
       
       doc.setFontSize(typography.h3.size);
@@ -553,7 +555,11 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
         const highValue = item.value >= 3;
         
         // Color code high values
-        doc.setTextColor(...(highValue ? section.color : colors.secondary));
+        if (highValue) {
+          doc.setTextColor(section.color[0], section.color[1], section.color[2]);
+        } else {
+          doc.setTextColor(...colors.secondary);
+        }
         doc.text(`${item.label}:`, rightColumnX + 12, rightContentY);
         doc.setTextColor(...colors.primary);
         doc.text(valueText, rightColumnX + 50, rightContentY);
@@ -578,7 +584,8 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
     ];
     
     constraints.forEach(constraint => {
-      doc.setFillColor(...(constraint.value ? colors.warning : colors.success));
+      const fillColor = constraint.value ? [colors.warning[0], colors.warning[1], colors.warning[2]] as [number, number, number] : [colors.success[0], colors.success[1], colors.success[2]] as [number, number, number];
+      doc.setFillColor(...fillColor);
       doc.circle(rightColumnX + 12, rightContentY - 1, 1.5, 'F');
       
       doc.setFontSize(typography.small.size);
@@ -655,7 +662,7 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
         doc.setFont('helvetica', typography.small.weight);
         doc.setTextColor(...colors.primary);
         
-        mirror.actions.forEach((action, actionIndex) => {
+        (mirror.actions || []).forEach((action, actionIndex) => {
           // Handle text overflow with proper wrapping
           const actionLines = safeSplitTextToSize(doc, action, columnWidth - LAYOUT.cardContentMargin);
           const chipHeight = actionLines.length * LAYOUT.lineSpacing + LAYOUT.chipSpacing;
@@ -671,8 +678,8 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
             
             // Calculate remaining actions height for new page card
             let remainingActionsHeight = LAYOUT.headerSpacing;
-            for (let i = actionIndex; i < mirror.actions.length; i++) {
-              const remainingActionLines = safeSplitTextToSize(doc, mirror.actions[i], columnWidth - LAYOUT.cardContentMargin);
+            for (let i = actionIndex; i < (mirror.actions?.length || 0); i++) {
+              const remainingActionLines = safeSplitTextToSize(doc, mirror.actions?.[i] || '', columnWidth - LAYOUT.cardContentMargin);
               remainingActionsHeight += remainingActionLines.length * LAYOUT.lineSpacing + LAYOUT.chipSpacing;
             }
             remainingActionsHeight += LAYOUT.bottomPadding;
@@ -717,7 +724,7 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
       if (mirror.watchouts?.length) {
         // Calculate dynamic height for watchouts with safety margins
         let estimatedWatchoutsHeight = LAYOUT.headerSpacing;
-        mirror.watchouts.forEach(watchout => {
+        (mirror.watchouts || []).forEach(watchout => {
           const watchoutLines = safeSplitTextToSize(doc, watchout, columnWidth - LAYOUT.cardContentMargin);
           estimatedWatchoutsHeight += watchoutLines.length * LAYOUT.lineSpacing + LAYOUT.chipSpacing;
         });
@@ -757,7 +764,7 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
         doc.setFont('helvetica', typography.small.weight);
         doc.setTextColor(...colors.primary);
         
-        mirror.watchouts.forEach((watchout, watchoutIndex) => {
+        (mirror.watchouts || []).forEach((watchout, watchoutIndex) => {
           // Handle text overflow with proper wrapping
           const watchoutLines = safeSplitTextToSize(doc, watchout, columnWidth - LAYOUT.cardContentMargin);
           const chipHeight = watchoutLines.length * LAYOUT.lineSpacing + LAYOUT.chipSpacing;
@@ -773,8 +780,8 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
             
             // Calculate remaining watchouts height for new page card
             let remainingWatchoutsHeight = LAYOUT.headerSpacing;
-            for (let i = watchoutIndex; i < mirror.watchouts.length; i++) {
-              const remainingWatchoutLines = safeSplitTextToSize(doc, mirror.watchouts[i], columnWidth - LAYOUT.cardContentMargin);
+            for (let i = watchoutIndex; i < (mirror.watchouts?.length || 0); i++) {
+              const remainingWatchoutLines = safeSplitTextToSize(doc, mirror.watchouts?.[i] || '', columnWidth - LAYOUT.cardContentMargin);
               remainingWatchoutsHeight += remainingWatchoutLines.length * LAYOUT.lineSpacing + LAYOUT.chipSpacing;
             }
             remainingWatchoutsHeight += LAYOUT.bottomPadding;
@@ -1503,5 +1510,359 @@ export function handleExportJSON(sessionData: OptionsStudioData, filename: strin
     
   } catch (error) {
     throw new Error('Failed to export JSON data. Please try again.');
+  }
+}
+
+// Enhanced executive PDF export with insights integration
+export interface EnhancedAssessmentResults extends AssessmentResults {
+  insights?: ExecutiveInsight[];
+  priorities?: ActionPriority[];
+  maturityLevel?: string;
+  averageScore?: number;
+}
+
+export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults, assessmentId: string): Promise<void> {
+  try {
+    // Validate required data
+    if (!data || !data.contextProfile || !data.pillarScores || !assessmentId) {
+      throw new Error('Missing required data for executive PDF generation');
+    }
+
+    // Generate enhanced insights if not provided
+    let insights = data.insights;
+    let priorities = data.priorities;
+    
+    if (!insights || !priorities) {
+      const generatedInsights = generateEnhancedExecutiveInsights(
+        data.pillarScores, 
+        data.triggeredGates || [], 
+        data.contextProfile
+      );
+      insights = generatedInsights.insights;
+      priorities = generatedInsights.priorities;
+    }
+
+    // Load jsPDF
+    let jsPDF;
+    try {
+      const jsPDFModule = await import('jspdf');
+      jsPDF = jsPDFModule.jsPDF;
+      
+      if (!jsPDF) {
+        throw new Error('jsPDF not available');
+      }
+    } catch (importError) {
+      console.error('Failed to import jsPDF:', importError);
+      throw new Error('PDF library failed to load. Please try refreshing the page.');
+    }
+
+    // Create PDF document
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 24;
+    const contentWidth = pageWidth - (margin * 2);
+    const maxY = pageHeight - 40;
+    
+    let currentY = margin;
+    
+    // Executive Color Palette
+    const colors = {
+      primary: [15, 23, 42] as [number, number, number],
+      secondary: [51, 65, 85] as [number, number, number],
+      accent: [99, 102, 241] as [number, number, number],
+      success: [34, 197, 94] as [number, number, number],
+      warning: [245, 158, 11] as [number, number, number],
+      error: [239, 68, 68] as [number, number, number],
+      surface: [248, 250, 252] as [number, number, number],
+      white: [255, 255, 255] as [number, number, number],
+      border: [226, 232, 240] as [number, number, number]
+    };
+
+    // Typography
+    const typography = {
+      hero: { size: 28, weight: 'bold' as const },
+      h1: { size: 22, weight: 'bold' as const },
+      h2: { size: 16, weight: 'bold' as const },
+      h3: { size: 14, weight: 'bold' as const },
+      body: { size: 11, weight: 'normal' as const },
+      small: { size: 9, weight: 'normal' as const }
+    };
+
+    // Helper functions
+    const addPageFooter = () => {
+      const footerY = pageHeight - 25;
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...colors.secondary);
+      doc.text('CORTEX™ Executive AI Readiness Assessment', margin, footerY);
+      doc.text(`Page ${doc.getCurrentPageInfo().pageNumber}`, pageWidth - margin - 15, footerY);
+    };
+
+    const checkPageOverflow = (additionalHeight: number): boolean => {
+      if (currentY + additionalHeight > maxY) {
+        addPageFooter();
+        doc.addPage();
+        currentY = margin;
+        return true;
+      }
+      return false;
+    };
+
+    const drawCard = (x: number, y: number, width: number, height: number) => {
+      doc.setFillColor(...colors.white);
+      doc.setDrawColor(...colors.border);
+      doc.setLineWidth(0.5);
+      doc.rect(x, y, width, height, 'FD');
+    };
+
+    // Executive Header with Professional Design
+    doc.setFillColor(...colors.primary);
+    doc.rect(0, 0, pageWidth, 70, 'F');
+    
+    // Header content
+    doc.setTextColor(...colors.white);
+    doc.setFontSize(typography.hero.size);
+    doc.setFont('helvetica', typography.hero.weight);
+    doc.text('CORTEX™', margin, 25);
+    
+    doc.setFontSize(typography.body.size);
+    doc.setFont('helvetica', 'normal');
+    doc.text('EXECUTIVE AI READINESS BRIEF', margin, 35);
+    
+    // Header metadata
+    doc.setFontSize(typography.small.size);
+    const currentDate = new Date().toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    const dateText = `Generated: ${currentDate}`;
+    const idText = `Assessment ID: ${assessmentId.slice(0, 8).toUpperCase()}`;
+    
+    doc.text(dateText, pageWidth - margin - doc.getTextWidth(dateText), 25);
+    doc.text(idText, pageWidth - margin - doc.getTextWidth(idText), 33);
+    
+    // Executive status indicator
+    doc.setFillColor(...colors.success);
+    doc.circle(pageWidth - margin - 8, 50, 3, 'F');
+    doc.setFontSize(10);
+    doc.text('EXECUTIVE READY', pageWidth - margin - 40, 52);
+    
+    currentY = 85;
+    
+    // Reset text color
+    doc.setTextColor(...colors.primary);
+    
+    // Executive Summary Section
+    checkPageOverflow(60);
+    
+    // Calculate maturity level
+    const avgScore = data.averageScore || (Object.values(data.pillarScores as Record<string, number>).reduce((sum: number, score: number) => sum + score, 0) / 6);
+    const maturityLevel = data.maturityLevel || (avgScore < 1 ? 'Nascent' : avgScore < 2 ? 'Emerging' : avgScore < 3 ? 'Integrated' : 'Leading');
+    
+    drawCard(margin, currentY, contentWidth, 55);
+    
+    doc.setFontSize(typography.h1.size);
+    doc.setFont('helvetica', typography.h1.weight);
+    doc.setTextColor(...colors.accent);
+    doc.text('EXECUTIVE SUMMARY', margin + 8, currentY + 15);
+    
+    doc.setFontSize(typography.h2.size);
+    doc.setFont('helvetica', typography.h2.weight);
+    doc.setTextColor(...colors.primary);
+    doc.text(`Current AI Maturity: ${maturityLevel}`, margin + 8, currentY + 25);
+    
+    doc.setFontSize(typography.body.size);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Overall Readiness Score: ${avgScore.toFixed(1)}/4.0`, margin + 8, currentY + 35);
+    
+    const summaryText = `Based on assessment of ${Object.keys(data.pillarScores).length} strategic domains, your organization shows ${maturityLevel.toLowerCase()} AI capabilities with ${data.triggeredGates?.length || 0} critical requirements identified.`;
+    const summaryLines = safeSplitTextToSize(doc, summaryText, contentWidth - 16);
+    let summaryY = currentY + 45;
+    summaryLines.forEach((line: string) => {
+      doc.text(line, margin + 8, summaryY);
+      summaryY += 5;
+    });
+    
+    currentY += 65;
+    
+    // Strategic Insights Section
+    if (insights && insights.length > 0) {
+      checkPageOverflow(80);
+      
+      doc.setFontSize(typography.h1.size);
+      doc.setFont('helvetica', typography.h1.weight);
+      doc.setTextColor(...colors.accent);
+      doc.text('STRATEGIC INSIGHTS', margin, currentY);
+      currentY += 15;
+      
+      insights.forEach((insight, index) => {
+        checkPageOverflow(40);
+        
+        // Insight card
+        const insightHeight = 35;
+        drawCard(margin, currentY, contentWidth, insightHeight);
+        
+        // Urgency badge
+        const urgencyColor = insight.urgency === 'high' ? colors.error : insight.urgency === 'medium' ? colors.warning : colors.success;
+        doc.setFillColor(...urgencyColor);
+        doc.rect(pageWidth - margin - 35, currentY + 5, 30, 8, 'F');
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...colors.white);
+        doc.text(insight.urgency.toUpperCase(), pageWidth - margin - 30, currentY + 9.5);
+        
+        // Insight content
+        doc.setFontSize(typography.h3.size);
+        doc.setFont('helvetica', typography.h3.weight);
+        doc.setTextColor(...colors.primary);
+        doc.text(`${index + 1}. ${insight.title}`, margin + 8, currentY + 12);
+        
+        doc.setFontSize(typography.small.size);
+        doc.setFont('helvetica', 'normal');
+        const descLines = safeSplitTextToSize(doc, insight.description, contentWidth - 50);
+        let descY = currentY + 18;
+        descLines.forEach((line: string) => {
+          doc.text(line, margin + 8, descY);
+          descY += 4;
+        });
+        
+        // Business impact
+        doc.setFillColor(...colors.surface);
+        doc.rect(margin + 8, currentY + 26, contentWidth - 16, 6, 'F');
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'italic');
+        doc.setTextColor(...colors.secondary);
+        doc.text(`Business Impact: ${insight.businessImpact}`, margin + 10, currentY + 29.5);
+        
+        currentY += insightHeight + 8;
+      });
+    }
+    
+    // Executive Action Priorities
+    if (priorities && priorities.length > 0) {
+      checkPageOverflow(60);
+      
+      doc.setFontSize(typography.h1.size);
+      doc.setFont('helvetica', typography.h1.weight);
+      doc.setTextColor(...colors.accent);
+      doc.text('YOUR NEXT 90 DAYS', margin, currentY);
+      currentY += 15;
+      
+      priorities.forEach((priority, index) => {
+        checkPageOverflow(30);
+        
+        const priorityHeight = 25;
+        drawCard(margin, currentY, contentWidth, priorityHeight);
+        
+        // Priority number
+        doc.setFillColor(...colors.accent);
+        doc.circle(margin + 15, currentY + 12, 6, 'F');
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...colors.white);
+        doc.text((index + 1).toString(), margin + 12, currentY + 15);
+        
+        // Timeframe badge
+        const timeframeColor = priority.urgency === 'high' ? colors.error : priority.urgency === 'medium' ? colors.warning : colors.success;
+        doc.setFillColor(...timeframeColor);
+        doc.rect(pageWidth - margin - 40, currentY + 5, 35, 8, 'F');
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...colors.white);
+        doc.text(priority.timeframe, pageWidth - margin - 37, currentY + 9.5);
+        
+        // Priority content
+        doc.setFontSize(typography.h3.size);
+        doc.setFont('helvetica', typography.h3.weight);
+        doc.setTextColor(...colors.primary);
+        doc.text(priority.title, margin + 25, currentY + 12);
+        
+        doc.setFontSize(typography.small.size);
+        doc.setFont('helvetica', 'normal');
+        const priorityLines = safeSplitTextToSize(doc, priority.description, contentWidth - 80);
+        doc.text(priorityLines[0] || '', margin + 25, currentY + 18);
+        
+        currentY += priorityHeight + 8;
+      });
+    }
+    
+    // Domain Performance Overview
+    checkPageOverflow(80);
+    
+    doc.setFontSize(typography.h1.size);
+    doc.setFont('helvetica', typography.h1.weight);
+    doc.setTextColor(...colors.accent);
+    doc.text('DOMAIN PERFORMANCE', margin, currentY);
+    currentY += 15;
+    
+    // Create domain performance chart
+    const domainHeight = 60;
+    drawCard(margin, currentY, contentWidth, domainHeight);
+    
+    const domains = Object.entries(data.pillarScores as Record<string, number>);
+    const barWidth = (contentWidth - 40) / domains.length;
+    let barX = margin + 20;
+    
+    domains.forEach(([domain, score]) => {
+      const domainName = CORTEX_PILLARS[domain.toUpperCase() as keyof typeof CORTEX_PILLARS]?.name || domain;
+      const numericScore = Number(score);
+      const barHeight = (numericScore / 4) * 35; // Max height 35mm
+      
+      // Score bar
+      const barColor = numericScore >= 3 ? colors.success : numericScore >= 2 ? colors.warning : colors.error;
+      doc.setFillColor(...barColor);
+      doc.rect(barX, currentY + 40 - barHeight, barWidth - 4, barHeight, 'F');
+      
+      // Score label
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...colors.white);
+      doc.text(numericScore.toFixed(1), barX + (barWidth - 4) / 2 - 3, currentY + 37 - barHeight / 2);
+      
+      // Domain label (rotated)
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...colors.primary);
+      
+      const shortName = domainName.length > 15 ? domainName.substring(0, 12) + '...' : domainName;
+      doc.text(shortName, barX - 2, currentY + 50, { angle: 45 });
+      
+      barX += barWidth;
+    });
+    
+    currentY += domainHeight + 15;
+    
+    // Footer
+    addPageFooter();
+    
+    // Generate and download PDF
+    const pdfBlob = doc.output('blob');
+    
+    if (!pdfBlob || pdfBlob.size === 0) {
+      throw new Error('Failed to generate executive PDF');
+    }
+    
+    const url = URL.createObjectURL(pdfBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `cortex-executive-brief-${assessmentId}.pdf`;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    
+    link.click();
+    
+    setTimeout(() => {
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }, 100);
+
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Executive PDF generation failed: ${error.message}`);
+    } else {
+      throw new Error('Executive PDF generation failed: An unexpected error occurred');
+    }
   }
 }

@@ -18,7 +18,7 @@ import { ProtectedRoute } from "@/components/auth/protected-route";
 import { ValueSnapshot } from "@/components/value-overlay";
 import { initializeValueOverlay } from "@/lib/value-overlay";
 import { CORTEX_PILLARS, getPriorityLevel } from "@/lib/cortex";
-import { exportJSONResults } from "@/lib/pdf-generator";
+import { exportJSONResults, generateExecutiveBriefPDF, type EnhancedAssessmentResults } from "@/lib/pdf-generator";
 import { getNetworkError } from "@/lib/queryClient";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -150,25 +150,42 @@ export default function ResultsPage() {
     if (!assessment) return;
     
     try {
-      // TODO: Update to use new PDF generation approach for full assessment results
-      const blob = new Blob([JSON.stringify(assessment, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `cortex-assessment-${assessment.id}.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      // Generate enhanced insights for executive PDF
+      const enhancedInsights = generateEnhancedExecutiveInsights(
+        assessment.pillarScores as PillarScores,
+        (assessment.triggeredGates as any[]) || [],
+        assessment.contextProfile as ContextProfile
+      );
+
+      // Calculate maturity metrics
+      const avgScore = Object.values(assessment.pillarScores as PillarScores).reduce((sum, score) => sum + score, 0) / 6;
+      const maturityLevel = avgScore < 1 ? 'Nascent' : avgScore < 2 ? 'Emerging' : avgScore < 3 ? 'Integrated' : 'Leading';
+
+      // Prepare enhanced assessment data
+      const enhancedData: EnhancedAssessmentResults = {
+        contextProfile: assessment.contextProfile as ContextProfile,
+        pillarScores: assessment.pillarScores as PillarScores,
+        triggeredGates: (assessment.triggeredGates as any[]) || [],
+        completedAt: assessment.completedAt || new Date().toISOString(),
+        priorityMoves: (assessment as any).priorityMoves || null,
+        insights: enhancedInsights.insights,
+        priorities: enhancedInsights.priorities,
+        maturityLevel,
+        averageScore: avgScore
+      };
+
+      // Generate executive PDF
+      await generateExecutiveBriefPDF(enhancedData, assessment.id);
       
       toast({
-        title: "Export Complete",
-        description: "Your assessment results have been downloaded as JSON.",
+        title: "Executive Brief Generated",
+        description: "Your professional AI readiness executive brief has been downloaded.",
       });
     } catch (error) {
+      console.error('PDF generation error:', error);
       toast({
         title: "Export Failed", 
-        description: "Failed to generate export file. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to generate executive brief. Please try again.",
         variant: "destructive",
       });
     }
@@ -371,7 +388,7 @@ export default function ResultsPage() {
                 <div className="mt-6 pt-6 border-t border-border">
                   <Button size="lg" className="w-full" onClick={handleExportPDF}>
                     <ArrowRight className="h-5 w-5 mr-2" />
-                    Get Detailed Action Plan
+                    Generate Executive Brief
                   </Button>
                 </div>
               </div>
@@ -664,7 +681,7 @@ export default function ResultsPage() {
                   Export Data
                 </Button>
                 <Button onClick={handleExportPDF}>
-                  Download Report
+                  Executive Brief PDF
                 </Button>
               </div>
             </div>
