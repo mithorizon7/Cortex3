@@ -3,9 +3,32 @@ import { pgTable, text, varchar, integer, boolean, jsonb } from "drizzle-orm/pg-
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Cohorts table for managing access groups
+export const cohorts = pgTable("cohorts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  code: varchar("code", { length: 8 }).notNull().unique(), // 8-character unique access code
+  name: text("name").notNull(), // Admin-friendly name for the cohort
+  description: text("description"), // Optional description
+  allowedSlots: integer("allowed_slots").notNull(), // Maximum number of members
+  usedSlots: integer("used_slots").notNull().default(0), // Current number of members
+  status: text("status").notNull().default("active"), // active, archived
+  createdAt: text("created_at").default(sql`now()`),
+});
+
+// Users table for cohort membership and admin roles
+export const users = pgTable("users", {
+  userId: text("user_id").primaryKey(), // Firebase UID
+  email: text("email").notNull(),
+  cohortId: varchar("cohort_id").references(() => cohorts.id),
+  role: text("role").notNull().default("user"), // user, admin, super_admin
+  lastActiveAt: text("last_active_at"),
+  invitedBy: text("invited_by"), // Track who invited admin users (no FK for now to avoid circular ref)
+  createdAt: text("created_at").default(sql`now()`),
+});
+
 export const assessments = pgTable("assessments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull(), // Firebase user ID for ownership tracking
+  userId: varchar("user_id").notNull(), // Firebase user ID for ownership tracking - FK added later after data migration
   contextProfile: jsonb("context_profile").notNull(),
   situationAssessment: jsonb("context_mirror"),
   situationAssessmentUpdatedAt: text("context_mirror_updated_at"),
@@ -22,11 +45,26 @@ export const assessments = pgTable("assessments", {
   createdAt: text("created_at").default(sql`now()`),
 });
 
+// Insert schemas and types for new tables
+export const insertCohortSchema = createInsertSchema(cohorts).omit({
+  id: true,
+  createdAt: true,
+  usedSlots: true, // This is managed by the system
+});
+
+export const insertUserSchema = createInsertSchema(users).omit({
+  createdAt: true,
+});
+
 export const insertAssessmentSchema = createInsertSchema(assessments).omit({
   id: true,
   createdAt: true,
 });
 
+export type InsertCohort = z.infer<typeof insertCohortSchema>;
+export type Cohort = typeof cohorts.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type User = typeof users.$inferSelect;
 export type InsertAssessment = z.infer<typeof insertAssessmentSchema>;
 export type Assessment = typeof assessments.$inferSelect;
 

@@ -1,0 +1,152 @@
+Developer Plan: Cohort Management & Admin Features
+Data Model Extensions (Drizzle ORM Schema)
+To support cohorts and admin roles, we will extend the database schema using Drizzle (PostgreSQL). Key additions:
+Cohorts Table: Define a new cohorts table with fields:
+id (UUID primary key, auto-gen like in assessments)
+code (6-character unique code for cohort access)
+allowedSlots (integer max allowed members)
+usedSlots (integer count of sign-ups so far)
+name or description (optional label for admin reference)
+createdAt timestamp.
+Each cohort’s code will be the invite key that unlocks sign-up for that cohort.
+Users Table (Cohort Membership & Admin Flag): Introduce a users table to track each authenticated user’s cohort and role. Fields:
+userId (text, primary key, the Firebase UID) – links to assessments.userId
+GitHub
+.
+email (text, for admin convenience – populate from req.userEmail on sign-up
+GitHub
+).
+cohortId (UUID, foreign key to cohorts.id – null if no cohort assigned).
+isAdmin (boolean, default false).
+createdAt timestamp.
+These tables will be defined in shared/schema.ts similar to the existing assessments table. For example, the assessments table uses pgTable with various columns
+GitHub
+. We will add analogous definitions for cohorts and users. The Drizzle config will pick up the new schema and we can generate a migration
+GitHub
+.
+Relationships:
+No change to assessments table structure is strictly required (we can derive cohort via userId). However, we may add a foreign key constraint linking assessments.userId to the new users.userId for data integrity. This ensures an assessment’s user must exist in our users table (and thus have a cohort or admin role).
+Admin User Role Setup
+Initial Admin: We will designate an initial admin (e.g. via configuration or manual DB entry). For example, we might set an env config for an initial admin email and mark that user as admin upon first login. Alternatively, after adding the users table, we can manually insert the initial admin’s userId/email with isAdmin=true so they have admin privileges from the start.
+Adding Admins by Email: We’ll implement an admin-only function to promote other users:
+Create a POST endpoint (e.g. /api/admin/admins) that accepts an email address. It will require admin auth (see Admin API below).
+On request, the server will look up the user by email. If the user already exists in our users table (i.e. has signed up), we set their isAdmin=true. If not yet in our system, we can pre-provision an admin invite: for example, create a placeholder entry with that email and a generated userId or store it in a separate invites list. The simpler approach is to require the user to exist (the admin can invite them to sign up first), but to be user-friendly we could:
+Use Firebase Admin SDK to find or create the user by email (since we have firebase-admin configured
+GitHub
+).
+If created or found, insert into users table with isAdmin=true (so when they log in, they’re recognized as admin).
+We will send an email or notify the admin to share credentials manually (automated invite email is a future enhancement).
+Security: The list of admins will be stored in the users.isAdmin field. This way, admin status is checked server-side via DB, not solely via client. We’ll add a middleware to verify admin status on protected routes (see below).
+Cohort Access Codes & Sign-Up Flow
+We will introduce invite code verification into the account creation process to gate who can register:
+Code Generation: When an admin creates a cohort (see Admin API), the backend will generate a unique 6-digit alphanumeric code for that cohort. This code and the allowed slot count (e.g. 35) are saved in the cohorts table.
+Sign-Up UI Changes: In the React client, add a new input field for the cohort code on the registration form. This will appear only in “Create Account” mode. For example, in EnhancedSignInModal.tsx, we see the form fields for Name, Email, Password
+GitHub
+. We will insert a similar block for “Access Code” when isSignUp is true. The new field will collect the 6-digit code from the user. (We’ll also update form validation to require a code for sign-up.)
+{isSignUp && (
+  <div className="space-y-2">
+    <Label htmlFor="code">Access Code</Label>
+    <Input 
+      id="code" 
+      type="text" 
+      placeholder="Enter cohort access code"
+      value={code}
+      onChange={(e) => setCode(e.target.value)}
+      required 
+      disabled={emailLoading}
+    />
+  </div>
+)}
+Client-Side Validation: When the user submits the sign-up form, we will first validate the code format (e.g. 6 characters). The handleEmailSubmit function will need to incorporate code verification. Before calling signUpWithEmail, we will call a new API endpoint (e.g. POST /api/cohorts/verify) to check the code.
+Backend Code Verification: We will implement a public endpoint to verify and consume a code (or integrate this logic into the sign-up flow on the server). The steps on the server:
+Receive the code and (optionally) the user’s email.
+Look up the cohort by code in cohorts table. If not found or usedSlots >= allowedSlots, return an error (invalid or full).
+If valid, reserve a slot: increment usedSlots and store the user’s membership. Because account creation isn’t complete yet at this point, an approach is to tentatively reserve it and finalize on successful sign-up:
+E.g., perform the DB update usedSlots = usedSlots + 1 where code matches and usedSlots < allowedSlots (to avoid race conditions). This can be done in a single SQL statement or transaction to ensure atomicity.
+Alternatively, wait until after Firebase sign-up succeeds, then complete the DB insert (preferred to avoid “losing” a slot if sign-up fails). We can pass the code along to the server after auth. See next point.
+Complete Sign-Up (Server): Firebase Auth will create the user account (via signUpWithEmail or Google OAuth). Once the user is authenticated, we will call a secure endpoint to finalize their cohort membership. For example, on client after a successful sign-up, call POST /api/cohorts/join with the code (unless we already did it above). This endpoint will:
+Verify the code again and ensure slots available (if not already reserved).
+Retrieve the userId from the auth context (req.userId is set by Firebase token middleware
+GitHub
+). Also get userEmail if needed.
+Insert a record into users table: userId, email, cohortId (looked up via code), isAdmin=false.
+Increment the cohort’s usedSlots. (If we reserved earlier, this step would simply attach the user; if not reserved earlier, do it now in the same transaction as insertion to avoid over-count.)
+Return success or an error if code invalid/full.
+Google OAuth Consideration: If the user chooses “Sign in with Google” to create an account, we can’t ask for a code before authentication (Google popup is immediate). To handle this, we will detect a new Google user on first login and prompt for a code afterward:
+One approach: when a Google login completes, our app sees a user but no users DB entry. We can redirect them to an “Enter Cohort Code” page/modal. The user must input a valid code to proceed. On submission, call the same /api/cohorts/join endpoint to record their membership. If the code is invalid or cohort full, we may sign them out or block access (since they aren’t authorized).
+We’ll incorporate this into the app’s state: e.g. extend the ProtectedRoute or create a new guard to check if a logged-in user has a cohort. If not, show a code entry prompt instead of the assessment. This ensures even Google sign-ups must supply a code to use the system.
+Preventing Unauthorized Access: We will enforce on the server that no assessment or content can be accessed without a valid cohort. The requireAuthMiddleware (which currently checks for any authenticated user
+GitHub
+) will be augmented or paired with a new middleware to check cohort membership. For instance, a requireMembership middleware can query our users table for req.userId. If the user record is missing or has no cohort, we return 403 Forbidden (unless the user is an admin). This extra check will be applied to all participant-only API routes (e.g. creating or fetching assessments). This way, even if someone somehow creates a Firebase account without a code, they cannot use the program.
+Admin API Endpoints (Cohort & Admin Management)
+We will add new Express routes under a protected admin router. Only authenticated admins can hit these endpoints:
+Authentication & Middleware: Implement requireAdminMiddleware similar to requireAuthMiddleware. After requireAuthMiddleware runs (setting req.userId), requireAdminMiddleware will check req.userId against our DB’s admin flag. If not admin, respond with 403. Otherwise, proceed. We can chain these in routes (e.g. router.use(requireAuth, requireAdmin)).
+Create Cohort (POST /api/admin/cohorts): Allows an admin to create a new cohort code. Request includes cohort name/description and slot limit. Server will:
+Generate a unique 6-digit code (e.g. numeric or alphanumeric). Ensure no existing cohort has that code (loop until unique).
+Insert a new row in cohorts with the code, allowedSlots, usedSlots=0, and name.
+Return the created cohort info (especially the code) to display to the admin.
+List Cohorts (GET /api/admin/cohorts): Returns all cohorts with their details: code, name, allowed vs used slots, creation date. This helps admin see current cohorts and capacity.
+Update Cohort Slots (PATCH /api/admin/cohorts/:id or /:code): Enables increasing or decreasing the slot limit or editing name. The admin might use this to “add more slots” to an ongoing cohort. The server will take the new allowedSlots (ensuring it’s >= usedSlots to avoid inconsistency) and update the cohort record. We’ll log any such changes. (Removal of slots below current usage or deleting cohorts could be implemented with caution; for now we focus on increasing slots.)
+Get Cohort Averages (GET /api/admin/cohorts/:id/averages): Returns aggregate metrics for a cohort (see Cohort Analytics below). This could also be included in the GET cohort detail above to minimize extra calls.
+Add Admin (POST /api/admin/admins): As described, takes an email and promotes that user to admin. Implementation details covered in Admin User Role above. This route will check that the requesting user is an admin (via middleware) and then perform the lookup/insert for the target user.
+All admin routes will be mounted under an /api/admin prefix (for example, in server/routes.ts we’ll add app.use("/api/admin", adminRoutes) and define adminRoutes in a new file). The adminRoutes router will use requireAuthMiddleware and requireAdminMiddleware at the top to secure all its endpoints.
+Cohort Analytics (Average Scores per Cohort)
+We want to enable an admin to view aggregated results of all users in a cohort for both the Context Profile and Pulse Check:
+Data to Aggregate:
+Context Profile: Each assessment’s contextProfile is stored as JSON (e.g. regulatory_intensity, data_sensitivity, etc., each 0–4, plus some booleans)
+GitHub
+. We will compute the average (mean) of each numeric slider across the cohort’s members. For boolean fields (e.g. procurement_constraints), we can compute the percentage “Yes” (treat true as 1/false as 0 and average).
+Pulse Check (Domain Scores): After an assessment is completed, it has pillarScores – an object with scores 0–3 for each of the 6 domains C, O, R, T, E, X
+GitHub
+. We will average these domain scores across all completed assessments in the cohort. This gives the cohort’s mean scores, which the admin (and eventually users) can compare against individual scores.
+Back-end Calculation: We’ll add a method in the backend service to gather these stats. For example, an AssessmentService.getCohortStats(cohortId) that:
+Queries all assessments for users in the given cohort. Since we have users table linking userId to cohortId, we can join or do a subquery: select assessments where userId in (select userId from users where cohortId = X). Alternatively, if we added cohortId directly to assessments, just filter by that.
+Filter to completed assessments (we might decide to include only those with completedAt set, or at least with pillarScores not null).
+Aggregate the data: We can fetch all pillarScores JSON objects and compute averages in Node. Given the small cohort sizes (dozens), this is efficient. For each domain key, sum the values and divide by count to get average. Similarly, aggregate each context slider field.
+We might also use SQL JSON functions to compute averages directly in the query, but implementing in service code is simpler and clear. For now, a straightforward approach: fetch assessments, then use JavaScript to calculate means.
+API: The GET /api/admin/cohorts/:id/averages route will call the above service and return a JSON payload like:
+{
+  "cohortId": "1234-uuid", 
+  "memberCount": 30,
+  "contextAverages": { "regulatory_intensity": 2.5, "data_sensitivity": 3.1, ... , "procurement_constraints_pct": 0.4, ... },
+  "pulseAverages": { "C": 2.0, "O": 1.5, "R": 2.3, "T": 1.8, "E": 2.1, "X": 1.0 }
+}
+This gives the admin what the average context slider values are and average domain scores (“Strategic Maturity Index” scores) for the cohort. We’ll ensure these are rounded appropriately for display.
+Future: We will later use this data to let individual users compare their own scores to the cohort (e.g. on the results page, show “Cohort average: X” next to the user’s score). For now, we’ll focus on exposing it to admins (perhaps via the admin UI or a downloadable CSV).
+Admin Dashboard UI
+We will create an admin interface in the frontend for managing cohorts and viewing stats. Likely a new page e.g. AdminDashboard or extending the existing Dashboard page:
+Access Control in UI: The dashboard route (/dashboard) currently might be intended for normal users (possibly listing their past assessments). We will either repurpose it or add a new route /admin for cohort management. In App.tsx routing, we can add:
+<Route path="/admin">
+  {() => (
+    <ProtectedRoute>
+      <AdminDashboard />
+    </ProtectedRoute>
+  )}
+</Route>
+We might enhance ProtectedRoute to accept an requireAdmin prop. Alternatively, inside AdminDashboard component, use useAuth() to check user.isAdmin (we’ll need to supply that info via context or fetch). If not admin, redirect to home or show “Unauthorized”.
+Fetching Admin Data: On mounting the admin page, we will call the new endpoints:
+GET /api/admin/cohorts to list cohorts.
+For each cohort (or on demand), GET /api/admin/cohorts/{id}/averages for stats.
+We will likely integrate these with React Query (as the app already uses useQuery for data fetching
+GitHub
+). We should also ensure the auth token is sent on these requests (the app likely attaches the Firebase token in Authorization header for all /api calls via a global fetch interceptor or similar). If not, we will add that so that req.userId is available on the server side
+GitHub
+.
+UI Layout: The Admin dashboard can display:
+A list of cohorts (perhaps in a table or cards), showing Code, Name, Members (used/allowed), and creation date.
+For each cohort, an option to view Stats (average scores). This could be a toggle to reveal a summary: e.g., “Average domain scores: C=2.0, O=1.5, …” and perhaps “Avg context sliders: regulatory=2.5, …”. We can present this as text or simple charts (like a radar/honeycomb for averages vs ideal). Initially, a simple list of averages is fine.
+A button to Create New Cohort – opens a form to input name and allowed slots, then calls POST /api/admin/cohorts. On success, show the generated code to the admin (copyable) and add the cohort to the list.
+Option to edit a cohort’s allowedSlots (e.g. “Add 5 more slots”) – could be an inline edit or modal that calls PATCH.
+Section to Manage Admins (optional for now): the initial scope is cohort management, but since we added admin invites, we could also include a simple form to add an admin by email. The admin can enter an email and submit (calls POST /api/admin/admins). We show a success message (“Invitation created” or “User promoted to admin”). This can be a small subsection on the admin page.
+Admin Identification on Frontend: The AuthContext currently stores Firebase user but doesn’t know about our isAdmin. We will fetch the current user’s profile from our API (e.g. GET /api/assessments returns assessments but not role). We might create a /api/user/me endpoint to get the DB user record (with isAdmin and cohort info). Simpler: after login, when hitting admin page, just call an endpoint or reuse the cohorts fetch – if that returns 403, we know they aren’t admin. For now, we can store a boolean in state after fetching cohorts (if 200 OK, user is admin). We will also likely hide the admin UI link from non-admin users. (For example, in the AppHeader component or wherever navigation is, only show “Admin” link if user.isAdmin true.)
+Testing & Next Steps
+With these changes, we will thoroughly test:
+Database Migrations: Run the Drizzle migration to create new tables and verify we can insert and query them. Write unit tests for the storage layer if possible (similar to existing storage.test.ts).
+Sign-Up Flow: Test signing up with a valid code (should succeed and create user+cohort membership) and with an invalid or used-up code (should block sign-up with a friendly error). Also test Google OAuth path (should prompt for code after login).
+Admin Actions: Test that non-admin users cannot access the new cohort/admin routes (should get 403). Test that an admin can create cohorts, the code is unique and 6-digit, and that allowedSlots and usedSlots logic works (e.g., once 35 users have joined, the 36th cannot).
+Averages Calculation: Create a cohort with a few dummy assessments (we can insert sample data) and verify the averages match expectations. For example, if three users in cohort have pillar C scores 1,2,3, the API should return 2.0 for C. We’ll ensure booleans are handled correctly (maybe as percentage or count).
+This plan leverages the existing frameworks: Express for APIs, Firebase Auth for user identification, and React for UI. We integrate seamlessly: using req.userId from Firebase token (already set in requestContextMiddleware) to link to our new users table
+GitHub
+. We follow the established code style (using middleware for security
+GitHub
+, using the service/storage pattern for DB ops, and React Context/Query for state). By implementing these steps, we will gain fine-grained control over who can access the app and robust cohort analytics within the current stack.
