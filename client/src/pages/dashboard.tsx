@@ -85,7 +85,7 @@ function AssessmentCard({ assessment }: { assessment: Assessment }) {
 export default function Dashboard() {
   const { user } = useAuth();
   
-  const { data: assessments, isLoading, error } = useQuery({
+  const { data: assessments, isLoading, error } = useQuery<Assessment[]>({
     queryKey: ['/api/assessments', user?.uid],
     enabled: !!user?.uid,
   });
