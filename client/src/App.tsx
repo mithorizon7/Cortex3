@@ -38,6 +38,13 @@ function Router() {
           </ProtectedRoute>
         )}
       </Route>
+      <Route path="/admin-dashboard">
+        {() => (
+          <ProtectedRoute>
+            <AdminDashboard />
+          </ProtectedRoute>
+        )}
+      </Route>
       <Route path="/context-profile">
         {() => (
           <ProtectedRoute>

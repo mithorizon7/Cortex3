@@ -94,10 +94,7 @@ export default function AdminDashboard() {
   // Create cohort mutation
   const createCohortMutation = useMutation({
     mutationFn: async (data: CreateCohortData) => {
-      return apiRequest('/api/cohorts', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
+      return apiRequest('POST', '/api/cohorts', data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/cohorts'] });
@@ -120,10 +117,7 @@ export default function AdminDashboard() {
   // Update cohort mutation
   const updateCohortMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<CreateCohortData> }) => {
-      return apiRequest(`/api/cohorts/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(data),
-      });
+      return apiRequest('PUT', `/api/cohorts/${id}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/cohorts'] });
@@ -146,9 +140,7 @@ export default function AdminDashboard() {
   // Delete cohort mutation (for super admins)
   const deleteCohortMutation = useMutation({
     mutationFn: async (cohortId: string) => {
-      return apiRequest(`/api/cohorts/${cohortId}`, {
-        method: 'DELETE',
-      });
+      return apiRequest('DELETE', `/api/cohorts/${cohortId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/cohorts'] });
@@ -243,6 +235,7 @@ export default function AdminDashboard() {
   }
 
   const isSuperAdmin = userProfile.role === 'super_admin';
+  const isAdmin = userProfile.role === 'admin' || userProfile.role === 'super_admin';
 
   return (
     <ProtectedRoute requireAuth>
@@ -310,7 +303,7 @@ export default function AdminDashboard() {
                 <Settings className="h-4 w-4" />
                 <span>Settings</span>
               </TabsTrigger>
-              {isSuperAdmin && (
+              {isAdmin && (
                 <TabsTrigger value="bootstrap-invites" className="flex items-center space-x-2">
                   <Key className="h-4 w-4" />
                   <span>Bootstrap</span>
@@ -475,8 +468,8 @@ export default function AdminDashboard() {
               </Card>
             </TabsContent>
 
-            {/* Bootstrap Invites Tab (Super Admin Only) */}
-            {isSuperAdmin && (
+            {/* Bootstrap Invites Tab (Admin and Super Admin) */}
+            {isAdmin && (
               <TabsContent value="bootstrap-invites" className="space-y-6">
                 <BootstrapInviteManagement />
               </TabsContent>

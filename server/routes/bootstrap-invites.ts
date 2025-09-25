@@ -2,7 +2,7 @@ import { Request, Response, Router } from 'express';
 import { generateIncidentId, createUserError, sanitizeErrorForUser } from '../utils/incident';
 import { USER_ERROR_MESSAGES, HTTP_STATUS } from '../constants';
 import { logger } from '../logger';
-import { requireSuperAdminMiddleware } from '../middleware/security';
+import { requireAdminMiddleware, requireSuperAdminMiddleware } from '../middleware/security';
 import { withDatabaseErrorHandling } from '../utils/database-errors';
 import { storage } from '../storage';
 import { insertBootstrapInviteSchema } from '@shared/schema';
@@ -44,7 +44,7 @@ function generateBootstrapCode(): string {
 /**
  * Get all bootstrap invites (super admin only)
  */
-router.get('/', requireSuperAdminMiddleware, async (req: Request, res: Response) => {
+router.get('/', requireAdminMiddleware, async (req: Request, res: Response) => {
   const incidentId = generateIncidentId();
   
   try {
@@ -84,7 +84,7 @@ router.get('/', requireSuperAdminMiddleware, async (req: Request, res: Response)
 /**
  * Create new bootstrap invite (super admin only)
  */
-router.post('/', requireSuperAdminMiddleware, async (req: Request, res: Response) => {
+router.post('/', requireAdminMiddleware, async (req: Request, res: Response) => {
   const incidentId = generateIncidentId();
   
   try {
@@ -99,6 +99,44 @@ router.post('/', requireSuperAdminMiddleware, async (req: Request, res: Response
     
     // Validate request body
     const validatedData = createBootstrapInviteSchema.parse(req.body);
+    
+    // Security check: Prevent privilege escalation
+    // Get current user to check their role
+    const currentUser = await withDatabaseErrorHandling(
+      'get_current_user_for_role_check',
+      () => storage.getUser(req.userId!)
+    );
+    
+    if (!currentUser) {
+      logger.warn('User not found during bootstrap invite creation', {
+        additionalContext: {
+          operation: 'create_bootstrap_invite_user_not_found',
+          userId: req.userId,
+          incidentId
+        }
+      });
+      
+      res.status(HTTP_STATUS.FORBIDDEN)
+        .json(createUserError('User not found', incidentId, HTTP_STATUS.FORBIDDEN));
+      return;
+    }
+    
+    // Role-based permission check
+    if (currentUser.role === 'admin' && validatedData.role === 'super_admin') {
+      logger.warn('Admin user attempted to create super_admin bootstrap invite', {
+        additionalContext: {
+          operation: 'privilege_escalation_attempt',
+          userId: req.userId,
+          userRole: currentUser.role,
+          requestedRole: validatedData.role,
+          incidentId
+        }
+      });
+      
+      res.status(HTTP_STATUS.FORBIDDEN)
+        .json(createUserError('Insufficient privileges to create super admin invites', incidentId, HTTP_STATUS.FORBIDDEN));
+      return;
+    }
     
     // Generate unique code
     let code: string;
