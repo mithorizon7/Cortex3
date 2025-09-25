@@ -19,12 +19,13 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
   open, 
   onOpenChange 
 }) => {
-  const { signIn, signInWithEmail, signUpWithEmail, loading, error, clearError } = useAuth();
+  const { signIn, signInWithEmail, signUpWithEmail, signUpWithCohort, loading, error, clearError } = useAuth();
   const { toast } = useToast();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [cohortAccessCode, setCohortAccessCode] = useState('');
   const [emailLoading, setEmailLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
 
@@ -57,11 +58,20 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
       clearError();
       
       if (isSignUp) {
-        await signUpWithEmail(email, password, displayName || undefined);
-        toast({
-          title: 'Account Created!',
-          description: 'Your account has been created successfully and you are now signed in.',
-        });
+        // Use cohort-aware signup if access code is provided
+        if (cohortAccessCode) {
+          await signUpWithCohort(email, password, cohortAccessCode, displayName || undefined);
+          toast({
+            title: 'Account Created!',
+            description: 'Your account has been created successfully and you have joined the cohort.',
+          });
+        } else {
+          await signUpWithEmail(email, password, displayName || undefined);
+          toast({
+            title: 'Account Created!',
+            description: 'Your account has been created successfully and you are now signed in.',
+          });
+        }
       } else {
         await signInWithEmail(email, password);
         toast({
@@ -75,6 +85,7 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
       setEmail('');
       setPassword('');
       setDisplayName('');
+      setCohortAccessCode('');
     } catch (error) {
       console.error('Email authentication error:', error);
       
@@ -180,18 +191,38 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
               <CardContent>
                 <form onSubmit={handleEmailSubmit} className="space-y-4">
                   {isSignUp && (
-                    <div className="space-y-2">
-                      <Label htmlFor="displayName">Name (Optional)</Label>
-                      <Input
-                        id="displayName"
-                        type="text"
-                        placeholder="Enter your full name"
-                        value={displayName}
-                        onChange={(e) => setDisplayName(e.target.value)}
-                        disabled={emailLoading}
-                        data-testid="display-name-input"
-                      />
-                    </div>
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="displayName">Name (Optional)</Label>
+                        <Input
+                          id="displayName"
+                          type="text"
+                          placeholder="Enter your full name"
+                          value={displayName}
+                          onChange={(e) => setDisplayName(e.target.value)}
+                          disabled={emailLoading}
+                          data-testid="display-name-input"
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="cohortAccessCode">Cohort Access Code *</Label>
+                        <Input
+                          id="cohortAccessCode"
+                          type="text"
+                          placeholder="Enter 6-digit access code"
+                          value={cohortAccessCode}
+                          onChange={(e) => setCohortAccessCode(e.target.value.toUpperCase())}
+                          disabled={emailLoading}
+                          maxLength={6}
+                          required
+                          data-testid="cohort-access-code-input"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          You must have a valid access code to join CORTEX assessments
+                        </p>
+                      </div>
+                    </>
                   )}
                   
                   <div className="space-y-2">
@@ -225,7 +256,7 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
                   
                   <Button 
                     type="submit"
-                    disabled={emailLoading || !email || !password || (isSignUp && password.length < 6)}
+                    disabled={emailLoading || !email || !password || (isSignUp && (password.length < 6 || !cohortAccessCode || cohortAccessCode.length !== 6))}
                     className="w-full"
                     size="lg"
                     data-testid={isSignUp ? "email-signup-button" : "email-signin-button"}

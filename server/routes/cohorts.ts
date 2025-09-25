@@ -401,6 +401,90 @@ router.put('/:id', requireAdminMiddleware, async (req: Request, res: Response) =
 });
 
 /**
+ * Validate cohort access code (public endpoint for signup validation)
+ */
+router.post('/validate-access-code', async (req: Request, res: Response) => {
+  const incidentId = generateIncidentId();
+  
+  try {
+    logger.info('Validating cohort access code', {
+      additionalContext: {
+        operation: 'validate_access_code',
+        incidentId
+      }
+    });
+    
+    const { accessCode } = req.body;
+    
+    if (!accessCode || typeof accessCode !== 'string' || accessCode.length !== 6) {
+      res.status(HTTP_STATUS.BAD_REQUEST)
+        .json(createUserError('Access code must be exactly 6 characters', incidentId, HTTP_STATUS.BAD_REQUEST));
+      return;
+    }
+    
+    // Find cohort by access code
+    const cohort = await withDatabaseErrorHandling(
+      'get_cohort_by_code_validation',
+      () => storage.getCohortByCode(accessCode)
+    );
+    
+    if (!cohort) {
+      res.status(HTTP_STATUS.NOT_FOUND).json({ 
+        valid: false,
+        error: 'Invalid access code'
+      });
+      return;
+    }
+    
+    // Check if cohort is active
+    if (cohort.status !== 'active') {
+      res.status(HTTP_STATUS.FORBIDDEN).json({ 
+        valid: false,
+        error: 'This cohort is no longer accepting new members'
+      });
+      return;
+    }
+    
+    // Check if cohort has available slots
+    if (cohort.usedSlots >= cohort.allowedSlots) {
+      res.status(HTTP_STATUS.CONFLICT).json({ 
+        valid: false,
+        error: 'This cohort is full'
+      });
+      return;
+    }
+    
+    res.json({ 
+      valid: true,
+      cohort: {
+        id: cohort.id,
+        name: cohort.name,
+        description: cohort.description,
+        allowedSlots: cohort.allowedSlots,
+        usedSlots: cohort.usedSlots
+      }
+    });
+    
+  } catch (error) {
+    logger.error(
+      'Failed to validate access code',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        additionalContext: {
+          operation: 'validate_access_code_error',
+          incidentId
+        }
+      }
+    );
+    
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ 
+      valid: false,
+      error: 'Failed to validate access code'
+    });
+  }
+});
+
+/**
  * Join cohort with access code (authenticated users)
  */
 router.post('/join', requireAuthMiddleware, async (req: Request, res: Response) => {

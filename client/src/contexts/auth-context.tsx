@@ -19,6 +19,7 @@ interface AuthContextType {
   signIn: (usePopup?: boolean) => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmail: (email: string, password: string, displayName?: string) => Promise<void>;
+  signUpWithCohort: (email: string, password: string, cohortAccessCode: string, displayName?: string) => Promise<void>;
   signOut: () => Promise<void>;
   clearError: () => void;
 }
@@ -108,6 +109,77 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, []);
 
+  const signUpWithCohort = useCallback(async (email: string, password: string, cohortAccessCode: string, displayName?: string) => {
+    if (!isFirebaseConfigured()) {
+      const errorMsg = 'Authentication is not available. Please configure Firebase.';
+      setError(errorMsg);
+      throw new Error(errorMsg);
+    }
+    
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // First, validate the cohort access code
+      const validateResponse = await fetch('/api/cohorts/validate-access-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ accessCode: cohortAccessCode }),
+      });
+      
+      const validationResult = await validateResponse.json();
+      
+      if (!validationResult.valid) {
+        throw new Error(validationResult.error || 'Invalid cohort access code');
+      }
+      
+      // Create Firebase user account
+      const userCredential = await firebaseSignUpWithEmail(email, password, displayName);
+      const firebaseUser = userCredential.user;
+      
+      try {
+        // Get Firebase ID token for authentication with our API
+        const idToken = await firebaseUser.getIdToken();
+        
+        // Join the cohort using the validated access code
+        const joinResponse = await fetch('/api/cohorts/join', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`,
+          },
+          body: JSON.stringify({ code: cohortAccessCode }),
+        });
+        
+        if (!joinResponse.ok) {
+          const joinError = await joinResponse.json();
+          throw new Error(joinError.error || 'Failed to join cohort');
+        }
+      } catch (joinError) {
+        // If cohort join fails, delete the Firebase account to prevent orphaning
+        try {
+          await firebaseUser.delete();
+          console.log('Deleted Firebase account after failed cohort join');
+        } catch (deleteError) {
+          console.error('Failed to delete Firebase account after cohort join failure:', deleteError);
+          // Note: We still throw the original join error, not the delete error
+        }
+        
+        // Re-throw the original cohort join error
+        throw joinError;
+      }
+      
+      // Don't set loading to false here - let the auth state listener handle it
+    } catch (error: any) {
+      console.error('Cohort sign-up error:', error);
+      setError(getAuthErrorMessage(error));
+      setLoading(false); // Only set loading to false on error
+      throw error; // Re-throw so UI components can handle the error
+    }
+  }, []);
+
   const signOut = useCallback(async () => {
     if (!isFirebaseConfigured()) {
       setError('Authentication is not available. Please configure Firebase.');
@@ -165,6 +237,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     signIn,
     signInWithEmail,
     signUpWithEmail,
+    signUpWithCohort,
     signOut,
     clearError,
   };
