@@ -169,6 +169,17 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
     const columnWidth = (contentWidth - 12) / 2; // 12mm gap between columns
     const maxY = pageHeight - 40; // Reserve space for footer and padding
     
+    // Centralized layout constants for consistent estimation and rendering
+    const LAYOUT = {
+      cardContentMargin: 20,     // Margin inside cards
+      lineSpacing: 5.5,          // Space between lines
+      paragraphSpacing: 8,       // Space between paragraphs
+      headerSpacing: 28,         // Space for card headers
+      bottomPadding: 20,         // Card bottom padding
+      chipSpacing: 6,            // Extra space for action/watchout chips
+      minCardHeight: 150         // Minimum card height
+    };
+    
     let currentY = margin;
     
     // Premium Color Palette (RGB tuples for jsPDF compatibility)
@@ -346,21 +357,21 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
     // Premium Left Column: Strategic Context
     // First calculate content height, then draw card
     const leftColumnStartY = currentY;
-    let contentEndY = currentY + 25; // Start after header with more padding
+    let contentEndY = currentY + LAYOUT.headerSpacing;
     
     if (insight) {
       // Split insight into paragraphs and calculate total height needed
       const paragraphs = insight.split(/\n{2,}/).filter(p => p.trim().length > 0);
       
       paragraphs.forEach((paragraph, index) => {
-        const lines = safeSplitTextToSize(doc, paragraph.trim(), columnWidth - 20); // More margin
-        contentEndY += lines.length * 5.5; // More space per line for safety
-        if (index < paragraphs.length - 1) contentEndY += 8; // More paragraph spacing
+        const lines = safeSplitTextToSize(doc, paragraph.trim(), columnWidth - LAYOUT.cardContentMargin);
+        contentEndY += lines.length * LAYOUT.lineSpacing;
+        if (index < paragraphs.length - 1) contentEndY += LAYOUT.paragraphSpacing;
       });
     }
     
     // Calculate proper card height with safety margin
-    const leftColumnHeight = Math.max(150, contentEndY - leftColumnStartY + 20); // Extra bottom padding
+    const leftColumnHeight = Math.max(LAYOUT.minCardHeight, contentEndY - leftColumnStartY + LAYOUT.bottomPadding);
     
     // Now draw the card with correct height
     drawCard(leftColumnX, leftColumnStartY, columnWidth, leftColumnHeight, false);
@@ -379,16 +390,16 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
       doc.setFont('helvetica', typography.body.weight);
       doc.setTextColor(...colors.primary);
       
-      let contentY = leftColumnStartY + 20;
+      let contentY = leftColumnStartY + LAYOUT.headerSpacing;
       paragraphs.forEach((paragraph, index) => {
-        const lines = safeSplitTextToSize(doc, paragraph.trim(), columnWidth - 16);
+        const lines = safeSplitTextToSize(doc, paragraph.trim(), columnWidth - LAYOUT.cardContentMargin);
         
         lines.forEach((line: string) => {
-          doc.text(line, leftColumnX + 8, contentY);
-          contentY += 5;
+          doc.text(line, leftColumnX + LAYOUT.cardContentMargin/2, contentY);
+          contentY += LAYOUT.lineSpacing;
         });
         
-        if (index < paragraphs.length - 1) contentY += 6;
+        if (index < paragraphs.length - 1) contentY += LAYOUT.paragraphSpacing;
       });
       
       leftColumnY = contentY + 10;
@@ -603,12 +614,12 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
       // Premium Actions (Left Column)
       if (mirror.actions?.length) {
         // Calculate dynamic height for actions with safety margins
-        let estimatedActionsHeight = 28; // More header space
+        let estimatedActionsHeight = LAYOUT.headerSpacing;
         mirror.actions.forEach(action => {
-          const actionLines = safeSplitTextToSize(doc, action, columnWidth - 20); // More margin
-          estimatedActionsHeight += actionLines.length * 5 + 10; // More space per line and spacing
+          const actionLines = safeSplitTextToSize(doc, action, columnWidth - LAYOUT.cardContentMargin);
+          estimatedActionsHeight += actionLines.length * LAYOUT.lineSpacing + LAYOUT.chipSpacing;
         });
-        estimatedActionsHeight += 15; // More bottom padding
+        estimatedActionsHeight += LAYOUT.bottomPadding;
         
         // Check if entire actions section will fit on current page
         if (gridLeftY + estimatedActionsHeight > maxY - 20) {
@@ -639,15 +650,15 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
         doc.text('Leadership Actions', gridLeftX + 18, gridLeftY + 12);
         
         // Premium action items with enhanced styling
-        let actionContentY = gridLeftY + 28; // Match header calculation
+        let actionContentY = gridLeftY + LAYOUT.headerSpacing;
         doc.setFontSize(typography.small.size);
         doc.setFont('helvetica', typography.small.weight);
         doc.setTextColor(...colors.primary);
         
         mirror.actions.forEach((action, actionIndex) => {
           // Handle text overflow with proper wrapping
-          const actionLines = safeSplitTextToSize(doc, action, columnWidth - 20);
-          const chipHeight = actionLines.length * 5 + 6; // More space per line
+          const actionLines = safeSplitTextToSize(doc, action, columnWidth - LAYOUT.cardContentMargin);
+          const chipHeight = actionLines.length * LAYOUT.lineSpacing + LAYOUT.chipSpacing;
           
           // Pagination check for each action
           if (actionContentY + chipHeight > maxY - 20) {
@@ -659,12 +670,12 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
             gridRightY = margin + 15;
             
             // Calculate remaining actions height for new page card
-            let remainingActionsHeight = 22; // Header space
+            let remainingActionsHeight = LAYOUT.headerSpacing;
             for (let i = actionIndex; i < mirror.actions.length; i++) {
-              const remainingActionLines = safeSplitTextToSize(doc, mirror.actions[i], columnWidth - 16);
-              remainingActionsHeight += remainingActionLines.length * 4 + 8; // Content + spacing
+              const remainingActionLines = safeSplitTextToSize(doc, mirror.actions[i], columnWidth - LAYOUT.cardContentMargin);
+              remainingActionsHeight += remainingActionLines.length * LAYOUT.lineSpacing + LAYOUT.chipSpacing;
             }
-            remainingActionsHeight += 10; // Bottom padding
+            remainingActionsHeight += LAYOUT.bottomPadding;
             
             // Redraw premium actions card on new page
             drawCard(gridLeftX, actionContentY, columnWidth, remainingActionsHeight, true);
@@ -689,11 +700,11 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
           doc.setFillColor(...colors.surface);
           doc.setDrawColor(...colors.accent);
           doc.setLineWidth(0.5);
-          doc.rect(gridLeftX + 8, actionContentY, columnWidth - 16, chipHeight, 'FD');
+          doc.rect(gridLeftX + 8, actionContentY, columnWidth - LAYOUT.cardContentMargin, chipHeight, 'FD');
           
           // Action text
           actionLines.forEach((line: string, lineIndex: number) => {
-            doc.text(line, gridLeftX + 12, actionContentY + 4 + (lineIndex * 4));
+            doc.text(line, gridLeftX + LAYOUT.cardContentMargin/2, actionContentY + 4 + (lineIndex * LAYOUT.lineSpacing));
           });
           
           actionContentY += chipHeight + 4;
@@ -705,12 +716,12 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
       // Premium Watchouts (Right Column)  
       if (mirror.watchouts?.length) {
         // Calculate dynamic height for watchouts with safety margins
-        let estimatedWatchoutsHeight = 28; // More header space
+        let estimatedWatchoutsHeight = LAYOUT.headerSpacing;
         mirror.watchouts.forEach(watchout => {
-          const watchoutLines = safeSplitTextToSize(doc, watchout, columnWidth - 20); // More margin
-          estimatedWatchoutsHeight += watchoutLines.length * 5 + 10; // More space per line and spacing
+          const watchoutLines = safeSplitTextToSize(doc, watchout, columnWidth - LAYOUT.cardContentMargin);
+          estimatedWatchoutsHeight += watchoutLines.length * LAYOUT.lineSpacing + LAYOUT.chipSpacing;
         });
-        estimatedWatchoutsHeight += 15; // More bottom padding
+        estimatedWatchoutsHeight += LAYOUT.bottomPadding;
         
         // Check if entire watchouts section will fit on current page
         if (gridRightY + estimatedWatchoutsHeight > maxY - 20) {
@@ -748,8 +759,8 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
         
         mirror.watchouts.forEach((watchout, watchoutIndex) => {
           // Handle text overflow with proper wrapping
-          const watchoutLines = safeSplitTextToSize(doc, watchout, columnWidth - 20);
-          const chipHeight = watchoutLines.length * 5 + 6; // More space per line
+          const watchoutLines = safeSplitTextToSize(doc, watchout, columnWidth - LAYOUT.cardContentMargin);
+          const chipHeight = watchoutLines.length * LAYOUT.lineSpacing + LAYOUT.chipSpacing;
           
           // Pagination check for each watchout
           if (watchoutContentY + chipHeight > maxY - 20) {
@@ -761,12 +772,12 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
             gridRightY = margin + 15;
             
             // Calculate remaining watchouts height for new page card
-            let remainingWatchoutsHeight = 22; // Header space
+            let remainingWatchoutsHeight = LAYOUT.headerSpacing;
             for (let i = watchoutIndex; i < mirror.watchouts.length; i++) {
-              const remainingWatchoutLines = safeSplitTextToSize(doc, mirror.watchouts[i], columnWidth - 16);
-              remainingWatchoutsHeight += remainingWatchoutLines.length * 4 + 8; // Content + spacing
+              const remainingWatchoutLines = safeSplitTextToSize(doc, mirror.watchouts[i], columnWidth - LAYOUT.cardContentMargin);
+              remainingWatchoutsHeight += remainingWatchoutLines.length * LAYOUT.lineSpacing + LAYOUT.chipSpacing;
             }
-            remainingWatchoutsHeight += 10; // Bottom padding
+            remainingWatchoutsHeight += LAYOUT.bottomPadding;
             
             // Redraw premium watchouts card on new page
             drawCard(gridRightX, watchoutContentY, columnWidth, remainingWatchoutsHeight, true);
@@ -791,11 +802,11 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
           doc.setFillColor(...colors.surface);
           doc.setDrawColor(...colors.warning);
           doc.setLineWidth(0.5);
-          doc.rect(gridRightX + 8, watchoutContentY, columnWidth - 16, chipHeight, 'FD');
+          doc.rect(gridRightX + 8, watchoutContentY, columnWidth - LAYOUT.cardContentMargin, chipHeight, 'FD');
           
           // Watchout text
           watchoutLines.forEach((line: string, lineIndex: number) => {
-            doc.text(line, gridRightX + 12, watchoutContentY + 4 + (lineIndex * 4));
+            doc.text(line, gridRightX + LAYOUT.cardContentMargin/2, watchoutContentY + 4 + (lineIndex * LAYOUT.lineSpacing));
           });
           
           watchoutContentY += chipHeight + 4;
