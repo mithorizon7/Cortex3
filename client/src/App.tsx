@@ -17,6 +17,7 @@ import DomainQuestions from "@/pages/domain-questions";
 import Results from "@/pages/results";
 import OptionsStudio from "@/pages/options-studio";
 import Dashboard from "@/pages/dashboard";
+import AdminDashboard from "@/pages/admin-dashboard";
 
 function Router() {
   return (
@@ -26,6 +27,13 @@ function Router() {
         {() => (
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        )}
+      </Route>
+      <Route path="/admin">
+        {() => (
+          <ProtectedRoute>
+            <AdminDashboard />
           </ProtectedRoute>
         )}
       </Route>
