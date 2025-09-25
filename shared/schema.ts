@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, boolean, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, boolean, jsonb, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -45,6 +45,22 @@ export const assessments = pgTable("assessments", {
   createdAt: text("created_at").default(sql`now()`),
 });
 
+// Bootstrap invites table for reusable super admin access codes
+export const bootstrapInvites = pgTable("bootstrap_invites", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  code: varchar("code", { length: 8 }).notNull().unique(), // Bootstrap access code (e.g., F9K2B7QX)
+  role: text("role").notNull().default("super_admin"), // Role to assign when code is used
+  allowedUses: integer("allowed_uses").notNull().default(1), // Maximum number of times this code can be used
+  remainingUses: integer("remaining_uses").notNull().default(1), // Current remaining uses
+  expiresAt: timestamp("expires_at").notNull(), // When this invite expires
+  issuedBy: text("issued_by").notNull().references(() => users.userId), // Who created this invite
+  description: text("description"), // Optional description for audit purposes
+  status: text("status").notNull().default("active"), // active, expired, revoked
+  createdAt: text("created_at").default(sql`now()`),
+  lastUsedAt: text("last_used_at"), // Track when it was last used
+  usedBy: jsonb("used_by").default('[]'), // Array of user IDs who used this code (for audit)
+});
+
 // Insert schemas and types for new tables
 export const insertCohortSchema = createInsertSchema(cohorts).omit({
   id: true,
@@ -62,12 +78,21 @@ export const insertAssessmentSchema = createInsertSchema(assessments).omit({
   createdAt: true,
 });
 
+export const insertBootstrapInviteSchema = createInsertSchema(bootstrapInvites).omit({
+  id: true,
+  createdAt: true,
+  lastUsedAt: true,
+  usedBy: true,
+});
+
 export type InsertCohort = z.infer<typeof insertCohortSchema>;
 export type Cohort = typeof cohorts.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertAssessment = z.infer<typeof insertAssessmentSchema>;
 export type Assessment = typeof assessments.$inferSelect;
+export type InsertBootstrapInvite = z.infer<typeof insertBootstrapInviteSchema>;
+export type BootstrapInvite = typeof bootstrapInvites.$inferSelect;
 
 // Context Profile Types
 export const contextProfileSchema = z.object({

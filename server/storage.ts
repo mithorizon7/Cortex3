@@ -1,4 +1,4 @@
-import { type Assessment, type InsertAssessment, type OptionsStudioSession, type User, type InsertUser, type Cohort, type InsertCohort, assessments, users, cohorts, optionsStudioSessionSchema } from "@shared/schema";
+import { type Assessment, type InsertAssessment, type OptionsStudioSession, type User, type InsertUser, type Cohort, type InsertCohort, type BootstrapInvite, type InsertBootstrapInvite, assessments, users, cohorts, bootstrapInvites, optionsStudioSessionSchema } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { logger, withErrorHandling } from "./logger";
 import { withDatabaseErrorHandling } from "./utils/database-errors";
@@ -79,6 +79,14 @@ export interface IStorage {
   joinCohort(userId: string, cohortId: string): Promise<User | null>;
   joinCohortAtomic(userId: string, cohortId: string): Promise<{ user: User; cohort: Cohort } | null>;
   getCohortUsers(cohortId: string): Promise<User[]>;
+  
+  // Bootstrap invite operations
+  getBootstrapInvite(code: string): Promise<BootstrapInvite | null>;
+  createBootstrapInvite(invite: InsertBootstrapInvite): Promise<BootstrapInvite>;
+  updateBootstrapInvite(id: string, updates: Partial<InsertBootstrapInvite>): Promise<BootstrapInvite | null>;
+  useBootstrapInvite(code: string, userId: string): Promise<BootstrapInvite | null>;
+  getAllBootstrapInvites(): Promise<BootstrapInvite[]>;
+  revokeBootstrapInvite(id: string): Promise<BootstrapInvite | null>;
   
   // Analytics operations
   getCohortAnalytics(cohortId?: string | null): Promise<CohortAnalytics[]>;
@@ -820,6 +828,202 @@ export class DatabaseStorage implements IStorage {
         return analytics.length > 0 ? analytics[0] : null;
       },
       { functionArgs: { cohortId } }
+    );
+  }
+
+  // Bootstrap invite operations
+  async getBootstrapInvite(code: string): Promise<BootstrapInvite | null> {
+    return withDatabaseErrorHandling(
+      'getBootstrapInvite',
+      async () => {
+        const db = await getDb();
+        const [invite] = await db
+          .select()
+          .from(bootstrapInvites)
+          .where(eq(bootstrapInvites.code, code));
+        
+        if (invite) {
+          logger.debug('Bootstrap invite retrieved successfully', {
+            additionalContext: { code, status: invite.status }
+          });
+          return invite;
+        } else {
+          logger.debug('Bootstrap invite not found', {
+            additionalContext: { code }
+          });
+          return null;
+        }
+      },
+      { functionArgs: { code } }
+    );
+  }
+
+  async createBootstrapInvite(insertInvite: InsertBootstrapInvite): Promise<BootstrapInvite> {
+    return withDatabaseErrorHandling(
+      'createBootstrapInvite',
+      async () => {
+        const db = await getDb();
+        const [invite] = await db
+          .insert(bootstrapInvites)
+          .values(insertInvite)
+          .returning();
+        
+        logger.info('Bootstrap invite created successfully', {
+          additionalContext: { 
+            inviteId: invite.id,
+            code: invite.code,
+            role: invite.role,
+            allowedUses: invite.allowedUses
+          }
+        });
+        
+        return invite;
+      },
+      { functionArgs: { insertInvite } }
+    );
+  }
+
+  async updateBootstrapInvite(id: string, updates: Partial<InsertBootstrapInvite>): Promise<BootstrapInvite | null> {
+    return withDatabaseErrorHandling(
+      'updateBootstrapInvite',
+      async () => {
+        const db = await getDb();
+        const [updated] = await db
+          .update(bootstrapInvites)
+          .set(updates)
+          .where(eq(bootstrapInvites.id, id))
+          .returning();
+        
+        if (updated) {
+          logger.info('Bootstrap invite updated successfully', {
+            additionalContext: { 
+              inviteId: id,
+              updateKeys: Object.keys(updates)
+            }
+          });
+          return updated;
+        } else {
+          logger.warn('Cannot update bootstrap invite - not found', {
+            additionalContext: { inviteId: id }
+          });
+          return null;
+        }
+      },
+      { functionArgs: { id, updates } }
+    );
+  }
+
+  async useBootstrapInvite(code: string, userId: string): Promise<BootstrapInvite | null> {
+    return withDatabaseErrorHandling(
+      'useBootstrapInvite',
+      async () => {
+        const db = await getDb();
+        
+        // Use transaction to ensure atomic operation
+        const result = await db.transaction(async (tx) => {
+          // Get the invite with FOR UPDATE lock
+          const [invite] = await tx
+            .select()
+            .from(bootstrapInvites)
+            .where(eq(bootstrapInvites.code, code))
+            .for('update');
+          
+          if (!invite) {
+            throw new Error('Bootstrap invite not found');
+          }
+          
+          // Check if invite is still valid
+          if (invite.status !== 'active') {
+            throw new Error('Bootstrap invite is not active');
+          }
+          
+          if (invite.remainingUses <= 0) {
+            throw new Error('Bootstrap invite has no remaining uses');
+          }
+          
+          if (new Date() > new Date(invite.expiresAt)) {
+            throw new Error('Bootstrap invite has expired');
+          }
+          
+          // Get current usedBy array and add this user
+          const usedByArray = (invite.usedBy as string[]) || [];
+          usedByArray.push(userId);
+          
+          // Update the invite
+          const [updatedInvite] = await tx
+            .update(bootstrapInvites)
+            .set({
+              remainingUses: invite.remainingUses - 1,
+              lastUsedAt: new Date().toISOString(),
+              usedBy: usedByArray,
+              status: invite.remainingUses - 1 <= 0 ? 'expired' : 'active'
+            })
+            .where(eq(bootstrapInvites.id, invite.id))
+            .returning();
+          
+          return updatedInvite;
+        });
+        
+        logger.info('Bootstrap invite used successfully', {
+          additionalContext: { 
+            code,
+            userId,
+            remainingUses: result.remainingUses
+          }
+        });
+        
+        return result;
+      },
+      { functionArgs: { code, userId } }
+    );
+  }
+
+  async getAllBootstrapInvites(): Promise<BootstrapInvite[]> {
+    return withDatabaseErrorHandling(
+      'getAllBootstrapInvites',
+      async () => {
+        const db = await getDb();
+        const invites = await db
+          .select()
+          .from(bootstrapInvites)
+          .orderBy(desc(bootstrapInvites.createdAt));
+        
+        logger.debug('All bootstrap invites retrieved successfully', {
+          additionalContext: { 
+            inviteCount: invites.length 
+          }
+        });
+        
+        return invites;
+      },
+      { functionArgs: {} }
+    );
+  }
+
+  async revokeBootstrapInvite(id: string): Promise<BootstrapInvite | null> {
+    return withDatabaseErrorHandling(
+      'revokeBootstrapInvite',
+      async () => {
+        const db = await getDb();
+        const [revoked] = await db
+          .update(bootstrapInvites)
+          .set({ status: 'revoked' })
+          .where(eq(bootstrapInvites.id, id))
+          .returning();
+        
+        if (revoked) {
+          logger.info('Bootstrap invite revoked successfully', {
+            additionalContext: { inviteId: id }
+          });
+          return revoked;
+        } else {
+          logger.warn('Cannot revoke bootstrap invite - not found', {
+            additionalContext: { inviteId: id }
+          });
+          return null;
+        }
+      },
+      { functionArgs: { id } }
     );
   }
 }
