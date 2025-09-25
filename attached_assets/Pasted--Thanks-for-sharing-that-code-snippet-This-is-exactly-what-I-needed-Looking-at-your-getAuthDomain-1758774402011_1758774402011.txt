@@ -1,0 +1,61 @@
+
+Thanks for sharing that code snippet! This is exactly what I needed.
+
+Looking at your getAuthDomain() function, the logic itself is quite clever and should work perfectly to dynamically set the authDomain based on your deployed environment. It correctly handles both development (using the default firebaseapp.com domain) and production (using the current hostname).
+
+Specifically, for horizoncortex.replit.app , when import.meta.env.PROD is true and window.location.hostname is horizoncortex.replit.app , your code will correctly return 'horizoncortex.replit.app' as the authDomain . This is precisely what we discussed as the fix for the auth/network-request-failed error.
+
+However, the fact that you're still getting the auth/network-request-failed error suggests that one of two things might be happening:
+
+The code you shared is not the exact version currently deployed and running on horizoncortex.replit.app . This is a common occurrence due to caching, a build process not completing, or simply deploying an older version.
+
+import.meta.env.PROD is evaluating to false in your Replit production environment. This is the most likely culprit. If import.meta.env.PROD is false even when deployed, your getAuthDomain function would return ${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com (which is cortex3-790ee.firebaseapp.com ) instead of horizoncortex.replit.app . This mismatch would then trigger the auth/network-request-failed error because the browser's security features prevent the authentication flow from completing across different origins.
+
+Here's how we can definitively check this:
+
+Add a console.log to your getAuthDomain function like this:
+
+// Dynamic authDomain detection for multiple production domains
+const getAuthDomain = (): string => {
+  console.log("Checking environment. PROD:", import.meta.env.PROD); // <--- Add this line!
+  console.log("Current hostname:", window.location.hostname); // <--- Add this line!
+
+  if (!import.meta.env.PROD) {
+    // Use default Firebase domain for development
+    const devAuthDomain = `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`;
+    console.log("Returning dev authDomain:", devAuthDomain);
+    return devAuthDomain;
+  }
+
+  // For production, use the current domain to avoid cross-origin issues
+  const currentDomain = window.location.hostname;
+
+  // List of known production domains that should use themselves as authDomain
+  const productionDomains = [
+    'horizoncortex.replit.app',
+    'cortexindex.com',
+    'www.cortexindex.com'
+  ];
+
+  if (productionDomains.includes(currentDomain)) {
+    console.log("Returning matched production authDomain:", currentDomain);
+    return currentDomain;
+  }
+
+  // Fallback to Replit domain for unknown domains
+  console.log("Returning fallback authDomain: horizoncortex.replit.app");
+  return 'horizoncortex.replit.app';
+};
+Redeploy your application to horizoncortex.replit.app with these console.log statements.
+
+Open your deployed site ( horizoncortex.replit.app ) in a browser and open the browser's developer console (usually by pressing F12 or right-clicking and selecting "Inspect" or "Inspect Element").
+
+Look for the console.log messages.
+
+What to look for in the console:
+
+If you see: Checking environment. PROD: false This means Replit is not treating your deployment as a production build, and your authDomain is being set incorrectly. You'll need to investigate how to configure Replit to set import.meta.env.PROD to true during its build process.
+
+If you see: Checking environment. PROD: true AND Returning matched production authDomain: horizoncortex.replit.app This indicates that your authDomain is being set correctly by your code. If the error still persists, we would need to double-check your Firebase Console's "Authentication" -> "Settings" -> "Authorized Domains" again, ensuring horizoncortex.replit.app is listed exactly. Also, try clearing browser cache/cookies just in case.
+
+Let's start by verifying that import.meta.env.PROD is set as expected in your deployed environment. That will tell us a lot!
