@@ -5,7 +5,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/auth-context";
 import { ProtectedRoute } from "@/components/auth/protected-route";
-import { FirebaseDebugPanel } from "@/components/debug/firebase-debug";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import ContextProfile from "@/pages/context-profile";
@@ -106,7 +105,6 @@ function App() {
           <main id="main-content" role="main">
             <Router />
           </main>
-          <FirebaseDebugPanel />
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>
