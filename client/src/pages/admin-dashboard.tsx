@@ -1,13 +1,22 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { AppHeader } from '@/components/navigation/app-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Users, Settings, BarChart3, Shield, AlertCircle } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Plus, Users, Settings, BarChart3, Shield, AlertCircle, Edit, Trash2, MoreHorizontal } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 
 // Types for user profile and cohort data
 interface UserProfile {
@@ -31,9 +40,43 @@ interface Cohort {
   createdAt?: string;
 }
 
+// Form validation schemas
+const createCohortSchema = z.object({
+  name: z.string().min(1, 'Name is required').max(100, 'Name must be less than 100 characters'),
+  description: z.string().min(1, 'Description is required').max(500, 'Description must be less than 500 characters'),
+  allowedSlots: z.number().min(1, 'Must allow at least 1 user').max(10000, 'Too many slots'),
+  status: z.enum(['active', 'inactive']).default('active')
+});
+
+type CreateCohortData = z.infer<typeof createCohortSchema>;
+
 export default function AdminDashboard() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('cohorts');
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editingCohort, setEditingCohort] = useState<Cohort | null>(null);
+
+  // Create cohort form
+  const createForm = useForm<CreateCohortData>({
+    resolver: zodResolver(createCohortSchema),
+    defaultValues: {
+      name: '',
+      description: '',
+      allowedSlots: 50,
+      status: 'active'
+    }
+  });
+
+  // Edit cohort form
+  const editForm = useForm<CreateCohortData>({
+    resolver: zodResolver(createCohortSchema),
+    defaultValues: {
+      name: '',
+      description: '',
+      allowedSlots: 50,
+      status: 'active'
+    }
+  });
 
   // Fetch user profile to determine admin role
   const { data: userProfile, isLoading: profileLoading } = useQuery<UserProfile>({
@@ -45,6 +88,108 @@ export default function AdminDashboard() {
     queryKey: ['/api/cohorts'],
     enabled: !!userProfile && (userProfile.role === 'admin' || userProfile.role === 'super_admin'),
   });
+
+  // Create cohort mutation
+  const createCohortMutation = useMutation({
+    mutationFn: async (data: CreateCohortData) => {
+      return apiRequest('/api/cohorts', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/cohorts'] });
+      setCreateDialogOpen(false);
+      createForm.reset();
+      toast({
+        title: 'Success',
+        description: 'Cohort created successfully',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to create cohort',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Update cohort mutation
+  const updateCohortMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<CreateCohortData> }) => {
+      return apiRequest(`/api/cohorts/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/cohorts'] });
+      setEditingCohort(null);
+      editForm.reset();
+      toast({
+        title: 'Success',
+        description: 'Cohort updated successfully',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update cohort',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Delete cohort mutation (for super admins)
+  const deleteCohortMutation = useMutation({
+    mutationFn: async (cohortId: string) => {
+      return apiRequest(`/api/cohorts/${cohortId}`, {
+        method: 'DELETE',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/cohorts'] });
+      toast({
+        title: 'Success',
+        description: 'Cohort deleted successfully',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to delete cohort',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Handle form submissions
+  const handleCreateCohort = (data: CreateCohortData) => {
+    createCohortMutation.mutate(data);
+  };
+
+  const handleUpdateCohort = (data: CreateCohortData) => {
+    if (editingCohort) {
+      updateCohortMutation.mutate({ id: editingCohort.id, data });
+    }
+  };
+
+  const handleDeleteCohort = (cohortId: string) => {
+    if (confirm('Are you sure you want to delete this cohort? This action cannot be undone.')) {
+      deleteCohortMutation.mutate(cohortId);
+    }
+  };
+
+  const openEditDialog = (cohort: Cohort) => {
+    setEditingCohort(cohort);
+    editForm.reset({
+      name: cohort.name,
+      description: cohort.description,
+      allowedSlots: cohort.allowedSlots,
+      status: cohort.status,
+    });
+  };
 
   // Loading states
   if (profileLoading) {
@@ -123,10 +268,14 @@ export default function AdminDashboard() {
                   {isSuperAdmin ? 'Super Admin' : 'Admin'}
                 </Badge>
                 {isSuperAdmin && (
-                  <Button size="lg" data-testid="button-create-cohort">
-                    <Plus className="h-5 w-5 mr-2" />
-                    Create Cohort
-                  </Button>
+                  <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button size="lg" data-testid="button-create-cohort">
+                        <Plus className="h-5 w-5 mr-2" />
+                        Create Cohort
+                      </Button>
+                    </DialogTrigger>
+                  </Dialog>
                 )}
               </div>
             </div>
@@ -208,13 +357,56 @@ export default function AdminDashboard() {
                                   <span className="font-mono font-medium">{cohort.code}</span>
                                 </div>
                                 <div className="pt-2 flex space-x-2">
-                                  <Button variant="outline" size="sm" className="flex-1">
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="flex-1"
+                                    data-testid={`button-view-users-${cohort.id}`}
+                                  >
                                     View Users
                                   </Button>
                                   {(isSuperAdmin || cohort.id === userProfile.cohortId) && (
-                                    <Button variant="outline" size="sm" className="flex-1">
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm" 
+                                      className="flex-1"
+                                      onClick={() => openEditDialog(cohort)}
+                                      data-testid={`button-edit-cohort-${cohort.id}`}
+                                      disabled={updateCohortMutation.isPending}
+                                    >
                                       Edit
                                     </Button>
+                                  )}
+                                  {isSuperAdmin && (
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button 
+                                          variant="outline" 
+                                          size="sm"
+                                          data-testid={`button-cohort-menu-${cohort.id}`}
+                                        >
+                                          <MoreHorizontal className="h-4 w-4" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end">
+                                        <DropdownMenuItem 
+                                          onClick={() => openEditDialog(cohort)}
+                                          data-testid={`menu-edit-cohort-${cohort.id}`}
+                                        >
+                                          <Edit className="h-4 w-4 mr-2" />
+                                          Edit Details
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem 
+                                          onClick={() => handleDeleteCohort(cohort.id)}
+                                          className="text-destructive"
+                                          data-testid={`menu-delete-cohort-${cohort.id}`}
+                                          disabled={deleteCohortMutation.isPending}
+                                        >
+                                          <Trash2 className="h-4 w-4 mr-2" />
+                                          Delete Cohort
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
                                   )}
                                 </div>
                               </div>
@@ -233,10 +425,14 @@ export default function AdminDashboard() {
                           }
                         </p>
                         {isSuperAdmin && (
-                          <Button>
-                            <Plus className="h-4 w-4 mr-2" />
-                            Create Cohort
-                          </Button>
+                          <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+                            <DialogTrigger asChild>
+                              <Button data-testid="button-create-first-cohort">
+                                <Plus className="h-4 w-4 mr-2" />
+                                Create Cohort
+                              </Button>
+                            </DialogTrigger>
+                          </Dialog>
                         )}
                       </div>
                     )}
@@ -288,6 +484,202 @@ export default function AdminDashboard() {
             </TabsContent>
           </Tabs>
         </main>
+
+        {/* Create Cohort Dialog */}
+        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Create New Cohort</DialogTitle>
+              <DialogDescription>
+                Create a new cohort for organizing users. A unique access code will be generated automatically.
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...createForm}>
+              <form onSubmit={createForm.handleSubmit(handleCreateCohort)} className="space-y-4">
+                <FormField
+                  control={createForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cohort Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter cohort name" {...field} data-testid="input-cohort-name" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={createForm.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Describe the purpose and goals of this cohort"
+                          {...field}
+                          data-testid="input-cohort-description"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={createForm.control}
+                  name="allowedSlots"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Maximum Members</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          min="1" 
+                          max="10000"
+                          placeholder="50"
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                          data-testid="input-cohort-slots"
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Maximum number of users that can join this cohort
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <DialogFooter>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setCreateDialogOpen(false)}
+                    data-testid="button-cancel-create"
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    disabled={createCohortMutation.isPending}
+                    data-testid="button-confirm-create"
+                  >
+                    {createCohortMutation.isPending ? 'Creating...' : 'Create Cohort'}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Cohort Dialog */}
+        <Dialog open={!!editingCohort} onOpenChange={(open) => !open && setEditingCohort(null)}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Edit Cohort</DialogTitle>
+              <DialogDescription>
+                Update cohort details. The access code cannot be changed.
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...editForm}>
+              <form onSubmit={editForm.handleSubmit(handleUpdateCohort)} className="space-y-4">
+                <FormField
+                  control={editForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cohort Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter cohort name" {...field} data-testid="input-edit-cohort-name" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Describe the purpose and goals of this cohort"
+                          {...field}
+                          data-testid="input-edit-cohort-description"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name="allowedSlots"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Maximum Members</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          min="1" 
+                          max="10000"
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                          data-testid="input-edit-cohort-slots"
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Maximum number of users that can join this cohort
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status</FormLabel>
+                      <FormControl>
+                        <select 
+                          {...field} 
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                          data-testid="select-edit-cohort-status"
+                        >
+                          <option value="active">Active</option>
+                          <option value="inactive">Inactive</option>
+                        </select>
+                      </FormControl>
+                      <FormDescription>
+                        Only active cohorts can accept new members
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <DialogFooter>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setEditingCohort(null)}
+                    data-testid="button-cancel-edit"
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    disabled={updateCohortMutation.isPending}
+                    data-testid="button-confirm-edit"
+                  >
+                    {updateCohortMutation.isPending ? 'Updating...' : 'Update Cohort'}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
       </div>
     </ProtectedRoute>
   );
