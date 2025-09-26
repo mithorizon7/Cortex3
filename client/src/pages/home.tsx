@@ -15,6 +15,7 @@ import {
 import { AppHeader } from "@/components/navigation/app-header";
 import { ExecutiveCortexHero } from "@/components/executive-cortex-hero";
 import { EnhancedSignInModal } from "@/components/auth/enhanced-sign-in-modal";
+import { AuthDiagnostic } from "@/components/auth/auth-diagnostic";
 import { useAuth } from "@/contexts/auth-context";
 import type { Assessment, PillarScores } from "@shared/schema";
 import { 
@@ -63,6 +64,7 @@ const METHODOLOGY_CONTENT = {
 export default function HomePage() {
   const [, navigate] = useLocation();
   const [methodologyOpen, setMethodologyOpen] = useState(false);
+  const [diagnosticOpen, setDiagnosticOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [intendedDestination, setIntendedDestination] = useState<string | null>(null);
   const { user, loading } = useAuth();
@@ -182,6 +184,35 @@ export default function HomePage() {
         onOpenChange={setAuthModalOpen}
       />
       
+      {/* Temporary Auth Diagnostic Tool - Remove after login issues are resolved */}
+      {!user && (
+        <div className="fixed bottom-4 right-4 z-50">
+          <Button 
+            onClick={() => setDiagnosticOpen(true)}
+            variant="outline"
+            className="bg-background shadow-lg"
+            data-testid="button-show-auth-diagnostic"
+          >
+            🔧 Auth Diagnostic
+          </Button>
+        </div>
+      )}
+      
+      {/* Auth Diagnostic Sheet */}
+      <Sheet open={diagnosticOpen} onOpenChange={setDiagnosticOpen}>
+        <SheetContent side="right" className="w-[600px] sm:w-[800px]">
+          <SheetHeader>
+            <SheetTitle>🔧 Authentication Diagnostics</SheetTitle>
+            <SheetDescription>
+              Debug authentication issues and get setup guidance.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-6">
+            <AuthDiagnostic />
+          </div>
+        </SheetContent>
+      </Sheet>
+
       {/* Methodology Sheet - moved from identity strip */}
       <Sheet open={methodologyOpen} onOpenChange={setMethodologyOpen}>
         <SheetContent side="right" className="w-[400px] sm:w-[540px]">
