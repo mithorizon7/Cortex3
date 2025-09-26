@@ -19,6 +19,11 @@ interface UserProfile {
   email: string;
   role: 'user' | 'admin' | 'super_admin';
   cohortId: string | null;
+  cohort?: {
+    id: string;
+    code: string;
+    name: string;
+  } | null;
   lastActiveAt?: string;
   invitedBy?: string;
   createdAt?: string;

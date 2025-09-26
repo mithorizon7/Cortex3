@@ -4,6 +4,8 @@ import { AuthButton } from '@/components/auth/auth-button';
 import { Button } from '@/components/ui/button';
 import { Brain, Home, BarChart3, HelpCircle } from 'lucide-react';
 import { useLatestAssessment } from '@/hooks/useLatestAssessment';
+import { useAuth } from '@/contexts/auth-context';
+import { Badge } from '@/components/ui/badge';
 
 interface AppHeaderProps {
   showIdentityInline?: boolean;
@@ -21,6 +23,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   showNav = true
 }) => {
   const { data: latestAssessment } = useLatestAssessment();
+  const { userProfile } = useAuth();
   
   // Smart navigation: go to results if completed assessment exists, otherwise start new assessment
   const assessmentPath = latestAssessment ? `/results/${latestAssessment.id}` : '/context-profile';

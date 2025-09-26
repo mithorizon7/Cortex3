@@ -42,7 +42,40 @@ router.get('/profile', requireAuthMiddleware, async (req: Request, res: Response
       return;
     }
     
-    res.json(user);
+    // Fetch cohort details if user has a cohort
+    let cohortInfo = null;
+    if (user.cohortId) {
+      try {
+        const cohort = await withDatabaseErrorHandling(
+          'get_user_cohort_database',
+          () => storage.getCohort(user.cohortId!)
+        );
+        
+        if (cohort) {
+          cohortInfo = {
+            id: cohort.id,
+            code: cohort.code,
+            name: cohort.name
+          };
+        }
+      } catch (error) {
+        // Log error but don't fail the request
+        logger.warn('Failed to fetch user cohort details', {
+          additionalContext: {
+            operation: 'get_user_cohort_failed',
+            userId: req.userId,
+            cohortId: user.cohortId,
+            incidentId
+          }
+        });
+      }
+    }
+    
+    // Return user profile with cohort information
+    res.json({
+      ...user,
+      cohort: cohortInfo
+    });
     
   } catch (error) {
     logger.error(
