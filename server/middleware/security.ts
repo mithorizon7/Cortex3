@@ -90,7 +90,7 @@ export function securityMiddleware(req: Request, res: Response, next: NextFuncti
     // But allow specific frame sources for potential Firebase iframe fallbacks
     res.setHeader('X-Frame-Options', 'SAMEORIGIN');
     
-    // Secure Firebase-compatible CSP for production
+    // Secure Firebase-compatible CSP for production with violation reporting
     const csp = [
       "default-src 'self'",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
@@ -100,7 +100,8 @@ export function securityMiddleware(req: Request, res: Response, next: NextFuncti
       "font-src 'self' https://fonts.gstatic.com",
       "object-src 'none'",
       "media-src 'self'",
-      "frame-src 'self' https://cortex3-790ee.firebaseapp.com https://accounts.google.com"
+      "frame-src 'self' https://cortex3-790ee.firebaseapp.com https://accounts.google.com",
+      "report-uri /api/csp-violation-report"
     ].join('; ');
     
     res.setHeader('Content-Security-Policy', csp);
