@@ -1,0 +1,88 @@
+{
+  "success": false,
+  "diagnostics": {
+    "timestamp": "2025-09-26T14:38:54.439Z",
+    "browser": {
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Safari/605.1.15",
+      "cookiesEnabled": true,
+      "language": "en-US",
+      "platform": "MacIntel",
+      "onLine": true,
+      "connection": "not available"
+    },
+    "environment": {
+      "isDev": false,
+      "currentDomain": "cortexindex.com",
+      "currentOrigin": "https://cortexindex.com",
+      "currentURL": "https://cortexindex.com/",
+      "protocol": "https:",
+      "port": "",
+      "pathname": "/"
+    },
+    "firebase": {
+      "configured": true,
+      "authState": "not authenticated",
+      "apiKeySet": "Set",
+      "projectId": "cortex3-790ee",
+      "appIdSet": "Set",
+      "expectedAuthDomain": "cortexindex.com",
+      "expectedRedirectURI": "https://cortexindex.com/__/auth/handler"
+    },
+    "localStorage": {
+      "available": true,
+      "firebaseKeys": 0
+    },
+    "context": {
+      "user": null,
+      "loading": false
+    }
+  },
+  "error": {
+    "code": "auth/internal-error",
+    "message": "Firebase: Error (auth/internal-error).",
+    "stack": "Ko@https://cortexindex.com/assets/index-lkeBTpye.js:167:76\ncreate@https://cortexindex.com/assets/index-lkeBTpye.js:167:461\n@https://cortexindex.com/assets/index-lkeBTpye.js:1607:997",
+    "name": "FirebaseError",
+    "customData": {
+      "isTrusted": true
+    }
+  }
+}
+
+
+{
+  "timestamp": "2025-09-26T14:39:05.045Z",
+  "browser": {
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Safari/605.1.15",
+    "cookiesEnabled": true,
+    "language": "en-US",
+    "platform": "MacIntel",
+    "onLine": true,
+    "connection": "not available"
+  },
+  "environment": {
+    "isDev": false,
+    "currentDomain": "cortexindex.com",
+    "currentOrigin": "https://cortexindex.com",
+    "currentURL": "https://cortexindex.com/",
+    "protocol": "https:",
+    "port": "",
+    "pathname": "/"
+  },
+  "firebase": {
+    "configured": true,
+    "authState": "not authenticated",
+    "apiKeySet": "Set",
+    "projectId": "cortex3-790ee",
+    "appIdSet": "Set",
+    "expectedAuthDomain": "cortexindex.com",
+    "expectedRedirectURI": "https://cortexindex.com/__/auth/handler"
+  },
+  "localStorage": {
+    "available": true,
+    "firebaseKeys": 0
+  },
+  "context": {
+    "user": null,
+    "loading": false
+  }
+}
