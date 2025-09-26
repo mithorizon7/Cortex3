@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/auth-context';
-import { LogIn, LogOut, User, Loader2 } from 'lucide-react';
+import { LogIn, LogOut, User, Loader2, Settings, Shield } from 'lucide-react';
+import { Link } from 'wouter';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,7 +26,7 @@ export const AuthButton: React.FC<AuthButtonProps> = ({
   size = 'default',
   className = ''
 }) => {
-  const { user, loading, error, signOut, clearError } = useAuth();
+  const { user, userProfile, loading, error, signOut, clearError, isAdmin } = useAuth();
   const { toast } = useToast();
   const [showSignInModal, setShowSignInModal] = useState(false);
 
@@ -113,9 +114,29 @@ export const AuthButton: React.FC<AuthButtonProps> = ({
               <p className="text-xs leading-none text-muted-foreground">
                 {user.email}
               </p>
+              {userProfile && (
+                <div className="flex items-center gap-1 mt-1">
+                  <Shield className="h-3 w-3" />
+                  <span className="text-xs font-medium text-primary">
+                    {userProfile.role === 'super_admin' ? 'Super Admin' : 
+                     userProfile.role === 'admin' ? 'Admin' : 'User'}
+                  </span>
+                </div>
+              )}
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
+          {isAdmin && (
+            <>
+              <DropdownMenuItem asChild data-testid="admin-dashboard-menu-item">
+                <Link href="/admin">
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Admin Dashboard</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
           <DropdownMenuItem onClick={handleSignOut} data-testid="sign-out-menu-item">
             <LogOut className="mr-2 h-4 w-4" />
             <span>Sign out</span>

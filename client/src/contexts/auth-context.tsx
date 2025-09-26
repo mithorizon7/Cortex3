@@ -13,8 +13,20 @@ import {
   isFirebaseConfigured
 } from '@/lib/firebase';
 
+// User profile from our database
+interface UserProfile {
+  userId: string;
+  email: string;
+  role: 'user' | 'admin' | 'super_admin';
+  cohortId: string | null;
+  lastActiveAt?: string;
+  invitedBy?: string;
+  createdAt?: string;
+}
+
 interface AuthContextType {
   user: User | null;
+  userProfile: UserProfile | null;
   loading: boolean;
   error: string | null;
   signIn: (usePopup?: boolean) => Promise<void>;
@@ -25,6 +37,8 @@ interface AuthContextType {
   resetPassword: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
   clearError: () => void;
+  isAdmin: boolean;
+  isSuperAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -43,8 +57,31 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Helper function to fetch user profile from our database
+  const fetchUserProfile = useCallback(async (firebaseUser: User) => {
+    try {
+      const response = await fetch('/api/users/profile', {
+        headers: {
+          'Authorization': `Bearer ${await firebaseUser.getIdToken()}`
+        }
+      });
+      
+      if (response.ok) {
+        const profile = await response.json();
+        setUserProfile(profile);
+      } else {
+        // User profile not found in database - they might be new
+        setUserProfile(null);
+      }
+    } catch (error) {
+      console.error('Failed to fetch user profile:', error);
+      setUserProfile(null);
+    }
+  }, []);
 
   const clearError = useCallback(() => {
     setError(null);
@@ -321,19 +358,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       });
 
     // Set up auth state listener
-    const unsubscribe = onAuthStateChange((user) => {
+    const unsubscribe = onAuthStateChange(async (user) => {
       setUser(user);
-      setLoading(false);
       
+      if (user) {
+        // Fetch user profile from our database
+        await fetchUserProfile(user);
+      } else {
+        // Clear user profile when logged out
+        setUserProfile(null);
+      }
+      
+      setLoading(false);
     });
 
     return () => {
       unsubscribe();
     };
-  }, []);
+  }, [fetchUserProfile]);
+
+  // Computed properties for convenience
+  const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'super_admin';
+  const isSuperAdmin = userProfile?.role === 'super_admin';
 
   const value: AuthContextType = {
     user,
+    userProfile,
     loading,
     error,
     signIn,
@@ -344,6 +394,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     resetPassword,
     signOut,
     clearError,
+    isAdmin,
+    isSuperAdmin,
   };
 
   return (
