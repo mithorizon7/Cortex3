@@ -460,9 +460,9 @@ export class DatabaseStorage implements IStorage {
         const maxAttempts = 10;
         
         do {
-          const crypto = await import('crypto');
-          const randomBytes = crypto.randomBytes(3);
-          code = (parseInt(randomBytes.toString('hex'), 16) % 1000000).toString().padStart(6, '0');
+          const { randomBytes } = await import('crypto');
+          const randomBytesBuffer = randomBytes(3);
+          code = (parseInt(randomBytesBuffer.toString('hex'), 16) % 1000000).toString().padStart(6, '0');
           attempts++;
           
           // Check if code already exists in database
@@ -1393,9 +1393,9 @@ export class MemStorage implements IStorage {
         const maxAttempts = 10;
         
         do {
-          const crypto = await import('crypto');
-          const randomBytes = crypto.randomBytes(3);
-          code = (parseInt(randomBytes.toString('hex'), 16) % 1000000).toString().padStart(6, '0');
+          const { randomBytes } = await import('crypto');
+          const randomBytesBuffer = randomBytes(3);
+          code = (parseInt(randomBytesBuffer.toString('hex'), 16) % 1000000).toString().padStart(6, '0');
           attempts++;
           
           // Check if code already exists in memory storage
