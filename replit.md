@@ -1,110 +1,181 @@
 # CORTEX™ Executive AI Readiness Assessment
 
 ## Overview
-
-CORTEX is a web-based executive AI readiness assessment platform that helps leadership teams evaluate their organization's preparedness for AI adoption. The application provides a structured assessment flow consisting of a context profile questionnaire, pulse check evaluation, and comprehensive results with tailored guidance. The system evaluates organizations across six core domains (Clarity & Command, Operations & Data, Risk/Trust/Security, Talent & Culture, Ecosystem & Infrastructure, and Experimentation & Evolution) to provide actionable insights for AI strategy and implementation.
+CORTEX is a web-based executive AI readiness assessment platform designed to help leadership teams evaluate their organization's preparedness for AI adoption. The platform provides a structured assessment flow, including a context profile questionnaire, a pulse check evaluation, and comprehensive results with tailored guidance. It evaluates organizations across six core domains (Clarity & Command, Operations & Data, Risk/Trust/Security, Talent & Culture, Ecosystem & Infrastructure, and Experimentation & Evolution) to deliver actionable insights for AI strategy and implementation. The project aims to provide clear, actionable insights for executive-level users, focusing on strategic AI adoption.
 
 ## User Preferences
-
 Preferred communication style: Simple, everyday language.
 
 ## System Architecture
 
 ### Frontend Architecture
-The application uses a modern React-based single-page application (SPA) architecture built with TypeScript and Vite. The frontend follows a component-based design pattern with shadcn/ui components for consistent UI elements. The application uses Wouter for client-side routing, providing three main routes: context profile creation, pulse check assessment, and results display. State management is handled through React hooks and TanStack Query for server state management, enabling efficient data fetching and caching.
+The application uses a modern React-based Single-Page Application (SPA) built with TypeScript and Vite. It follows a component-based design with `shadcn/ui` for consistent UI elements and Wouter for client-side routing. State management is handled by React hooks and TanStack Query for efficient data fetching and caching. The UI/UX features a progress-based design with a distinctive honeycomb radar visualization for results, leveraging CSS custom properties for theming and responsive layouts.
 
 ### Backend Architecture
-The server implements a REST API using Express.js with TypeScript. The architecture follows a layered approach with separate concerns for routing, storage, and business logic. The API provides endpoints for creating assessments, updating pulse responses, and retrieving results. Currently implements an in-memory storage solution for development, with the infrastructure ready for database integration through the storage abstraction layer.
+The server implements a REST API using Express.js with TypeScript, following a layered architecture for routing, storage, and business logic. It provides endpoints for creating assessments, updating pulse responses, and retrieving results. An in-memory storage solution is used for development, with a database abstraction layer ready for PostgreSQL integration.
 
 ### Data Storage Solutions
-The application uses Drizzle ORM as the database abstraction layer with PostgreSQL as the target database (configured for Neon serverless). The schema defines assessments with JSONB fields for flexible storage of context profiles, pulse responses, pillar scores, and triggered gates. The current implementation includes an in-memory storage adapter for development purposes, with the production database configuration ready for deployment.
+Drizzle ORM is used as the database abstraction layer, targeting PostgreSQL (configured for Neon serverless). The schema stores assessments with JSONB fields for flexibility. An in-memory adapter facilitates development, while production is set for Neon.
 
 ### Assessment Flow Design
-The system implements a three-stage assessment workflow: context profile collection (12 organizational context questions), pulse check evaluation (18 binary questions across 6 domains), and results generation with context-aware guidance. The application calculates maturity scores based on pulse responses and applies context-driven "gates" or requirements based on the organization's risk profile and operational constraints.
+The system implements a three-stage assessment workflow:
+1.  **Context Profile Collection**: 12 organizational context questions.
+2.  **Pulse Check Evaluation**: 18 binary questions across 6 domains.
+3.  **Results Generation**: Context-aware guidance based on maturity scores and "gates" derived from the organization's risk profile and operational constraints. The honeycomb radar visualization uses equal-area rings for accurate data representation.
 
-### UI/UX Architecture
-The interface uses a progress-based design with clear visual indicators for assessment completion. The results page features a distinctive honeycomb radar visualization with equal-area rings for maturity representation. The design system leverages CSS custom properties for theming and includes responsive layouts optimized for executive-level users who prefer clear, actionable insights over technical complexity.
+### Security Architecture
+
+#### Content Security Policy (CSP) Configuration
+
+The application implements a comprehensive Content Security Policy to protect against XSS attacks and ensure secure loading of external resources. The CSP configuration is managed in `server/middleware/security.ts` and is **only applied in production environments**.
+
+##### Current CSP Directives (Production Only)
+
+The exact CSP configuration from `server/middleware/security.ts`:
+
+```
+default-src 'self';
+style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+script-src 'self' https://apis.google.com https://www.gstatic.com;
+img-src 'self' data: https://lh3.googleusercontent.com https://firebasestorage.googleapis.com;
+connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebaseinstallations.googleapis.com https://accounts.google.com https://firebase.googleapis.com;
+font-src 'self' https://fonts.gstatic.com;
+object-src 'none';
+media-src 'self';
+frame-src 'self' https://cortex3-790ee.firebaseapp.com https://accounts.google.com;
+report-uri /api/csp-violation-report
+```
+
+**Directive Breakdown**:
+- **default-src**: `'self'` - Default policy for all resource types
+- **style-src**: `'self'`, `'unsafe-inline'` (required for inline styles), `https://fonts.googleapis.com` (Google Fonts)
+- **script-src**: `'self'`, `https://apis.google.com` (Google APIs), `https://www.gstatic.com` (Google static resources)
+- **img-src**: `'self'`, `data:` (inline images), `https://lh3.googleusercontent.com` (Google profile images), `https://firebasestorage.googleapis.com` (Firebase Storage)
+- **connect-src**: `'self'`, Firebase domains, `https://accounts.google.com` (Google OAuth)
+- **font-src**: `'self'`, `https://fonts.gstatic.com` (Google Fonts)
+- **object-src**: `'none'` (no plugins)
+- **media-src**: `'self'` (application media only)
+- **frame-src**: `'self'`, `https://cortex3-790ee.firebaseapp.com` (Firebase project domain), `https://accounts.google.com` (Google OAuth)
+- **report-uri**: `/api/csp-violation-report` (violation reporting endpoint)
+
+##### Environment-Specific Behavior
+
+**Development Environment**:
+- **NO CSP** is applied in development (`NODE_ENV !== 'production'`)
+- Only basic security headers are set (`X-Content-Type-Options: nosniff`)
+- This prevents interference with Vite dev server and development tools
+
+**Production Environment**:
+- Full CSP as documented above is enforced
+- All security headers are applied
+- CSP violation reporting is enabled
+
+##### CSP Violation Monitoring
+
+**Violation Reporting Configuration**:
+- CSP includes `report-uri /api/csp-violation-report`
+- **Note**: The violation reporting endpoint is not currently implemented in the codebase
+- Violations are reported to the specified URI but require endpoint implementation
+
+**To Implement Violation Monitoring**:
+Add the following endpoint to your Express routes:
+```typescript
+app.post('/api/csp-violation-report', express.json({ type: 'application/csp-report' }), (req, res) => {
+  const violation = req.body['csp-report'];
+  console.log('CSP Violation:', {
+    blockedURI: violation['blocked-uri'],
+    violatedDirective: violation['violated-directive'],
+    sourceFile: violation['source-file'],
+    lineNumber: violation['line-number']
+  });
+  res.status(204).send();
+});
+```
+
+##### Firebase Authentication Requirements
+
+**Firebase Authentication Domains**:
+- `https://identitytoolkit.googleapis.com`: Core Firebase Auth API
+- `https://securetoken.googleapis.com`: Token refresh and validation
+- `https://firebaseinstallations.googleapis.com`: Firebase app installations
+- `https://firebase.googleapis.com`: Firebase general API
+- `https://cortex3-790ee.firebaseapp.com`: Project-specific Firebase domain
+- `https://accounts.google.com`: Google OAuth flows
+
+##### Adding New External Services
+
+When integrating new external services:
+
+1. **Identify Required Domains**: Determine all domains the service needs
+2. **Update CSP Configuration**: Modify the CSP string in `server/middleware/security.ts` (lines 94-105)
+3. **Add Domains to Appropriate Directives**:
+   - Scripts: Add to `script-src`
+   - API calls: Add to `connect-src`
+   - Images: Add to `img-src`
+   - Fonts: Add to `font-src`
+   - Frames/iframes: Add to `frame-src`
+4. **Test in Production**: CSP only applies in production, so test thoroughly
+5. **Monitor for Violations**: Check browser console for CSP violation errors
+6. **Document Changes**: Update this documentation with new requirements
+
+##### Common CSP Issues and Solutions
+
+**Firebase Authentication Failures**:
+- Verify Firebase project domain in `frame-src`: `https://cortex3-790ee.firebaseapp.com`
+- Ensure `https://accounts.google.com` is in both `connect-src` and `frame-src`
+- Check that all Firebase domains are in `connect-src`
+
+**Google Fonts Loading Issues**:
+- Confirm `https://fonts.googleapis.com` is in `style-src`
+- Ensure `https://fonts.gstatic.com` is in `font-src`
+
+**Third-Party API Integration**:
+- Add API domains to `connect-src`
+- Add script domains to `script-src` if loading external scripts
+- Test integration in production environment where CSP is active
+
+##### CSP Debugging
+
+**Testing CSP Changes**:
+1. Deploy to production environment (CSP not active in development)
+2. Open browser developer tools
+3. Look for "Content Security Policy" violation errors
+4. Check which directive was violated and which resource was blocked
+5. Update CSP configuration accordingly
+
+**Development Testing**:
+To test CSP in development, temporarily modify the environment check in `server/middleware/security.ts`:
+```typescript
+// Change line 83 from:
+if (process.env.NODE_ENV === 'production') {
+// To:
+if (true) { // Force CSP in development for testing
+```
+Remember to revert this change before committing.
 
 ## External Dependencies
 
 ### Database Services
-- **Neon PostgreSQL**: Serverless PostgreSQL database for production data storage
-- **Drizzle ORM**: Database toolkit and ORM for type-safe database operations
-- **@neondatabase/serverless**: Neon-specific database driver for serverless environments
+-   **Neon PostgreSQL**: Serverless PostgreSQL database for production.
+-   **Drizzle ORM**: Database toolkit and ORM.
+-   **@neondatabase/serverless**: Neon-specific database driver.
 
 ### Frontend Libraries
-- **React & Ecosystem**: Core framework with React DOM for rendering
-- **TanStack Query**: Server state management and data fetching with caching
-- **React Hook Form**: Form state management with validation
-- **Wouter**: Lightweight client-side routing solution
-- **shadcn/ui**: Component library built on Radix UI primitives
-- **Tailwind CSS**: Utility-first CSS framework for styling
+-   **React & Ecosystem**: Core framework for rendering.
+-   **TanStack Query**: Server state management and data fetching.
+-   **React Hook Form**: Form state management with validation.
+-   **Wouter**: Lightweight client-side routing.
+-   **shadcn/ui**: Component library built on Radix UI.
+-   **Tailwind CSS**: Utility-first CSS framework.
 
 ### UI Component System
-- **Radix UI**: Unstyled, accessible UI primitives for complex components
-- **Lucide React**: Icon library for consistent iconography
-- **class-variance-authority**: Utility for managing component variants
-- **clsx & tailwind-merge**: Conditional class name utilities
+-   **Radix UI**: Unstyled, accessible UI primitives.
+-   **Lucide React**: Icon library.
+-   **class-variance-authority**: Utility for managing component variants.
+-   **clsx & tailwind-merge**: Conditional class name utilities.
 
 ### Development Tools
-- **Vite**: Build tool and development server with hot module replacement
-- **TypeScript**: Static type checking for enhanced developer experience
-- **ESBuild**: Fast JavaScript bundler for production builds
-- **Zod**: Schema validation for type-safe data handling
-
-## Documentation Architecture
-
-### Core Documentation Files
-- **replit.md**: Primary project documentation and system overview (this file)
-- **AGENTS.md**: Comprehensive guidelines for automated agents and contributors
-- **README.md**: User-facing project introduction and setup instructions
-
-### Documentation Maintenance Process
-The project follows a structured documentation update process:
-1. **Immediate Updates**: Update `replit.md` for architectural changes and user preferences
-2. **Agent Guidelines**: Update `AGENTS.md` when adding new conventions, workflows, or requirements  
-3. **Version Control**: Both documentation files are versioned and maintained alongside code changes
-4. **Review Process**: Documentation updates are included in relevant Pull Requests
-5. **Consistency**: All documentation must remain aligned with current system implementation
-
-### Documentation Standards
-- **Technical Accuracy**: All documentation must reflect current system state
-- **Agent Compatibility**: Guidelines must be clear for both human developers and automated agents
-- **User Focus**: Maintain simple, everyday language per user preferences
-- **Completeness**: Cover security, testing, architecture, and development processes comprehensively
-
-## Recent Changes
-
-### User Dashboard Implementation (September 2025)
-- **Assessment History Dashboard**: Created a comprehensive user dashboard at `/dashboard` route displaying assessment history with completed and in-progress sections
-- **Enhanced User Experience**: Users can now easily access previous assessments, view completion status, and see overall maturity scores without bookmarking URLs
-- **Secure API Integration**: Added authenticated `/api/assessments` endpoint with proper Firebase token validation to fetch user-specific assessment data
-- **Storage Layer Enhancement**: Extended both DatabaseStorage and MemStorage with `getUserAssessments()` method for consistent data retrieval across storage implementations
-- **Navigation Improvements**: Dashboard includes direct links to resume in-progress assessments and view completed results, significantly improving returning user experience
-
-### Documentation & Agent Guidelines (September 2025)
-- **AGENTS.md Creation**: Added comprehensive agent guidelines covering coding standards, workflows, testing, security, and project-specific requirements
-- **Documentation Process**: Established structured maintenance process for keeping documentation current with system changes
-- **Version Control**: Implemented versioning system for documentation files with update tracking
-
-### Security & Production Readiness Enhancements (September 2025)
-- **Critical Security Fixes**: Resolved XSS vulnerabilities by implementing DOMPurify sanitization with strict allowlists for HTML content rendering in value-overlay and chart components
-- **Enhanced Accessibility**: Added skip navigation links, proper ARIA landmarks, and reduced motion support for users with motion sensitivity preferences
-- **Performance Optimizations**: Enhanced font preloading, implemented proper easing functions, and added motion-safe CSS transitions
-- **Design System Enhancement**: Added semantic design tokens following MIT-inspired color palette for improved consistency and maintainability
-
-### Technical Stability Improvements (September 2025)
-- **Test Suite Fixes**: Resolved all failing tests including DATABASE_URL dependencies, TypeScript compilation errors, and environment-specific middleware tests
-- **Database Integration**: Implemented lazy database loading to support testing without database connections
-- **Type Safety**: Fixed all TypeScript compilation issues across frontend and backend components
-- **CI/CD Stability**: Achieved 124 passing tests across 13 test files with zero failures
-
-### UI/UX Improvements (September 2025)
-- **Header Consolidation**: Successfully consolidated double headers into a single AppHeader component with inline identity display and integrated Help functionality
-- **Enhanced AppHeader**: Added flexible props system for route-specific customization including `showIdentityInline`, `identityText`, `showHelp`, and `onHelpClick`
-- **Responsive Design**: Implemented responsive Help button behavior (text button on desktop, icon on mobile) with proper accessibility attributes
-- **Executive-Focused Design**: Eliminated visual clutter and competing branding elements for a cleaner, more professional appearance
-- **Comprehensive Testing**: Added E2E test coverage for header functionality across desktop and mobile viewports
-
-### Assessment Logic
-The application includes embedded assessment logic based on the CORTEX methodology, with predefined questions, scoring algorithms, and guidance content. Context-aware gate evaluation determines organizational requirements based on regulatory intensity, data sensitivity, and other risk factors collected in the context profile. The honeycomb radar visualization uses mathematically correct equal-area ring calculations for accurate data representation.
+-   **Vite**: Build tool and development server.
+-   **TypeScript**: Static type checking.
+-   **ESBuild**: Fast JavaScript bundler.
+-   **Zod**: Schema validation.
