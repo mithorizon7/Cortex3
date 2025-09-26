@@ -76,6 +76,17 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           )}
           
           <div className="flex items-center space-x-3 sm:space-x-2">
+            {/* Cohort Display */}
+            {userProfile?.cohort && (
+              <Badge 
+                variant="secondary" 
+                className="hidden sm:flex font-mono text-xs"
+                data-testid="cohort-display"
+              >
+                Cohort: {userProfile.cohort.code}
+              </Badge>
+            )}
+            
             {showHelp && (
               <>
                 {/* Desktop Help Button */}
