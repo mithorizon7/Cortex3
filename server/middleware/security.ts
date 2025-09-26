@@ -87,17 +87,17 @@ export function securityMiddleware(req: Request, res: Response, next: NextFuncti
     res.setHeader('X-XSS-Protection', '1; mode=block');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
     
-    // Basic CSP for production
+    // Firebase-compatible CSP for production
     const csp = [
       "default-src 'self'",
       "style-src 'self' 'unsafe-inline' fonts.googleapis.com",
-      "script-src 'self' 'unsafe-eval'",
-      "img-src 'self' data: https:",
-      "connect-src 'self'",
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://apis.google.com https://www.gstatic.com https://replit.com",
+      "img-src 'self' data: https: https://lh3.googleusercontent.com",
+      "connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebaseinstallations.googleapis.com https://accounts.google.com",
       "font-src 'self' fonts.gstatic.com",
       "object-src 'none'",
       "media-src 'self'",
-      "frame-src 'none'"
+      "frame-src 'self' https://cortex3-790ee.firebaseapp.com https://horizoncortex.replit.app https://cortexindex.com https://www.cortexindex.com https://accounts.google.com"
     ].join('; ');
     
     res.setHeader('Content-Security-Policy', csp);
