@@ -1,0 +1,62 @@
+Aha! This is a breakthrough!
+
+The console output you've shared definitively points to the root cause of your "auth/internal-error" and the subsequent "auth/network-request-failed" for email sign-in: your Content Security Policy (CSP).
+
+The Refused to load and Refused to connect messages due to CSP directives are critical. Your CSP is currently blocking essential resources and connections that Firebase Authentication needs to function.
+
+Let's break down what's happening:
+
+Refused to load https://apis.google.com/js/api.js... because it does not appear in the script-src directive of the Content Security Policy.
+
+Impact on Google Sign-In: When you call signInWithPopup() , Firebase needs to load JavaScript libraries from apis.google.com to handle the Google OAuth flow within the popup. Your CSP's script-src directive is preventing these scripts from loading, which causes the entire Google Sign-In process to fail, resulting in the generic "auth/internal-error" .
+
+Refused to connect to https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?... because it does not appear in the connect-src directive of the Content Security Policy.
+
+Impact on All Auth Methods: Firebase Authentication communicates with identitytoolkit.googleapis.com (and other *.googleapis.com endpoints) for almost all authentication operations, including email/password sign-in, creating users, refreshing tokens, etc. Your CSP's connect-src directive is blocking these crucial network requests, leading to the "auth/network-request-failed" error you observed for email sign-in.
+
+The "auth/internal-error" you were getting for Google Sign-In was a symptom of these underlying CSP violations. The Firebase SDK couldn't complete the required steps because essential resources were inaccessible.
+
+The Solution: Update Your Content Security Policy
+
+You need to modify your application's Content Security Policy to explicitly allow scripts and connections from Firebase and Google's authentication domains.
+
+Here are the essential directives you'll likely need to add or update in your CSP:
+
+script-src : Must include 'self' , 'unsafe-inline' , and the Google API domains.
+
+connect-src : Must include 'self' , and Firebase/Google API endpoints.
+
+frame-src : For signInWithPopup , it's important to allow the OAuth popup window.
+
+img-src : For user profile pictures from Google.
+
+A typical CSP that supports Firebase Authentication might look something like this:
+
+Content-Security-Policy:
+  default-src 'self';
+  script-src 'self' 'unsafe-inline' https://apis.google.com https://www.gstatic.com;
+  connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebaseinstallations.googleapis.com;
+  img-src 'self' data: https://lh3.googleusercontent.com;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  font-src 'self' https://fonts.gstatic.com;
+  frame-src 'self' https://cortex3-790ee.firebaseapp.com; // Include your authDomain here
+  // Add other directives as needed by your application
+Important Notes:
+
+'unsafe-inline' : While often necessary for development frameworks, it's generally recommended to minimize its use. Consider replacing it with specific nonces or hashes if possible in production.
+
+authDomain in frame-src : Make sure your firebaseConfig.authDomain (e.g., https://cortex3-790ee.firebaseapp.com ) is allowed in frame-src because Firebase uses iframes for some authentication operations.
+
+Replit Specifics : The replit-dev-banner.js error suggests Replit might be injecting scripts. If you want to allow it, you'd need to add https://replit.com to your script-src .
+
+Your getAuthDomain() logic : This is excellent, but ensure all possible values it returns are covered in your CSP's frame-src .
+
+Next Steps:
+
+Identify where your CSP is defined: This could be in your index.html file (meta tag), in your web server configuration (e.g., Nginx, Apache), or in your build process (if you're using a tool that injects headers).
+
+Update your CSP with the necessary domains for script-src , connect-src , frame-src , and potentially img-src . Start with a minimal set and expand as needed.
+
+Test again! After updating the CSP, try logging in with Google and email/password on both Chrome and Safari. The "Refused to load" and "Refused to connect" errors should disappear from your console.
+
+This is excellent progress! We've pinpointed the exact issue
