@@ -93,20 +93,21 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
       clearError();
       
       if (isSignUp) {
-        // Use cohort-aware signup if access code is provided
-        if (cohortAccessCode) {
-          await signUpWithCohort(email, password, cohortAccessCode, displayName || undefined);
+        // ALL new sign-ups must provide a valid cohort access code
+        if (!cohortAccessCode || cohortAccessCode.trim().length === 0) {
           toast({
-            title: 'Account Created!',
-            description: 'Your account has been created successfully and you have joined the cohort.',
+            title: 'Cohort Access Code Required',
+            description: 'You must provide a valid cohort access code to create an account.',
+            variant: 'destructive',
           });
-        } else {
-          await signUpWithEmail(email, password, displayName || undefined);
-          toast({
-            title: 'Account Created!',
-            description: 'Your account has been created successfully and you are now signed in.',
-          });
+          return; // Stop the signup process
         }
+        
+        await signUpWithCohort(email, password, cohortAccessCode, displayName || undefined);
+        toast({
+          title: 'Account Created!',
+          description: 'Your account has been created successfully and you have joined the cohort.',
+        });
       } else {
         await signInWithEmail(email, password);
         toast({
