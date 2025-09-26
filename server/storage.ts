@@ -460,7 +460,8 @@ export class DatabaseStorage implements IStorage {
         const maxAttempts = 10;
         
         do {
-          const randomBytes = require('crypto').randomBytes(3);
+          const crypto = await import('crypto');
+          const randomBytes = crypto.randomBytes(3);
           code = (parseInt(randomBytes.toString('hex'), 16) % 1000000).toString().padStart(6, '0');
           attempts++;
           
@@ -1392,7 +1393,8 @@ export class MemStorage implements IStorage {
         const maxAttempts = 10;
         
         do {
-          const randomBytes = require('crypto').randomBytes(3);
+          const crypto = await import('crypto');
+          const randomBytes = crypto.randomBytes(3);
           code = (parseInt(randomBytes.toString('hex'), 16) % 1000000).toString().padStart(6, '0');
           attempts++;
           
