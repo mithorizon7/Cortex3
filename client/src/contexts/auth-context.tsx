@@ -73,13 +73,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (response.ok) {
         const profile = await response.json();
         setUserProfile(profile);
+      } else if (response.status === 404) {
+        // User profile not found in database - they are a new user
+        // This can happen if they sign in without going through cohort signup
+        setUserProfile(null);
+        
+        // If they're trying to sign in as a new user, show error and sign them out
+        if (firebaseUser) {
+          const errorMsg = 'New users must create an account with a cohort access code. Please sign up first.';
+          setError(errorMsg);
+          
+          // Sign them out since they can't proceed without a cohort
+          try {
+            await firebaseUser.delete();
+          } catch (deleteError) {
+            console.error('Failed to delete new user account:', deleteError);
+          }
+          
+          throw new Error(errorMsg);
+        }
       } else {
-        // User profile not found in database - they might be new
+        // Other error (server error, etc.)
         setUserProfile(null);
       }
     } catch (error) {
       console.error('Failed to fetch user profile:', error);
       setUserProfile(null);
+      throw error; // Re-throw to trigger error handling
     }
   }, []);
 

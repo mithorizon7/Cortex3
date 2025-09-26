@@ -35,15 +35,25 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
     try {
       clearError();
       
-      if (isSignUp && cohortAccessCode) {
-        // For signup with cohort code
+      if (isSignUp) {
+        // For new account creation, cohort code is required
+        if (!cohortAccessCode) {
+          toast({
+            title: 'Cohort Code Required',
+            description: 'Please enter a valid cohort access code to create your account.',
+            variant: 'destructive',
+          });
+          return;
+        }
+        
         await signUpWithGoogleAndCohort(cohortAccessCode, true);
         toast({
           title: 'Account Created!',
           description: 'Your Google account has been created and you have joined the cohort.',
         });
       } else {
-        // Regular sign-in
+        // For existing users signing in - no cohort code needed
+        // This will handle the check for new vs existing users on the server side
         await signIn(true);
         toast({
           title: 'Welcome!',
@@ -52,11 +62,23 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
       }
       
       onOpenChange(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Google sign-in error:', error);
+      
+      // If it's a new user trying to sign in without a cohort code, show specific error
+      if (!isSignUp && error.message && error.message.includes('cohort')) {
+        toast({
+          title: 'New User Account Detected',
+          description: 'New users must create an account with a cohort access code. Please use the sign up form.',
+          variant: 'destructive',
+        });
+        setIsSignUp(true); // Switch to sign-up mode
+        return;
+      }
+      
       toast({
         title: isSignUp ? 'Sign Up Failed' : 'Sign In Failed',
-        description: 'There was a problem signing you in with Google. Please try again.',
+        description: error.message || 'There was a problem signing you in with Google. Please try again.',
         variant: 'destructive',
       });
     }
