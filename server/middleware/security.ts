@@ -83,21 +83,24 @@ export function securityMiddleware(req: Request, res: Response, next: NextFuncti
   if (process.env.NODE_ENV === 'production') {
     // Basic security headers
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('X-XSS-Protection', '1; mode=block');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
     
-    // Firebase-compatible CSP for production
+    // Firebase auth uses popups, not frames, so we can keep X-Frame-Options restrictive
+    // But allow specific frame sources for potential Firebase iframe fallbacks
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    
+    // Secure Firebase-compatible CSP for production
     const csp = [
       "default-src 'self'",
-      "style-src 'self' 'unsafe-inline' fonts.googleapis.com",
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://apis.google.com https://www.gstatic.com https://replit.com",
-      "img-src 'self' data: https: https://lh3.googleusercontent.com",
-      "connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebaseinstallations.googleapis.com https://accounts.google.com",
-      "font-src 'self' fonts.gstatic.com",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "script-src 'self' https://apis.google.com https://www.gstatic.com",
+      "img-src 'self' data: https://lh3.googleusercontent.com https://firebasestorage.googleapis.com",
+      "connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebaseinstallations.googleapis.com https://accounts.google.com https://firebase.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com",
       "object-src 'none'",
       "media-src 'self'",
-      "frame-src 'self' https://cortex3-790ee.firebaseapp.com https://horizoncortex.replit.app https://cortexindex.com https://www.cortexindex.com https://accounts.google.com"
+      "frame-src 'self' https://cortex3-790ee.firebaseapp.com https://accounts.google.com"
     ].join('; ');
     
     res.setHeader('Content-Security-Policy', csp);
