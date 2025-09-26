@@ -17,31 +17,21 @@ import {
   sendPasswordResetEmail
 } from 'firebase/auth';
 
-// Dynamic authDomain detection for multiple production domains
+// Firebase authDomain configuration for OAuth
 const getAuthDomain = (): string => {
-  const currentDomain = window.location.hostname;
-
-  // List of known production domains that should use themselves as authDomain
-  const productionDomains = [
-    'horizoncortex.replit.app',
-    'cortexindex.com',
-    'www.cortexindex.com'
-  ];
-
-  // Check if we're on a known production domain (regardless of PROD env var)
-  if (productionDomains.includes(currentDomain)) {
-    return currentDomain;
-  }
-
-  // Check if we're on localhost or a development environment
-  if (currentDomain === 'localhost' || currentDomain.includes('.replit.dev')) {
-    // Use default Firebase domain for development
-    const devAuthDomain = `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`;
-    return devAuthDomain;
-  }
-
-  // For any other domain, fallback to Replit domain
-  return 'horizoncortex.replit.app';
+  // Always use the default Firebase domain for OAuth callbacks
+  // This ensures Google OAuth works regardless of the custom domain being used
+  // Custom domains can be used for the app, but OAuth must go through Firebase's domain
+  const firebaseAuthDomain = `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`;
+  
+  // Log the configuration for debugging
+  console.log('Firebase Auth Configuration:', {
+    currentDomain: window.location.hostname,
+    authDomain: firebaseAuthDomain,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID
+  });
+  
+  return firebaseAuthDomain;
 };
 
 // Firebase configuration with environment variables
