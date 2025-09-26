@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { User, getAdditionalUserInfo } from 'firebase/auth';
 import { 
   auth, 
@@ -12,6 +12,7 @@ import {
   getAuthErrorMessage,
   isFirebaseConfigured
 } from '@/lib/firebase';
+import { useLocation } from 'wouter';
 
 // User profile from our database
 interface UserProfile {
@@ -65,6 +66,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isNewLogin, setIsNewLogin] = useState(false);
+  const isProcessingRedirectCohortRef = useRef(false);
+  const [, setLocation] = useLocation();
+
+  // Helper function to handle post-login navigation
+  const handlePostLoginNavigation = useCallback((profile: UserProfile | null, isNewLogin: boolean = false) => {
+    // Only handle navigation for new logins, not every profile fetch
+    if (!isNewLogin) return;
+    
+    const currentPath = window.location.pathname;
+    
+    // Only redirect from specific auth entry points
+    const authEntryPaths = ['/', '/sign-in', '/sign-up'];
+    if (!authEntryPaths.includes(currentPath)) return;
+    
+    if (profile?.role === 'admin' || profile?.role === 'super_admin') {
+      // Redirect admin users to admin dashboard
+      setLocation('/admin');
+    } else {
+      // Redirect regular users to assessment
+      setLocation('/context-profile');
+    }
+  }, [setLocation]);
 
   // Helper function to fetch user profile from our database
   const fetchUserProfile = useCallback(async (firebaseUser: User) => {
@@ -78,21 +102,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (response.ok) {
         const profile = await response.json();
         setUserProfile(profile);
+        // Handle post-login navigation after profile is loaded (only for new logins)
+        handlePostLoginNavigation(profile, isNewLogin);
       } else if (response.status === 404) {
         // User profile not found in database - this is fine, they can still use the app
         console.log('User profile not found - user can still use the app without a profile');
         setUserProfile(null);
+        // Navigate regular users to assessment start (only for new logins)
+        handlePostLoginNavigation(null, isNewLogin);
       } else {
         // Other error (server error, etc.)
         console.warn(`Profile fetch failed with status ${response.status}`);
         setUserProfile(null);
       }
+      
+      // Reset the new login flag and clean up sessionStorage after handling navigation
+      if (isNewLogin) {
+        setIsNewLogin(false);
+        // Clean up any remaining sessionStorage flags after successful processing
+        sessionStorage.removeItem('cortex_new_login');
+        sessionStorage.removeItem('cortex_cohort_code');
+      }
     } catch (error) {
       console.error('Failed to fetch user profile:', error);
       setUserProfile(null);
+      // Reset the new login flag even on error
+      if (isNewLogin) {
+        setIsNewLogin(false);
+      }
       // Don't throw errors for profile fetch issues - just log them
     }
-  }, []);
+  }, [handlePostLoginNavigation, isNewLogin]);
 
   const clearError = useCallback(() => {
     setError(null);
@@ -108,15 +148,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
+      setIsNewLogin(true); // Mark as new login for navigation
+      
+      // For redirect flows, persist the new login flag across page reload
+      if (!usePopup) {
+        sessionStorage.setItem('cortex_new_login', 'true');
+      }
+      
       await signInWithGoogle(usePopup);
       // Don't set loading to false here - let the auth state listener handle it
     } catch (error: any) {
       console.error('Sign-in error:', error);
       if (error.message !== 'Redirect initiated - result will be available after redirect') {
+        setIsNewLogin(false); // Only reset flag on actual errors, not redirect flow
         setError(getAuthErrorMessage(error));
         setLoading(false); // Only set loading to false on error
         throw error; // Re-throw so UI components can handle the error
       }
+      // For redirect flow, keep isNewLogin=true so navigation works after redirect
     }
   }, []);
 
@@ -130,10 +179,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
+      setIsNewLogin(true); // Mark as new login for navigation
       await firebaseSignInWithEmail(email, password);
       // Don't set loading to false here - let the auth state listener handle it
     } catch (error: any) {
       console.error('Email sign-in error:', error);
+      setIsNewLogin(false); // Reset flag on error
       setError(getAuthErrorMessage(error));
       setLoading(false); // Only set loading to false on error
       throw error; // Re-throw so UI components can handle the error
@@ -150,10 +201,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
+      setIsNewLogin(true); // Mark as new login for navigation
       await firebaseSignUpWithEmail(email, password, displayName);
       // Don't set loading to false here - let the auth state listener handle it
     } catch (error: any) {
       console.error('Email sign-up error:', error);
+      setIsNewLogin(false); // Reset flag on error
       setError(getAuthErrorMessage(error));
       setLoading(false); // Only set loading to false on error
       throw error; // Re-throw so UI components can handle the error
@@ -170,10 +223,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
+      setIsNewLogin(true); // Mark as new login for navigation
       
       // Clear any previous errors and prepare for signup
       
       // First, validate the cohort access code
+      console.log('Validating cohort access code:', cohortAccessCode);
       const validateResponse = await fetch('/api/cohorts/validate-access-code', {
         method: 'POST',
         headers: {
@@ -182,9 +237,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         body: JSON.stringify({ accessCode: cohortAccessCode }),
       });
       
+      console.log('Validation response status:', validateResponse.status);
       const validationResult = await validateResponse.json();
+      console.log('Validation result:', validationResult);
       
-      if (!validationResult.valid) {
+      if (!validateResponse.ok || !validationResult.valid) {
         throw new Error(validationResult.error || 'Invalid cohort access code');
       }
       
@@ -229,6 +286,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Don't set loading to false here - let the auth state listener handle it
     } catch (error: any) {
       console.error('Cohort sign-up error:', error);
+      setIsNewLogin(false); // Reset flag on error
       setError(getAuthErrorMessage(error));
       setLoading(false); // Only set loading to false on error
       
@@ -248,9 +306,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
+      setIsNewLogin(true); // Mark as new login for navigation
       
-      // Clear any previous errors and prepare for signup
+      // For redirect flows, we need to restructure the flow completely
+      if (!usePopup) {
+        // First, validate the cohort access code before redirect
+        const validateResponse = await fetch('/api/cohorts/validate-access-code', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ accessCode: cohortAccessCode }),
+        });
+        
+        const validationResult = await validateResponse.json();
+        
+        if (!validateResponse.ok || !validationResult.valid) {
+          throw new Error(validationResult.error || 'Invalid cohort access code');
+        }
+        
+        // Persist both the new login flag and cohort code for post-redirect processing
+        sessionStorage.setItem('cortex_new_login', 'true');
+        sessionStorage.setItem('cortex_cohort_code', cohortAccessCode);
+        
+        // Initiate redirect flow - cohort join will happen after redirect completes
+        await signInWithGoogle(usePopup);
+        return; // Function ends here for redirect flow
+      }
       
+      // Popup flow continues with immediate processing
       // First, validate the cohort access code
       const validateResponse = await fetch('/api/cohorts/validate-access-code', {
         method: 'POST',
@@ -262,7 +346,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       const validationResult = await validateResponse.json();
       
-      if (!validationResult.valid) {
+      if (!validateResponse.ok || !validationResult.valid) {
         throw new Error(validationResult.error || 'Invalid cohort access code');
       }
       
@@ -315,6 +399,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Don't set loading to false here - let the auth state listener handle it
     } catch (error: any) {
       console.error('Google cohort sign-up error:', error);
+      setIsNewLogin(false); // Reset flag on error
       setError(getAuthErrorMessage(error));
       setLoading(false); // Only set loading to false on error
       
@@ -370,20 +455,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return;
     }
 
-    // Handle redirect result on app load
-    handleRedirectResult()
-      .then((result) => {
-        if (result) {
-          setUser(result.user);
-        }
-      })
-      .catch((error) => {
-        console.error('Redirect result error:', error);
-        setError(getAuthErrorMessage(error));
-      });
+    // Check for persisted new login flag and cohort code from redirect flows
+    const wasNewLogin = sessionStorage.getItem('cortex_new_login') === 'true';
+    const cohortCode = sessionStorage.getItem('cortex_cohort_code');
+    
+    // Set processing flag BEFORE setting up auth listener to prevent race condition
+    if (wasNewLogin && cohortCode) {
+      isProcessingRedirectCohortRef.current = true;
+    }
 
-    // Set up auth state listener
+    // Set up auth state listener FIRST
     const unsubscribe = onAuthStateChange(async (user) => {
+      // Don't process auth changes while we're handling redirect cohort signup
+      if (isProcessingRedirectCohortRef.current) {
+        return;
+      }
+      
       setUser(user);
       
       if (user) {
@@ -396,6 +483,86 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       setLoading(false);
     });
+
+    // Handle redirect result AFTER auth listener is set up
+    handleRedirectResult()
+      .then(async (result) => {
+        if (result && wasNewLogin && cohortCode) {
+          // This is a Google cohort signup redirect completion
+          setUser(result.user);
+          setIsNewLogin(true);
+          
+          try {
+            // Complete the cohort join process that was interrupted by redirect
+            const idToken = await result.user.getIdToken();
+            
+            const joinResponse = await fetch('/api/cohorts/join', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${idToken}`,
+              },
+              body: JSON.stringify({ code: cohortCode }),
+            });
+            
+            if (!joinResponse.ok) {
+              const joinError = await joinResponse.json();
+              throw new Error(joinError.error || 'Failed to join cohort after redirect');
+            }
+            
+            console.log('Successfully completed cohort join after redirect');
+            
+            // Allow auth listener to proceed with profile fetch and navigation
+            isProcessingRedirectCohortRef.current = false;
+            
+            // Manually trigger profile fetch since auth listener was blocked
+            await fetchUserProfile(result.user);
+            
+          } catch (error) {
+            console.error('Failed to complete cohort join after redirect:', error);
+            
+            // Critical failure - sign out user using proper Firebase method
+            try {
+              await firebaseSignOut();
+              console.log('Signed out user due to cohort join failure');
+            } catch (signOutError) {
+              console.error('Failed to sign out user after cohort join failure:', signOutError);
+            }
+            
+            setError(getAuthErrorMessage(error));
+            setIsNewLogin(false);
+            setUser(null);
+            
+            // Reset processing state on error
+            isProcessingRedirectCohortRef.current = false;
+          } finally {
+            // Always clean up sessionStorage after processing completes (success or failure)
+            sessionStorage.removeItem('cortex_new_login');
+            sessionStorage.removeItem('cortex_cohort_code');
+          }
+        } else if (result && wasNewLogin) {
+          // Regular Google signin redirect completion
+          setUser(result.user);
+          setIsNewLogin(true);
+          sessionStorage.removeItem('cortex_new_login');
+        } else if (result) {
+          // Regular redirect result without new login flag
+          setUser(result.user);
+        }
+      })
+      .catch((error) => {
+        console.error('Redirect result error:', error);
+        setError(getAuthErrorMessage(error));
+        isProcessingRedirectCohortRef.current = false;
+        // Clean up sessionStorage on error
+        if (wasNewLogin) {
+          setIsNewLogin(false);
+          sessionStorage.removeItem('cortex_new_login');
+        }
+        if (cohortCode) {
+          sessionStorage.removeItem('cortex_cohort_code');
+        }
+      });
 
     return () => {
       unsubscribe();
