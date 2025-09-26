@@ -1,0 +1,43 @@
+Thank you for clarifying that your API key's "Application restrictions" are set to "None." This is a very important piece of information because it completely rules out my previous hypothesis that your domains were being blocked by HTTP referrer restrictions!
+
+With "None" selected, your API key can be used from any website, including horizoncortex.replit.app and cortexindex.com . This means the auth/internal-error is not originating from a block due to where the API request is coming from.
+
+Furthermore, you've confirmed that "Restrict key" is selected under "API Restrictions" and that the crucial Identity Toolkit API is included in the list of 24 allowed APIs. This ensures that the core Firebase Authentication service that handles sign-ins should be accessible.
+
+Recap of what we know:
+
+Your client-side code for Firebase initialization and Google Sign-In is robust and correctly implemented.
+
+Your Google Cloud OAuth Client ID is an exact match, and all necessary domains and redirect URIs are properly configured in Google Cloud Console.
+
+Your Firebase project has Google Sign-In enabled.
+
+Your API key has no "Application restrictions" (meaning it's wide open) and includes the Identity Toolkit API in its "API restrictions."
+
+Since all these common points of failure have been thoroughly checked and appear correct, and the error persists across multiple browsers and domains, the auth/internal-error points to a more subtle issue on the backend of Firebase Authentication itself, or a highly specific environmental factor.
+
+Here's what I suspect might be happening or what needs to be investigated next:
+
+A deeper issue during the internal Firebase-Google OAuth handshake: Even with correct initial setup, sometimes there can be an unexpected issue during the actual token exchange or user creation process on Firebase's or Google's servers. This is where an "internal error" would typically be generated if it's not a direct configuration mismatch.
+
+Incorrect VITE_FIREBASE_APP_ID : While your initial diagnostics stated appIdSet: "Set" , this only confirms the environment variable exists. If the actual value of VITE_FIREBASE_APP_ID in your deployed environment doesn't precisely match the Web App ID in your Firebase Project Settings (under "General" tab, "Your apps"), this could lead to an internal error when Firebase tries to link the authentication request to the specific web app.
+
+Unusual browser environment behavior: While less likely given it's on both Chrome and Safari, certain browser security features or network proxies (especially in corporate environments) can sometimes interfere in unexpected ways, even with well-configured authDomain s.
+
+Given that your API key is currently unrestricted, I highly recommend adding "Application restrictions" as a best practice once this issue is resolved. While it didn't cause this specific error , it's an important security measure.
+
+To debug this "internal error" further, we need to gather more granular information about the network requests made during the authentication process.
+
+Here are the critical next steps and follow-up questions:
+
+Detailed Network Trace (Most Important): When you attempt to sign in with Google, please open your browser's developer tools (usually F12 on Windows/Linux, or Cmd+Option+I on Mac, then navigate to the "Network" tab).
+
+Initiate the Google sign-in.
+
+Watch the network requests. There will be calls to accounts.google.com , then redirects, and finally calls to identitytoolkit.googleapis.com or your __/auth/handler endpoint.
+
+Look for any requests that return a non-2xx (e.g., 4xx or 5xx) status code. Click on these failing requests and examine their "Headers," "Payload," and especially "Response" or "Preview" tabs for any specific error messages from Google or Firebase. Even if the SDK reports a generic error, the underlying HTTP response might contain more detail.
+
+Verify VITE_FIREBASE_APP_ID : Please confirm that the value of import.meta.env.VITE_FIREBASE_APP_ID being used by your deployed application exactly matches the "App ID" for your web app in your Firebase project settings (Firebase Console > Project settings > General > Your apps).
+
+Check for Browser Console Warnings/Errors (beyond the auth/internal-error ): Are there any other warnings or errors logged in the browser console before or during the auth/internal-error that might provide context?

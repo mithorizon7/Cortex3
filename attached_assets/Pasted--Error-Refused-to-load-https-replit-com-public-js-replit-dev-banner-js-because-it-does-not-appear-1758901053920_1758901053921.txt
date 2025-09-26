@@ -1,0 +1,90 @@
+[Error] Refused to load https://replit.com/public/js/replit-dev-banner.js because it does not appear in the script-src directive of the Content Security Policy.
+[Info] Successfully preconnected to https://fonts.gstatic.com/
+[Info] Successfully preconnected to https://fonts.googleapis.com/
+[Error] Refused to load https://apis.google.com/js/api.js?onload=__iframefcb580194 because it does not appear in the script-src directive of the Content Security Policy.
+[Error] Refused to load https://apis.google.com/js/api.js?onload=__iframefcb642066 because it does not appear in the script-src directive of the Content Security Policy.
+[Error] Google sign-in failed:
+FirebaseError: Firebase: Error (auth/internal-error).
+Yo — index-DsrUmkV9.js:167
+create — index-DsrUmkV9.js:167:462
+(anonymous function) — index-DsrUmkV9.js:1607:998
+	(anonymous function) (index-DsrUmkV9.js:1607:2910)
+[Error] Production OAuth Error Details:
+Object
+
+code: "auth/internal-error"
+
+domain: "cortexindex.com"
+
+message: "Firebase: Error (auth/internal-error)."
+
+url: "https://cortexindex.com/"
+
+Object Prototype
+	(anonymous function) (index-DsrUmkV9.js:1607:2952)
+[Error] Sign-in error:
+FirebaseError: Firebase: Error (auth/internal-error).
+Yo — index-DsrUmkV9.js:167
+create — index-DsrUmkV9.js:167:462
+(anonymous function) — index-DsrUmkV9.js:1607:998
+	(anonymous function) (index-DsrUmkV9.js:1912:58851)
+[Error] Google sign-in error:
+FirebaseError: Firebase: Error (auth/internal-error).
+Yo — index-DsrUmkV9.js:167
+create — index-DsrUmkV9.js:167:462
+(anonymous function) — index-DsrUmkV9.js:1607:998
+	(anonymous function) (index-DsrUmkV9.js:1958:6995)
+[Error] Refused to load https://apis.google.com/js/api.js?onload=__iframefcb645644 because it does not appear in the script-src directive of the Content Security Policy.
+[Error] Google sign-in failed:
+FirebaseError: Firebase: Error (auth/internal-error).
+Yo — index-DsrUmkV9.js:167
+create — index-DsrUmkV9.js:167:462
+(anonymous function) — index-DsrUmkV9.js:1607:998
+	(anonymous function) (index-DsrUmkV9.js:1607:2910)
+[Error] Production OAuth Error Details:
+Object
+
+code: "auth/internal-error"
+
+domain: "cortexindex.com"
+
+message: "Firebase: Error (auth/internal-error)."
+
+url: "https://cortexindex.com/"
+
+Object Prototype
+	(anonymous function) (index-DsrUmkV9.js:1607:2952)
+[Error] Sign-in error:
+FirebaseError: Firebase: Error (auth/internal-error).
+Yo — index-DsrUmkV9.js:167
+create — index-DsrUmkV9.js:167:462
+(anonymous function) — index-DsrUmkV9.js:1607:998
+	(anonymous function) (index-DsrUmkV9.js:1912:58851)
+[Error] Google sign-in error:
+FirebaseError: Firebase: Error (auth/internal-error).
+Yo — index-DsrUmkV9.js:167
+create — index-DsrUmkV9.js:167:462
+(anonymous function) — index-DsrUmkV9.js:1607:998
+	(anonymous function) (index-DsrUmkV9.js:1958:6995)
+[Error] Refused to connect to https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyAbqwktGfu-lYcWSVmOvDiyDbLj_bQfqNk because it does not appear in the connect-src directive of the Content Security Policy.
+[Error] Email sign-in failed:
+FirebaseError: Firebase: Error (auth/network-request-failed).
+Yo — index-DsrUmkV9.js:167
+create — index-DsrUmkV9.js:167:462
+gi — index-DsrUmkV9.js:452
+(anonymous function) — index-DsrUmkV9.js:557:1468
+	(anonymous function) (index-DsrUmkV9.js:1607:3249)
+[Error] Email sign-in error:
+FirebaseError: Firebase: Error (auth/network-request-failed).
+Yo — index-DsrUmkV9.js:167
+create — index-DsrUmkV9.js:167:462
+gi — index-DsrUmkV9.js:452
+(anonymous function) — index-DsrUmkV9.js:557:1468
+	(anonymous function) (index-DsrUmkV9.js:1912:59170)
+[Error] Email authentication error:
+FirebaseError: Firebase: Error (auth/network-request-failed).
+Yo — index-DsrUmkV9.js:167
+create — index-DsrUmkV9.js:167:462
+gi — index-DsrUmkV9.js:452
+(anonymous function) — index-DsrUmkV9.js:557:1468
+	(anonymous function) (index-DsrUmkV9.js:1958:7662)

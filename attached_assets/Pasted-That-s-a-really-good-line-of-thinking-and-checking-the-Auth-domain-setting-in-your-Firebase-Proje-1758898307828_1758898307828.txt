@@ -1,0 +1,16 @@
+That's a really good line of thinking, and checking the "Auth domain" setting in your Firebase Project settings is definitely a valuable diagnostic step! However, based on the diagnostic information you provided, the picture is a little more nuanced.
+
+Your diagnostics explicitly state expectedAuthDomain: "cortexindex.com" . This tells us that your client-side Firebase SDK configuration is already instructing it to use cortexindex.com as the authDomain . This means your firebaseConfig object in your code correctly includes authDomain: "cortexindex.com" .
+
+The "Auth domain" setting in the Firebase Console's Project Settings (under "General" or "Authentication -> Settings") primarily shows what Firebase expects or defaults to if you don't specify an authDomain in your client-side config, or it reflects the primary domain associated with your Firebase Hosting. Since your diagnostics confirm your code is setting authDomain to cortexindex.com , a mismatch in this console display isn't likely the direct cause of the auth/internal-error in your deployed app. Your app is already trying to use cortexindex.com for authentication.
+
+The auth/internal-error in this scenario, where your client-side authDomain is correctly set, is most commonly due to one of two things:
+
+OAuth Provider Redirect URI Mismatch: As discussed in our previous exchange, the most critical place to check is still your Google Cloud Project's OAuth client settings to ensure https://cortexindex.com/__/auth/handler is precisely listed as an Authorized Redirect URI for the Google provider. This is often the culprit even when Firebase's own authorized domains are correct.
+
+/__/auth/handler Availability: The /__/auth/handler path must be correctly served by Firebase Hosting (or your hosting solution) for cortexindex.com . If this handler isn't accessible or isn't properly configured for your custom domain, the authentication flow breaks.
+
+The quick test of trying horizoncortex.replit.app is a good idea! If it works there, but not on cortexindex.com , it would further point to an issue specific to how cortexindex.com is interacting with the authentication flow, whether that's the OAuth provider's settings for that domain or the serving of the handler file.
+
+So, while checking the Firebase Console's "Auth domain" is not harmful, given your diagnostics, I'd reiterate focusing on the Google Cloud OAuth client's redirect URI configuration as the primary suspect for your auth/internal-error .
+
