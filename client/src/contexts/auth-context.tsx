@@ -80,11 +80,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUserProfile(profile);
       } else if (response.status === 404) {
         // User profile not found in database - they are a new user
-        // This can happen if they sign in without going through cohort signup
+        // This can happen during signup process or if they sign in without going through cohort signup
+        console.log('User profile not found - this may be expected during signup process');
         setUserProfile(null);
         
-        // If they're trying to sign in as a new user, show error and sign them out
-        if (firebaseUser) {
+        // Only show error and sign them out if they're trying to sign in as an existing user
+        // Don't interfere during the signup process
+        const isInSignupFlow = localStorage.getItem('cortex-signup-in-progress') === 'true';
+        
+        if (firebaseUser && !isInSignupFlow) {
           const errorMsg = 'New users must create an account with a cohort access code. Please sign up first.';
           setError(errorMsg);
           
@@ -99,12 +103,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       } else {
         // Other error (server error, etc.)
+        console.warn(`Profile fetch failed with status ${response.status}`);
         setUserProfile(null);
       }
     } catch (error) {
       console.error('Failed to fetch user profile:', error);
       setUserProfile(null);
-      throw error; // Re-throw to trigger error handling
+      // Only re-throw if it's not a profile fetch issue during signup
+      const isInSignupFlow = localStorage.getItem('cortex-signup-in-progress') === 'true';
+      if (!isInSignupFlow) {
+        throw error; // Re-throw to trigger error handling
+      }
     }
   }, []);
 
@@ -185,6 +194,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setLoading(true);
       setError(null);
       
+      // Set flag to indicate signup is in progress
+      localStorage.setItem('cortex-signup-in-progress', 'true');
+      
       // First, validate the cohort access code
       const validateResponse = await fetch('/api/cohorts/validate-access-code', {
         method: 'POST',
@@ -222,6 +234,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           const joinError = await joinResponse.json();
           throw new Error(joinError.error || 'Failed to join cohort');
         }
+        
+        // Clear the signup flag on successful completion
+        localStorage.removeItem('cortex-signup-in-progress');
       } catch (joinError) {
         // If cohort join fails, delete the Firebase account to prevent orphaning
         try {
@@ -241,6 +256,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.error('Cohort sign-up error:', error);
       setError(getAuthErrorMessage(error));
       setLoading(false); // Only set loading to false on error
+      
+      // Clear the signup flag on error
+      localStorage.removeItem('cortex-signup-in-progress');
+      
       throw error; // Re-throw so UI components can handle the error
     }
   }, []);
@@ -255,6 +274,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
+      
+      // Set flag to indicate signup is in progress
+      localStorage.setItem('cortex-signup-in-progress', 'true');
       
       // First, validate the cohort access code
       const validateResponse = await fetch('/api/cohorts/validate-access-code', {
@@ -296,6 +318,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           const joinError = await joinResponse.json();
           throw new Error(joinError.error || 'Failed to join cohort');
         }
+        
+        // Clear the signup flag on successful completion
+        localStorage.removeItem('cortex-signup-in-progress');
       } catch (joinError) {
         // Only delete the Firebase account if it's a newly created account
         // Do NOT delete existing accounts that just failed to join a cohort
@@ -320,6 +345,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.error('Google cohort sign-up error:', error);
       setError(getAuthErrorMessage(error));
       setLoading(false); // Only set loading to false on error
+      
+      // Clear the signup flag on error
+      localStorage.removeItem('cortex-signup-in-progress');
+      
       throw error; // Re-throw so UI components can handle the error
     }
   }, []);
