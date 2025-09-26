@@ -79,20 +79,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const profile = await response.json();
         setUserProfile(profile);
       } else if (response.status === 404) {
-        // User profile not found in database - they are a new user
-        // This can happen during signup process or if they sign in without going through cohort signup
-        console.log('User profile not found - this may be expected during signup process');
+        // User profile not found in database
+        // This can happen during signup process or for existing Firebase users who don't have a profile yet
+        console.log('User profile not found - this may be expected during signup process or for existing users');
         setUserProfile(null);
         
-        // Only show error and sign them out if they're trying to sign in as an existing user
-        // Don't interfere during the signup process
+        // Only interfere if we're certain this is an unauthorized new user trying to bypass signup
+        // Don't interfere during the signup process or for existing Firebase users
         const isInSignupFlow = localStorage.getItem('cortex-signup-in-progress') === 'true';
         
-        if (firebaseUser && !isInSignupFlow) {
+        // Check if this is a brand new Firebase account (created in the last few seconds)
+        const userCreationTime = firebaseUser.metadata.creationTime;
+        const isNewFirebaseAccount = userCreationTime && 
+          (Date.now() - new Date(userCreationTime).getTime()) < 10000; // 10 seconds
+        
+        if (firebaseUser && !isInSignupFlow && isNewFirebaseAccount) {
           const errorMsg = 'New users must create an account with a cohort access code. Please sign up first.';
           setError(errorMsg);
           
-          // Sign them out since they can't proceed without a cohort
+          // Only delete very new Firebase accounts that tried to bypass signup
           try {
             await firebaseUser.delete();
           } catch (deleteError) {
@@ -101,6 +106,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           
           throw new Error(errorMsg);
         }
+        
+        // For existing Firebase users without profiles, just log them in without a profile
+        // They may be legacy users or there may be a database issue
       } else {
         // Other error (server error, etc.)
         console.warn(`Profile fetch failed with status ${response.status}`);
