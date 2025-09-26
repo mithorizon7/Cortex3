@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { LogIn, Loader2, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
+import { PasswordResetModal } from './password-reset-modal';
 
 interface EnhancedSignInModalProps {
   open: boolean;
@@ -28,6 +29,7 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
   const [cohortAccessCode, setCohortAccessCode] = useState('');
   const [emailLoading, setEmailLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(true);
+  const [showPasswordReset, setShowPasswordReset] = useState(false);
 
   const handleGoogleSignIn = async () => {
     try {
@@ -123,8 +125,17 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
     setPassword('TestUser2024!');
   };
 
+  const handleForgotPassword = () => {
+    setShowPasswordReset(true);
+  };
+
+  const handleBackToSignIn = () => {
+    setShowPasswordReset(false);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[400px]" data-testid="enhanced-sign-in-modal">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold text-center">
@@ -270,7 +281,21 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="password">Password</Label>
+                      {!isSignUp && (
+                        <Button 
+                          type="button"
+                          variant="ghost" 
+                          size="sm"
+                          onClick={handleForgotPassword}
+                          className="h-auto p-0 text-xs hover:bg-transparent text-primary underline-offset-4 hover:underline"
+                          data-testid="forgot-password-link"
+                        >
+                          Forgot Password?
+                        </Button>
+                      )}
+                    </div>
                     <Input
                       id="password"
                       type="password"
@@ -340,5 +365,12 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
         </Tabs>
       </DialogContent>
     </Dialog>
+    
+    <PasswordResetModal 
+      open={showPasswordReset}
+      onOpenChange={setShowPasswordReset}
+      onBackToSignIn={handleBackToSignIn}
+    />
+    </>
   );
 };

@@ -7,6 +7,7 @@ import {
   signInWithEmail as firebaseSignInWithEmail,
   signUpWithEmail as firebaseSignUpWithEmail,
   signOut as firebaseSignOut,
+  resetPassword as firebaseResetPassword,
   handleRedirectResult,
   getAuthErrorMessage,
   isFirebaseConfigured
@@ -21,6 +22,7 @@ interface AuthContextType {
   signUpWithEmail: (email: string, password: string, displayName?: string) => Promise<void>;
   signUpWithCohort: (email: string, password: string, cohortAccessCode: string, displayName?: string) => Promise<void>;
   signUpWithGoogleAndCohort: (cohortAccessCode: string, usePopup?: boolean) => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
   clearError: () => void;
 }
@@ -260,6 +262,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, []);
 
+  const resetPassword = useCallback(async (email: string) => {
+    if (!isFirebaseConfigured()) {
+      const errorMsg = 'Authentication is not available. Please configure Firebase.';
+      setError(errorMsg);
+      throw new Error(errorMsg);
+    }
+    
+    try {
+      setLoading(true);
+      setError(null);
+      await firebaseResetPassword(email);
+      // Don't set loading to false here - keep it true until user navigates away
+    } catch (error: any) {
+      console.error('Password reset error:', error);
+      setError(getAuthErrorMessage(error));
+      setLoading(false); // Only set loading to false on error
+      throw error; // Re-throw so UI components can handle the error
+    }
+  }, []);
+
   const signOut = useCallback(async () => {
     if (!isFirebaseConfigured()) {
       setError('Authentication is not available. Please configure Firebase.');
@@ -319,6 +341,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     signUpWithEmail,
     signUpWithCohort,
     signUpWithGoogleAndCohort,
+    resetPassword,
     signOut,
     clearError,
   };

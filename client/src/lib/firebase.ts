@@ -13,7 +13,8 @@ import {
   UserCredential,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  updateProfile
+  updateProfile,
+  sendPasswordResetEmail
 } from 'firebase/auth';
 
 // Dynamic authDomain detection for multiple production domains
@@ -235,6 +236,20 @@ export const signOut = async (): Promise<void> => {
   }
 };
 
+// Password reset functionality
+export const resetPassword = async (email: string): Promise<void> => {
+  if (!firebaseAuth) {
+    throw new Error('Firebase authentication not configured');
+  }
+  
+  try {
+    await sendPasswordResetEmail(firebaseAuth, email);
+  } catch (error) {
+    console.error('Password reset failed:', error);
+    throw error;
+  }
+};
+
 // Auth state listener
 export const onAuthStateChange = (callback: (user: User | null) => void) => {
   if (!firebaseAuth) {
@@ -275,6 +290,9 @@ export const getAuthErrorMessage = (error: AuthError): string => {
       return 'An account with this email already exists.';
     case 'auth/invalid-credential':
       return 'Invalid email or password. Please try again.';
+    // Password reset specific errors (note: duplicates handled by catch-all)
+    case 'auth/missing-email':
+      return 'Please enter your email address.';
     default:
       return 'Sign-in failed. Please try again.';
   }
