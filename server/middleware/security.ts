@@ -90,6 +90,9 @@ export function securityMiddleware(req: Request, res: Response, next: NextFuncti
     // But allow specific frame sources for potential Firebase iframe fallbacks
     res.setHeader('X-Frame-Options', 'SAMEORIGIN');
     
+    // Get Firebase project ID from environment
+    const firebaseProjectId = process.env.FIREBASE_PROJECT_ID || process.env.VITE_FIREBASE_PROJECT_ID || 'cortex3-790ee';
+    
     // Secure Firebase-compatible CSP for production with violation reporting
     const csp = [
       "default-src 'self'",
@@ -100,7 +103,7 @@ export function securityMiddleware(req: Request, res: Response, next: NextFuncti
       "font-src 'self' https://fonts.gstatic.com",
       "object-src 'none'",
       "media-src 'self'",
-      "frame-src 'self' https://cortex3-790ee.firebaseapp.com https://accounts.google.com",
+      `frame-src 'self' https://${firebaseProjectId}.firebaseapp.com https://accounts.google.com`,
       "report-uri /api/csp-violation-report"
     ].join('; ');
     

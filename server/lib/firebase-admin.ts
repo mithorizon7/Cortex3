@@ -26,30 +26,33 @@ export const initializeFirebaseAdmin = () => {
       return { adminApp, adminAuth };
     }
 
-    // In production, use service account file or environment variables
-    // For development, we can use the Firebase emulator or fallback to client-side verification
-    const projectId = process.env.FIREBASE_PROJECT_ID || process.env.VITE_FIREBASE_PROJECT_ID;
-    
-    if (!projectId) {
-      logger.warn('Firebase project ID not configured for admin SDK');
-      return { adminApp: null, adminAuth: null };
-    }
-
     // Try to initialize with service account if available
     const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
     const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
     
     let credential;
+    let projectId = process.env.FIREBASE_PROJECT_ID || process.env.VITE_FIREBASE_PROJECT_ID;
     
     if (serviceAccountKey) {
       // Parse service account key from environment variable
       try {
         const serviceAccount = JSON.parse(serviceAccountKey) as ServiceAccount;
+        // Extract project ID from service account if not explicitly set
+        if (!projectId && serviceAccount.project_id) {
+          projectId = serviceAccount.project_id;
+          logger.info(`Using project ID from service account: ${projectId}`);
+        }
         credential = cert(serviceAccount);
       } catch (error) {
         logger.error('Failed to parse Firebase service account key', error instanceof Error ? error : new Error(String(error)));
         throw error;
       }
+    }
+    
+    // Check if we have a project ID from any source
+    if (!projectId) {
+      logger.warn('Firebase project ID not configured and not found in service account');
+      return { adminApp: null, adminAuth: null };
     } else if (serviceAccountPath) {
       // Use service account file path
       credential = cert(serviceAccountPath);

@@ -18,7 +18,13 @@ export const APP_CONFIG = {
   // Security
   CORS: {
     origin: process.env.NODE_ENV === 'production' 
-      ? ['https://yourdomain.com'] // Replace with actual production domains
+      ? [
+          'https://cortexindex.com',
+          'https://www.cortexindex.com',
+          'https://horizoncortex.replit.app',
+          'https://cortex3-790ee.firebaseapp.com',
+          'https://cortex3-790ee.web.app'
+        ]
       : ['http://localhost:3000', 'http://localhost:5000'],
     credentials: true,
     optionsSuccessStatus: 200
