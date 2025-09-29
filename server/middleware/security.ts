@@ -11,6 +11,7 @@ export function corsMiddleware(req: Request, res: Response, next: NextFunction) 
   const allowedOrigins = APP_CONFIG.CORS.origin as string[];
   const origin = req.headers.origin;
   
+  // Always set CORS headers for allowed origins
   if (origin && allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   }
@@ -19,8 +20,15 @@ export function corsMiddleware(req: Request, res: Response, next: NextFunction) 
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-Frontend-Request-Id, X-User-Id');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   
+  // Handle OPTIONS preflight requests
   if (req.method === 'OPTIONS') {
-    res.sendStatus(200);
+    // For OPTIONS, we need to ensure origin header is set before responding
+    if (origin && allowedOrigins.includes(origin)) {
+      res.status(200).end();
+    } else {
+      // If origin not allowed, still respond to OPTIONS but without Allow-Origin
+      res.status(200).end();
+    }
     return;
   }
   
