@@ -51,6 +51,13 @@ export default function ContextProfilePage() {
 
   const createAssessment = useMutation({
     mutationFn: async (contextProfile: ContextProfile) => {
+      // Debug: Check authentication state before making request
+      if (!user) {
+        console.warn("Attempting to submit assessment without authenticated user");
+        throw new Error("Authentication required: User not logged in");
+      }
+      
+      console.log("Submitting assessment for user:", user.uid);
       const response = await apiRequest("POST", "/api/assessments", { contextProfile });
       return response.json();
     },
@@ -68,19 +75,25 @@ export default function ContextProfilePage() {
       let title = "Save Failed";
       let description = "Unable to save your responses. Please try again.";
       
-      switch (errorType) {
-        case 'offline':
-          title = "No Internet Connection";
-          description = "Please check your connection and try again when you're back online.";
-          break;
-        case 'network':
-          title = "Connection Problem";
-          description = "Unable to reach our servers. Please check your connection and try again.";
-          break;
-        case 'server':
-          title = "Server Issue";
-          description = "Our servers are experiencing issues. Please try again in a moment.";
-          break;
+      // Check for authentication errors specifically
+      if (error?.message?.includes('401') || (error as any)?.statusCode === 401) {
+        title = "Authentication Required";
+        description = "Your session has expired. Please sign in again to continue.";
+      } else {
+        switch (errorType) {
+          case 'offline':
+            title = "No Internet Connection";
+            description = "Please check your connection and try again when you're back online.";
+            break;
+          case 'network':
+            title = "Connection Problem";
+            description = "Unable to reach our servers. Please check your connection and try again.";
+            break;
+          case 'server':
+            title = "Server Issue";
+            description = "Our servers are experiencing issues. Please try again in a moment.";
+            break;
+        }
       }
       
       // Enhance error message with incident ID if available

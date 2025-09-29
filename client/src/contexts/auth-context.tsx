@@ -105,11 +105,55 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Handle post-login navigation after profile is loaded (only for new logins)
         handlePostLoginNavigation(profile, isNewLogin);
       } else if (response.status === 404) {
-        // User profile not found in database - this is fine, they can still use the app
-        console.log('User profile not found - user can still use the app without a profile');
-        setUserProfile(null);
-        // Navigate regular users to assessment start (only for new logins)
-        handlePostLoginNavigation(null, isNewLogin);
+        // User profile not found in database - create one automatically
+        console.log('User profile not found in database - creating new user record');
+        
+        // Validate required fields before attempting user creation
+        if (!firebaseUser.email) {
+          console.error('Cannot create user profile: email is required but missing from Firebase user');
+          setError('Unable to create account: email address is required. Please sign in with a provider that includes your email address.');
+          setUserProfile(null);
+          // Sign out to prevent access to protected routes without valid profile
+          await signOut();
+          return;
+        }
+        
+        try {
+          const createResponse = await fetch('/api/users', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${await firebaseUser.getIdToken()}`
+            },
+            body: JSON.stringify({
+              userId: firebaseUser.uid,
+              email: firebaseUser.email,
+              role: 'user'
+            })
+          });
+          
+          if (createResponse.ok) {
+            const newProfile = await createResponse.json();
+            console.log('Successfully created user profile:', newProfile);
+            setUserProfile(newProfile);
+            // Handle post-login navigation after profile is created
+            handlePostLoginNavigation(newProfile, isNewLogin);
+          } else {
+            console.warn(`Failed to create user profile: ${createResponse.status}`);
+            setError('Unable to create account. Please try signing in again or contact support if the problem persists.');
+            setUserProfile(null);
+            // Sign out to prevent access to protected routes without valid profile
+            await signOut();
+            return;
+          }
+        } catch (createError) {
+          console.error('Error creating user profile:', createError);
+          setError('Network error while creating account. Please check your connection and try again.');
+          setUserProfile(null);
+          // Sign out to prevent access to protected routes without valid profile  
+          await signOut();
+          return;
+        }
       } else {
         // Other error (server error, etc.)
         console.warn(`Profile fetch failed with status ${response.status}`);
@@ -529,7 +573,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               console.error('Failed to sign out user after cohort join failure:', signOutError);
             }
             
-            setError(getAuthErrorMessage(error));
+            setError(getAuthErrorMessage(error as any));
             setIsNewLogin(false);
             setUser(null);
             

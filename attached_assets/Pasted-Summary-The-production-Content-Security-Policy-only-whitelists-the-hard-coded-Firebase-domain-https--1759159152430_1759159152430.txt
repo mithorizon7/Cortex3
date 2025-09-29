@@ -1,0 +1,30 @@
+Summary
+The production Content Security Policy only whitelists the hard-coded Firebase domain https://cortex3-790ee.firebaseapp.com, so any environment that uses a different Firebase project ID will have its auth popup/iframe blocked, preventing new accounts from signing in.
+CORS is likewise locked to a placeholder origin (https://yourdomain.com), so browsers hitting the API from the real production domain will fail their preflight requests before reaching the signup endpoints.
+Issues
+Production CSP blocks Firebase auth for non-cortex3-790ee projects. Hard-coding the frame source to a single Firebase hostname breaks Google/Firebase sign-in flows whenever the deployed project ID differs, which explains why new users routinely fail to authenticate in production.
+
+CORS allows only https://yourdomain.com, blocking real production origins. With this placeholder left in place, browsers making API calls from the live site receive failed preflight responses, so account-creation requests never reach the server.
+
+Summary
+New accounts fail to finish onboarding because the backend never initializes Firebase Admin when FIREBASE_PROJECT_ID is absent, leaving requests unauthenticated and triggering cleanup that deletes the freshly-created Firebase login.
+Findings
+Firebase Admin initialization stops token verification when FIREBASE_PROJECT_ID is unset.
+initializeFirebaseAdmin immediately bails out if FIREBASE_PROJECT_ID/VITE_FIREBASE_PROJECT_ID are missing, even when a full FIREBASE_SERVICE_ACCOUNT_KEY is present. Without Admin initialization, the request middleware leaves req.userId as 'anonymous', the auth guard blocks /api/cohorts/join, and the join handler cannot create a profile because req.userEmail was never populated. The frontend treats that failure as fatal and deletes the brand-new Firebase account, which matches the production symptom of “almost always cannot create a new user and log in.”
+
+Summary
+The Firebase client initialization always points Google OAuth back to the default firebaseapp.com domain instead of the live hostname, which explains the new-account login failures you’re seeing in production.
+Issues
+Firebase auth domain is always forced to <project>.firebaseapp.com – getAuthDomain() ignores the current hostname and always returns ${projectId}.firebaseapp.com. When the site is served from a custom domain (e.g., horizoncortex.replit.app), browsers treat the OAuth flow as cross-site, triggering auth/network-request-failed and preventing newly created users from signing in. The diagnostics panel already expects a dynamic domain, so this mismatch directly causes the production failures you described.
+
+Summary
+The production API only permits the placeholder https://yourdomain.com origin, so real front-end domains never receive Access-Control-Allow-Origin; browser-enforced CORS blocks sign-up/login calls before they reach the server.
+When Firebase Admin credentials are absent or misconfigured, token verification returns null, leaving requestContextMiddleware to tag every caller as anonymous, so protected endpoints (like /api/cohorts/join) always return 401 and new accounts cannot be provisioned.
+Findings
+Production CORS allowlist still uses a placeholder domain
+APP_CONFIG.CORS.origin only contains https://yourdomain.com in production, and corsMiddleware sends Access-Control-Allow-Origin only when the request’s origin exactly matches that list. Any deployment hosted on Firebase (.web.app/.firebaseapp.com) or a custom domain will therefore have every cross-origin POST (e.g., cohort validation/join, profile fetch) rejected by the browser, which matches the observed inability to sign up or sign in on production.
+
+Backend treats authenticated users as anonymous when Firebase Admin isn’t initialized
+initializeFirebaseAdmin returns { adminApp: null, adminAuth: null } whenever FIREBASE_PROJECT_ID/VITE_FIREBASE_PROJECT_ID and service-account credentials are missing, and requestContextMiddleware then leaves req.userId as 'anonymous'. Every protected route (including cohort joins that finish sign-up) consequently returns 401, even though the browser supplied a valid Firebase ID token, matching the production failures you’re seeing.
+
+
