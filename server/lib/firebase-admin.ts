@@ -29,10 +29,10 @@ export const initializeFirebaseAdmin = () => {
     // Try to initialize with service account if available
     const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
     const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-    
-    let credential;
+
+    let credential: ReturnType<typeof cert> | undefined;
     let projectId = process.env.FIREBASE_PROJECT_ID || process.env.VITE_FIREBASE_PROJECT_ID;
-    
+
     if (serviceAccountKey) {
       // Parse service account key from environment variable
       try {
@@ -44,39 +44,50 @@ export const initializeFirebaseAdmin = () => {
         }
         credential = cert(serviceAccount);
       } catch (error) {
-        logger.error('Failed to parse Firebase service account key', error instanceof Error ? error : new Error(String(error)));
+        logger.error(
+          'Failed to parse Firebase service account key',
+          error instanceof Error ? error : new Error(String(error))
+        );
         throw error;
       }
     }
-    
-    // Check if we have a project ID from any source
-    if (!projectId) {
-      logger.warn('Firebase project ID not configured and not found in service account');
-      return { adminApp: null, adminAuth: null };
-    } else if (serviceAccountPath) {
-      // Use service account file path
+
+    if (!credential && serviceAccountPath) {
+      // Use service account file path when key JSON isn't provided inline
       credential = cert(serviceAccountPath);
-    } else {
-      // For development without service account, initialize with minimal config
-      // This will work for token verification but won't have admin privileges
-      adminApp = initializeApp({
-        projectId: projectId,
-      });
-      adminAuth = getAuth(adminApp);
-      
-      logger.warn('Firebase Admin initialized without service account credentials - limited functionality available');
-      return { adminApp, adminAuth };
     }
 
-    // Initialize with service account credentials
-    adminApp = initializeApp({
-      credential: credential,
-      projectId: projectId,
-    });
+    // If we still don't have a project ID but do have credentials, try to derive from them
+    if (!projectId && credential && typeof (credential as any).projectId === 'string') {
+      projectId = (credential as any).projectId as string;
+      logger.info(`Using project ID from credential: ${projectId}`);
+    }
+
+    if (!credential && !projectId) {
+      logger.warn('Firebase credentials not configured - cannot initialize Firebase Admin');
+      return { adminApp: null, adminAuth: null };
+    }
+
+    const initializationConfig: { credential?: ReturnType<typeof cert>; projectId?: string } = {};
+    if (credential) {
+      initializationConfig.credential = credential;
+    }
+    if (projectId) {
+      initializationConfig.projectId = projectId;
+      if (!process.env.FIREBASE_PROJECT_ID && !process.env.VITE_FIREBASE_PROJECT_ID) {
+        process.env.FIREBASE_PROJECT_ID = projectId;
+      }
+    }
+
+    adminApp = initializeApp(initializationConfig);
     
     adminAuth = getAuth(adminApp);
-    
-    logger.info('Firebase Admin SDK initialized successfully');
+
+    if (credential) {
+      logger.info('Firebase Admin SDK initialized with service account credentials');
+    } else {
+      logger.warn('Firebase Admin initialized without service account credentials - limited functionality available');
+    }
     return { adminApp, adminAuth };
     
   } catch (error) {
@@ -386,7 +397,15 @@ export const createTestAccount = async (): Promise<{ uid: string; email: string 
  * Check if Firebase Admin is properly configured
  */
 export const isFirebaseAdminConfigured = (): boolean => {
-  return adminAuth !== null || !!(process.env.FIREBASE_PROJECT_ID || process.env.VITE_FIREBASE_PROJECT_ID);
+  return (
+    adminAuth !== null ||
+    !!(
+      process.env.FIREBASE_PROJECT_ID ||
+      process.env.VITE_FIREBASE_PROJECT_ID ||
+      process.env.FIREBASE_SERVICE_ACCOUNT_KEY ||
+      process.env.FIREBASE_SERVICE_ACCOUNT_PATH
+    )
+  );
 };
 
 // Initialize on module load
