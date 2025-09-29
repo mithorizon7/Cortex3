@@ -38,8 +38,8 @@ export const initializeFirebaseAdmin = () => {
       try {
         const serviceAccount = JSON.parse(serviceAccountKey) as ServiceAccount;
         // Extract project ID from service account if not explicitly set
-        if (!projectId && serviceAccount.project_id) {
-          projectId = serviceAccount.project_id;
+        if (!projectId && serviceAccount.projectId) {
+          projectId = serviceAccount.projectId;
           logger.info(`Using project ID from service account: ${projectId}`);
         }
         credential = cert(serviceAccount);
