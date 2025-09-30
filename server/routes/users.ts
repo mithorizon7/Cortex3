@@ -313,13 +313,45 @@ router.patch('/admin/:userId/role', requireAdminMiddleware, async (req: Request,
       () => storage.getUser(req.userId!)
     );
 
+    if (!requestingUser) {
+      logger.error('Requesting user not found during role update', {
+        additionalContext: {
+          operation: 'update_user_role_user_not_found',
+          requestingUserId: req.userId,
+          incidentId
+        }
+      });
+      res.status(HTTP_STATUS.UNAUTHORIZED)
+        .json(createUserError(USER_ERROR_MESSAGES.UNAUTHORIZED, incidentId, HTTP_STATUS.UNAUTHORIZED));
+      return;
+    }
+
+    // Get target user to check their current role
+    const targetUser = await withDatabaseErrorHandling(
+      'get_target_user_profile',
+      () => storage.getUser(userId)
+    );
+
+    if (!targetUser) {
+      logger.warn('Target user not found during role update', {
+        additionalContext: {
+          operation: 'update_user_role_target_not_found',
+          targetUserId: userId,
+          incidentId
+        }
+      });
+      res.status(HTTP_STATUS.NOT_FOUND)
+        .json(createUserError('User not found', incidentId, HTTP_STATUS.NOT_FOUND));
+      return;
+    }
+
     // Only super admins can promote to admin or super_admin
-    if (requestingUser?.role !== 'super_admin' && (payload.role === 'admin' || payload.role === 'super_admin')) {
+    if (requestingUser.role !== 'super_admin' && (payload.role === 'admin' || payload.role === 'super_admin')) {
       logger.warn('Admin attempted to promote user to admin role', {
         additionalContext: {
-          operation: 'update_user_role_unauthorized',
+          operation: 'update_user_role_unauthorized_promotion',
           requestingUserId: req.userId,
-          requestingUserRole: requestingUser?.role,
+          requestingUserRole: requestingUser.role,
           targetUserId: userId,
           attemptedRole: payload.role,
           incidentId
@@ -331,11 +363,31 @@ router.patch('/admin/:userId/role', requireAdminMiddleware, async (req: Request,
       return;
     }
 
+    // Only super admins can demote existing admins or super_admins
+    if (requestingUser.role !== 'super_admin' && (targetUser.role === 'admin' || targetUser.role === 'super_admin')) {
+      logger.warn('Admin attempted to modify privileged user role', {
+        additionalContext: {
+          operation: 'update_user_role_unauthorized_demotion',
+          requestingUserId: req.userId,
+          requestingUserRole: requestingUser.role,
+          targetUserId: userId,
+          targetUserCurrentRole: targetUser.role,
+          attemptedRole: payload.role,
+          incidentId
+        }
+      });
+
+      res.status(HTTP_STATUS.FORBIDDEN)
+        .json(createUserError('Only super admins can modify admin or super admin roles', incidentId, HTTP_STATUS.FORBIDDEN));
+      return;
+    }
+
     logger.info('Updating user role', {
       additionalContext: {
         operation: 'update_user_role',
         incidentId,
         targetUserId: userId,
+        targetUserCurrentRole: targetUser.role,
         newRole: payload.role,
         requestedBy: req.userId
       }
@@ -510,11 +562,68 @@ router.delete('/admin/:userId', requireAdminMiddleware, async (req: Request, res
       return;
     }
 
+    // Get requesting user's profile to check if they're super admin
+    const requestingUser = await withDatabaseErrorHandling(
+      'get_requesting_user_profile_delete',
+      () => storage.getUser(req.userId!)
+    );
+
+    if (!requestingUser) {
+      logger.error('Requesting user not found during delete', {
+        additionalContext: {
+          operation: 'delete_user_requesting_not_found',
+          requestingUserId: req.userId,
+          incidentId
+        }
+      });
+      res.status(HTTP_STATUS.UNAUTHORIZED)
+        .json(createUserError(USER_ERROR_MESSAGES.UNAUTHORIZED, incidentId, HTTP_STATUS.UNAUTHORIZED));
+      return;
+    }
+
+    // Get target user to check their role
+    const targetUser = await withDatabaseErrorHandling(
+      'get_target_user_profile_delete',
+      () => storage.getUser(userId)
+    );
+
+    if (!targetUser) {
+      logger.warn('Target user not found for deletion', {
+        additionalContext: {
+          operation: 'delete_user_target_not_found',
+          targetUserId: userId,
+          incidentId
+        }
+      });
+      res.status(HTTP_STATUS.NOT_FOUND)
+        .json(createUserError('User not found', incidentId, HTTP_STATUS.NOT_FOUND));
+      return;
+    }
+
+    // Only super admins can delete admin or super_admin users
+    if (requestingUser.role !== 'super_admin' && (targetUser.role === 'admin' || targetUser.role === 'super_admin')) {
+      logger.warn('Admin attempted to delete privileged user', {
+        additionalContext: {
+          operation: 'delete_user_unauthorized',
+          requestingUserId: req.userId,
+          requestingUserRole: requestingUser.role,
+          targetUserId: userId,
+          targetUserRole: targetUser.role,
+          incidentId
+        }
+      });
+
+      res.status(HTTP_STATUS.FORBIDDEN)
+        .json(createUserError('Only super admins can delete admin or super admin users', incidentId, HTTP_STATUS.FORBIDDEN));
+      return;
+    }
+
     logger.info('Deleting user', {
       additionalContext: {
         operation: 'delete_user',
         incidentId,
         targetUserId: userId,
+        targetUserRole: targetUser.role,
         requestedBy: req.userId
       }
     });

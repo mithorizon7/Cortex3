@@ -33,6 +33,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Users, 
   Search, 
@@ -41,7 +42,8 @@ import {
   User as UserIcon, 
   Trash2, 
   Edit,
-  Filter
+  Filter,
+  Info
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -227,6 +229,16 @@ export default function UserManagement() {
             </Badge>
           </div>
 
+          {!isSuperAdmin && (
+            <Alert data-testid="alert-admin-restrictions">
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                As an admin, you can manage regular users and update cohort memberships. 
+                Only super admins can create, modify, or delete other admin or super admin accounts.
+              </AlertDescription>
+            </Alert>
+          )}
+
           <Card>
             <CardHeader>
               <CardTitle>Search & Filter</CardTitle>
@@ -360,6 +372,7 @@ export default function UserManagement() {
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => setEditingUser(user)}
+                                disabled={!isSuperAdmin && (user.role === 'admin' || user.role === 'super_admin')}
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
@@ -368,6 +381,7 @@ export default function UserManagement() {
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => setDeletingUser(user)}
+                                disabled={!isSuperAdmin && (user.role === 'admin' || user.role === 'super_admin')}
                               >
                                 <Trash2 className="h-4 w-4 text-destructive" />
                               </Button>
