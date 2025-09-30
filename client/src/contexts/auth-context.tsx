@@ -249,7 +249,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const signIn = useCallback(async (usePopup = true) => {
-    if (!isFirebaseConfigured()) {
+    const configured = await isFirebaseConfigured();
+    if (!configured) {
       const errorMsg = 'Authentication is not available. Please configure Firebase.';
       setError(errorMsg);
       throw new Error(errorMsg);
@@ -285,7 +286,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const signInWithEmail = useCallback(async (email: string, password: string) => {
-    if (!isFirebaseConfigured()) {
+    const configured = await isFirebaseConfigured();
+    if (!configured) {
       const errorMsg = 'Authentication is not available. Please configure Firebase.';
       setError(errorMsg);
       throw new Error(errorMsg);
@@ -309,7 +311,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const signUpWithEmail = useCallback(async (email: string, password: string, displayName?: string) => {
-    if (!isFirebaseConfigured()) {
+    const configured = await isFirebaseConfigured();
+    if (!configured) {
       const errorMsg = 'Authentication is not available. Please configure Firebase.';
       setError(errorMsg);
       throw new Error(errorMsg);
@@ -333,7 +336,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const signUpWithCohort = useCallback(async (email: string, password: string, cohortAccessCode: string, displayName?: string) => {
-    if (!isFirebaseConfigured()) {
+    const configured = await isFirebaseConfigured();
+    if (!configured) {
       const errorMsg = 'Authentication is not available. Please configure Firebase.';
       setError(errorMsg);
       throw new Error(errorMsg);
@@ -418,7 +422,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const signUpWithGoogleAndCohort = useCallback(async (cohortAccessCode: string, usePopup = true) => {
-    if (!isFirebaseConfigured()) {
+    const configured = await isFirebaseConfigured();
+    if (!configured) {
       const errorMsg = 'Authentication is not available. Please configure Firebase.';
       setError(errorMsg);
       throw new Error(errorMsg);
@@ -518,7 +523,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const resetPassword = useCallback(async (email: string) => {
-    if (!isFirebaseConfigured()) {
+    const configured = await isFirebaseConfigured();
+    if (!configured) {
       const errorMsg = 'Authentication is not available. Please configure Firebase.';
       setError(errorMsg);
       throw new Error(errorMsg);
@@ -538,7 +544,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const signOut = useCallback(async () => {
-    if (!isFirebaseConfigured()) {
+    const configured = await isFirebaseConfigured();
+    if (!configured) {
       setError('Authentication is not available. Please configure Firebase.');
       return;
     }
@@ -559,16 +566,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   signOutRef.current = signOut;
 
   useEffect(() => {
-    // If Firebase is not configured, just set loading to false
-    if (!isFirebaseConfigured()) {
-      setLoading(false);
-      console.warn('Firebase not configured - authentication disabled');
-      return;
-    }
+    // Check Firebase configuration asynchronously
+    isFirebaseConfigured().then((configured) => {
+      if (!configured) {
+        setLoading(false);
+        console.warn('Firebase not configured - authentication disabled');
+        return;
+      }
 
-    // Check for persisted new login flag and cohort code from redirect flows
-    const wasNewLogin = sessionStorage.getItem('cortex_new_login') === 'true';
-    const cohortCode = sessionStorage.getItem('cortex_cohort_code');
+      // Check for persisted new login flag and cohort code from redirect flows
+      const wasNewLogin = sessionStorage.getItem('cortex_new_login') === 'true';
+      const cohortCode = sessionStorage.getItem('cortex_cohort_code');
     
     // Set processing flag BEFORE setting up auth listener to prevent race condition
     // Block auth listener for ANY redirect completion (cohort or regular) to avoid duplicate processing
@@ -760,9 +768,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       });
 
-    return () => {
-      unsubscribe();
-    };
+      return () => {
+        unsubscribe();
+      };
+    }); // Close the promise callback
   }, [fetchUserProfile]);
 
   // Computed properties for convenience

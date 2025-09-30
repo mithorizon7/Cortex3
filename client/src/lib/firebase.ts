@@ -118,24 +118,48 @@ if (validateConfig()) {
 
 // Initialize Firebase - will be set after async init completes
 let firebaseAuth: Auth | null = null;
+let firebaseInitPromise: Promise<void> | null = null;
+let firebaseInitialized = false;
 
-// Initialize Firebase when module loads
-initializeFirebase().then(({ auth }) => {
-  firebaseAuth = auth;
-  if (auth) {
-    console.log('Firebase initialized successfully with persistence');
+// Create initialization promise that can be awaited
+const ensureFirebaseInitialized = async (): Promise<void> => {
+  if (firebaseInitialized) return;
+  
+  if (!firebaseInitPromise) {
+    firebaseInitPromise = initializeFirebase().then(({ auth }) => {
+      firebaseAuth = auth;
+      firebaseInitialized = true;
+      if (auth) {
+        console.log('Firebase initialized successfully with persistence');
+      }
+    }).catch((error) => {
+      console.error('Failed to initialize Firebase:', error);
+      firebaseInitialized = true; // Mark as initialized even on error to avoid infinite loops
+      throw error;
+    });
   }
-}).catch((error) => {
-  console.error('Failed to initialize Firebase:', error);
+  
+  await firebaseInitPromise;
+};
+
+// Start initialization immediately when module loads
+ensureFirebaseInitialized().catch((error) => {
+  console.error('Initial Firebase setup failed:', error);
 });
 
-// Check if Firebase is configured
-export const isFirebaseConfigured = (): boolean => {
-  return firebaseAuth !== null;
+// Check if Firebase is configured - now async to ensure initialization
+export const isFirebaseConfigured = async (): Promise<boolean> => {
+  try {
+    await ensureFirebaseInitialized();
+    return firebaseAuth !== null;
+  } catch {
+    return false;
+  }
 };
 
 // Authentication utility functions
 export const signInWithGoogle = async (usePopup = true): Promise<UserCredential> => {
+  await ensureFirebaseInitialized();
   if (!firebaseAuth) {
     throw new Error('Firebase authentication not configured');
   }
@@ -184,6 +208,7 @@ export const signInWithGoogle = async (usePopup = true): Promise<UserCredential>
 
 // Email/Password Authentication for testing
 export const signInWithEmail = async (email: string, password: string): Promise<UserCredential> => {
+  await ensureFirebaseInitialized();
   if (!firebaseAuth) {
     throw new Error('Firebase authentication not configured');
   }
@@ -197,6 +222,7 @@ export const signInWithEmail = async (email: string, password: string): Promise<
 };
 
 export const createTestAccount = async (email: string, password: string, displayName?: string): Promise<UserCredential> => {
+  await ensureFirebaseInitialized();
   if (!firebaseAuth) {
     throw new Error('Firebase authentication not configured');
   }
@@ -218,6 +244,7 @@ export const createTestAccount = async (email: string, password: string, display
 
 // General sign-up function for new user accounts
 export const signUpWithEmail = async (email: string, password: string, displayName?: string): Promise<UserCredential> => {
+  await ensureFirebaseInitialized();
   if (!firebaseAuth) {
     throw new Error('Firebase authentication not configured');
   }
@@ -238,6 +265,7 @@ export const signUpWithEmail = async (email: string, password: string, displayNa
 };
 
 export const handleRedirectResult = async (): Promise<UserCredential | null> => {
+  await ensureFirebaseInitialized();
   if (!firebaseAuth) {
     return null;
   }
@@ -251,6 +279,7 @@ export const handleRedirectResult = async (): Promise<UserCredential | null> => 
 };
 
 export const signOut = async (): Promise<void> => {
+  await ensureFirebaseInitialized();
   if (!firebaseAuth) {
     throw new Error('Firebase authentication not configured');
   }
@@ -265,6 +294,7 @@ export const signOut = async (): Promise<void> => {
 
 // Password reset functionality
 export const resetPassword = async (email: string): Promise<void> => {
+  await ensureFirebaseInitialized();
   if (!firebaseAuth) {
     throw new Error('Firebase authentication not configured');
   }
@@ -279,12 +309,33 @@ export const resetPassword = async (email: string): Promise<void> => {
 
 // Auth state listener
 export const onAuthStateChange = (callback: (user: User | null) => void) => {
-  if (!firebaseAuth) {
-    // Return a no-op unsubscribe function when Firebase is not configured
+  // Handle Firebase initialization asynchronously
+  ensureFirebaseInitialized().then(() => {
+    if (!firebaseAuth) {
+      // Return a no-op unsubscribe function when Firebase is not configured
+      setTimeout(() => callback(null), 0);
+      return () => {};
+    }
+  }).catch((error) => {
+    console.error('Failed to initialize Firebase for auth listener:', error);
     setTimeout(() => callback(null), 0);
-    return () => {};
+  });
+  
+  // Return unsubscribe immediately, but it will only work after Firebase is initialized
+  if (firebaseAuth) {
+    return onAuthStateChanged(firebaseAuth, callback);
+  } else {
+    // Create a deferred unsubscribe that will work once Firebase is initialized
+    let unsubscribe: (() => void) | null = null;
+    ensureFirebaseInitialized().then(() => {
+      if (firebaseAuth) {
+        unsubscribe = onAuthStateChanged(firebaseAuth, callback);
+      }
+    });
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }
-  return onAuthStateChanged(firebaseAuth, callback);
 };
 
 // Error message utilities
