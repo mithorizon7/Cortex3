@@ -649,9 +649,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setIsNewLogin(true);
           isNewLoginRef.current = true; // Sync ref with state
           sessionStorage.removeItem('cortex_new_login');
+          
+          // Manually fetch profile and complete auth flow
+          try {
+            await fetchUserProfile(result.user);
+          } catch (error) {
+            console.error('Failed to fetch profile after redirect:', error);
+            setError(getAuthErrorMessage(error as any));
+          } finally {
+            setLoading(false);
+          }
         } else if (result) {
           // Regular redirect result without new login flag
           setUser(result.user);
+          
+          // Fetch profile for any redirect result
+          try {
+            await fetchUserProfile(result.user);
+          } catch (error) {
+            console.error('Failed to fetch profile after redirect:', error);
+          } finally {
+            setLoading(false);
+          }
         }
       })
       .catch((error) => {
