@@ -72,7 +72,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                   {latestAssessment ? 'My Results' : 'Assessment'}
                 </Button>
               </Link>
-              {userProfile?.role === 'super_admin' && (
+              {(userProfile?.role === 'admin' || userProfile?.role === 'super_admin') && (
                 <Link href="/user-management">
                   <Button variant="ghost" size="sm" className="font-ui font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-user-management">
                     <Users className="h-4 w-4 mr-2" />

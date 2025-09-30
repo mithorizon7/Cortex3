@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { generateIncidentId, createUserError } from '../utils/incident';
 import { USER_ERROR_MESSAGES, HTTP_STATUS } from '../constants';
 import { logger } from '../logger';
-import { requireAuthMiddleware, requireSuperAdminMiddleware } from '../middleware/security';
+import { requireAuthMiddleware, requireAdminMiddleware, requireSuperAdminMiddleware } from '../middleware/security';
 import { withDatabaseErrorHandling } from '../utils/database-errors';
 import { storage } from '../storage';
 
@@ -211,9 +211,9 @@ router.post('/', requireAuthMiddleware, async (req: Request, res: Response) => {
 });
 
 /**
- * Get all users (Super Admin only)
+ * Get all users (Admin and Super Admin)
  */
-router.get('/admin/all-users', requireSuperAdminMiddleware, async (req: Request, res: Response) => {
+router.get('/admin/all-users', requireAdminMiddleware, async (req: Request, res: Response) => {
   const incidentId = generateIncidentId();
 
   try {
@@ -298,14 +298,38 @@ const updateUserRoleSchema = z.object({
 });
 
 /**
- * Update user role (Super Admin only)
+ * Update user role (Super Admin only - admins can only demote to user)
  */
-router.patch('/admin/:userId/role', requireSuperAdminMiddleware, async (req: Request, res: Response) => {
+router.patch('/admin/:userId/role', requireAdminMiddleware, async (req: Request, res: Response) => {
   const incidentId = generateIncidentId();
   const { userId } = req.params;
 
   try {
     const payload = updateUserRoleSchema.parse(req.body);
+
+    // Get requesting user's profile to check if they're super admin
+    const requestingUser = await withDatabaseErrorHandling(
+      'get_requesting_user_profile',
+      () => storage.getUser(req.userId!)
+    );
+
+    // Only super admins can promote to admin or super_admin
+    if (requestingUser?.role !== 'super_admin' && (payload.role === 'admin' || payload.role === 'super_admin')) {
+      logger.warn('Admin attempted to promote user to admin role', {
+        additionalContext: {
+          operation: 'update_user_role_unauthorized',
+          requestingUserId: req.userId,
+          requestingUserRole: requestingUser?.role,
+          targetUserId: userId,
+          attemptedRole: payload.role,
+          incidentId
+        }
+      });
+
+      res.status(HTTP_STATUS.FORBIDDEN)
+        .json(createUserError('Only super admins can promote users to admin or super admin roles', incidentId, HTTP_STATUS.FORBIDDEN));
+      return;
+    }
 
     logger.info('Updating user role', {
       additionalContext: {
@@ -383,9 +407,9 @@ const updateUserCohortSchema = z.object({
 });
 
 /**
- * Update user cohort membership (Super Admin only)
+ * Update user cohort membership (Admin and Super Admin)
  */
-router.patch('/admin/:userId/cohort', requireSuperAdminMiddleware, async (req: Request, res: Response) => {
+router.patch('/admin/:userId/cohort', requireAdminMiddleware, async (req: Request, res: Response) => {
   const incidentId = generateIncidentId();
   const { userId } = req.params;
 
@@ -464,9 +488,9 @@ router.patch('/admin/:userId/cohort', requireSuperAdminMiddleware, async (req: R
 });
 
 /**
- * Delete user (Super Admin only)
+ * Delete user (Admin and Super Admin)
  */
-router.delete('/admin/:userId', requireSuperAdminMiddleware, async (req: Request, res: Response) => {
+router.delete('/admin/:userId', requireAdminMiddleware, async (req: Request, res: Response) => {
   const incidentId = generateIncidentId();
   const { userId } = req.params;
 

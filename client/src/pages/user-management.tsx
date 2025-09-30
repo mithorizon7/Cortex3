@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { useLocation } from 'wouter';
+import { useAuth } from '@/contexts/auth-context';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { AppHeader } from '@/components/navigation/app-header';
 import { Button } from '@/components/ui/button';
@@ -78,9 +80,9 @@ export default function UserManagement() {
   const [editingUser, setEditingUser] = useState<UserWithCohort | null>(null);
   const [deletingUser, setDeletingUser] = useState<UserWithCohort | null>(null);
 
-  // Redirect non-super-admins
+  // Redirect non-admins (both admin and super_admin can access)
   useEffect(() => {
-    if (!authLoading && userProfile && userProfile.role !== 'super_admin') {
+    if (!authLoading && userProfile && userProfile.role !== 'admin' && userProfile.role !== 'super_admin') {
       toast({
         title: 'Access Denied',
         description: 'You do not have permission to access this page.',
@@ -90,10 +92,12 @@ export default function UserManagement() {
     }
   }, [authLoading, userProfile, navigate, toast]);
 
-  // Fetch all users (super admin only)
+  const isSuperAdmin = userProfile?.role === 'super_admin';
+
+  // Fetch all users (admin and super admin only)
   const { data: users, isLoading: usersLoading } = useQuery<UserWithCohort[]>({
     queryKey: ['/api/users/admin/all-users'],
-    enabled: userProfile?.role === 'super_admin', // Only fetch if super admin
+    enabled: userProfile?.role === 'admin' || userProfile?.role === 'super_admin',
   });
 
   // Fetch cohorts for cohort selection
@@ -393,25 +397,55 @@ export default function UserManagement() {
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Role</label>
-                  <Select
-                    data-testid="select-edit-role"
-                    defaultValue={editingUser.role}
-                    onValueChange={(value) => {
-                      updateRoleMutation.mutate({
-                        userId: editingUser.userId,
-                        role: value as 'user' | 'admin' | 'super_admin'
-                      });
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="user">User</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="super_admin">Super Admin</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  {isSuperAdmin ? (
+                    <Select
+                      data-testid="select-edit-role"
+                      defaultValue={editingUser.role}
+                      onValueChange={(value) => {
+                        updateRoleMutation.mutate({
+                          userId: editingUser.userId,
+                          role: value as 'user' | 'admin' | 'super_admin'
+                        });
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="user">User</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="super_admin">Super Admin</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <>
+                      <Select
+                        data-testid="select-edit-role"
+                        defaultValue={editingUser.role}
+                        onValueChange={(value) => {
+                          if (value === 'user') {
+                            updateRoleMutation.mutate({
+                              userId: editingUser.userId,
+                              role: 'user'
+                            });
+                          }
+                        }}
+                        disabled={editingUser.role === 'admin' || editingUser.role === 'super_admin'}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="user">User</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {(editingUser.role === 'admin' || editingUser.role === 'super_admin') && (
+                        <p className="text-xs text-muted-foreground">
+                          Only super admins can modify admin roles
+                        </p>
+                      )}
+                    </>
+                  )}
                 </div>
 
                 <div className="space-y-2">
