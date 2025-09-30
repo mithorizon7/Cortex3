@@ -74,38 +74,59 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Helper function to handle post-login navigation
   const handlePostLoginNavigation = useCallback((profile: UserProfile | null, isNewLogin: boolean = false) => {
+    console.log('[Auth] handlePostLoginNavigation called:', {
+      isNewLogin,
+      currentPath: window.location.pathname,
+      profileEmail: profile?.email,
+      profileRole: profile?.role
+    });
+    
     // Only handle navigation for new logins, not every profile fetch
-    if (!isNewLogin) return;
+    if (!isNewLogin) {
+      console.log('[Auth] Skipping navigation - not a new login');
+      return;
+    }
     
     const currentPath = window.location.pathname;
     
     // Only redirect from specific auth entry points
     const authEntryPaths = ['/', '/sign-in', '/sign-up'];
-    if (!authEntryPaths.includes(currentPath)) return;
+    if (!authEntryPaths.includes(currentPath)) {
+      console.log('[Auth] Skipping navigation - current path not an auth entry point:', currentPath);
+      return;
+    }
     
     if (profile?.role === 'admin' || profile?.role === 'super_admin') {
       // Redirect admin users to admin dashboard
+      console.log('[Auth] Navigating admin user to /admin');
       setLocation('/admin');
     } else {
       // Redirect regular users to assessment
+      console.log('[Auth] Navigating regular user to /context-profile');
       setLocation('/context-profile');
     }
   }, [setLocation]);
 
   // Helper function to fetch user profile from our database
   const fetchUserProfile = useCallback(async (firebaseUser: User) => {
+    console.log('[Auth] fetchUserProfile called for user:', firebaseUser.email, 'isNewLogin:', isNewLoginRef.current);
     try {
       const idToken = await firebaseUser.getIdToken();
+      console.log('[Auth] Got ID token, fetching profile from /api/users/profile');
       const response = await fetch('/api/users/profile', {
         headers: {
           'Authorization': `Bearer ${idToken}`
         }
       });
       
+      console.log('[Auth] Profile API response status:', response.status);
+      
       if (response.ok) {
         const profile = await response.json();
+        console.log('[Auth] Profile fetched successfully:', profile.email, 'role:', profile.role);
         setUserProfile(profile);
         // Handle post-login navigation after profile is loaded (only for new logins)
+        console.log('[Auth] Calling handlePostLoginNavigation with isNewLogin:', isNewLoginRef.current);
         handlePostLoginNavigation(profile, isNewLoginRef.current);
       } else if (response.status === 404) {
         // User profile not found in database - create one automatically
@@ -555,8 +576,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     // Set up auth state listener FIRST
     const unsubscribe = onAuthStateChange(async (user) => {
+      console.log('[Auth] Auth state changed:', user ? `User: ${user.email}` : 'No user');
+      
       // Don't process auth changes while we're handling redirect cohort signup
       if (isProcessingRedirectCohortRef.current) {
+        console.log('[Auth] Skipping auth state change - processing redirect cohort');
         return;
       }
       
@@ -565,16 +589,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         if (user) {
           // Fetch user profile from our database
+          console.log('[Auth] Fetching profile from auth state listener');
           await fetchUserProfile(user);
         } else {
           // Clear user profile when logged out
+          console.log('[Auth] Clearing user profile');
           setUserProfile(null);
         }
       } catch (error) {
-        console.error('Error in auth state change handler:', error);
+        console.error('[Auth] Error in auth state change handler:', error);
         // Don't throw - just log the error and continue
       } finally {
         // Always set loading to false, even if profile fetch fails
+        console.log('[Auth] Auth state listener setting loading to false');
         setLoading(false);
       }
     });
@@ -645,6 +672,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           }
         } else if (result && wasNewLogin) {
           // Regular Google signin redirect completion
+          console.log('[Auth] Processing regular Google signin redirect for user:', result.user.email);
           setUser(result.user);
           setIsNewLogin(true);
           isNewLoginRef.current = true; // Sync ref with state
@@ -652,23 +680,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           
           // Manually fetch profile and complete auth flow
           try {
+            console.log('[Auth] Fetching user profile after redirect...');
             await fetchUserProfile(result.user);
+            console.log('[Auth] Profile fetch completed successfully');
           } catch (error) {
-            console.error('Failed to fetch profile after redirect:', error);
+            console.error('[Auth] Failed to fetch profile after redirect:', error);
             setError(getAuthErrorMessage(error as any));
           } finally {
+            console.log('[Auth] Setting loading to false after redirect processing');
             setLoading(false);
           }
         } else if (result) {
           // Regular redirect result without new login flag
+          console.log('[Auth] Processing redirect result without new login flag for user:', result.user.email);
           setUser(result.user);
           
           // Fetch profile for any redirect result
           try {
+            console.log('[Auth] Fetching user profile...');
             await fetchUserProfile(result.user);
+            console.log('[Auth] Profile fetch completed');
           } catch (error) {
-            console.error('Failed to fetch profile after redirect:', error);
+            console.error('[Auth] Failed to fetch profile after redirect:', error);
           } finally {
+            console.log('[Auth] Setting loading to false');
             setLoading(false);
           }
         }
