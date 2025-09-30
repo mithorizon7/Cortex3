@@ -570,15 +570,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const wasNewLogin = sessionStorage.getItem('cortex_new_login') === 'true';
     const cohortCode = sessionStorage.getItem('cortex_cohort_code');
     
-    // Set flags BEFORE setting up auth listener to prevent race condition
-    if (wasNewLogin && cohortCode) {
-      // For cohort joins, block the auth listener entirely
+    // Set processing flag BEFORE setting up auth listener to prevent race condition
+    // Block auth listener for ANY redirect completion (cohort or regular) to avoid duplicate processing
+    if (wasNewLogin) {
+      console.log('[Auth] Blocking auth listener - will handle redirect result manually');
       isProcessingRedirectCohortRef.current = true;
-    } else if (wasNewLogin) {
-      // For regular logins, set the new login flag so auth listener knows to navigate
-      console.log('[Auth] Setting isNewLoginRef to true before auth listener setup');
-      isNewLoginRef.current = true;
-      setIsNewLogin(true);
     }
 
     // Set up auth state listener FIRST
@@ -682,8 +678,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           console.log('[Auth] Processing regular Google signin redirect for user:', result.user.email);
           setUser(result.user);
           setIsNewLogin(true);
-          isNewLoginRef.current = true; // Sync ref with state
-          sessionStorage.removeItem('cortex_new_login');
+          isNewLoginRef.current = true; // Set flag so navigation will work
           
           // Manually fetch profile and complete auth flow
           try {
@@ -693,12 +688,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           } catch (error) {
             console.error('[Auth] Failed to fetch profile after redirect:', error);
             setError(getAuthErrorMessage(error as any));
+            setIsNewLogin(false);
+            isNewLoginRef.current = false;
           } finally {
             console.log('[Auth] Setting loading to false after redirect processing');
             setLoading(false);
+            // Clean up sessionStorage after everything is done
+            sessionStorage.removeItem('cortex_new_login');
+            // Allow auth listener to process future changes
+            isProcessingRedirectCohortRef.current = false;
           }
         } else if (result) {
-          // Regular redirect result without new login flag
+          // Regular redirect result without new login flag (shouldn't happen, but handle gracefully)
           console.log('[Auth] Processing redirect result without new login flag for user:', result.user.email);
           setUser(result.user);
           
