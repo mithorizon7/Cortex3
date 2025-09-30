@@ -7,6 +7,7 @@ import cohortRoutes from "./routes/cohorts";
 import userRoutes from "./routes/users";
 import bootstrapInviteRoutes from "./routes/bootstrap-invites";
 import diagnosticRoutes from "./routes/diagnostic";
+import setupRoutes from "./routes/setup";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Register API routes with proper modular structure
@@ -17,6 +18,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/users", userRoutes);
   app.use("/api/bootstrap-invites", bootstrapInviteRoutes);
   app.use("/api/diagnostic", diagnosticRoutes);
+  app.use("/api/setup", setupRoutes);
   
   // Create HTTP server
   return createServer(app);
