@@ -252,6 +252,25 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
                   {loading ? 'Creating account...' : isSignUp ? 'Create Account with Google' : 'Sign in with Google'}
                 </Button>
                 
+                <div className="pt-2 border-t">
+                  <p className="text-center text-sm text-muted-foreground mb-2">
+                    {isSignUp ? 'Already have an account?' : 'Need an account?'}
+                  </p>
+                  <Button 
+                    type="button"
+                    variant="outline" 
+                    size="default"
+                    onClick={() => setIsSignUp(!isSignUp)}
+                    className="w-full"
+                    data-testid="toggle-signup-mode-google"
+                  >
+                    {isSignUp 
+                      ? 'Sign in to Existing Account' 
+                      : 'Create New Account'
+                    }
+                  </Button>
+                </div>
+                
                 {error && (
                   <p className="text-sm text-destructive text-center" data-testid="auth-error">
                     {error}
@@ -385,23 +404,26 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
                       : (isSignUp ? 'Create Account' : 'Sign in')
                     }
                   </Button>
-                  
-                  <div className="text-center">
-                    <Button 
-                      type="button"
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => setIsSignUp(!isSignUp)}
-                      className="text-sm hover:bg-transparent text-primary underline-offset-4 hover:underline"
-                      data-testid="toggle-signup-mode"
-                    >
-                      {isSignUp 
-                        ? 'Already have an account? Login here' 
-                        : 'Need an account? Create one here'
-                      }
-                    </Button>
-                  </div>
                 </form>
+                
+                <div className="pt-4 border-t">
+                  <p className="text-center text-sm text-muted-foreground mb-2">
+                    {isSignUp ? 'Already have an account?' : 'Need an account?'}
+                  </p>
+                  <Button 
+                    type="button"
+                    variant="outline" 
+                    size="default"
+                    onClick={() => setIsSignUp(!isSignUp)}
+                    className="w-full"
+                    data-testid="toggle-signup-mode"
+                  >
+                    {isSignUp 
+                      ? 'Sign in to Existing Account' 
+                      : 'Create New Account'
+                    }
+                  </Button>
+                </div>
                 
                 {error && (
                   <p className="text-sm text-destructive text-center mt-4" data-testid="auth-error">
