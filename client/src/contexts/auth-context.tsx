@@ -218,6 +218,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       // Reset the new login flag and clean up sessionStorage after handling navigation
       if (isNewLoginRef.current) {
+        console.log('[Auth] Resetting isNewLogin flag after profile fetch');
         setIsNewLogin(false);
         isNewLoginRef.current = false;
         // Clean up any remaining sessionStorage flags after successful processing
@@ -569,9 +570,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const wasNewLogin = sessionStorage.getItem('cortex_new_login') === 'true';
     const cohortCode = sessionStorage.getItem('cortex_cohort_code');
     
-    // Set processing flag BEFORE setting up auth listener to prevent race condition
+    // Set flags BEFORE setting up auth listener to prevent race condition
     if (wasNewLogin && cohortCode) {
+      // For cohort joins, block the auth listener entirely
       isProcessingRedirectCohortRef.current = true;
+    } else if (wasNewLogin) {
+      // For regular logins, set the new login flag so auth listener knows to navigate
+      console.log('[Auth] Setting isNewLoginRef to true before auth listener setup');
+      isNewLoginRef.current = true;
+      setIsNewLogin(true);
     }
 
     // Set up auth state listener FIRST
