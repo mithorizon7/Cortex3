@@ -14,7 +14,9 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   updateProfile,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  setPersistence,
+  browserLocalPersistence
 } from 'firebase/auth';
 
 // Firebase authDomain configuration for OAuth
@@ -66,7 +68,7 @@ const validateConfig = () => {
 let app: FirebaseApp;
 let auth: Auth;
 
-export const initializeFirebase = (): { app: FirebaseApp | null; auth: Auth | null } => {
+export const initializeFirebase = async (): Promise<{ app: FirebaseApp | null; auth: Auth | null }> => {
   try {
     if (!validateConfig()) {
       console.warn('Firebase not configured - authentication will be disabled');
@@ -81,6 +83,15 @@ export const initializeFirebase = (): { app: FirebaseApp | null; auth: Auth | nu
     }
     
     auth = getAuth(app);
+    
+    // Set persistence to LOCAL to ensure auth state survives redirects
+    try {
+      await setPersistence(auth, browserLocalPersistence);
+      console.log('Firebase persistence set to LOCAL for redirect support');
+    } catch (persistenceError) {
+      console.error('Failed to set Firebase persistence:', persistenceError);
+      // Continue anyway - browser should use local persistence by default
+    }
     
     return { app, auth };
   } catch (error) {
@@ -105,8 +116,18 @@ if (validateConfig()) {
   }
 }
 
+// Initialize Firebase - will be set after async init completes
+let firebaseAuth: Auth | null = null;
+
 // Initialize Firebase when module loads
-const { auth: firebaseAuth } = initializeFirebase();
+initializeFirebase().then(({ auth }) => {
+  firebaseAuth = auth;
+  if (auth) {
+    console.log('Firebase initialized successfully with persistence');
+  }
+}).catch((error) => {
+  console.error('Failed to initialize Firebase:', error);
+});
 
 // Check if Firebase is configured
 export const isFirebaseConfigured = (): boolean => {
