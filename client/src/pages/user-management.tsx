@@ -70,15 +70,30 @@ interface Cohort {
 
 export default function UserManagement() {
   const { toast } = useToast();
+  const { userProfile, loading: authLoading } = useAuth();
+  const [, navigate] = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [cohortFilter, setCohortFilter] = useState<string>('all');
   const [editingUser, setEditingUser] = useState<UserWithCohort | null>(null);
   const [deletingUser, setDeletingUser] = useState<UserWithCohort | null>(null);
 
+  // Redirect non-super-admins
+  useEffect(() => {
+    if (!authLoading && userProfile && userProfile.role !== 'super_admin') {
+      toast({
+        title: 'Access Denied',
+        description: 'You do not have permission to access this page.',
+        variant: 'destructive',
+      });
+      navigate('/');
+    }
+  }, [authLoading, userProfile, navigate, toast]);
+
   // Fetch all users (super admin only)
   const { data: users, isLoading: usersLoading } = useQuery<UserWithCohort[]>({
     queryKey: ['/api/users/admin/all-users'],
+    enabled: userProfile?.role === 'super_admin', // Only fetch if super admin
   });
 
   // Fetch cohorts for cohort selection
@@ -190,7 +205,7 @@ export default function UserManagement() {
   };
 
   return (
-    <ProtectedRoute allowedRoles={['super_admin']}>
+    <ProtectedRoute>
       <div className="min-h-screen bg-background">
         <AppHeader />
         
