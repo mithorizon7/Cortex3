@@ -172,12 +172,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           }
           return;
         }
+      } else if (response.status === 401 || response.status === 403) {
+        // Authorization/authentication errors - force sign out
+        console.warn(`Authorization failed with status ${response.status}`);
+        setError('Your session has expired or you do not have permission to access this account. Please sign in again.');
+        setUserProfile(null);
+        // Sign out to clear invalid session
+        if (signOutRef.current) {
+          await signOutRef.current();
+        }
+        return;
       } else {
         // Other error (server error, etc.)
         console.warn(`Profile fetch failed with status ${response.status}`);
         const errorText = await response.text().catch(() => '');
         if (response.status >= 500) {
           setError('Server error: Unable to load your profile. Please try refreshing the page.');
+        } else {
+          // Other client errors (400, etc.)
+          setError('Unable to load your profile. Please try signing in again or contact support if the problem persists.');
         }
         setUserProfile(null);
       }
