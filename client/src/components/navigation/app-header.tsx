@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'wouter';
 import { AuthButton } from '@/components/auth/auth-button';
 import { Button } from '@/components/ui/button';
-import { Brain, Home, BarChart3, HelpCircle, Users } from 'lucide-react';
+import { Brain, Home, BarChart3, HelpCircle, Users, LayoutDashboard } from 'lucide-react';
 import { useLatestAssessment } from '@/hooks/useLatestAssessment';
 import { useAuth } from '@/contexts/auth-context';
 import { Badge } from '@/components/ui/badge';
@@ -73,12 +73,20 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 </Button>
               </Link>
               {(userProfile?.role === 'admin' || userProfile?.role === 'super_admin') && (
-                <Link href="/user-management">
-                  <Button variant="ghost" size="sm" className="font-ui font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-user-management">
-                    <Users className="h-4 w-4 mr-2" />
-                    User Management
-                  </Button>
-                </Link>
+                <>
+                  <Link href="/admin-dashboard">
+                    <Button variant="ghost" size="sm" className="font-ui font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-admin-dashboard">
+                      <LayoutDashboard className="h-4 w-4 mr-2" />
+                      Admin Dashboard
+                    </Button>
+                  </Link>
+                  <Link href="/user-management">
+                    <Button variant="ghost" size="sm" className="font-ui font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-user-management">
+                      <Users className="h-4 w-4 mr-2" />
+                      User Management
+                    </Button>
+                  </Link>
+                </>
               )}
             </nav>
           )}
