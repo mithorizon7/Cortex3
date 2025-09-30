@@ -573,8 +573,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Set processing flag BEFORE setting up auth listener to prevent race condition
     // Block auth listener for ANY redirect completion (cohort or regular) to avoid duplicate processing
     if (wasNewLogin) {
-      console.log('[Auth] Blocking auth listener - will handle redirect result manually');
+      console.log('[Auth] Found new login flag - will check for redirect result');
       isProcessingRedirectCohortRef.current = true;
+      
+      // Safety timeout: unblock after 5 seconds if redirect handler doesn't complete
+      setTimeout(() => {
+        if (isProcessingRedirectCohortRef.current) {
+          console.warn('[Auth] Timeout: unblocking auth listener after 5 seconds');
+          isProcessingRedirectCohortRef.current = false;
+        }
+      }, 5000);
     }
 
     // Set up auth state listener FIRST
@@ -612,6 +620,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Handle redirect result AFTER auth listener is set up
     handleRedirectResult()
       .then(async (result) => {
+        console.log('[Auth] Redirect result:', result ? `User: ${result.user.email}` : 'No redirect result');
+        
+        // If we blocked the auth listener but there's no redirect result, unblock it
+        if (!result && wasNewLogin) {
+          console.log('[Auth] No redirect result but wasNewLogin flag set - unblocking auth listener');
+          isProcessingRedirectCohortRef.current = false;
+          sessionStorage.removeItem('cortex_new_login');
+          sessionStorage.removeItem('cortex_cohort_code');
+          // Force a refresh of the current auth state
+          if (auth) {
+            const currentUser = auth.currentUser;
+            if (currentUser) {
+              console.log('[Auth] Current user exists, fetching profile');
+              setUser(currentUser);
+              await fetchUserProfile(currentUser);
+            }
+          }
+          setLoading(false);
+          return;
+        }
+        
         if (result && wasNewLogin && cohortCode) {
           // This is a Google cohort signup redirect completion
           setUser(result.user);
