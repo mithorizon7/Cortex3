@@ -101,16 +101,6 @@ export function securityMiddleware(req: Request, res: Response, next: NextFuncti
     // Get Firebase project ID from environment
     const firebaseProjectId = process.env.FIREBASE_PROJECT_ID || process.env.VITE_FIREBASE_PROJECT_ID || 'cortex3-790ee';
     
-    // Include all production domains that might host OAuth redirects
-    const authorizedFrameSources = [
-      "'self'",
-      `https://${firebaseProjectId}.firebaseapp.com`,
-      'https://accounts.google.com',
-      'https://cortexindex.com',
-      'https://www.cortexindex.com',
-      'https://horizoncortex.replit.app'
-    ];
-    
     // Secure Firebase-compatible CSP for production with violation reporting
     const csp = [
       "default-src 'self'",
@@ -121,7 +111,7 @@ export function securityMiddleware(req: Request, res: Response, next: NextFuncti
       "font-src 'self' https://fonts.gstatic.com",
       "object-src 'none'",
       "media-src 'self'",
-      `frame-src ${authorizedFrameSources.join(' ')}`,
+      `frame-src 'self' https://${firebaseProjectId}.firebaseapp.com https://accounts.google.com`,
       "report-uri /api/csp-violation-report"
     ].join('; ');
     

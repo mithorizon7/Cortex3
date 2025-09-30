@@ -505,15 +505,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       setUser(user);
       
-      if (user) {
-        // Fetch user profile from our database
-        await fetchUserProfile(user);
-      } else {
-        // Clear user profile when logged out
-        setUserProfile(null);
+      try {
+        if (user) {
+          // Fetch user profile from our database
+          await fetchUserProfile(user);
+        } else {
+          // Clear user profile when logged out
+          setUserProfile(null);
+        }
+      } catch (error) {
+        console.error('Error in auth state change handler:', error);
+        // Don't throw - just log the error and continue
+      } finally {
+        // Always set loading to false, even if profile fetch fails
+        setLoading(false);
       }
-      
-      setLoading(false);
     });
 
     // Handle redirect result AFTER auth listener is set up
@@ -550,6 +556,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             // Manually trigger profile fetch since auth listener was blocked
             await fetchUserProfile(result.user);
             
+            // Ensure loading is set to false after successful processing
+            setLoading(false);
+            
           } catch (error) {
             console.error('Failed to complete cohort join after redirect:', error);
             
@@ -567,6 +576,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             
             // Reset processing state on error
             isProcessingRedirectCohortRef.current = false;
+            
+            // Ensure loading is set to false even on error
+            setLoading(false);
           } finally {
             // Always clean up sessionStorage after processing completes (success or failure)
             sessionStorage.removeItem('cortex_new_login');

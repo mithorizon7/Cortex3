@@ -31,7 +31,7 @@ The application implements a comprehensive Content Security Policy to protect ag
 
 ##### Current CSP Directives (Production Only)
 
-The exact CSP configuration from `server/middleware/security.ts` (dynamically generated):
+The exact CSP configuration from `server/middleware/security.ts`:
 
 ```
 default-src 'self';
@@ -42,7 +42,7 @@ connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.go
 font-src 'self' https://fonts.gstatic.com;
 object-src 'none';
 media-src 'self';
-frame-src 'self' https://cortex3-790ee.firebaseapp.com https://accounts.google.com https://cortexindex.com https://www.cortexindex.com https://horizoncortex.replit.app;
+frame-src 'self' https://cortex3-790ee.firebaseapp.com https://accounts.google.com;
 report-uri /api/csp-violation-report
 ```
 
@@ -99,17 +99,16 @@ app.post('/api/csp-violation-report', express.json({ type: 'application/csp-repo
 - `https://securetoken.googleapis.com`: Token refresh and validation
 - `https://firebaseinstallations.googleapis.com`: Firebase app installations
 - `https://firebase.googleapis.com`: Firebase general API
-- `https://cortex3-790ee.firebaseapp.com`: Project-specific Firebase domain
+- `https://cortex3-790ee.firebaseapp.com`: Project-specific Firebase domain (hosts OAuth handler)
 - `https://accounts.google.com`: Google OAuth flows
-- `https://cortexindex.com`: Production domain for same-origin OAuth
-- `https://horizoncortex.replit.app`: Replit production domain for same-origin OAuth
+
+**Important**: Production domains (cortexindex.com, horizoncortex.replit.app) must be added to Firebase Console → Authentication → Settings → Authorized domains for OAuth redirects to work correctly.
 
 **OAuth Flow Configuration**:
-The application uses dynamic authDomain selection to prevent cross-origin issues:
-- When accessed from authorized production domains (cortexindex.com, horizoncortex.replit.app), OAuth uses the same domain for authentication
-- This maintains same-origin flow and prevents third-party cookie restrictions
-- In development, uses Firebase default domain for compatibility
-- Production always uses redirect flow instead of popup to avoid browser popup blockers
+- **authDomain**: Always uses `${projectId}.firebaseapp.com` because Firebase's auth handler endpoints (`/__/auth/handler`) only exist on this domain
+- **Production Redirect Flow**: Production automatically uses `signInWithRedirect` instead of `signInWithPopup` to avoid browser popup blockers
+- **Development Popup Flow**: Development uses popup for better UX, with automatic fallback to redirect if popup is blocked
+- **Cross-Origin Handling**: The redirect flow naturally handles cross-origin OAuth without third-party cookie restrictions
 
 ##### Adding New External Services
 
