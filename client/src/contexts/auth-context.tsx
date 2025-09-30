@@ -67,7 +67,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isNewLogin, setIsNewLogin] = useState(false);
+  const isNewLoginRef = useRef(false); // Ref to track new login without dependency issues
   const isProcessingRedirectCohortRef = useRef(false);
+  const signOutRef = useRef<(() => Promise<void>) | null>(null); // Ref to signOut function for use before definition
   const [, setLocation] = useLocation();
 
   // Helper function to handle post-login navigation
@@ -93,9 +95,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Helper function to fetch user profile from our database
   const fetchUserProfile = useCallback(async (firebaseUser: User) => {
     try {
+      const idToken = await firebaseUser.getIdToken();
       const response = await fetch('/api/users/profile', {
         headers: {
-          'Authorization': `Bearer ${await firebaseUser.getIdToken()}`
+          'Authorization': `Bearer ${idToken}`
         }
       });
       
@@ -103,7 +106,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const profile = await response.json();
         setUserProfile(profile);
         // Handle post-login navigation after profile is loaded (only for new logins)
-        handlePostLoginNavigation(profile, isNewLogin);
+        handlePostLoginNavigation(profile, isNewLoginRef.current);
       } else if (response.status === 404) {
         // User profile not found in database - create one automatically
         console.log('User profile not found in database - creating new user record');
@@ -114,7 +117,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setError('Unable to create account: email address is required. Please sign in with a provider that includes your email address.');
           setUserProfile(null);
           // Sign out to prevent access to protected routes without valid profile
-          await signOut();
+          if (signOutRef.current) {
+            await signOutRef.current();
+          }
           return;
         }
         
@@ -123,7 +128,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${await firebaseUser.getIdToken()}`
+              'Authorization': `Bearer ${idToken}`
             },
             body: JSON.stringify({
               userId: firebaseUser.uid,
@@ -137,46 +142,72 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             console.log('Successfully created user profile:', newProfile);
             setUserProfile(newProfile);
             // Handle post-login navigation after profile is created
-            handlePostLoginNavigation(newProfile, isNewLogin);
+            handlePostLoginNavigation(newProfile, isNewLoginRef.current);
           } else {
-            console.warn(`Failed to create user profile: ${createResponse.status}`);
+            const errorText = await createResponse.text().catch(() => 'Unknown error');
+            console.warn(`Failed to create user profile: ${createResponse.status} - ${errorText}`);
             setError('Unable to create account. Please try signing in again or contact support if the problem persists.');
             setUserProfile(null);
             // Sign out to prevent access to protected routes without valid profile
-            await signOut();
+            if (signOutRef.current) {
+              await signOutRef.current();
+            }
             return;
           }
         } catch (createError) {
           console.error('Error creating user profile:', createError);
-          setError('Network error while creating account. Please check your connection and try again.');
+          // Check if it's a network error
+          const isNetworkError = createError instanceof TypeError && 
+            (createError.message.includes('fetch') || createError.message.includes('network'));
+          
+          if (isNetworkError) {
+            setError('Network error: Unable to connect to the server. Please check your internet connection and try again.');
+          } else {
+            setError('Unable to create account due to a technical error. Please try again or contact support.');
+          }
           setUserProfile(null);
           // Sign out to prevent access to protected routes without valid profile  
-          await signOut();
+          if (signOutRef.current) {
+            await signOutRef.current();
+          }
           return;
         }
       } else {
         // Other error (server error, etc.)
         console.warn(`Profile fetch failed with status ${response.status}`);
+        const errorText = await response.text().catch(() => '');
+        if (response.status >= 500) {
+          setError('Server error: Unable to load your profile. Please try refreshing the page.');
+        }
         setUserProfile(null);
       }
       
       // Reset the new login flag and clean up sessionStorage after handling navigation
-      if (isNewLogin) {
+      if (isNewLoginRef.current) {
         setIsNewLogin(false);
+        isNewLoginRef.current = false;
         // Clean up any remaining sessionStorage flags after successful processing
         sessionStorage.removeItem('cortex_new_login');
         sessionStorage.removeItem('cortex_cohort_code');
       }
     } catch (error) {
       console.error('Failed to fetch user profile:', error);
+      // Check if it's a network error
+      const isNetworkError = error instanceof TypeError && 
+        (error.message.includes('fetch') || error.message.includes('network'));
+      
+      if (isNetworkError) {
+        setError('Network error: Unable to connect to the server. Please check your internet connection and try again.');
+      }
       setUserProfile(null);
       // Reset the new login flag even on error
-      if (isNewLogin) {
+      if (isNewLoginRef.current) {
         setIsNewLogin(false);
+        isNewLoginRef.current = false;
       }
       // Don't throw errors for profile fetch issues - just log them
     }
-  }, [handlePostLoginNavigation, isNewLogin]);
+  }, [handlePostLoginNavigation]);
 
   const clearError = useCallback(() => {
     setError(null);
@@ -193,6 +224,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setLoading(true);
       setError(null);
       setIsNewLogin(true); // Mark as new login for navigation
+      isNewLoginRef.current = true; // Sync ref with state
       
       // Always persist the new login flag for redirect flows
       sessionStorage.setItem('cortex_new_login', 'true');
@@ -210,6 +242,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       // For actual errors, reset state and show error
       setIsNewLogin(false);
+      isNewLoginRef.current = false; // Sync ref with state
       setError(getAuthErrorMessage(error));
       setLoading(false);
       throw error; // Re-throw so UI components can handle the error
@@ -227,11 +260,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setLoading(true);
       setError(null);
       setIsNewLogin(true); // Mark as new login for navigation
+      isNewLoginRef.current = true; // Sync ref with state
       await firebaseSignInWithEmail(email, password);
       // Don't set loading to false here - let the auth state listener handle it
     } catch (error: any) {
       console.error('Email sign-in error:', error);
       setIsNewLogin(false); // Reset flag on error
+      isNewLoginRef.current = false; // Sync ref with state
       setError(getAuthErrorMessage(error));
       setLoading(false); // Only set loading to false on error
       throw error; // Re-throw so UI components can handle the error
@@ -249,11 +284,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setLoading(true);
       setError(null);
       setIsNewLogin(true); // Mark as new login for navigation
+      isNewLoginRef.current = true; // Sync ref with state
       await firebaseSignUpWithEmail(email, password, displayName);
       // Don't set loading to false here - let the auth state listener handle it
     } catch (error: any) {
       console.error('Email sign-up error:', error);
       setIsNewLogin(false); // Reset flag on error
+      isNewLoginRef.current = false; // Sync ref with state
       setError(getAuthErrorMessage(error));
       setLoading(false); // Only set loading to false on error
       throw error; // Re-throw so UI components can handle the error
@@ -271,6 +308,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setLoading(true);
       setError(null);
       setIsNewLogin(true); // Mark as new login for navigation
+      isNewLoginRef.current = true; // Sync ref with state
       
       // Clear any previous errors and prepare for signup
       
@@ -334,6 +372,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error: any) {
       console.error('Cohort sign-up error:', error);
       setIsNewLogin(false); // Reset flag on error
+      isNewLoginRef.current = false; // Sync ref with state
       setError(getAuthErrorMessage(error));
       setLoading(false); // Only set loading to false on error
       
@@ -354,6 +393,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setLoading(true);
       setError(null);
       setIsNewLogin(true); // Mark as new login for navigation
+      isNewLoginRef.current = true; // Sync ref with state
       
       // First, validate the cohort access code before proceeding
       const validateResponse = await fetch('/api/cohorts/validate-access-code', {
@@ -434,6 +474,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error: any) {
       console.error('Google cohort sign-up error:', error);
       setIsNewLogin(false); // Reset flag on error
+      isNewLoginRef.current = false; // Sync ref with state
       sessionStorage.removeItem('cortex_cohort_code'); // Clean up
       setError(getAuthErrorMessage(error));
       setLoading(false); // Only set loading to false on error
@@ -478,6 +519,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setLoading(false);
     }
   }, []);
+
+  // Populate the signOut ref so it can be used in fetchUserProfile
+  signOutRef.current = signOut;
 
   useEffect(() => {
     // If Firebase is not configured, just set loading to false
@@ -529,6 +573,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           // This is a Google cohort signup redirect completion
           setUser(result.user);
           setIsNewLogin(true);
+          isNewLoginRef.current = true; // Sync ref with state
           
           try {
             // Complete the cohort join process that was interrupted by redirect
@@ -572,6 +617,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             
             setError(getAuthErrorMessage(error as any));
             setIsNewLogin(false);
+            isNewLoginRef.current = false; // Sync ref with state
             setUser(null);
             
             // Reset processing state on error
@@ -588,6 +634,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           // Regular Google signin redirect completion
           setUser(result.user);
           setIsNewLogin(true);
+          isNewLoginRef.current = true; // Sync ref with state
           sessionStorage.removeItem('cortex_new_login');
         } else if (result) {
           // Regular redirect result without new login flag
@@ -601,6 +648,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Clean up sessionStorage on error
         if (wasNewLogin) {
           setIsNewLogin(false);
+          isNewLoginRef.current = false; // Sync ref with state
           sessionStorage.removeItem('cortex_new_login');
         }
         if (cohortCode) {
