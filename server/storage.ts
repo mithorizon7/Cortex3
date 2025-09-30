@@ -65,8 +65,10 @@ export interface IStorage {
   
   // User operations
   getUser(userId: string): Promise<User | null>;
+  getAllUsers(): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(userId: string, updates: Partial<InsertUser>): Promise<User | null>;
+  deleteUser(userId: string): Promise<boolean>;
   getSuperAdminCount(): Promise<number>;
   
   // Cohort operations
@@ -325,6 +327,23 @@ export class DatabaseStorage implements IStorage {
     );
   }
 
+  async getAllUsers(): Promise<User[]> {
+    return withDatabaseErrorHandling(
+      'getAllUsers',
+      async () => {
+        const db = await getDb();
+        const allUsers = await db.select().from(users).orderBy(users.createdAt);
+        
+        logger.debug('All users retrieved successfully', {
+          additionalContext: { userCount: allUsers.length }
+        });
+        
+        return allUsers;
+      },
+      { functionArgs: {} }
+    );
+  }
+
   async createUser(insertUser: InsertUser): Promise<User> {
     return withDatabaseErrorHandling(
       'createUser',
@@ -376,6 +395,34 @@ export class DatabaseStorage implements IStorage {
         }
       },
       { functionArgs: { userId, updates } }
+    );
+  }
+
+  async deleteUser(userId: string): Promise<boolean> {
+    return withDatabaseErrorHandling(
+      'deleteUser',
+      async () => {
+        const db = await getDb();
+        
+        // First, delete all assessments for this user
+        await db.delete(assessments).where(eq(assessments.userId, userId));
+        
+        // Then delete the user
+        const result = await db.delete(users).where(eq(users.userId, userId)).returning();
+        
+        if (result.length > 0) {
+          logger.info('User and their assessments deleted successfully', {
+            additionalContext: { userId }
+          });
+          return true;
+        } else {
+          logger.warn('Cannot delete user - not found', {
+            additionalContext: { userId }
+          });
+          return false;
+        }
+      },
+      { functionArgs: { userId } }
     );
   }
 
@@ -1262,6 +1309,22 @@ export class MemStorage implements IStorage {
     );
   }
 
+  async getAllUsers(): Promise<User[]> {
+    return withErrorHandling(
+      'getAllUsers',
+      async () => {
+        const allUsers = Array.from(this.users.values());
+        
+        logger.debug('All users retrieved successfully', {
+          additionalContext: { userCount: allUsers.length }
+        });
+        
+        return allUsers;
+      },
+      { functionArgs: {} }
+    );
+  }
+
   async createUser(insertUser: InsertUser): Promise<User> {
     return withErrorHandling(
       'createUser',
@@ -1316,6 +1379,35 @@ export class MemStorage implements IStorage {
         return updated;
       },
       { functionArgs: { userId, updates } }
+    );
+  }
+
+  async deleteUser(userId: string): Promise<boolean> {
+    return withErrorHandling(
+      'deleteUser',
+      async () => {
+        // First, delete all assessments for this user
+        const userAssessments = Array.from(this.assessments.values()).filter(a => a.userId === userId);
+        for (const assessment of userAssessments) {
+          this.assessments.delete(assessment.id);
+        }
+        
+        // Then delete the user
+        const deleted = this.users.delete(userId);
+        
+        if (deleted) {
+          logger.info('User and their assessments deleted successfully', {
+            additionalContext: { userId, assessmentCount: userAssessments.length }
+          });
+          return true;
+        } else {
+          logger.warn('Cannot delete user - not found', {
+            additionalContext: { userId }
+          });
+          return false;
+        }
+      },
+      { functionArgs: { userId } }
     );
   }
 
