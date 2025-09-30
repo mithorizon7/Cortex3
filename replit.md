@@ -6,6 +6,19 @@ CORTEX is a web-based executive AI readiness assessment platform designed to hel
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+
+### September 30, 2025 - Google OAuth Redirect Fix
+**Issue**: Users experienced an eternal "Checking authentication" spinner after completing Google OAuth sign-in via redirect. The loading indicator in the header would show "Loading..." indefinitely, preventing users from accessing the application.
+
+**Root Cause**: After Google OAuth redirect completed and users returned to the site, the authentication context (`client/src/contexts/auth-context.tsx`) was not calling `fetchUserProfile()` or setting `loading` to false for regular redirect completions. This caused the auth flow to never complete.
+
+**Solution**: Added explicit `fetchUserProfile()` calls and loading state management in both redirect completion paths:
+1. Regular Google sign-in redirects (with `wasNewLogin` flag)
+2. Generic redirect results without cohort join
+
+**Impact**: Google OAuth now works correctly in production, with proper profile loading and navigation after redirect completion. Users can successfully sign in using Google and access the application.
+
 ## System Architecture
 
 ### Frontend Architecture
