@@ -65,6 +65,16 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
     } catch (error: any) {
       console.error('Google sign-in error:', error);
       
+      // Handle redirect flow - don't show error for expected redirect
+      if (error.message === 'REDIRECT_FLOW_INITIATED') {
+        toast({
+          title: 'Redirecting to Google',
+          description: 'Please complete sign-in with Google. You will be redirected back automatically.',
+        });
+        // Don't close modal or show error for redirect flow
+        return;
+      }
+      
       // If it's a new user trying to sign in without a cohort code, show specific error
       if (!isSignUp && error.message && error.message.includes('cohort')) {
         toast({
@@ -76,9 +86,14 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
         return;
       }
       
+      // Get user-friendly error message - never show raw Firebase errors
+      const errorMessage = error.code ? 
+        (error.code.includes('auth/') ? 'Sign-in failed. Please try again or contact support if the problem persists.' : error.message) :
+        (error.message || 'There was a problem signing you in with Google. Please try again.');
+      
       toast({
         title: isSignUp ? 'Sign Up Failed' : 'Sign In Failed',
-        description: error.message || 'There was a problem signing you in with Google. Please try again.',
+        description: errorMessage,
         variant: 'destructive',
       });
     }
@@ -122,22 +137,43 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
       setPassword('');
       setDisplayName('');
       setCohortAccessCode('');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Email authentication error:', error);
       
-      if (isSignUp) {
-        toast({
-          title: 'Sign Up Failed',
-          description: 'Unable to create your account. Please check your information and try again.',
-          variant: 'destructive',
-        });
+      // Get user-friendly error message - never show raw Firebase errors
+      let errorMessage = '';
+      if (error.code && error.code.includes('auth/')) {
+        // Firebase errors - provide user-friendly messages
+        if (error.code === 'auth/email-already-in-use') {
+          errorMessage = 'An account with this email already exists. Please sign in instead.';
+        } else if (error.code === 'auth/weak-password') {
+          errorMessage = 'Password should be at least 6 characters long.';
+        } else if (error.code === 'auth/invalid-email') {
+          errorMessage = 'Please enter a valid email address.';
+        } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+          errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+        } else if (error.code === 'auth/invalid-credential') {
+          errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+        } else {
+          errorMessage = isSignUp ? 
+            'Unable to create your account. Please check your information and try again.' :
+            'Sign-in failed. Please check your credentials and try again.';
+        }
+      } else if (error.message && !error.message.includes('auth/')) {
+        // Non-Firebase error with a message
+        errorMessage = error.message;
       } else {
-        toast({
-          title: 'Sign In Failed',
-          description: 'Invalid email or password. Please check your credentials and try again.',
-          variant: 'destructive',
-        });
+        // Fallback message
+        errorMessage = isSignUp ? 
+          'Unable to create your account. Please check your information and try again.' :
+          'Invalid email or password. Please check your credentials and try again.';
       }
+      
+      toast({
+        title: isSignUp ? 'Sign Up Failed' : 'Sign In Failed',
+        description: errorMessage,
+        variant: 'destructive',
+      });
     } finally {
       setEmailLoading(false);
     }

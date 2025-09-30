@@ -1,0 +1,20 @@
+Deep Diagnosis of Firebase Auth Sign‑Up Failure
+Issue: New User Sign-Up Fails in Production
+When users attempt to create new accounts (via email/password or Google Sign-In) on the production site (cortexindex.com / horizoncortex.replit.app), the sign-up process fails almost immediately. This problem does not occur (or is less prevalent) in the development environment. After investigating the codebase and configuration, several root causes were identified that explain why new user creation “almost never worked” in production:
+Cause 1: OAuth Domain Mismatch (Firebase Auth Domain Configuration)
+The front-end is hard-coding the Firebase OAuth redirect domain to the default *.firebaseapp.com instead of using the app’s actual host. In the code, the getAuthDomain() function always returns ${projectId}.firebaseapp.com, regardless of the current site domain
+GitHub
+GitHub
+. This means Google’s OAuth flow will redirect through cortex3-790ee.firebaseapp.com (the Firebase default domain) rather than the actual domain the user is on (e.g. horizoncortex.replit.app or cortexindex.com).
+Because the site is served on a custom domain, this mismatch triggers cross-site behavior. Many browsers (especially Safari or those with strict cookie policies) treat the Firebase popup/redirect as a third-party context, causing token transfer failures (often surfacing as a Firebase "auth/network-request-failed" error). In short, the OAuth handshake can’t complete properly because it’s not returning to the same origin where it started. The app’s own diagnostic log confirms it expected the auth domain and redirect URI to match the current domain
+GitHub
+, but the actual config always forces the firebaseapp.com domain, leading to the inconsistency.
+Cause 2: Content Security Policy Restrictions
+In production, a strict Content Security Policy (CSP) is in place which limits allowed domains for certain resources. Notably, the CSP frame-src is locked to the Firebase project’s default domain and Google’s accounts domain
+GitHub
+. If the OAuth flow or Firebase auth widget tries to use any domain not in this whitelist, the browser will block it. Originally, the CSP was effectively hard-coded to a specific Firebase project ID (cortex3-790ee)
+GitHub
+GitHub
+. This is fine for that one project, but if the app was ever pointed to a different Firebase project (e.g. a testing/staging project) or if a custom domain needed to host the auth handler, the CSP would prevent the popup/redirect from loading
+GitHub
+. In summary, the CSP wasn’t dynamic or inclusive of all necessary domains, which could contribute to auth popups being blocked in production.

@@ -119,18 +119,33 @@ export const signInWithGoogle = async (usePopup = true): Promise<UserCredential>
   }
   
   try {
-    // Always use popup for better cross-browser compatibility
-    // Safari 16.1+ blocks redirects due to third-party cookie restrictions
-    if (usePopup) {
-      return await signInWithPopup(firebaseAuth, googleProvider);
-    } else {
+    // In production, always use redirect to avoid popup blockers
+    // In development, try popup first for better UX
+    const shouldUseRedirect = import.meta.env.PROD || !usePopup;
+    
+    if (shouldUseRedirect) {
+      // Use redirect flow in production to avoid popup blockers
       await signInWithRedirect(firebaseAuth, googleProvider);
       // For redirect, we need to handle the result elsewhere
-      throw new Error('Redirect initiated - result will be available after redirect');
+      throw new Error('REDIRECT_FLOW_INITIATED');
+    } else {
+      // Try popup in development
+      try {
+        return await signInWithPopup(firebaseAuth, googleProvider);
+      } catch (popupError: any) {
+        // If popup is blocked or closed, fall back to redirect
+        if (popupError.code === 'auth/popup-blocked' || 
+            popupError.code === 'auth/popup-closed-by-user' ||
+            popupError.code === 'auth/cancelled-popup-request') {
+          console.log('Popup blocked or closed, falling back to redirect flow');
+          await signInWithRedirect(firebaseAuth, googleProvider);
+          throw new Error('REDIRECT_FLOW_INITIATED');
+        }
+        // For other popup errors, re-throw them
+        throw popupError;
+      }
     }
   } catch (error) {
-    console.error('Google sign-in failed:', error);
-    
     // Enhanced error logging for production debugging
     if (import.meta.env.PROD) {
       console.error('Production OAuth Error Details:', {

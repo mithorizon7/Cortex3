@@ -194,22 +194,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setError(null);
       setIsNewLogin(true); // Mark as new login for navigation
       
-      // For redirect flows, persist the new login flag across page reload
-      if (!usePopup) {
-        sessionStorage.setItem('cortex_new_login', 'true');
-      }
+      // Always persist the new login flag for redirect flows
+      sessionStorage.setItem('cortex_new_login', 'true');
       
       await signInWithGoogle(usePopup);
       // Don't set loading to false here - let the auth state listener handle it
     } catch (error: any) {
       console.error('Sign-in error:', error);
-      if (error.message !== 'Redirect initiated - result will be available after redirect') {
-        setIsNewLogin(false); // Only reset flag on actual errors, not redirect flow
-        setError(getAuthErrorMessage(error));
-        setLoading(false); // Only set loading to false on error
-        throw error; // Re-throw so UI components can handle the error
+      // Check if this is a redirect flow initiation
+      if (error.message === 'REDIRECT_FLOW_INITIATED') {
+        // This is expected for redirect flows - don't show error
+        // Keep loading state and isNewLogin flag for when user returns
+        return;
       }
-      // For redirect flow, keep isNewLogin=true so navigation works after redirect
+      
+      // For actual errors, reset state and show error
+      setIsNewLogin(false);
+      setError(getAuthErrorMessage(error));
+      setLoading(false);
+      throw error; // Re-throw so UI components can handle the error
     }
   }, []);
 
@@ -352,34 +355,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setError(null);
       setIsNewLogin(true); // Mark as new login for navigation
       
-      // For redirect flows, we need to restructure the flow completely
-      if (!usePopup) {
-        // First, validate the cohort access code before redirect
-        const validateResponse = await fetch('/api/cohorts/validate-access-code', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ accessCode: cohortAccessCode }),
-        });
-        
-        const validationResult = await validateResponse.json();
-        
-        if (!validateResponse.ok || !validationResult.valid) {
-          throw new Error(validationResult.error || 'Invalid cohort access code');
-        }
-        
-        // Persist both the new login flag and cohort code for post-redirect processing
-        sessionStorage.setItem('cortex_new_login', 'true');
-        sessionStorage.setItem('cortex_cohort_code', cohortAccessCode);
-        
-        // Initiate redirect flow - cohort join will happen after redirect completes
-        await signInWithGoogle(usePopup);
-        return; // Function ends here for redirect flow
-      }
-      
-      // Popup flow continues with immediate processing
-      // First, validate the cohort access code
+      // First, validate the cohort access code before proceeding
       const validateResponse = await fetch('/api/cohorts/validate-access-code', {
         method: 'POST',
         headers: {
@@ -394,61 +370,73 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw new Error(validationResult.error || 'Invalid cohort access code');
       }
       
-      // Create Firebase user account with Google OAuth
-      const userCredential = await signInWithGoogle(usePopup);
-      const firebaseUser = userCredential.user;
-      // Use Firebase's official API to determine if this is a new user account
-      const additionalUserInfo = getAdditionalUserInfo(userCredential);
-      const isNewUser = additionalUserInfo?.isNewUser ?? false;
+      // Persist both the new login flag and cohort code for post-redirect/auth processing
+      sessionStorage.setItem('cortex_new_login', 'true');
+      sessionStorage.setItem('cortex_cohort_code', cohortAccessCode);
       
+      // Initiate Google sign-in (will use redirect in production)
       try {
-        // Get Firebase ID token for authentication with our API
-        const idToken = await firebaseUser.getIdToken();
+        const userCredential = await signInWithGoogle(usePopup);
+        const firebaseUser = userCredential.user;
+        // Use Firebase's official API to determine if this is a new user account
+        const additionalUserInfo = getAdditionalUserInfo(userCredential);
+        const isNewUser = additionalUserInfo?.isNewUser ?? false;
         
-        // Join the cohort using the validated access code
-        const joinResponse = await fetch('/api/cohorts/join', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${idToken}`,
-          },
-          body: JSON.stringify({ code: cohortAccessCode }),
-        });
-        
-        if (!joinResponse.ok) {
-          const joinError = await joinResponse.json();
-          throw new Error(joinError.error || 'Failed to join cohort');
-        }
-        
-        // Signup completed successfully
-      } catch (joinError) {
-        // Only delete the Firebase account if it's a newly created account
-        // Do NOT delete existing accounts that just failed to join a cohort
-        if (isNewUser) {
-          try {
-            await firebaseUser.delete();
-            console.log('Deleted newly created Firebase account after failed cohort join');
-          } catch (deleteError) {
-            console.error('Failed to delete Firebase account after cohort join failure:', deleteError);
-            // Note: We still throw the original join error, not the delete error
+        try {
+          // Get Firebase ID token for authentication with our API
+          const idToken = await firebaseUser.getIdToken();
+          
+          // Join the cohort using the validated access code
+          const joinResponse = await fetch('/api/cohorts/join', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${idToken}`,
+            },
+            body: JSON.stringify({ code: cohortAccessCode }),
+          });
+          
+          if (!joinResponse.ok) {
+            const joinError = await joinResponse.json();
+            throw new Error(joinError.error || 'Failed to join cohort');
           }
-        } else {
-          console.log('Cohort join failed for existing account - not deleting Firebase account');
+          
+          // Signup completed successfully - clean up session storage
+          sessionStorage.removeItem('cortex_cohort_code');
+        } catch (joinError) {
+          // Only delete the Firebase account if it's a newly created account
+          // Do NOT delete existing accounts that just failed to join a cohort
+          if (isNewUser) {
+            try {
+              await firebaseUser.delete();
+              console.log('Deleted newly created Firebase account after failed cohort join');
+            } catch (deleteError) {
+              console.error('Failed to delete Firebase account after cohort join failure:', deleteError);
+            }
+          } else {
+            console.log('Cohort join failed for existing account - not deleting Firebase account');
+          }
+          
+          // Re-throw the original cohort join error
+          throw joinError;
         }
-        
-        // Re-throw the original cohort join error
-        throw joinError;
+      } catch (signInError: any) {
+        // Check if this is a redirect flow initiation
+        if (signInError.message === 'REDIRECT_FLOW_INITIATED') {
+          // This is expected for redirect flows - don't show error
+          // Cohort join will happen after redirect completes via the auth state listener
+          return;
+        }
+        throw signInError;
       }
       
       // Don't set loading to false here - let the auth state listener handle it
     } catch (error: any) {
       console.error('Google cohort sign-up error:', error);
       setIsNewLogin(false); // Reset flag on error
+      sessionStorage.removeItem('cortex_cohort_code'); // Clean up
       setError(getAuthErrorMessage(error));
       setLoading(false); // Only set loading to false on error
-      
-      // Signup failed, error already set
-      
       throw error; // Re-throw so UI components can handle the error
     }
   }, []);
