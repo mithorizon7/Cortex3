@@ -19,19 +19,42 @@ import {
 
 // Firebase authDomain configuration for OAuth
 const getAuthDomain = (): string => {
-  // Always use the default Firebase domain for OAuth callbacks
-  // This ensures Google OAuth works regardless of the custom domain being used
-  // Custom domains can be used for the app, but OAuth must go through Firebase's domain
-  const firebaseAuthDomain = `${import.meta.env.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`;
+  const currentHost = window.location.hostname;
+  const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID;
+  
+  // List of authorized domains for Firebase OAuth
+  // These must be added to Firebase Console -> Authentication -> Settings -> Authorized domains
+  const authorizedDomains = [
+    'cortexindex.com',
+    'www.cortexindex.com',
+    'horizoncortex.replit.app',
+    `${projectId}.firebaseapp.com`, // Firebase default domain as fallback
+    'localhost'
+  ];
+  
+  // Use the current domain if it's in the authorized list
+  // This prevents cross-origin issues during OAuth flow
+  let authDomain: string;
+  if (authorizedDomains.some(domain => currentHost === domain || currentHost.endsWith(`.${domain}`))) {
+    // Use the current domain for OAuth to maintain same-origin flow
+    authDomain = currentHost;
+  } else if (currentHost.includes('replit.dev') || currentHost.includes('repl.co')) {
+    // For Replit development environments, use the Firebase default domain
+    authDomain = `${projectId}.firebaseapp.com`;
+  } else {
+    // Fallback to Firebase default domain for unknown domains
+    authDomain = `${projectId}.firebaseapp.com`;
+  }
   
   // Log the configuration for debugging
   console.log('Firebase Auth Configuration:', {
-    currentDomain: window.location.hostname,
-    authDomain: firebaseAuthDomain,
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID
+    currentDomain: currentHost,
+    authDomain: authDomain,
+    projectId: projectId,
+    isSameOrigin: authDomain === currentHost
   });
   
-  return firebaseAuthDomain;
+  return authDomain;
 };
 
 // Firebase configuration with environment variables
