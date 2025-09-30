@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { generateIncidentId, createUserError } from '../utils/incident';
 import { USER_ERROR_MESSAGES, HTTP_STATUS } from '../constants';
 import { logger } from '../logger';
-import { requireAuthMiddleware } from '../middleware/security';
+import { requireAuthMiddleware, requireSuperAdminMiddleware } from '../middleware/security';
 import { withDatabaseErrorHandling } from '../utils/database-errors';
 import { storage } from '../storage';
 
@@ -200,6 +200,337 @@ router.post('/', requireAuthMiddleware, async (req: Request, res: Response) => {
         additionalContext: {
           operation: 'create_user_error',
           userId: req.userId,
+          incidentId
+        }
+      }
+    );
+
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(createUserError(USER_ERROR_MESSAGES.SERVER_ERROR, incidentId, HTTP_STATUS.INTERNAL_SERVER_ERROR));
+  }
+});
+
+/**
+ * Get all users (Super Admin only)
+ */
+router.get('/admin/all-users', requireSuperAdminMiddleware, async (req: Request, res: Response) => {
+  const incidentId = generateIncidentId();
+
+  try {
+    logger.info('Fetching all users', {
+      additionalContext: {
+        operation: 'get_all_users',
+        incidentId,
+        requestedBy: req.userId
+      }
+    });
+
+    const users = await withDatabaseErrorHandling(
+      'get_all_users_database',
+      () => storage.getAllUsers()
+    );
+
+    // Fetch cohort details for each user
+    const usersWithCohorts = await Promise.all(
+      users.map(async (user) => {
+        let cohortInfo = null;
+        if (user.cohortId) {
+          try {
+            const cohort = await withDatabaseErrorHandling(
+              'get_user_cohort_database',
+              () => storage.getCohort(user.cohortId!)
+            );
+            if (cohort) {
+              cohortInfo = {
+                id: cohort.id,
+                code: cohort.code,
+                name: cohort.name,
+                status: cohort.status
+              };
+            }
+          } catch (error) {
+            logger.warn('Failed to fetch cohort details for user', {
+              additionalContext: {
+                operation: 'get_user_cohort_failed',
+                userId: user.userId,
+                cohortId: user.cohortId,
+                incidentId
+              }
+            });
+          }
+        }
+        return {
+          ...user,
+          cohort: cohortInfo
+        };
+      })
+    );
+
+    logger.info('All users retrieved successfully', {
+      additionalContext: {
+        operation: 'get_all_users_success',
+        userCount: users.length,
+        incidentId
+      }
+    });
+
+    res.json(usersWithCohorts);
+  } catch (error) {
+    logger.error(
+      'Failed to fetch all users',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        additionalContext: {
+          operation: 'get_all_users_error',
+          requestedBy: req.userId,
+          incidentId
+        }
+      }
+    );
+
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(createUserError(USER_ERROR_MESSAGES.SERVER_ERROR, incidentId, HTTP_STATUS.INTERNAL_SERVER_ERROR));
+  }
+});
+
+const updateUserRoleSchema = z.object({
+  role: z.enum(['user', 'admin', 'super_admin'])
+});
+
+/**
+ * Update user role (Super Admin only)
+ */
+router.patch('/admin/:userId/role', requireSuperAdminMiddleware, async (req: Request, res: Response) => {
+  const incidentId = generateIncidentId();
+  const { userId } = req.params;
+
+  try {
+    const payload = updateUserRoleSchema.parse(req.body);
+
+    logger.info('Updating user role', {
+      additionalContext: {
+        operation: 'update_user_role',
+        incidentId,
+        targetUserId: userId,
+        newRole: payload.role,
+        requestedBy: req.userId
+      }
+    });
+
+    const user = await withDatabaseErrorHandling(
+      'update_user_role_database',
+      () => storage.updateUser(userId, { role: payload.role })
+    );
+
+    if (!user) {
+      logger.warn('User not found for role update', {
+        additionalContext: {
+          operation: 'update_user_role_not_found',
+          targetUserId: userId,
+          incidentId
+        }
+      });
+
+      res.status(HTTP_STATUS.NOT_FOUND)
+        .json(createUserError('User not found', incidentId, HTTP_STATUS.NOT_FOUND));
+      return;
+    }
+
+    logger.info('User role updated successfully', {
+      additionalContext: {
+        operation: 'update_user_role_success',
+        targetUserId: userId,
+        newRole: payload.role,
+        incidentId
+      }
+    });
+
+    res.json(user);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      logger.warn('Invalid data provided while updating user role', {
+        additionalContext: {
+          operation: 'update_user_role_validation_error',
+          incidentId,
+          issues: error.issues
+        }
+      });
+
+      res.status(HTTP_STATUS.BAD_REQUEST)
+        .json(createUserError(USER_ERROR_MESSAGES.VALIDATION_ERROR, incidentId, HTTP_STATUS.BAD_REQUEST));
+      return;
+    }
+
+    logger.error(
+      'Failed to update user role',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        additionalContext: {
+          operation: 'update_user_role_error',
+          targetUserId: userId,
+          incidentId
+        }
+      }
+    );
+
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(createUserError(USER_ERROR_MESSAGES.SERVER_ERROR, incidentId, HTTP_STATUS.INTERNAL_SERVER_ERROR));
+  }
+});
+
+const updateUserCohortSchema = z.object({
+  cohortId: z.string().nullable()
+});
+
+/**
+ * Update user cohort membership (Super Admin only)
+ */
+router.patch('/admin/:userId/cohort', requireSuperAdminMiddleware, async (req: Request, res: Response) => {
+  const incidentId = generateIncidentId();
+  const { userId } = req.params;
+
+  try {
+    const payload = updateUserCohortSchema.parse(req.body);
+
+    logger.info('Updating user cohort', {
+      additionalContext: {
+        operation: 'update_user_cohort',
+        incidentId,
+        targetUserId: userId,
+        newCohortId: payload.cohortId,
+        requestedBy: req.userId
+      }
+    });
+
+    const user = await withDatabaseErrorHandling(
+      'update_user_cohort_database',
+      () => storage.updateUser(userId, { cohortId: payload.cohortId })
+    );
+
+    if (!user) {
+      logger.warn('User not found for cohort update', {
+        additionalContext: {
+          operation: 'update_user_cohort_not_found',
+          targetUserId: userId,
+          incidentId
+        }
+      });
+
+      res.status(HTTP_STATUS.NOT_FOUND)
+        .json(createUserError('User not found', incidentId, HTTP_STATUS.NOT_FOUND));
+      return;
+    }
+
+    logger.info('User cohort updated successfully', {
+      additionalContext: {
+        operation: 'update_user_cohort_success',
+        targetUserId: userId,
+        newCohortId: payload.cohortId,
+        incidentId
+      }
+    });
+
+    res.json(user);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      logger.warn('Invalid data provided while updating user cohort', {
+        additionalContext: {
+          operation: 'update_user_cohort_validation_error',
+          incidentId,
+          issues: error.issues
+        }
+      });
+
+      res.status(HTTP_STATUS.BAD_REQUEST)
+        .json(createUserError(USER_ERROR_MESSAGES.VALIDATION_ERROR, incidentId, HTTP_STATUS.BAD_REQUEST));
+      return;
+    }
+
+    logger.error(
+      'Failed to update user cohort',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        additionalContext: {
+          operation: 'update_user_cohort_error',
+          targetUserId: userId,
+          incidentId
+        }
+      }
+    );
+
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json(createUserError(USER_ERROR_MESSAGES.SERVER_ERROR, incidentId, HTTP_STATUS.INTERNAL_SERVER_ERROR));
+  }
+});
+
+/**
+ * Delete user (Super Admin only)
+ */
+router.delete('/admin/:userId', requireSuperAdminMiddleware, async (req: Request, res: Response) => {
+  const incidentId = generateIncidentId();
+  const { userId } = req.params;
+
+  try {
+    // Prevent deleting yourself
+    if (req.userId === userId) {
+      logger.warn('User attempted to delete themselves', {
+        additionalContext: {
+          operation: 'delete_user_self_attempt',
+          userId,
+          incidentId
+        }
+      });
+
+      res.status(HTTP_STATUS.BAD_REQUEST)
+        .json(createUserError('You cannot delete your own account', incidentId, HTTP_STATUS.BAD_REQUEST));
+      return;
+    }
+
+    logger.info('Deleting user', {
+      additionalContext: {
+        operation: 'delete_user',
+        incidentId,
+        targetUserId: userId,
+        requestedBy: req.userId
+      }
+    });
+
+    const deleted = await withDatabaseErrorHandling(
+      'delete_user_database',
+      () => storage.deleteUser(userId)
+    );
+
+    if (!deleted) {
+      logger.warn('User not found for deletion', {
+        additionalContext: {
+          operation: 'delete_user_not_found',
+          targetUserId: userId,
+          incidentId
+        }
+      });
+
+      res.status(HTTP_STATUS.NOT_FOUND)
+        .json(createUserError('User not found', incidentId, HTTP_STATUS.NOT_FOUND));
+      return;
+    }
+
+    logger.info('User deleted successfully', {
+      additionalContext: {
+        operation: 'delete_user_success',
+        targetUserId: userId,
+        incidentId
+      }
+    });
+
+    res.json({ success: true, message: 'User and their data deleted successfully' });
+  } catch (error) {
+    logger.error(
+      'Failed to delete user',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        additionalContext: {
+          operation: 'delete_user_error',
+          targetUserId: userId,
           incidentId
         }
       }
