@@ -31,7 +31,7 @@ The application implements a comprehensive Content Security Policy to protect ag
 
 ##### Current CSP Directives (Production Only)
 
-The exact CSP configuration from `server/middleware/security.ts`:
+The exact CSP configuration from `server/middleware/security.ts` (dynamically generated):
 
 ```
 default-src 'self';
@@ -42,7 +42,7 @@ connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.go
 font-src 'self' https://fonts.gstatic.com;
 object-src 'none';
 media-src 'self';
-frame-src 'self' https://cortex3-790ee.firebaseapp.com https://accounts.google.com;
+frame-src 'self' https://cortex3-790ee.firebaseapp.com https://accounts.google.com https://cortexindex.com https://www.cortexindex.com https://horizoncortex.replit.app;
 report-uri /api/csp-violation-report
 ```
 
@@ -101,6 +101,15 @@ app.post('/api/csp-violation-report', express.json({ type: 'application/csp-repo
 - `https://firebase.googleapis.com`: Firebase general API
 - `https://cortex3-790ee.firebaseapp.com`: Project-specific Firebase domain
 - `https://accounts.google.com`: Google OAuth flows
+- `https://cortexindex.com`: Production domain for same-origin OAuth
+- `https://horizoncortex.replit.app`: Replit production domain for same-origin OAuth
+
+**OAuth Flow Configuration**:
+The application uses dynamic authDomain selection to prevent cross-origin issues:
+- When accessed from authorized production domains (cortexindex.com, horizoncortex.replit.app), OAuth uses the same domain for authentication
+- This maintains same-origin flow and prevents third-party cookie restrictions
+- In development, uses Firebase default domain for compatibility
+- Production always uses redirect flow instead of popup to avoid browser popup blockers
 
 ##### Adding New External Services
 
