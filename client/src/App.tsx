@@ -19,6 +19,7 @@ import Results from "@/pages/results";
 import OptionsStudio from "@/pages/options-studio";
 import Dashboard from "@/pages/dashboard";
 import AdminDashboard from "@/pages/admin-dashboard";
+import UserManagement from "@/pages/user-management";
 
 function Router() {
   return (
@@ -42,6 +43,13 @@ function Router() {
         {() => (
           <ProtectedRoute>
             <AdminDashboard />
+          </ProtectedRoute>
+        )}
+      </Route>
+      <Route path="/user-management">
+        {() => (
+          <ProtectedRoute allowedRoles={['super_admin']}>
+            <UserManagement />
           </ProtectedRoute>
         )}
       </Route>
