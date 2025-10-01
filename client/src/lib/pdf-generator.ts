@@ -287,9 +287,14 @@ function twoColumn(doc: any, y: number) {
   return { left, right, y };
 }
 
-function formatKV(doc: any, label: string, value?: string | number) {
-  const v = value ?? "—";
-  return wrap(doc, `${label}: ${String(v)}`, 999); // wrap later in card
+function formatKV(doc: any, label: string, value?: string | number | boolean) {
+  let v: string;
+  if (typeof value === 'boolean') {
+    v = value ? 'Yes' : 'No';
+  } else {
+    v = value != null ? String(value) : '—';
+  }
+  return wrap(doc, `${label}: ${v}`, 999); // wrap later in card
 }
 
 function pillarLabel(id: string) {
@@ -586,7 +591,7 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
     for (let i = 0; i < sessionData.selectedOptions.length; i++) {
       const opt = sessionData.selectedOptions[i] || {} as any;
       const title = opt.title || opt.id || `Option ${i + 1}`;
-      const desc = opt.shortDescription || opt.description || "";
+      const desc = opt.shortDescription || opt.fullDescription || "";
 
       ({ cursorY: y } = addPageIfNeeded(doc, 12, y, "CORTEX — Options Studio"));
       setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
