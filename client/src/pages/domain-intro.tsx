@@ -38,28 +38,74 @@ export default function DomainIntroPage() {
   const currentIndex = DOMAIN_ORDER.indexOf(domain as string);
   const progress = ((currentIndex + 1) / DOMAIN_ORDER.length) * 100;
 
+  // Helper function to evaluate complex conditions
+  const evaluateCondition = (condition: string, profile: any): boolean => {
+    if (!profile) return false;
+    
+    // Map friendly names to canonical names
+    const friendlyToCanonical: Record<string, string> = {
+      'regulated': 'regulatory_intensity',
+      'sensitivity': 'data_sensitivity',
+      'safety': 'safety_criticality',
+      'brand': 'brand_exposure',
+      'scale': 'scale_throughput'
+    };
+    
+    // All canonical field names
+    const canonicalFields = [
+      'regulatory_intensity', 'data_sensitivity', 'safety_criticality',
+      'brand_exposure', 'clock_speed', 'latency_edge', 'scale_throughput',
+      'data_advantage', 'build_readiness', 'finops_priority',
+      'procurement_constraints', 'edge_operations'
+    ];
+    
+    // Start with the original condition
+    let evaluableCondition = condition;
+    
+    // First, replace friendly names with canonical names
+    for (const [friendly, canonical] of Object.entries(friendlyToCanonical)) {
+      // Use word boundaries to avoid partial matches
+      const regex = new RegExp(`\\b${friendly}\\b`, 'g');
+      evaluableCondition = evaluableCondition.replace(regex, canonical);
+    }
+    
+    // Then, add 'profile.' prefix to all canonical field names
+    // Sort by length descending to avoid replacing partial matches
+    const sortedFields = [...canonicalFields].sort((a, b) => b.length - a.length);
+    for (const fieldName of sortedFields) {
+      // Replace field names that aren't already prefixed with 'profile.'
+      const regex = new RegExp(`\\b${fieldName}\\b`, 'g');
+      evaluableCondition = evaluableCondition.replace(regex, (match, offset, str) => {
+        // Check if already prefixed by looking at previous characters
+        const beforeMatch = str.substring(Math.max(0, offset - 8), offset);
+        if (beforeMatch.endsWith('profile.')) {
+          return match; // Already prefixed, don't replace
+        }
+        return `profile.${fieldName}`;
+      });
+    }
+    
+    // Safely evaluate the condition
+    try {
+      // Create a function that evaluates the condition with profile in scope
+      const evalFunc = new Function('profile', `return ${evaluableCondition};`);
+      return evalFunc(profile);
+    } catch (e) {
+      console.warn(`Failed to evaluate condition: ${condition}`, e);
+      return false;
+    }
+  };
+
   // Determine which context notes to show based on assessment profile
   const contextNotesToShow = domainData?.contextNotes?.filter(note => {
     if (!assessment || !(assessment as any)?.contextProfile) return false;
-    
     const profile = (assessment as any).contextProfile;
-    switch (note.condition) {
-      case 'regulated >= 3':
-        return profile.regulatory_intensity >= 3;
-      case 'sensitivity >= 3':
-        return profile.data_sensitivity >= 3;
-      case 'regulated >= 3 || safety >= 3':
-        return profile.regulatory_intensity >= 3 || profile.safety_criticality >= 3;
-      case 'build_readiness <= 1':
-        return profile.build_readiness <= 1;
-      case 'clock_speed >= 3 || scale >= 3':
-        return profile.clock_speed >= 3 || profile.scale_ambition >= 3;
-      case 'latency_edge >= 3':
-        return profile.latency_edge >= 3;
-      default:
-        return false;
-    }
+    return evaluateCondition(note.condition, profile);
   }) || [];
+  
+  // Separate critical and awareness notes
+  const criticalNotes = contextNotesToShow.filter(note => note.severity === 'critical');
+  const awarenessNotes = contextNotesToShow.filter(note => note.severity !== 'critical');
 
   const handleSkipToggle = (checked: boolean) => {
     setSkipIntros(checked);
@@ -226,18 +272,41 @@ export default function DomainIntroPage() {
                 </CardContent>
               </Card>
 
-              {/* Context Notes (if applicable) */}
-              {contextNotesToShow.length > 0 && (
+              {/* Critical Context Notes */}
+              {criticalNotes.length > 0 && (
+                <Card className="mb-6 border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/20">
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2 text-lg text-red-800 dark:text-red-200">
+                      <AlertCircle className="h-5 w-5" />
+                      <span>Critical Context for Your Organization</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {criticalNotes.map((note, index) => (
+                        <div key={index} className="border-l-4 border-red-500 pl-4 py-2">
+                          <p className="text-red-800 dark:text-red-200 font-ui leading-relaxed">
+                            {note.note}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Awareness Context Notes */}
+              {awarenessNotes.length > 0 && (
                 <Card className="mb-8 border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20">
                   <CardHeader>
                     <CardTitle className="flex items-center space-x-2 text-lg text-amber-800 dark:text-amber-200">
                       <AlertCircle className="h-5 w-5" />
-                      <span>Context Note for Your Organization</span>
+                      <span>Context Guidance for Your Organization</span>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      {contextNotesToShow.map((note, index) => (
+                      {awarenessNotes.map((note, index) => (
                         <p key={index} className="text-amber-800 dark:text-amber-200 font-ui leading-relaxed">
                           {note.note}
                         </p>
