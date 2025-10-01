@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/auth-context';
-import { LogIn, Loader2, Mail } from 'lucide-react';
+import { LogIn, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { PasswordResetModal } from './password-reset-modal';
 
@@ -18,7 +18,7 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
   open, 
   onOpenChange 
 }) => {
-  const { signIn, signInWithEmail, signUpWithEmail, signUpWithCohort, signUpWithGoogleAndCohort, loading, error, clearError } = useAuth();
+  const { signInWithEmail, signUpWithCohort, loading, error, clearError } = useAuth();
   const { toast } = useToast();
   
   const [email, setEmail] = useState('');
@@ -28,74 +28,6 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
   const [emailLoading, setEmailLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(true);
   const [showPasswordReset, setShowPasswordReset] = useState(false);
-
-  const handleGoogleSignIn = async () => {
-    try {
-      clearError();
-      
-      if (isSignUp) {
-        // For new account creation, cohort code is required
-        if (!cohortAccessCode) {
-          toast({
-            title: 'Cohort Code Required',
-            description: 'Please enter a valid cohort access code to create your account.',
-            variant: 'destructive',
-          });
-          return;
-        }
-        
-        await signUpWithGoogleAndCohort(cohortAccessCode, true);
-        toast({
-          title: 'Account Created!',
-          description: 'Your Google account has been created and you have joined the cohort.',
-        });
-      } else {
-        // For existing users signing in - no cohort code needed
-        // This will handle the check for new vs existing users on the server side
-        await signIn(true);
-        toast({
-          title: 'Welcome!',
-          description: 'You have been successfully signed in.',
-        });
-      }
-      
-      onOpenChange(false);
-    } catch (error: any) {
-      console.error('Google sign-in error:', error);
-      
-      // Handle redirect flow - don't show error for expected redirect
-      if (error.message === 'REDIRECT_FLOW_INITIATED') {
-        toast({
-          title: 'Redirecting to Google',
-          description: 'Please complete sign-in with Google. You will be redirected back automatically.',
-        });
-        // Don't close modal or show error for redirect flow
-        return;
-      }
-      
-      // If it's a new user trying to sign in without a cohort code, show specific error
-      if (!isSignUp && error.message && error.message.includes('cohort')) {
-        toast({
-          title: 'New User Account Detected',
-          description: 'New users must create an account with a cohort access code. Please use the sign up form.',
-          variant: 'destructive',
-        });
-        setIsSignUp(true); // Switch to sign-up mode
-        return;
-      }
-      
-      // Get user-friendly error message - never show raw Firebase errors
-      const errorMessage = error.code ? 
-        (error.code.includes('auth/') ? 'Sign-in failed. Please try again or contact support if the problem persists.' : error.message) :
-        (error.message || 'There was a problem signing you in with Google. Please try again.');
-      
-      toast({
-        title: isSignUp ? 'Sign Up Failed' : 'Sign In Failed',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-    }
-  };
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
