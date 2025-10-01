@@ -159,12 +159,41 @@ function runningHeader(doc: any, pageWidth: number, title: string) {
 }
 
 // Footer pass after content is placed
-function finalizeFooters(doc: any, labelLeft: string) {
+async function finalizeFooters(doc: any, labelLeft: string) {
   const n = doc.getNumberOfPages();
+  
+  // Load MIT Open Learning logo
+  let logoData: string | null = null;
+  try {
+    const logoModule = await import("@assets/Open-Learning-logo-revised copy_1759350974487.png");
+    const logoUrl = logoModule.default;
+    const response = await fetch(logoUrl);
+    const blob = await response.blob();
+    logoData = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.readAsDataURL(blob);
+    });
+  } catch (e) {
+    console.warn("Could not load logo for PDF footer:", e);
+  }
+  
   for (let i = 1; i <= n; i++) {
     doc.setPage(i);
     const w = doc.internal.pageSize.getWidth();
-    const y = doc.internal.pageSize.getHeight() - 10;
+    const h = doc.internal.pageSize.getHeight();
+    
+    // Add logo centered above page numbers
+    if (logoData) {
+      const logoWidth = 30;
+      const logoHeight = 8;
+      const logoX = (w - logoWidth) / 2;
+      const logoY = h - 18;
+      doc.addImage(logoData, 'PNG', logoX, logoY, logoWidth, logoHeight);
+    }
+    
+    // Page text at bottom
+    const y = h - 6;
     setFont(doc, TYPO.caption);
     setText(doc, PALETTE.inkSubtle);
     doc.text(labelLeft, PAGE.margin, y);
@@ -531,7 +560,7 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
   }
 
   // Finalize footers
-  finalizeFooters(doc, "CORTEX Executive AI Readiness Assessment");
+  await finalizeFooters(doc, "CORTEX Executive AI Readiness Assessment");
 
   // Download
   const blob = doc.output("blob");
@@ -659,7 +688,7 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
   const summary = `Options explored: ${sessionData.selectedOptions?.length ?? 0} • Completed: ${(sessionData as any).completed ? "Yes" : "No"}`;
   doc.text(summary, PAGE.margin, y + 2);
 
-  finalizeFooters(doc, "CORTEX Options Studio");
+  await finalizeFooters(doc, "CORTEX Options Studio");
 
   const blob = doc.output("blob");
   if (!(blob instanceof Blob)) throw new Error("Failed to generate PDF blob");
@@ -753,7 +782,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     }
   }
 
-  finalizeFooters(doc, "CORTEX Executive Brief");
+  await finalizeFooters(doc, "CORTEX Executive Brief");
 
   const blob = doc.output("blob");
   if (!(blob instanceof Blob)) throw new Error("Failed to generate PDF blob");
