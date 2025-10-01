@@ -3,12 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/auth-context';
 import { LogIn, Loader2, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Badge } from '@/components/ui/badge';
 import { PasswordResetModal } from './password-reset-modal';
 
 interface EnhancedSignInModalProps {
@@ -179,11 +177,6 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
     }
   };
 
-  const fillTestCredentials = () => {
-    setEmail('test.user@cortexapp.dev');
-    setPassword('TestUser2024!');
-  };
-
   const handleForgotPassword = () => {
     setShowPasswordReset(true);
   };
@@ -205,82 +198,7 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="email" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="email" data-testid="email-signup-tab">Email</TabsTrigger>
-            <TabsTrigger value="google" data-testid="google-signup-tab">Google</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="google" className="mt-6">
-            <Card>
-              <CardHeader className="text-center">
-                <CardTitle className="text-lg">Sign up with Google</CardTitle>
-                <CardDescription>
-                  Use your Google account for quick and secure account creation
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {isSignUp && (
-                  <div className="space-y-2">
-                    <Label htmlFor="google-cohort-code">Cohort Access Code *</Label>
-                    <Input
-                      id="google-cohort-code"
-                      type="text"
-                      placeholder="Enter your cohort access code"
-                      value={cohortAccessCode}
-                      onChange={(e) => setCohortAccessCode(e.target.value)}
-                      maxLength={8}
-                      data-testid="input-google-cohort-code"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      You must have a valid access code to join CORTEX assessments
-                    </p>
-                  </div>
-                )}
-                <Button 
-                  onClick={handleGoogleSignIn}
-                  disabled={loading || (isSignUp && !cohortAccessCode)}
-                  className="w-full"
-                  size="lg"
-                  data-testid="google-signin-button"
-                >
-                  {loading ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : (
-                    <Mail className="h-4 w-4 mr-2" />
-                  )}
-                  {loading ? 'Creating account...' : isSignUp ? 'Create Account with Google' : 'Sign in with Google'}
-                </Button>
-                
-                <div className="pt-2 border-t">
-                  <p className="text-center text-sm text-muted-foreground mb-2">
-                    {isSignUp ? 'Already have an account?' : 'Need an account?'}
-                  </p>
-                  <Button 
-                    type="button"
-                    variant="outline" 
-                    size="default"
-                    onClick={() => setIsSignUp(!isSignUp)}
-                    className="w-full"
-                    data-testid="toggle-signup-mode-google"
-                  >
-                    {isSignUp 
-                      ? 'Sign in to Existing Account' 
-                      : 'Create New Account'
-                    }
-                  </Button>
-                </div>
-                
-                {error && (
-                  <p className="text-sm text-destructive text-center" data-testid="auth-error">
-                    {error}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="email" className="mt-6">
+        <div className="w-full mt-6">
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">
@@ -292,27 +210,13 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
                     : 'Use your email and password to sign in'
                   }
                 </CardDescription>
-                {!isSignUp && (
-                  <div className="flex items-center gap-2 pt-2">
-                    <Badge variant="secondary" className="text-xs">Test Account Available</Badge>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={fillTestCredentials}
-                      className="h-auto p-0 text-xs hover:bg-transparent text-primary underline-offset-4 hover:underline"
-                      data-testid="fill-test-credentials-button"
-                    >
-                      Use Test Account
-                    </Button>
-                  </div>
-                )}
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleEmailSubmit} className="space-y-4">
                   {isSignUp && (
                     <>
                       <div className="space-y-2">
-                        <Label htmlFor="displayName">Name (Optional)</Label>
+                        <Label htmlFor="displayName">Name</Label>
                         <Input
                           id="displayName"
                           type="text"
@@ -320,6 +224,7 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
                           value={displayName}
                           onChange={(e) => setDisplayName(e.target.value)}
                           disabled={emailLoading}
+                          required
                           data-testid="display-name-input"
                         />
                       </div>
@@ -430,20 +335,9 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
                     {error}
                   </p>
                 )}
-
-                <div className="mt-6 p-3 bg-muted rounded-md">
-                  <p className="text-xs text-muted-foreground font-medium mb-2">
-                    Test Account Credentials:
-                  </p>
-                  <div className="text-xs text-muted-foreground space-y-1">
-                    <p><strong>Email:</strong> test.user@cortexapp.dev</p>
-                    <p><strong>Password:</strong> TestUser2024!</p>
-                  </div>
-                </div>
               </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
+        </div>
       </DialogContent>
     </Dialog>
     
