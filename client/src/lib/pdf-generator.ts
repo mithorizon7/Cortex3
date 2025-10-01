@@ -745,10 +745,10 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     for (const ins of insights.slice(0, 6)) {
       ({ cursorY: y } = addPageIfNeeded(doc, 14, y, "CORTEX — Executive Brief"));
       setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
-      doc.text(normalizeText(ins.headline || "Insight"), PAGE.margin, y);
+      doc.text(normalizeText(ins.title || "Insight"), PAGE.margin, y);
       y += PAGE.line * 1.1;
       setFont(doc, TYPO.body); setText(doc, PALETTE.ink);
-      y = drawBody(doc, normalizeText(ins.rationale || ins.detail || ""), bounds(doc).w, y);
+      y = drawBody(doc, normalizeText(ins.description || ins.reasoning || ""), bounds(doc).w, y);
       y += 1.2;
     }
   }
