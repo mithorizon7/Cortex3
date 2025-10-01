@@ -1,12 +1,26 @@
+// pdf-generator.ts — rebuilt for executive-grade PDFs
+
 import { formatScaleValue } from "@shared/scale-utils";
-import type { ContextProfile, ExtendedOptionCard, OptionsStudioSession } from "@shared/schema";
+import type {
+  ContextProfile,
+  ExtendedOptionCard,
+  OptionsStudioSession
+} from "@shared/schema";
 import { MISCONCEPTION_QUESTIONS } from "@shared/options-studio-data";
-import { generateEnhancedExecutiveInsights, type ExecutiveInsight, type ActionPriority } from "./insight-engine";
+import {
+  generateEnhancedExecutiveInsights,
+  type ExecutiveInsight,
+  type ActionPriority
+} from "./insight-engine";
 import { CORTEX_PILLARS } from "./cortex";
+
+/* ====================================================================================
+   PUBLIC TYPES (unchanged)
+==================================================================================== */
 
 export interface AssessmentResults {
   contextProfile: ContextProfile;
-  pillarScores: any;
+  pillarScores: Record<string, number>;
   triggeredGates: any[];
   priorityMoves?: any;
   valueOverlay?: any;
@@ -14,11 +28,11 @@ export interface AssessmentResults {
 }
 
 export interface SituationAssessmentData {
-  // Legacy format (backward compatibility)
-  insight?: string; // Two paragraphs separated by \n\n
+  // Legacy (back-compat)
+  insight?: string;           // Two paragraphs separated by \n\n
   disclaimer?: string;
-  
-  // Situation Assessment 2.0 format
+
+  // Situation Assessment 2.0 “mirror”
   mirror?: {
     headline?: string;
     insight?: string;
@@ -30,974 +44,12 @@ export interface SituationAssessmentData {
     };
     disclaimer?: string;
   };
-  
+
   contextProfile: ContextProfile;
   assessmentId: string;
 }
 
-// Helper function to convert hex colors to RGB arrays for jsPDF
-function hexToRgb(hex: string): [number, number, number] {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result ? [
-    parseInt(result[1], 16),
-    parseInt(result[2], 16),
-    parseInt(result[3], 16)
-  ] : [0, 0, 0];
-}
-
-// Helper function to safely split text and fix character spacing issues
-function safeSplitTextToSize(doc: any, text: string, maxWidth: number): string[] {
-  if (!text || typeof text !== 'string') {
-    return [];
-  }
-  
-  // Preprocess text to avoid jsPDF spacing issues
-  const cleanText = text
-    .replace(/\s{2,}/g, ' ')          // Remove multiple spaces
-    .replace(/\u00A0/g, ' ')         // Replace non-breaking spaces
-    .replace(/[\u2000-\u206F]/g, ' ') // Replace unicode spaces
-    .trim();
-  
-  if (!cleanText) {
-    return [];
-  }
-  
-  try {
-    const lines = doc.splitTextToSize(cleanText, maxWidth);
-    
-    // Validate and fix any lines with character spacing issues
-    return (Array.isArray(lines) ? lines : [lines]).map((line: string) => {
-      if (typeof line !== 'string') {
-        return '';
-      }
-      
-      // Detect if line has character spacing issue (characters separated by spaces)
-      // Pattern: single characters followed by spaces, especially at end of lines
-      const hasSpacingIssue = /\b[a-zA-Z]\s+[a-zA-Z]\s+[a-zA-Z]/.test(line) || 
-                             /[a-zA-Z]\s+[a-zA-Z]\s*\.\s*\d*$/.test(line);
-      
-      if (hasSpacingIssue) {
-        // Fix by removing extra spaces between single characters
-        return line
-          .replace(/\b([a-zA-Z])\s+([a-zA-Z])\s+([a-zA-Z])/g, '$1$2$3')
-          .replace(/([a-zA-Z])\s+([a-zA-Z])\s*\.\s*(\d*)$/g, '$1$2.$3')
-          .replace(/\s{2,}/g, ' ')
-          .trim();
-      }
-      
-      return line;
-    }).filter(line => line.length > 0);
-  } catch (error) {
-    console.warn('PDF text splitting error:', error);
-    // Fallback: manual text wrapping
-    return manualTextWrap(cleanText, maxWidth, doc);
-  }
-}
-
-// Fallback manual text wrapping when jsPDF fails
-function manualTextWrap(text: string, maxWidth: number, doc: any): string[] {
-  const words = text.split(' ');
-  const lines: string[] = [];
-  let currentLine = '';
-  
-  for (const word of words) {
-    const testLine = currentLine ? `${currentLine} ${word}` : word;
-    
-    try {
-      const testWidth = doc.getTextWidth(testLine);
-      if (testWidth <= maxWidth) {
-        currentLine = testLine;
-      } else {
-        if (currentLine) {
-          lines.push(currentLine);
-        }
-        currentLine = word;
-      }
-    } catch (error) {
-      // If getTextWidth fails, use character-based estimation
-      if (testLine.length * 2.5 <= maxWidth) { // Rough estimation
-        currentLine = testLine;
-      } else {
-        if (currentLine) {
-          lines.push(currentLine);
-        }
-        currentLine = word;
-      }
-    }
-  }
-  
-  if (currentLine) {
-    lines.push(currentLine);
-  }
-  
-  return lines;
-}
-
-export async function generateSituationAssessmentBrief(data: SituationAssessmentData): Promise<void> {
-  try {
-    // Validate required data first
-    if (!data || !data.contextProfile || !data.assessmentId) {
-      throw new Error('Missing required data for PDF generation');
-    }
-    
-    // Validate that we have either legacy format OR Situation Assessment 2.0 format
-    const hasLegacyData = data.insight && data.disclaimer;
-    const hasMirrorData = data.mirror && (data.mirror.headline || data.mirror.insight);
-    
-    if (!hasLegacyData && !hasMirrorData) {
-      throw new Error('Missing context insight data for PDF generation');
-    }
-
-    // Attempt to load jsPDF with better error handling
-    let jsPDF;
-    try {
-      const jsPDFModule = await import('jspdf');
-      jsPDF = jsPDFModule.jsPDF;
-      
-      if (!jsPDF) {
-        throw new Error('jsPDF not available');
-      }
-    } catch (importError) {
-      console.error('Failed to import jsPDF:', importError);
-      throw new Error('PDF library failed to load. Please try refreshing the page or contact support if this persists.');
-    }
-
-    // Create new PDF document
-    const doc = new jsPDF('p', 'mm', 'a4');
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 24; // Increased margin for premium feel
-    const contentWidth = pageWidth - (margin * 2);
-    const columnWidth = (contentWidth - 12) / 2; // 12mm gap between columns
-    const maxY = pageHeight - 40; // Reserve space for footer and padding
-    
-    // Centralized layout constants for consistent estimation and rendering
-    const LAYOUT = {
-      cardContentMargin: 20,     // Margin inside cards
-      lineSpacing: 5.5,          // Space between lines
-      paragraphSpacing: 8,       // Space between paragraphs
-      headerSpacing: 28,         // Space for card headers
-      bottomPadding: 20,         // Card bottom padding
-      chipSpacing: 6,            // Extra space for action/watchout chips
-      minCardHeight: 150         // Minimum card height
-    };
-    
-    let currentY = margin;
-    
-    // Premium Color Palette (RGB tuples for jsPDF compatibility)
-    const colors = {
-      primary: [15, 23, 42],      // slate-900 - Deep charcoal
-      secondary: [51, 65, 85],    // slate-700 - Medium gray
-      accent: [99, 102, 241],     // indigo-500 - Professional blue
-      accentLight: [129, 140, 248], // indigo-400 - Lighter blue
-      surface: [248, 250, 252],   // slate-50 - Light surface
-      border: [226, 232, 240],    // slate-200 - Subtle border
-      success: [34, 197, 94],     // emerald-500 - Success green
-      warning: [245, 158, 11],    // amber-500 - Warning amber
-      error: [239, 68, 68],       // red-500 - Error red
-      white: [255, 255, 255],     // Pure white
-      gradient: {
-        start: [79, 70, 229],     // indigo-600
-        end: [139, 92, 246]       // violet-500
-      }
-    } as const;
-    
-    // Premium Typography System
-    const typography = {
-      hero: { size: 28, weight: 'bold' as const },
-      h1: { size: 20, weight: 'bold' as const },
-      h2: { size: 16, weight: 'bold' as const },
-      h3: { size: 14, weight: 'bold' as const },
-      body: { size: 11, weight: 'normal' as const },
-      small: { size: 9, weight: 'normal' as const },
-      caption: { size: 8, weight: 'normal' as const }
-    } as const;
-    
-    // Helper functions for premium design
-    const addPageFooter = () => {
-      const footerY = pageHeight - 25; // Match reserved space with padding
-      doc.setFontSize(typography.caption.size);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(...colors.secondary);
-      doc.text('CORTEX™ Executive AI Readiness Assessment', margin, footerY);
-      doc.text(`Page ${doc.getCurrentPageInfo().pageNumber}`, pageWidth - margin - 15, footerY);
-    };
-    
-    const drawGradientHeader = () => {
-      // Simulate gradient with multiple rectangles
-      const headerHeight = 60;
-      const steps = 20;
-      const stepHeight = headerHeight / steps;
-      
-      for (let i = 0; i < steps; i++) {
-        const ratio = i / (steps - 1);
-        const r = Math.round(colors.gradient.start[0] + (colors.gradient.end[0] - colors.gradient.start[0]) * ratio);
-        const g = Math.round(colors.gradient.start[1] + (colors.gradient.end[1] - colors.gradient.start[1]) * ratio);
-        const b = Math.round(colors.gradient.start[2] + (colors.gradient.end[2] - colors.gradient.start[2]) * ratio);
-        
-        doc.setFillColor(r, g, b);
-        doc.rect(0, i * stepHeight, pageWidth, stepHeight, 'F');
-      }
-    };
-    
-    const drawCard = (x: number, y: number, width: number, height: number, elevated = false) => {
-      if (elevated) {
-        // Draw shadow
-        doc.setFillColor(0, 0, 0, 0.1);
-        doc.rect(x + 1, y + 1, width, height, 'F');
-      }
-      
-      // Draw card background
-      doc.setFillColor(...colors.white);
-      doc.setDrawColor(...colors.border);
-      doc.setLineWidth(0.5);
-      doc.rect(x, y, width, height, 'FD');
-    };
-    
-    const addDivider = (y: number, style: 'full' | 'accent' = 'full') => {
-      if (style === 'accent') {
-        doc.setDrawColor(...colors.accent);
-        doc.setLineWidth(1);
-        doc.line(margin, y, margin + 60, y);
-      } else {
-        doc.setDrawColor(...colors.border);
-        doc.setLineWidth(0.3);
-        doc.line(margin, y, pageWidth - margin, y);
-      }
-    };
-    
-    // Enhanced page overflow check
-    const checkPageOverflow = (additionalHeight: number): boolean => {
-      if (currentY + additionalHeight > maxY) {
-        addPageFooter();
-        doc.addPage();
-        currentY = margin;
-        return true;
-      }
-      return false;
-    };
-    
-    // Premium Header Design
-    drawGradientHeader();
-    
-    // Header content with enhanced typography
-    doc.setTextColor(...colors.white);
-    doc.setFontSize(typography.hero.size);
-    doc.setFont('helvetica', typography.hero.weight);
-    doc.text('CORTEX™', margin, 25);
-    
-    doc.setFontSize(typography.body.size);
-    doc.setFont('helvetica', 'normal');
-    doc.text('EXECUTIVE AI READINESS ASSESSMENT', margin, 35);
-    
-    // Header metadata with better positioning
-    doc.setFontSize(typography.small.size);
-    const currentDate = new Date().toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    });
-    const dateText = `Generated: ${currentDate}`;
-    const idText = `ID: ${data.assessmentId.slice(0, 8).toUpperCase()}`;
-    
-    doc.text(dateText, pageWidth - margin - doc.getTextWidth(dateText), 25);
-    doc.text(idText, pageWidth - margin - doc.getTextWidth(idText), 33);
-    
-    // Premium status indicator
-    doc.setFillColor(...colors.success);
-    doc.circle(pageWidth - margin - 8, 45, 2, 'F');
-    doc.setFontSize(typography.caption.size);
-    doc.text('COMPLETED', pageWidth - margin - 25, 47);
-    
-    currentY = 75;
-    
-    // Reset text color for content
-    doc.setTextColor(...colors.primary);
-    
-    // Determine which format to use
-    const mirror = data.mirror;
-    const isLegacyFormat = !mirror && data.insight && data.disclaimer;
-    const insight = mirror?.insight || data.insight || '';
-    const disclaimer = mirror?.disclaimer || data.disclaimer || '';
-    
-    // Premium Executive Summary Section
-    if (mirror?.headline) {
-      checkPageOverflow(50);
-      
-      // Executive Summary Card
-      drawCard(margin, currentY, contentWidth, 45, true);
-      
-      // Section header with accent line
-      addDivider(currentY + 8, 'accent');
-      doc.setFontSize(typography.h2.size);
-      doc.setFont('helvetica', typography.h2.weight);
-      doc.setTextColor(...colors.accent);
-      doc.text('EXECUTIVE SUMMARY', margin + 8, currentY + 15);
-      
-      // Headline content
-      doc.setFontSize(typography.h3.size);
-      doc.setFont('helvetica', typography.h3.weight);
-      doc.setTextColor(...colors.primary);
-      const headlineLines = safeSplitTextToSize(doc, mirror.headline, contentWidth - 16);
-      let headlineY = currentY + 25;
-      headlineLines.forEach((line: string) => {
-        doc.text(line, margin + 8, headlineY);
-        headlineY += 5;
-      });
-      
-      currentY += 55;
-    }
-
-    // Premium Two-Column Layout with Enhanced Design
-    const leftColumnX = margin;
-    const rightColumnX = margin + columnWidth + 12;
-    
-    // Track Y positions for both columns
-    let leftColumnY = currentY + 10;
-    let rightColumnY = currentY + 10;
-    
-    // Premium Left Column: Strategic Context
-    // First calculate content height, then draw card
-    const leftColumnStartY = currentY;
-    let contentEndY = currentY + LAYOUT.headerSpacing;
-    
-    if (insight) {
-      // Split insight into paragraphs and calculate total height needed
-      const paragraphs = insight.split(/\n{2,}/).filter(p => p.trim().length > 0);
-      
-      paragraphs.forEach((paragraph, index) => {
-        const lines = safeSplitTextToSize(doc, paragraph.trim(), columnWidth - LAYOUT.cardContentMargin);
-        contentEndY += lines.length * LAYOUT.lineSpacing;
-        if (index < paragraphs.length - 1) contentEndY += LAYOUT.paragraphSpacing;
-      });
-    }
-    
-    // Calculate proper card height with safety margin
-    const leftColumnHeight = Math.max(LAYOUT.minCardHeight, contentEndY - leftColumnStartY + LAYOUT.bottomPadding);
-    
-    // Now draw the card with correct height
-    drawCard(leftColumnX, leftColumnStartY, columnWidth, leftColumnHeight, false);
-    
-    // Add header
-    doc.setFontSize(typography.h2.size);
-    doc.setFont('helvetica', typography.h2.weight);
-    doc.setTextColor(...colors.accent);
-    doc.text(isLegacyFormat ? 'CONTEXT REFLECTION' : 'STRATEGIC CONTEXT', leftColumnX + 8, leftColumnStartY + 12);
-    
-    if (insight) {
-      // Now render the actual content
-      const paragraphs = insight.split(/\n{2,}/).filter(p => p.trim().length > 0);
-      
-      doc.setFontSize(typography.body.size);
-      doc.setFont('helvetica', typography.body.weight);
-      doc.setTextColor(...colors.primary);
-      
-      let contentY = leftColumnStartY + LAYOUT.headerSpacing;
-      paragraphs.forEach((paragraph, index) => {
-        const lines = safeSplitTextToSize(doc, paragraph.trim(), columnWidth - LAYOUT.cardContentMargin);
-        
-        lines.forEach((line: string) => {
-          doc.text(line, leftColumnX + LAYOUT.cardContentMargin/2, contentY);
-          contentY += LAYOUT.lineSpacing;
-        });
-        
-        if (index < paragraphs.length - 1) contentY += LAYOUT.paragraphSpacing;
-      });
-      
-      leftColumnY = contentY + 10;
-    } else {
-      leftColumnY = leftColumnStartY + leftColumnHeight;
-    }
-    
-    // Define profile sections first
-    const profileSections = [
-      {
-        title: 'Risk & Compliance',
-        color: colors.error,
-        items: [
-          { key: 'regulatory_intensity', label: 'Regulatory Intensity', value: data.contextProfile.regulatory_intensity },
-          { key: 'data_sensitivity', label: 'Data Sensitivity', value: data.contextProfile.data_sensitivity },
-          { key: 'safety_criticality', label: 'Safety Criticality', value: data.contextProfile.safety_criticality },
-          { key: 'brand_exposure', label: 'Brand Exposure', value: data.contextProfile.brand_exposure }
-        ]
-      },
-      {
-        title: 'Operations & Performance',
-        color: colors.accent,
-        items: [
-          { key: 'clock_speed', label: 'Clock Speed', value: data.contextProfile.clock_speed },
-          { key: 'latency_edge', label: 'Latency Edge', value: data.contextProfile.latency_edge },
-          { key: 'scale_throughput', label: 'Scale & Throughput', value: data.contextProfile.scale_throughput }
-        ]
-      },
-      {
-        title: 'Strategic Assets',
-        color: colors.success,
-        items: [
-          { key: 'data_advantage', label: 'Data Advantage', value: data.contextProfile.data_advantage },
-          { key: 'build_readiness', label: 'Build Readiness', value: data.contextProfile.build_readiness },
-          { key: 'finops_priority', label: 'FinOps Priority', value: data.contextProfile.finops_priority }
-        ]
-      }
-    ];
-    
-    // Calculate actual content height for Organizational Context
-    let estimatedContextHeight = 20; // Header space
-    profileSections.forEach(section => {
-      estimatedContextHeight += 12; // Section header
-      estimatedContextHeight += section.items.length * 4; // Items
-      estimatedContextHeight += 6; // Section spacing
-    });
-    estimatedContextHeight += 20; // Constraints section space
-    
-    // Check if entire context section will fit on current page
-    if (currentY + estimatedContextHeight > maxY - 20) {
-      addPageFooter();
-      doc.addPage();
-      currentY = margin;
-      
-      // Re-add assessment header on new page
-      doc.setFontSize(16);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(...colors.accent);
-      doc.text('ASSESSMENT RESULTS (continued)', margin, currentY);
-      currentY += 15;
-    }
-    
-    // Premium Right Column: Organizational Context with dynamic height
-    drawCard(rightColumnX, currentY, columnWidth, estimatedContextHeight, false);
-    
-    doc.setFontSize(typography.h2.size);
-    doc.setFont('helvetica', typography.h2.weight);
-    doc.setTextColor(...colors.accent);
-    doc.text('ORGANIZATIONAL CONTEXT', rightColumnX + 8, currentY + 12);
-    
-    doc.setTextColor(...colors.primary);
-    
-    // Premium Context Profile with Visual Indicators
-    let rightContentY = currentY + 20;
-    
-    profileSections.forEach((section, sectionIndex) => {
-      // Pagination check for section header
-      if (rightContentY + 12 + (section.items.length * 4) + 6 > maxY - 20) {
-        // Add footer before page break
-        addPageFooter();
-        doc.addPage();
-        rightContentY = margin + 15;
-        
-        // Calculate remaining content height for new page card
-        let remainingHeight = 20; // Base height
-        for (let i = sectionIndex; i < profileSections.length; i++) {
-          remainingHeight += 12; // Section header
-          remainingHeight += profileSections[i].items.length * 4; // Items
-          remainingHeight += 6; // Section spacing
-        }
-        
-        // Redraw premium card on new page
-        drawCard(rightColumnX, rightContentY, columnWidth, remainingHeight, false);
-        
-        // Re-add context header on new page
-        doc.setFontSize(typography.h2.size);
-        doc.setFont('helvetica', typography.h2.weight);
-        doc.setTextColor(...colors.accent);
-        doc.text('ORGANIZATIONAL CONTEXT (continued)', rightColumnX + 8, rightContentY + 12);
-        rightContentY += 25;
-      }
-      
-      // Section header with color indicator
-      doc.setFillColor(section.color[0], section.color[1], section.color[2]);
-      doc.circle(rightColumnX + 10, rightContentY + 2, 2, 'F');
-      
-      doc.setFontSize(typography.h3.size);
-      doc.setFont('helvetica', typography.h3.weight);
-      doc.setTextColor(...colors.primary);
-      doc.text(section.title, rightColumnX + 18, rightContentY + 4);
-      rightContentY += 12;
-      
-      // Items with enhanced typography
-      doc.setFontSize(typography.small.size);
-      doc.setFont('helvetica', typography.small.weight);
-      section.items.forEach((item, itemIndex) => {
-        // Pagination check for each item
-        if (rightContentY + 4 > maxY - 20) {
-          // Add footer before page break
-          addPageFooter();
-          doc.addPage();
-          rightContentY = margin + 15;
-          
-          // Calculate remaining content height for new page card
-          let remainingHeight = 20; // Base height
-          // Add remaining items in current section
-          remainingHeight += (section.items.length - itemIndex) * 4;
-          // Add remaining sections
-          for (let i = sectionIndex + 1; i < profileSections.length; i++) {
-            remainingHeight += 12; // Section header
-            remainingHeight += profileSections[i].items.length * 4; // Items
-            remainingHeight += 6; // Section spacing
-          }
-          
-          // Redraw premium card on new page
-          drawCard(rightColumnX, rightContentY, columnWidth, remainingHeight, false);
-          
-          // Re-add context header on new page
-          doc.setFontSize(typography.h2.size);
-          doc.setFont('helvetica', typography.h2.weight);
-          doc.setTextColor(...colors.accent);
-          doc.text('ORGANIZATIONAL CONTEXT (continued)', rightColumnX + 8, rightContentY + 12);
-          rightContentY += 25;
-          
-          // Reset font for items
-          doc.setFontSize(typography.small.size);
-          doc.setFont('helvetica', typography.small.weight);
-        }
-        
-        const valueText = formatScaleValue(item.key || '', item.value);
-        const highValue = item.value >= 3;
-        
-        // Color code high values
-        if (highValue) {
-          doc.setTextColor(section.color[0], section.color[1], section.color[2]);
-        } else {
-          doc.setTextColor(...colors.secondary);
-        }
-        doc.text(`${item.label}:`, rightColumnX + 12, rightContentY);
-        doc.setTextColor(...colors.primary);
-        doc.text(valueText, rightColumnX + 50, rightContentY);
-        rightContentY += 4;
-      });
-      rightContentY += 6;
-    });
-    
-    // Premium Constraints Section
-    addDivider(rightContentY, 'accent');
-    rightContentY += 8;
-    
-    doc.setFontSize(typography.h3.size);
-    doc.setFont('helvetica', typography.h3.weight);
-    doc.setTextColor(...colors.primary);
-    doc.text('Operational Constraints', rightColumnX + 8, rightContentY);
-    rightContentY += 8;
-    
-    const constraints = [
-      { label: 'Procurement Constraints', value: data.contextProfile.procurement_constraints },
-      { label: 'Edge Operations', value: data.contextProfile.edge_operations }
-    ];
-    
-    constraints.forEach(constraint => {
-      const fillColor = constraint.value ? [colors.warning[0], colors.warning[1], colors.warning[2]] as [number, number, number] : [colors.success[0], colors.success[1], colors.success[2]] as [number, number, number];
-      doc.setFillColor(...fillColor);
-      doc.circle(rightColumnX + 12, rightContentY - 1, 1.5, 'F');
-      
-      doc.setFontSize(typography.small.size);
-      doc.setFont('helvetica', typography.small.weight);
-      doc.setTextColor(...colors.primary);
-      doc.text(`${constraint.label}: ${constraint.value ? 'Yes' : 'No'}`, rightColumnX + 18, rightContentY);
-      rightContentY += 5;
-    });
-    
-    // Move to next section using the maximum Y position from both columns  
-    currentY = Math.max(leftColumnY + 10, rightContentY + 20);
-    
-    // Premium Leadership Guidance Section
-    if (mirror && (mirror.actions?.length || mirror.watchouts?.length)) {
-      checkPageOverflow(60);
-      
-      // Section header with premium styling
-      addDivider(currentY, 'accent');
-      currentY += 8;
-      
-      doc.setFontSize(typography.h1.size);
-      doc.setFont('helvetica', typography.h1.weight);
-      doc.setTextColor(...colors.accent);
-      doc.text('LEADERSHIP GUIDANCE', margin, currentY);
-      currentY += 18;
-      
-      // Actions & Watchouts Grid Layout
-      const gridLeftX = leftColumnX;
-      const gridRightX = rightColumnX;
-      let gridLeftY = currentY;
-      let gridRightY = currentY;
-      
-      // Premium Actions (Left Column)
-      if (mirror.actions?.length) {
-        // Calculate dynamic height for actions with safety margins
-        let estimatedActionsHeight = LAYOUT.headerSpacing;
-        mirror.actions.forEach(action => {
-          const actionLines = safeSplitTextToSize(doc, action, columnWidth - LAYOUT.cardContentMargin);
-          estimatedActionsHeight += actionLines.length * LAYOUT.lineSpacing + LAYOUT.chipSpacing;
-        });
-        estimatedActionsHeight += LAYOUT.bottomPadding;
-        
-        // Check if entire actions section will fit on current page
-        if (gridLeftY + estimatedActionsHeight > maxY - 20) {
-          addPageFooter();
-          doc.addPage();
-          gridLeftY = margin + 15;
-          gridRightY = margin + 15;
-          currentY = margin;
-          
-          // Re-add section header on new page
-          doc.setFontSize(16);
-          doc.setFont('helvetica', 'bold');
-          doc.setTextColor(...colors.accent);
-          doc.text('LEADERSHIP GUIDANCE (continued)', margin, gridLeftY);
-          gridLeftY += 15;
-        }
-        
-        // Premium Actions Card with dynamic height
-        drawCard(gridLeftX, gridLeftY, columnWidth, estimatedActionsHeight, true);
-        
-        // Actions header with icon
-        doc.setFillColor(...colors.success);
-        doc.circle(gridLeftX + 10, gridLeftY + 8, 3, 'F');
-        
-        doc.setFontSize(typography.h3.size);
-        doc.setFont('helvetica', typography.h3.weight);
-        doc.setTextColor(...colors.primary);
-        doc.text('Leadership Actions', gridLeftX + 18, gridLeftY + 12);
-        
-        // Premium action items with enhanced styling
-        let actionContentY = gridLeftY + LAYOUT.headerSpacing;
-        doc.setFontSize(typography.small.size);
-        doc.setFont('helvetica', typography.small.weight);
-        doc.setTextColor(...colors.primary);
-        
-        (mirror.actions || []).forEach((action, actionIndex) => {
-          // Handle text overflow with proper wrapping
-          const actionLines = safeSplitTextToSize(doc, action, columnWidth - LAYOUT.cardContentMargin);
-          const chipHeight = actionLines.length * LAYOUT.lineSpacing + LAYOUT.chipSpacing;
-          
-          // Pagination check for each action
-          if (actionContentY + chipHeight > maxY - 20) {
-            // Add footer before page break
-            addPageFooter();
-            doc.addPage();
-            actionContentY = margin + 15;
-            gridLeftY = margin + 15;
-            gridRightY = margin + 15;
-            
-            // Calculate remaining actions height for new page card
-            let remainingActionsHeight = LAYOUT.headerSpacing;
-            for (let i = actionIndex; i < (mirror.actions?.length || 0); i++) {
-              const remainingActionLines = safeSplitTextToSize(doc, mirror.actions?.[i] || '', columnWidth - LAYOUT.cardContentMargin);
-              remainingActionsHeight += remainingActionLines.length * LAYOUT.lineSpacing + LAYOUT.chipSpacing;
-            }
-            remainingActionsHeight += LAYOUT.bottomPadding;
-            
-            // Redraw premium actions card on new page
-            drawCard(gridLeftX, actionContentY, columnWidth, remainingActionsHeight, true);
-            
-            // Actions header with icon on new page
-            doc.setFillColor(...colors.success);
-            doc.circle(gridLeftX + 10, actionContentY + 8, 3, 'F');
-            
-            // Re-add actions header on new page
-            doc.setFontSize(typography.h3.size);
-            doc.setFont('helvetica', typography.h3.weight);
-            doc.setTextColor(...colors.primary);
-            doc.text('Leadership Actions (continued)', gridLeftX + 18, actionContentY + 12);
-            actionContentY += 25;
-            
-            // Reset font for actions
-            doc.setFontSize(typography.small.size);
-            doc.setFont('helvetica', typography.small.weight);
-          }
-          
-          // Premium action chip with elevated design
-          doc.setFillColor(...colors.surface);
-          doc.setDrawColor(...colors.accent);
-          doc.setLineWidth(0.5);
-          doc.rect(gridLeftX + 8, actionContentY, columnWidth - LAYOUT.cardContentMargin, chipHeight, 'FD');
-          
-          // Action text
-          actionLines.forEach((line: string, lineIndex: number) => {
-            doc.text(line, gridLeftX + LAYOUT.cardContentMargin/2, actionContentY + 4 + (lineIndex * LAYOUT.lineSpacing));
-          });
-          
-          actionContentY += chipHeight + 4;
-        });
-        
-        gridLeftY = actionContentY + 10;
-      }
-      
-      // Premium Watchouts (Right Column)  
-      if (mirror.watchouts?.length) {
-        // Calculate dynamic height for watchouts with safety margins
-        let estimatedWatchoutsHeight = LAYOUT.headerSpacing;
-        (mirror.watchouts || []).forEach(watchout => {
-          const watchoutLines = safeSplitTextToSize(doc, watchout, columnWidth - LAYOUT.cardContentMargin);
-          estimatedWatchoutsHeight += watchoutLines.length * LAYOUT.lineSpacing + LAYOUT.chipSpacing;
-        });
-        estimatedWatchoutsHeight += LAYOUT.bottomPadding;
-        
-        // Check if entire watchouts section will fit on current page
-        if (gridRightY + estimatedWatchoutsHeight > maxY - 20) {
-          addPageFooter();
-          doc.addPage();
-          gridLeftY = margin + 15;
-          gridRightY = margin + 15;
-          currentY = margin;
-          
-          // Re-add section header on new page
-          doc.setFontSize(16);
-          doc.setFont('helvetica', 'bold');
-          doc.setTextColor(...colors.accent);
-          doc.text('LEADERSHIP GUIDANCE (continued)', margin, gridRightY);
-          gridRightY += 15;
-        }
-        
-        // Premium Watchouts Card with dynamic height
-        drawCard(gridRightX, gridRightY, columnWidth, estimatedWatchoutsHeight, true);
-        
-        // Watchouts header with icon
-        doc.setFillColor(...colors.warning);
-        doc.circle(gridRightX + 10, gridRightY + 8, 3, 'F');
-        
-        doc.setFontSize(typography.h3.size);
-        doc.setFont('helvetica', typography.h3.weight);
-        doc.setTextColor(...colors.primary);
-        doc.text('Watch-outs', gridRightX + 18, gridRightY + 12);
-        
-        // Premium watchout items with enhanced styling
-        let watchoutContentY = gridRightY + 28; // Match header calculation
-        doc.setFontSize(typography.small.size);
-        doc.setFont('helvetica', typography.small.weight);
-        doc.setTextColor(...colors.primary);
-        
-        (mirror.watchouts || []).forEach((watchout, watchoutIndex) => {
-          // Handle text overflow with proper wrapping
-          const watchoutLines = safeSplitTextToSize(doc, watchout, columnWidth - LAYOUT.cardContentMargin);
-          const chipHeight = watchoutLines.length * LAYOUT.lineSpacing + LAYOUT.chipSpacing;
-          
-          // Pagination check for each watchout
-          if (watchoutContentY + chipHeight > maxY - 20) {
-            // Add footer before page break
-            addPageFooter();
-            doc.addPage();
-            watchoutContentY = margin + 15;
-            gridLeftY = margin + 15;
-            gridRightY = margin + 15;
-            
-            // Calculate remaining watchouts height for new page card
-            let remainingWatchoutsHeight = LAYOUT.headerSpacing;
-            for (let i = watchoutIndex; i < (mirror.watchouts?.length || 0); i++) {
-              const remainingWatchoutLines = safeSplitTextToSize(doc, mirror.watchouts?.[i] || '', columnWidth - LAYOUT.cardContentMargin);
-              remainingWatchoutsHeight += remainingWatchoutLines.length * LAYOUT.lineSpacing + LAYOUT.chipSpacing;
-            }
-            remainingWatchoutsHeight += LAYOUT.bottomPadding;
-            
-            // Redraw premium watchouts card on new page
-            drawCard(gridRightX, watchoutContentY, columnWidth, remainingWatchoutsHeight, true);
-            
-            // Watchouts header with icon on new page
-            doc.setFillColor(...colors.warning);
-            doc.circle(gridRightX + 10, watchoutContentY + 8, 3, 'F');
-            
-            // Re-add watchouts header on new page
-            doc.setFontSize(typography.h3.size);
-            doc.setFont('helvetica', typography.h3.weight);
-            doc.setTextColor(...colors.primary);
-            doc.text('Watch-outs (continued)', gridRightX + 18, watchoutContentY + 12);
-            watchoutContentY += 25;
-            
-            // Reset font for watchouts
-            doc.setFontSize(typography.small.size);
-            doc.setFont('helvetica', typography.small.weight);
-          }
-          
-          // Premium watchout chip with elevated design
-          doc.setFillColor(...colors.surface);
-          doc.setDrawColor(...colors.warning);
-          doc.setLineWidth(0.5);
-          doc.rect(gridRightX + 8, watchoutContentY, columnWidth - LAYOUT.cardContentMargin, chipHeight, 'FD');
-          
-          // Watchout text
-          watchoutLines.forEach((line: string, lineIndex: number) => {
-            doc.text(line, gridRightX + LAYOUT.cardContentMargin/2, watchoutContentY + 4 + (lineIndex * LAYOUT.lineSpacing));
-          });
-          
-          watchoutContentY += chipHeight + 4;
-        });
-        
-        gridRightY = watchoutContentY + 10;
-      }
-      
-      currentY = Math.max(gridLeftY, gridRightY) + 5;
-    }
-    
-    // Situation Assessment 2.0: Scenario Lens Section with dynamic height calculation
-    if (mirror?.scenarios && (mirror.scenarios.if_regulation_tightens || mirror.scenarios.if_budgets_tighten)) {
-      // Calculate dynamic height based on actual content
-      let scenarioContentHeight = 10; // Base padding
-      
-      doc.setFontSize(10);
-      if (mirror.scenarios.if_regulation_tightens) {
-        const regLines = safeSplitTextToSize(doc, mirror.scenarios.if_regulation_tightens, contentWidth - 20);
-        scenarioContentHeight += 4 + (regLines.length * 4) + 2; // Title + content + spacing
-      }
-      
-      if (mirror.scenarios.if_budgets_tighten) {
-        const budgetLines = safeSplitTextToSize(doc, mirror.scenarios.if_budgets_tighten, contentWidth - 20);
-        scenarioContentHeight += 4 + (budgetLines.length * 4) + 2; // Title + content + spacing
-      }
-      
-      const totalScenarioHeight = scenarioContentHeight + 15; // Include section title
-      
-      checkPageOverflow(totalScenarioHeight);
-      doc.setFontSize(16);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(...colors.accent);
-      doc.text('SCENARIO LENS', margin, currentY);
-      currentY += 12;
-      
-      // Scenario background with dynamic height
-      doc.setFillColor(...hexToRgb('#f8fafc'));
-      doc.setDrawColor(...hexToRgb('#e2e8f0'));
-      doc.rect(margin, currentY - 3, contentWidth, scenarioContentHeight, 'FD');
-      
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(...colors.primary);
-      
-      let scenarioY = currentY + 2;
-      if (mirror.scenarios.if_regulation_tightens) {
-        doc.text('• If regulation tightens:', margin + 5, scenarioY);
-        scenarioY += 4;
-        const regLines = safeSplitTextToSize(doc, mirror.scenarios.if_regulation_tightens, contentWidth - 20);
-        regLines.forEach((line: string) => {
-          doc.text(line, margin + 12, scenarioY);
-          scenarioY += 4;
-        });
-        scenarioY += 2;
-      }
-      
-      if (mirror.scenarios.if_budgets_tighten) {
-        doc.text('• If budgets tighten:', margin + 5, scenarioY);
-        scenarioY += 4;
-        const budgetLines = safeSplitTextToSize(doc, mirror.scenarios.if_budgets_tighten, contentWidth - 20);
-        budgetLines.forEach((line: string) => {
-          doc.text(line, margin + 12, scenarioY);
-          scenarioY += 4;
-        });
-      }
-      
-      currentY += scenarioContentHeight + 10;
-    }
-    
-    // Discussion Notes Section (Full Width) - only for legacy format
-    if (isLegacyFormat) {
-      checkPageOverflow(40);
-      // Background for discussion section
-      doc.setFillColor(...colors.surface);
-      doc.rect(margin, currentY - 5, contentWidth, 35, 'F');
-      
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(...colors.accent);
-      doc.text('NOTES FOR YOUR DISCUSSION', margin + 5, currentY + 5);
-      
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(...colors.primary);
-      
-      const discussionNotes = [
-        '• Underline one advantage and one constraint that surprised you.',
-        '• Which item would most affect customers or reputation if mishandled?',
-        '• What\'s the smallest next step to address a key constraint?'
-      ];
-      
-      let noteY = currentY + 12;
-      discussionNotes.forEach(note => {
-        const lines = safeSplitTextToSize(doc, note, contentWidth - 10);
-        doc.text(lines, margin + 5, noteY);
-        noteY += lines.length * 4 + 2;
-      });
-      
-      currentY = noteY + 15;
-    }
-    
-    // Disclaimer with proper overflow protection
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'italic');
-    doc.setTextColor(...hexToRgb('#666666'));
-    
-    const disclaimerText = disclaimer ? 
-      `DISCLAIMER: ${disclaimer}\n\nThis brief provides a contextual reflection based on your organizational profile. It is educational content designed to facilitate strategic discussion, not prescriptive recommendations or compliance guidance.` :
-      'This brief provides a contextual reflection based on your organizational profile. It is educational content designed to facilitate strategic discussion, not prescriptive recommendations or compliance guidance.';
-    
-    const disclaimerLines = safeSplitTextToSize(doc, disclaimerText, contentWidth);
-    const disclaimerHeight = disclaimerLines.length * 3;
-    
-    // Use actual computed height for overflow check
-    checkPageOverflow(disclaimerHeight + 5); // Add small buffer
-    
-    doc.text(disclaimerLines, margin, currentY);
-    currentY += disclaimerHeight;
-    
-    // Final page footer (only add if not already added by page break)
-    if (currentY < maxY) {
-      addPageFooter();
-    }
-    
-    // Generate and download PDF
-    const pdfBlob = doc.output('blob');
-    
-    if (!pdfBlob || pdfBlob.size === 0) {
-      throw new Error('Failed to generate PDF: Empty or invalid PDF blob');
-    }
-    
-    const url = URL.createObjectURL(pdfBlob);
-    
-    const link = document.createElement('a');
-    link.href = url;
-    const filename = mirror ? 
-      `cortex-situation-assessment-2.0-${data.assessmentId}.pdf` : 
-      `cortex-situation-assessment-${data.assessmentId}.pdf`;
-    link.download = filename;
-    link.style.display = 'none';
-    document.body.appendChild(link);
-    
-    // Trigger download
-    link.click();
-    
-    // Cleanup
-    setTimeout(() => {
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    }, 100);
-    
-  } catch (error) {
-    // Enhanced error handling with more specific error types
-    if (error instanceof Error) {
-      // Check for specific error types to provide better user guidance
-      if (error.message.includes('jsPDF') || error.message.includes('PDF library')) {
-        throw new Error(`${error.message} Please check your internet connection and try again.`);
-      } else if (error.message.includes('Missing required data') || error.message.includes('Missing context insight')) {
-        throw new Error(`${error.message} Please refresh the page and complete the assessment again.`);
-      } else {
-        throw new Error(`PDF generation failed: ${error.message}. If this problem persists, please contact support.`);
-      }
-    } else {
-      throw new Error('PDF generation failed: An unexpected error occurred. Please try again or contact support if this persists.');
-    }
-  }
-}
-
-export function exportJSONResults(results: AssessmentResults): void {
-  const dataStr = JSON.stringify(results, null, 2);
-  const blob = new Blob([dataStr], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `cortex-assessment-${Date.now()}.json`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-}
-
-// Options Studio Export Functions
+// Options Studio export (unchanged)
 export interface OptionsStudioData extends OptionsStudioSession {
   contextProfile: ContextProfile;
   selectedOptions: ExtendedOptionCard[];
@@ -1008,512 +60,7 @@ export interface OptionsStudioData extends OptionsStudioSession {
   cautionMessages?: string[];
 }
 
-export async function handleExportPDF(sessionData: OptionsStudioData, assessmentId: string): Promise<void> {
-  try {
-    // Validate required data
-    if (!sessionData || !sessionData.contextProfile || !assessmentId) {
-      throw new Error('Missing required data for PDF generation');
-    }
-
-    // Attempt to load jsPDF
-    let jsPDF;
-    try {
-      const jsPDFModule = await import('jspdf');
-      jsPDF = jsPDFModule.jsPDF;
-      
-      if (!jsPDF) {
-        throw new Error('jsPDF not available');
-      }
-    } catch (importError) {
-      console.error('Failed to import jsPDF:', importError);
-      throw new Error('PDF library failed to load. Please try refreshing the page or contact support if this persists.');
-    }
-
-    // Create new PDF document
-    const doc = new jsPDF('p', 'mm', 'a4');
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 20;
-    const contentWidth = pageWidth - (margin * 2);
-    const maxY = pageHeight - 30;
-    
-    let currentY = margin;
-
-    // Brand Colors (RGB tuples for jsPDF compatibility)
-    const primaryColor = hexToRgb('#1a1a1a');
-    const accentColor = hexToRgb('#6366f1');
-    const lightGray = hexToRgb('#f3f4f6');
-    const whiteColor = [255, 255, 255] as [number, number, number];
-
-    // Colors object for consistency with situation assessment
-    const colors = {
-      primary: primaryColor,
-      secondary: hexToRgb('#666666'),
-      accent: accentColor,
-      muted: lightGray
-    };
-
-    // Add page footer function for options studio
-    const addPageFooter = () => {
-      const footerY = pageHeight - 15;
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(...colors.secondary);
-      doc.text('CORTEX™ Options Studio Report', margin, footerY);
-      doc.text(`Page ${doc.getCurrentPageInfo().pageNumber}`, pageWidth - margin - 15, footerY);
-    };
-
-    // Enhanced page overflow check
-    const checkPageOverflow = (additionalHeight: number): boolean => {
-      if (currentY + additionalHeight > maxY) {
-        addPageFooter();
-        doc.addPage();
-        currentY = margin;
-        return true;
-      }
-      return false;
-    };
-
-    // Header
-    doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-    doc.rect(0, 0, pageWidth, 35, 'F');
-    
-    doc.setTextColor(whiteColor[0], whiteColor[1], whiteColor[2]);
-    doc.setFontSize(24);
-    doc.setFont('helvetica', 'bold');
-    doc.text('CORTEX™', margin, 20);
-    
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Options Studio Report', margin, 28);
-    
-    // Date and Assessment ID
-    doc.setFontSize(10);
-    const dateText = `Generated: ${new Date().toLocaleDateString()}`;
-    const idText = `Assessment ID: ${assessmentId}`;
-    doc.text(dateText, pageWidth - margin - doc.getTextWidth(dateText), 20);
-    doc.text(idText, pageWidth - margin - doc.getTextWidth(idText), 28);
-    
-    currentY = 50;
-    doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-
-    // Use Case Section
-    if (sessionData.useCase) {
-      checkPageOverflow(25);
-      doc.setFontSize(16);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
-      doc.text('USE CASE', margin, currentY);
-      currentY += 10;
-      
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-      const useCaseLines = safeSplitTextToSize(doc, sessionData.useCase, contentWidth);
-      useCaseLines.forEach((line: string) => {
-        checkPageOverflow(6);
-        doc.text(line, margin, currentY);
-        currentY += 5;
-      });
-      currentY += 10;
-    }
-
-    // Goals Section
-    if (sessionData.goals && sessionData.goals.length > 0) {
-      checkPageOverflow(20);
-      doc.setFontSize(16);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
-      doc.text('SELECTED GOALS', margin, currentY);
-      currentY += 10;
-      
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(...colors.primary);
-      sessionData.goals.forEach(goal => {
-        checkPageOverflow(6);
-        doc.text(`• ${goal}`, margin + 5, currentY);
-        currentY += 5;
-      });
-      currentY += 10;
-    }
-
-    // Selected Options Section
-    if (sessionData.selectedOptions && sessionData.selectedOptions.length > 0) {
-      checkPageOverflow(25);
-      doc.setFontSize(16);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
-      doc.text('COMPARED OPTIONS', margin, currentY);
-      currentY += 10;
-      
-      sessionData.selectedOptions.forEach((option, index) => {
-        checkPageOverflow(30);
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-        doc.text(`${index + 1}. ${option.title || option.id}`, margin, currentY);
-        currentY += 6;
-        
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        const descLines = safeSplitTextToSize(doc, option.shortDescription || '', contentWidth - 10);
-        descLines.forEach((line: string) => {
-          checkPageOverflow(5);
-          doc.text(line, margin + 5, currentY);
-          currentY += 4;
-        });
-        currentY += 8;
-      });
-    }
-
-    // Emphasized Lenses
-    if (sessionData.emphasizedLenses && sessionData.emphasizedLenses.length > 0) {
-      checkPageOverflow(20);
-      doc.setFontSize(16);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
-      doc.text('EMPHASIZED LENSES FOR YOUR CONTEXT', margin, currentY);
-      currentY += 10;
-      
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(...colors.primary);
-      sessionData.emphasizedLenses.forEach(lens => {
-        checkPageOverflow(6);
-        doc.text(`• ${lens}`, margin + 5, currentY);
-        currentY += 5;
-      });
-      currentY += 10;
-    }
-
-    // Misconception Results Section
-    if (sessionData.misconceptionResponses && Object.keys(sessionData.misconceptionResponses).length > 0) {
-      checkPageOverflow(30);
-      doc.setFontSize(16);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
-      doc.text('MISCONCEPTION CHECK RESULTS', margin, currentY);
-      currentY += 10;
-      
-      // Use shared source of truth for misconception questions
-      const misconceptionData = MISCONCEPTION_QUESTIONS.reduce((acc, q) => {
-        acc[q.id] = q;
-        return acc;
-      }, {} as Record<string, typeof MISCONCEPTION_QUESTIONS[0]>);
-      
-      Object.entries(sessionData.misconceptionResponses).forEach(([questionId, userAnswer]) => {
-        const questionData = misconceptionData[questionId as keyof typeof misconceptionData];
-        if (questionData) {
-          checkPageOverflow(20);
-          
-          doc.setFontSize(11);
-          doc.setFont('helvetica', 'bold');
-          doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-          const questionLines = safeSplitTextToSize(doc, questionData.question, contentWidth - 10);
-          questionLines.forEach((line: string) => {
-            checkPageOverflow(5);
-            doc.text(line, margin + 5, currentY);
-            currentY += 4;
-          });
-          currentY += 2;
-          
-          // Show user's answer and correctness
-          doc.setFontSize(9);
-          doc.setFont('helvetica', 'normal');
-          const isCorrect = userAnswer === questionData.correctAnswer;
-          const resultText = `Your answer: ${userAnswer ? 'True' : 'False'} • ${isCorrect ? '[CORRECT]' : '[INCORRECT]'}`;
-          doc.setTextColor(...(isCorrect ? hexToRgb('#16a34a') : hexToRgb('#dc2626')));
-          doc.text(resultText, margin + 10, currentY);
-          currentY += 5;
-          
-          // Show explanation
-          doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-          doc.setFont('helvetica', 'italic');
-          const explanationLines = safeSplitTextToSize(doc, questionData.explanation, contentWidth - 20);
-          explanationLines.forEach((line: string) => {
-            checkPageOverflow(4);
-            doc.text(line, margin + 10, currentY);
-            currentY += 3.5;
-          });
-          currentY += 6;
-        }
-      });
-      currentY += 5;
-    }
-
-    // Seven Lenses Comparison Table
-    if (sessionData.selectedOptions && sessionData.selectedOptions.length > 0) {
-      checkPageOverflow(40);
-      doc.setFontSize(16);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
-      doc.text('SEVEN LENSES COMPARISON', margin, currentY);
-      currentY += 15;
-      
-      const lensLabels = ['Speed-to-Value', 'Customization & Control', 'Data Leverage', 'Risk & Compliance Load', 'Operational Burden', 'Portability & Lock-in', 'Cost Shape'];
-      const cellWidth = contentWidth / (lensLabels.length + 1);
-      const cellHeight = 8;
-      
-      // Table header
-      doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
-      doc.rect(margin, currentY, cellWidth, cellHeight, 'F');
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-      doc.text('Option', margin + 2, currentY + 5.5);
-      
-      lensLabels.forEach((label, index) => {
-        const x = margin + cellWidth + (index * cellWidth);
-        const isEmphasized = sessionData.emphasizedLenses && sessionData.emphasizedLenses.includes(label);
-        doc.setFillColor(...(isEmphasized ? hexToRgb('#dbeafe') : lightGray));
-        doc.rect(x, currentY, cellWidth, cellHeight, 'F');
-        
-        // Split long labels across lines
-        const words = label.split(' ');
-        if (words.length > 1) {
-          doc.setFontSize(7);
-          doc.text(words[0], x + 2, currentY + 3.5);
-          doc.text(words.slice(1).join(' '), x + 2, currentY + 6);
-        } else {
-          doc.setFontSize(8);
-          doc.text(label, x + 2, currentY + 5.5);
-        }
-      });
-      
-      currentY += cellHeight;
-      
-      // Table rows for each option
-      sessionData.selectedOptions.forEach((option) => {
-        checkPageOverflow(cellHeight + 2);
-        
-        // Option name
-        doc.setFillColor(whiteColor[0], whiteColor[1], whiteColor[2]);
-        doc.rect(margin, currentY, cellWidth, cellHeight, 'F');
-        doc.setDrawColor(0, 0, 0);
-        doc.rect(margin, currentY, cellWidth, cellHeight, 'S');
-        
-        doc.setFontSize(7);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-        const optionTitleLines = safeSplitTextToSize(doc, option.title || option.id || '', cellWidth - 4);
-        optionTitleLines.slice(0, 2).forEach((line: string, lineIndex: number) => {
-          doc.text(line, margin + 2, currentY + 3 + (lineIndex * 2.5));
-        });
-        
-        // Lens values
-        const lensValues = option.lensValues || option.axes || {};
-        const lensKeyMap = {
-          'Speed-to-Value': 'speed',
-          'Customization & Control': 'control',
-          'Data Leverage': 'dataLeverage',
-          'Risk & Compliance Load': 'riskLoad',
-          'Operational Burden': 'opsBurden',
-          'Portability & Lock-in': 'portability',
-          'Cost Shape': 'costShape'
-        };
-        
-        lensLabels.forEach((label, index) => {
-          const x = margin + cellWidth + (index * cellWidth);
-          const lensKey = lensKeyMap[label as keyof typeof lensKeyMap];
-          const value = (lensValues as any)[lensKey] || 0;
-          
-          const isEmphasized = sessionData.emphasizedLenses && sessionData.emphasizedLenses.includes(label);
-          doc.setFillColor(...(isEmphasized ? hexToRgb('#dbeafe') : whiteColor));
-          doc.rect(x, currentY, cellWidth, cellHeight, 'F');
-          doc.rect(x, currentY, cellWidth, cellHeight, 'S');
-          
-          // Value and dots
-          doc.setFontSize(10);
-          doc.setFont('helvetica', 'bold');
-          doc.setTextColor(...(isEmphasized ? hexToRgb('#1e40af') : primaryColor));
-          doc.text(value.toString(), x + cellWidth/2 - 3, currentY + 4);
-          
-          // Small dots to represent value (fixed the corrupted loop)
-          for (let i = 0; i < 4; i++) {
-            const dotX = x + 4 + (i * 3);
-            const dotY = currentY + 6;
-            doc.setFillColor(...(i < value ? (isEmphasized ? hexToRgb('#1e40af') : primaryColor) : hexToRgb('#d1d5db')));
-            doc.circle(dotX, dotY, 0.8, 'F');
-          }
-        });
-        
-        currentY += cellHeight;
-      });
-      
-      currentY += 10;
-    }
-    
-    // Caution Messages
-    if (sessionData.cautionMessages && sessionData.cautionMessages.length > 0) {
-      checkPageOverflow(25);
-      doc.setFontSize(16);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
-      doc.text('CONTEXT-BASED CAUTIONS', margin, currentY);
-      currentY += 10;
-      
-      doc.setFillColor(...hexToRgb('#fef3c7'));
-      doc.rect(margin, currentY - 5, contentWidth, sessionData.cautionMessages.length * 8 + 10, 'F');
-      
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(...hexToRgb('#92400e'));
-      sessionData.cautionMessages.forEach(message => {
-        const messageLines = safeSplitTextToSize(doc, `⚠ ${message}`, contentWidth - 10);
-        messageLines.forEach((line: string) => {
-          checkPageOverflow(5);
-          doc.text(line, margin + 5, currentY);
-          currentY += 4;
-        });
-        currentY += 2;
-      });
-      currentY += 8;
-    }
-
-    // Strategic Reflections
-    if (sessionData.reflectionAnswers && Object.keys(sessionData.reflectionAnswers).length > 0) {
-      checkPageOverflow(25);
-      doc.setFontSize(16);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
-      doc.text('STRATEGIC REFLECTIONS', margin, currentY);
-      currentY += 10;
-      
-      Object.entries(sessionData.reflectionAnswers).forEach(([prompt, answer], index) => {
-        if (answer && answer.trim()) {
-          checkPageOverflow(20);
-          doc.setFontSize(12);
-          doc.setFont('helvetica', 'bold');
-          doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-          const promptLines = safeSplitTextToSize(doc, `${index + 1}. ${prompt}`, contentWidth - 10);
-          promptLines.forEach((line: string) => {
-            checkPageOverflow(5);
-            doc.text(line, margin, currentY);
-            currentY += 5;
-          });
-          currentY += 2;
-          
-          doc.setFontSize(10);
-          doc.setFont('helvetica', 'normal');
-          const answerLines = safeSplitTextToSize(doc, answer, contentWidth - 10);
-          answerLines.forEach((line: string) => {
-            checkPageOverflow(4);
-            doc.text(line, margin + 5, currentY);
-            currentY += 4;
-          });
-          currentY += 8;
-        }
-      });
-    }
-
-    // Session Summary Box
-    checkPageOverflow(30);
-    doc.setFillColor(...hexToRgb('#f8fafc'));
-    doc.rect(margin, currentY, contentWidth, 25, 'F');
-    doc.setDrawColor(...hexToRgb('#e2e8f0'));
-    doc.rect(margin, currentY, contentWidth, 25, 'S');
-    
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
-    doc.text('SESSION SUMMARY', margin + 5, currentY + 8);
-    
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-    const summaryText = `Options explored: ${sessionData.selectedOptions?.length || 0} • Misconceptions tested: ${Object.keys(sessionData.misconceptionResponses || {}).length} • Emphasized lenses: ${sessionData.emphasizedLenses?.length || 0} • Completed: ${sessionData.completed ? 'Yes' : 'No'}`;
-    const summaryLines = safeSplitTextToSize(doc, summaryText, contentWidth - 10);
-    summaryLines.forEach((line: string, index: number) => {
-      doc.text(line, margin + 5, currentY + 14 + (index * 4));
-    });
-    
-    currentY += 35;
-
-    // Footer
-    const footerY = pageHeight - 15;
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...hexToRgb('#888888'));
-    doc.text('© 2024 CORTEX™ AI Strategic Maturity Program - Options Studio', margin, footerY);
-    const exportedText = `Exported: ${new Date(sessionData.exportedAt).toLocaleString()}`;
-    doc.text(exportedText, pageWidth - margin - doc.getTextWidth(exportedText), footerY);
-
-    // Generate and download PDF
-    const pdfBlob = doc.output('blob');
-    
-    if (!pdfBlob || pdfBlob.size === 0) {
-      throw new Error('Failed to generate PDF: Empty or invalid PDF blob');
-    }
-    
-    const url = URL.createObjectURL(pdfBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `cortex-options-studio-${assessmentId}.pdf`;
-    link.style.display = 'none';
-    document.body.appendChild(link);
-    
-    // Trigger download
-    link.click();
-    
-    // Cleanup
-    setTimeout(() => {
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    }, 100);
-
-  } catch (error) {
-    if (error instanceof Error) {
-      if (error.message.includes('jsPDF') || error.message.includes('PDF library')) {
-        throw new Error(`${error.message} Please check your internet connection and try again.`);
-      } else if (error.message.includes('Missing required data')) {
-        throw new Error(`${error.message} Please complete the Options Studio session and try again.`);
-      } else {
-        throw new Error(`PDF generation failed: ${error.message}. If this problem persists, please contact support.`);
-      }
-    } else {
-      throw new Error('PDF generation failed: An unexpected error occurred. Please try again or contact support if this persists.');
-    }
-  }
-}
-
-export function handleExportJSON(sessionData: OptionsStudioData, filename: string): void {
-  try {
-    const exportData = {
-      ...sessionData,
-      version: '1.0',
-      exportMetadata: {
-        exportedAt: sessionData.exportedAt,
-        dataStructureVersion: '1.0',
-        sourceApplication: 'CORTEX Options Studio'
-      }
-    };
-    
-    const dataStr = JSON.stringify(exportData, null, 2);
-    const blob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    link.style.display = 'none';
-    document.body.appendChild(link);
-    
-    // Trigger download
-    link.click();
-    
-    // Cleanup
-    setTimeout(() => {
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    }, 100);
-    
-  } catch (error) {
-    throw new Error('Failed to export JSON data. Please try again.');
-  }
-}
-
-// Enhanced executive PDF export with insights integration
+// Enhanced executive export (unchanged)
 export interface EnhancedAssessmentResults extends AssessmentResults {
   insights?: ExecutiveInsight[];
   priorities?: ActionPriority[];
@@ -1521,348 +68,714 @@ export interface EnhancedAssessmentResults extends AssessmentResults {
   averageScore?: number;
 }
 
-export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults, assessmentId: string): Promise<void> {
-  try {
-    // Validate required data
-    if (!data || !data.contextProfile || !data.pillarScores || !assessmentId) {
-      throw new Error('Missing required data for executive PDF generation');
+/* ====================================================================================
+   LIGHTWEIGHT LAYOUT SYSTEM
+   - crisp baseline grid
+   - robust wrapping
+   - section-aware page breaking
+==================================================================================== */
+
+type RGB = [number, number, number];
+
+const PALETTE = {
+  ink: hexToRgb("#0F172A"),            // slate-900
+  inkSubtle: hexToRgb("#334155"),      // slate-700
+  accent: hexToRgb("#6366F1"),         // indigo-500
+  success: hexToRgb("#22C55E"),        // green-500
+  warning: hexToRgb("#F59E0B"),        // amber-500
+  danger: hexToRgb("#EF4444"),         // red-500
+  line: hexToRgb("#E5E7EB"),           // gray-200
+  tint: hexToRgb("#F8FAFC"),           // slate-50
+  white: [255, 255, 255] as RGB,
+  black: [0, 0, 0] as RGB
+};
+
+const TYPO = {
+  hero:   { size: 24, weight: "bold" as const },
+  h1:     { size: 16, weight: "bold" as const },
+  h2:     { size: 13, weight: "bold" as const },
+  h3:     { size: 11, weight: "bold" as const },
+  body:   { size: 10, weight: "normal" as const },
+  small:  { size: 9,  weight: "normal" as const },
+  caption:{ size: 8,  weight: "normal" as const }
+};
+
+// Baseline + margins
+const PAGE = {
+  margin: 24,             // outer margin
+  footer: 18,             // reserved for footer
+  headerBar: 44,          // dark intro band on page 1
+  line: 4.2               // baseline “leading”
+};
+
+// Shape helpers rely on jsPDF's built-ins only (no plugins)
+function setFill(doc: any, c: RGB) { doc.setFillColor(c[0], c[1], c[2]); }
+function setStroke(doc: any, c: RGB) { doc.setDrawColor(c[0], c[1], c[2]); }
+function setText(doc: any, c: RGB) { doc.setTextColor(c[0], c[1], c[2]); }
+function setFont(doc: any, t: { size: number; weight: "bold" | "normal" }) {
+  doc.setFont("helvetica", t.weight);
+  doc.setFontSize(t.size);
+}
+
+// Converts hex to RGB for jsPDF
+function hexToRgb(hex: string): RGB {
+  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return m ? [parseInt(m[1],16), parseInt(m[2],16), parseInt(m[3],16)] as RGB : [0,0,0];
+}
+
+// Text normalization to prevent spaced-out glyph artifact
+function normalizeText(s: any): string {
+  if (!s) return "";
+  const t = String(s)
+    .replace(/\u00A0/g, " ")
+    .replace(/[\u2000-\u200B\u202F\u205F\u2060]/g, " ")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/\s+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+  // Collapse “char space char space …” patterns
+  if (/^(?:\S\s){8,}\S$/.test(t)) {
+    return t.replace(/\s+/g, "");
+  }
+  return t;
+}
+
+// Reliable wrap with sanity checks
+function wrap(doc: any, text: string, width: number): string[] {
+  const clean = normalizeText(text);
+  if (!clean) return [];
+  const lines = doc.splitTextToSize(clean, width);
+  return Array.isArray(lines) ? lines.map((x: any) => String(x)) : [String(lines)];
+}
+
+// Running header (page > 1)
+function runningHeader(doc: any, pageWidth: number, title: string) {
+  const y = PAGE.margin - 8;
+  setStroke(doc, PALETTE.line);
+  doc.line(PAGE.margin, y + 2, pageWidth - PAGE.margin, y + 2);
+  setFont(doc, TYPO.small);
+  setText(doc, PALETTE.inkSubtle);
+  doc.text(title, PAGE.margin, y);
+}
+
+// Footer pass after content is placed
+function finalizeFooters(doc: any, labelLeft: string) {
+  const n = doc.getNumberOfPages();
+  for (let i = 1; i <= n; i++) {
+    doc.setPage(i);
+    const w = doc.internal.pageSize.getWidth();
+    const y = doc.internal.pageSize.getHeight() - 10;
+    setFont(doc, TYPO.caption);
+    setText(doc, PALETTE.inkSubtle);
+    doc.text(labelLeft, PAGE.margin, y);
+    const pageText = `Page ${i} of ${n}`;
+    doc.text(pageText, w - PAGE.margin - doc.getTextWidth(pageText), y);
+  }
+}
+
+function ensureJsPDF() {
+  return import("jspdf").then(m => {
+    const J = (m as any).jsPDF;
+    if (!J) throw new Error("jsPDF not available");
+    return J;
+  });
+}
+
+function newDoc(J: any) {
+  const doc = new J("p", "mm", "a4");
+  doc.setProperties({
+    title: "CORTEX Brief",
+    subject: "Executive PDF",
+    creator: "CORTEX",
+    author: "CORTEX"
+  });
+  return doc;
+}
+
+function bounds(doc: any) {
+  const pw = doc.internal.pageSize.getWidth();
+  const ph = doc.internal.pageSize.getHeight();
+  const x = PAGE.margin;
+  const y = PAGE.margin;
+  const w = pw - PAGE.margin * 2;
+  const h = ph - PAGE.margin - PAGE.footer;
+  return { pw, ph, x, y, w, h };
+}
+
+function addPageIfNeeded(doc: any, needed: number, cursorY: number, titleForRunHeader?: string) {
+  const { ph } = doc.internal.pageSize;
+  const maxY = ph - PAGE.footer - PAGE.margin; // usable bottom
+  if (cursorY + needed <= maxY) return { cursorY, added: false };
+  doc.addPage();
+  const { pw } = doc.internal.pageSize;
+  if (titleForRunHeader) runningHeader(doc, pw, titleForRunHeader);
+  return { cursorY: PAGE.margin, added: true };
+}
+
+function drawSectionTitle(doc: any, title: string, y: number) {
+  setFont(doc, TYPO.h1);
+  setText(doc, PALETTE.accent);
+  doc.text(title, PAGE.margin, y);
+  return y + PAGE.line * 4;
+}
+
+function drawSubTitle(doc: any, title: string, y: number) {
+  setFont(doc, TYPO.h2);
+  setText(doc, PALETTE.ink);
+  doc.text(title, PAGE.margin, y);
+  return y + PAGE.line * 3;
+}
+
+function drawBody(doc: any, text: string, maxWidth: number, y: number) {
+  setFont(doc, TYPO.body);
+  setText(doc, PALETTE.ink);
+  const lines = wrap(doc, text, maxWidth);
+  for (const ln of lines) {
+    doc.text(ln, PAGE.margin, y);
+    y += PAGE.line;
+  }
+  return y;
+}
+
+function drawBullets(doc: any, items: string[], maxWidth: number, y: number) {
+  setFont(doc, TYPO.body);
+  setText(doc, PALETTE.ink);
+  const indent = 4.5;
+  for (const it of (items || [])) {
+    const bullet = "• ";
+    const lines = wrap(doc, bullet + normalizeText(it), maxWidth - indent);
+    for (let i = 0; i < lines.length; i++) {
+      const line = i === 0 ? lines[i] : "  " + lines[i];
+      doc.text(line, PAGE.margin + indent, y);
+      y += PAGE.line;
     }
+    y += 1.5;
+  }
+  return y;
+}
 
-    // Generate enhanced insights if not provided
-    let insights = data.insights;
-    let priorities = data.priorities;
-    
-    if (!insights || !priorities) {
-      const generatedInsights = generateEnhancedExecutiveInsights(
-        data.pillarScores, 
-        data.triggeredGates || [], 
-        data.contextProfile
-      );
-      insights = generatedInsights.insights;
-      priorities = generatedInsights.priorities;
+function drawCard(doc: any, x: number, y: number, w: number, header: string, bodyLines: string[][]) {
+  // background
+  setFill(doc, PALETTE.tint);
+  doc.rect(x, y - 3, w, 6 + bodyLines.reduce((acc, ls) => acc + (ls.length * PAGE.line) + 1.5, 0) + 2, "F");
+  // header
+  setFont(doc, TYPO.h3);
+  setText(doc, PALETTE.ink);
+  doc.text(header, x + 3, y + 1);
+  y += PAGE.line * 1.8;
+  // divider
+  setStroke(doc, PALETTE.line);
+  doc.line(x + 3, y - 2, x + w - 3, y - 2);
+  // lines
+  setFont(doc, TYPO.small);
+  for (const lines of bodyLines) {
+    for (const ln of lines) {
+      doc.text(ln, x + 3, y);
+      y += PAGE.line - 0.1;
     }
+    y += 1.2;
+  }
+  return y;
+}
 
-    // Load jsPDF
-    let jsPDF;
-    try {
-      const jsPDFModule = await import('jspdf');
-      jsPDF = jsPDFModule.jsPDF;
-      
-      if (!jsPDF) {
-        throw new Error('jsPDF not available');
-      }
-    } catch (importError) {
-      console.error('Failed to import jsPDF:', importError);
-      throw new Error('PDF library failed to load. Please try refreshing the page.');
+function twoColumn(doc: any, y: number) {
+  const { x, w } = bounds(doc);
+  const gap = 8;
+  const colW = (w - gap) / 2;
+  const left = { x, w: colW };
+  const right = { x: x + colW + gap, w: colW };
+  return { left, right, y };
+}
+
+function formatKV(doc: any, label: string, value?: string | number) {
+  const v = value ?? "—";
+  return wrap(doc, `${label}: ${String(v)}`, 999); // wrap later in card
+}
+
+function pillarLabel(id: string) {
+  const key = id?.toUpperCase?.() as keyof typeof CORTEX_PILLARS;
+  return (CORTEX_PILLARS?.[key]?.name as string) || id;
+}
+
+function drawScoreBars(doc: any, scores: Record<string, number>, y: number) {
+  const { x, w } = bounds(doc);
+  const max = 4;
+  const rowH = 8;
+  const barW = w * 0.55;
+  const labelW = w - barW - 6;
+
+  setFont(doc, TYPO.h2);
+  setText(doc, PALETTE.ink);
+  doc.text("Domain Performance", x, y);
+  y += PAGE.line * 2.5;
+
+  Object.entries(scores).forEach(([k, raw]) => {
+    const score = Math.max(0, Math.min(max, Number(raw)));
+    // label
+    setFont(doc, TYPO.small);
+    setText(doc, PALETTE.inkSubtle);
+    const label = pillarLabel(k);
+    doc.text(label, x, y + 3);
+    // bar
+    const bx = x + labelW;
+    const bw = barW;
+    setFill(doc, PALETTE.line);
+    doc.rect(bx, y, bw, 4, "F");
+    const color = score >= 3 ? PALETTE.success : score >= 2 ? PALETTE.warning : PALETTE.danger;
+    setFill(doc, color);
+    doc.rect(bx, y, (score / max) * bw, 4, "F");
+    // number
+    setFont(doc, TYPO.caption);
+    setText(doc, PALETTE.ink);
+    const num = score.toFixed(1);
+    doc.text(num, bx + bw + 2, y + 3);
+    y += rowH;
+  });
+
+  return y + 2;
+}
+
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ====================================================================================
+   1) SITUATION ASSESSMENT BRIEF
+==================================================================================== */
+
+export async function generateSituationAssessmentBrief(data: SituationAssessmentData): Promise<void> {
+  if (!data?.contextProfile || !data?.assessmentId) {
+    throw new Error("Missing required data for PDF generation");
+  }
+
+  const hasLegacy = data.insight && data.disclaimer;
+  const hasMirror = data.mirror && (data.mirror.headline || data.mirror.insight);
+  if (!hasLegacy && !hasMirror) {
+    throw new Error("Missing context insight data for PDF generation");
+  }
+
+  const J = await ensureJsPDF();
+  const doc = newDoc(J);
+  const { pw } = bounds(doc);
+
+  // Page 1 Header Bar
+  setFill(doc, PALETTE.ink);
+  doc.rect(0, 0, pw, PAGE.headerBar, "F");
+  setText(doc, PALETTE.white);
+  setFont(doc, TYPO.hero);
+  doc.text("CORTEX™", PAGE.margin, 18);
+  setFont(doc, TYPO.body);
+  doc.text("EXECUTIVE AI READINESS ASSESSMENT", PAGE.margin, 26);
+
+  // Right meta
+  const dateText = `Generated: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`;
+  const idText = `ID: ${String(data.assessmentId).slice(0, 8).toUpperCase()}`;
+  doc.text(dateText, pw - PAGE.margin - doc.getTextWidth(dateText), 16);
+  doc.text(idText,  pw - PAGE.margin - doc.getTextWidth(idText),  22);
+
+  // Status chip
+  setFill(doc, PALETTE.success);
+  doc.circle(pw - PAGE.margin - 8, 30, 2, "F");
+  setFont(doc, TYPO.small);
+  doc.text("COMPLETED", pw - PAGE.margin - 25, 31.5);
+
+  // Body start
+  let y = PAGE.headerBar + 10;
+
+  // Executive Summary
+  y = drawSectionTitle(doc, "EXECUTIVE SUMMARY", y);
+  if (data.mirror?.headline) {
+    setFont(doc, TYPO.h2);
+    setText(doc, PALETTE.ink);
+    y = drawBody(doc, data.mirror.headline, bounds(doc).w, y);
+    y += PAGE.line * 0.5;
+  }
+  const insightText = hasMirror ? data.mirror?.insight : data.insight?.split("\n\n")?.[0];
+  if (insightText) {
+    y = drawBody(doc, insightText, bounds(doc).w, y);
+  }
+  y += PAGE.line * 1;
+
+  // Two-column section: Strategic Context + Organizational Context
+  const runHeader = "CORTEX — Situation Assessment";
+  const col = twoColumn(doc, y);
+  let leftY = col.y;
+  let rightY = col.y;
+
+  // Left card: Strategic Context (always present)
+  leftY = drawSubTitle(doc, "Strategic Context", leftY);
+  leftY += 2;
+  const leftLines = wrap(doc, hasMirror ? (data.mirror?.insight || "") : (data.insight?.split("\n\n")?.[1] || ""), col.left.w);
+  for (const ln of leftLines) {
+    ({ cursorY: leftY } = addPageIfNeeded(doc, PAGE.line, leftY, runHeader));
+    setFont(doc, TYPO.body); setText(doc, PALETTE.ink);
+    doc.text(ln, col.left.x, leftY);
+    leftY += PAGE.line;
+  }
+
+  // Right column: Organizational Context as compact cards
+  rightY = drawSubTitle(doc, "Organizational Context", rightY);
+  rightY += 2;
+
+  const cp = data.contextProfile;
+  const buckets: { title: string; items: (string[])[] }[] = [
+    {
+      title: "Risk & Compliance",
+      items: [
+        formatKV(doc, "Regulatory Intensity", cp?.regulatory_intensity),
+        formatKV(doc, "Data Sensitivity", cp?.data_sensitivity),
+        formatKV(doc, "Safety Criticality", cp?.safety_criticality),
+        formatKV(doc, "Brand Exposure", cp?.brand_exposure)
+      ]
+    },
+    {
+      title: "Operations & Performance",
+      items: [
+        formatKV(doc, "Clock Speed", cp?.clock_speed),
+        formatKV(doc, "Edge Latency", cp?.latency_edge),
+        formatKV(doc, "Scale & Throughput", cp?.scale_throughput)
+      ]
+    },
+    {
+      title: "Strategic Assets",
+      items: [
+        formatKV(doc, "Data Advantage", cp?.data_advantage),
+        formatKV(doc, "Build Readiness", cp?.build_readiness),
+        formatKV(doc, "FinOps Priority", cp?.finops_priority)
+      ]
+    },
+    {
+      title: "Operational Constraints",
+      items: [
+        formatKV(doc, "Procurement Constraints", cp?.procurement_constraints),
+        formatKV(doc, "Edge Operations", cp?.edge_operations)
+      ]
     }
+  ];
 
-    // Create PDF document
-    const doc = new jsPDF('p', 'mm', 'a4');
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 24;
-    const contentWidth = pageWidth - (margin * 2);
-    const maxY = pageHeight - 40;
-    
-    let currentY = margin;
-    
-    // Executive Color Palette
-    const colors = {
-      primary: [15, 23, 42] as [number, number, number],
-      secondary: [51, 65, 85] as [number, number, number],
-      accent: [99, 102, 241] as [number, number, number],
-      success: [34, 197, 94] as [number, number, number],
-      warning: [245, 158, 11] as [number, number, number],
-      error: [239, 68, 68] as [number, number, number],
-      surface: [248, 250, 252] as [number, number, number],
-      white: [255, 255, 255] as [number, number, number],
-      border: [226, 232, 240] as [number, number, number]
-    };
+  for (const b of buckets) {
+    // estimate height and force break if needed
+    ({ cursorY: rightY } = addPageIfNeeded(doc, 26, rightY, runHeader));
+    const body = b.items.map(arr => wrap(doc, arr.join(" "), col.right.w - 6));
+    rightY = drawCard(doc, col.right.x, rightY, col.right.w, b.title, body);
+    rightY += 2;
+  }
 
-    // Typography
-    const typography = {
-      hero: { size: 28, weight: 'bold' as const },
-      h1: { size: 22, weight: 'bold' as const },
-      h2: { size: 16, weight: 'bold' as const },
-      h3: { size: 14, weight: 'bold' as const },
-      body: { size: 11, weight: 'normal' as const },
-      small: { size: 9, weight: 'normal' as const }
-    };
+  y = Math.max(leftY, rightY) + PAGE.line * 1.5;
 
-    // Helper functions
-    const addPageFooter = () => {
-      const footerY = pageHeight - 25;
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(...colors.secondary);
-      doc.text('CORTEX™ Executive AI Readiness Assessment', margin, footerY);
-      doc.text(`Page ${doc.getCurrentPageInfo().pageNumber}`, pageWidth - margin - 15, footerY);
-    };
+  // Leadership Guidance (two buckets)
+  ({ cursorY: y } = addPageIfNeeded(doc, 26, y, runHeader));
+  y = drawSectionTitle(doc, "LEADERSHIP GUIDANCE", y);
 
-    const checkPageOverflow = (additionalHeight: number): boolean => {
-      if (currentY + additionalHeight > maxY) {
-        addPageFooter();
-        doc.addPage();
-        currentY = margin;
-        return true;
-      }
-      return false;
-    };
+  const actions = hasMirror ? (data.mirror?.actions || []) : [];
+  const watchouts = hasMirror ? (data.mirror?.watchouts || []) : [];
 
-    const drawCard = (x: number, y: number, width: number, height: number) => {
-      doc.setFillColor(...colors.white);
-      doc.setDrawColor(...colors.border);
-      doc.setLineWidth(0.5);
-      doc.rect(x, y, width, height, 'FD');
-    };
+  const grid = twoColumn(doc, y);
+  let ay = grid.y, wy = grid.y;
 
-    // Executive Header with Professional Design
-    doc.setFillColor(...colors.primary);
-    doc.rect(0, 0, pageWidth, 70, 'F');
-    
-    // Header content
-    doc.setTextColor(...colors.white);
-    doc.setFontSize(typography.hero.size);
-    doc.setFont('helvetica', typography.hero.weight);
-    doc.text('CORTEX™', margin, 25);
-    
-    doc.setFontSize(typography.body.size);
-    doc.setFont('helvetica', 'normal');
-    doc.text('EXECUTIVE AI READINESS BRIEF', margin, 35);
-    
-    // Header metadata
-    doc.setFontSize(typography.small.size);
-    const currentDate = new Date().toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    });
-    const dateText = `Generated: ${currentDate}`;
-    const idText = `Assessment ID: ${assessmentId.slice(0, 8).toUpperCase()}`;
-    
-    doc.text(dateText, pageWidth - margin - doc.getTextWidth(dateText), 25);
-    doc.text(idText, pageWidth - margin - doc.getTextWidth(idText), 33);
-    
-    // Executive status indicator
-    doc.setFillColor(...colors.success);
-    doc.circle(pageWidth - margin - 8, 50, 3, 'F');
-    doc.setFontSize(10);
-    doc.text('EXECUTIVE READY', pageWidth - margin - 40, 52);
-    
-    currentY = 85;
-    
-    // Reset text color
-    doc.setTextColor(...colors.primary);
-    
-    // Executive Summary Section
-    checkPageOverflow(60);
-    
-    // Calculate maturity level
-    const avgScore = data.averageScore || (Object.values(data.pillarScores as Record<string, number>).reduce((sum: number, score: number) => sum + score, 0) / 6);
-    const maturityLevel = data.maturityLevel || (avgScore < 1 ? 'Nascent' : avgScore < 2 ? 'Emerging' : avgScore < 3 ? 'Integrated' : 'Leading');
-    
-    drawCard(margin, currentY, contentWidth, 55);
-    
-    doc.setFontSize(typography.h1.size);
-    doc.setFont('helvetica', typography.h1.weight);
-    doc.setTextColor(...colors.accent);
-    doc.text('EXECUTIVE SUMMARY', margin + 8, currentY + 15);
-    
-    doc.setFontSize(typography.h2.size);
-    doc.setFont('helvetica', typography.h2.weight);
-    doc.setTextColor(...colors.primary);
-    doc.text(`Current AI Maturity: ${maturityLevel}`, margin + 8, currentY + 25);
-    
-    doc.setFontSize(typography.body.size);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Overall Readiness Score: ${avgScore.toFixed(1)}/4.0`, margin + 8, currentY + 35);
-    
-    const summaryText = `Based on assessment of ${Object.keys(data.pillarScores).length} strategic domains, your organization shows ${maturityLevel.toLowerCase()} AI capabilities with ${data.triggeredGates?.length || 0} critical requirements identified.`;
-    const summaryLines = safeSplitTextToSize(doc, summaryText, contentWidth - 16);
-    let summaryY = currentY + 45;
-    summaryLines.forEach((line: string) => {
-      doc.text(line, margin + 8, summaryY);
-      summaryY += 5;
-    });
-    
-    currentY += 65;
-    
-    // Strategic Insights Section
-    if (insights && insights.length > 0) {
-      checkPageOverflow(80);
-      
-      doc.setFontSize(typography.h1.size);
-      doc.setFont('helvetica', typography.h1.weight);
-      doc.setTextColor(...colors.accent);
-      doc.text('STRATEGIC INSIGHTS', margin, currentY);
-      currentY += 15;
-      
-      insights.forEach((insight, index) => {
-        checkPageOverflow(40);
-        
-        // Insight card
-        const insightHeight = 35;
-        drawCard(margin, currentY, contentWidth, insightHeight);
-        
-        // Urgency badge
-        const urgencyColor = insight.urgency === 'high' ? colors.error : insight.urgency === 'medium' ? colors.warning : colors.success;
-        doc.setFillColor(...urgencyColor);
-        doc.rect(pageWidth - margin - 35, currentY + 5, 30, 8, 'F');
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...colors.white);
-        doc.text(insight.urgency.toUpperCase(), pageWidth - margin - 30, currentY + 9.5);
-        
-        // Insight content
-        doc.setFontSize(typography.h3.size);
-        doc.setFont('helvetica', typography.h3.weight);
-        doc.setTextColor(...colors.primary);
-        doc.text(`${index + 1}. ${insight.title}`, margin + 8, currentY + 12);
-        
-        doc.setFontSize(typography.small.size);
-        doc.setFont('helvetica', 'normal');
-        const descLines = safeSplitTextToSize(doc, insight.description, contentWidth - 50);
-        let descY = currentY + 18;
-        descLines.forEach((line: string) => {
-          doc.text(line, margin + 8, descY);
-          descY += 4;
-        });
-        
-        // Business impact
-        doc.setFillColor(...colors.surface);
-        doc.rect(margin + 8, currentY + 26, contentWidth - 16, 6, 'F');
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'italic');
-        doc.setTextColor(...colors.secondary);
-        doc.text(`Business Impact: ${insight.businessImpact}`, margin + 10, currentY + 29.5);
-        
-        currentY += insightHeight + 8;
-      });
+  if (actions.length) {
+    setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
+    doc.text("Priority Actions", grid.left.x, ay);
+    ay += PAGE.line * 1.6;
+    ay = drawBullets(doc, actions, grid.left.w, ay);
+  }
+  if (watchouts.length) {
+    setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
+    doc.text("Watch-outs", grid.right.x, wy);
+    wy += PAGE.line * 1.6;
+    wy = drawBullets(doc, watchouts, grid.right.w, wy);
+  }
+  y = Math.max(ay, wy) + PAGE.line;
+
+  // Scenario Lens
+  const sc = hasMirror ? data.mirror?.scenarios : undefined;
+  if (sc?.if_regulation_tightens || sc?.if_budgets_tighten) {
+    ({ cursorY: y } = addPageIfNeeded(doc, 30, y, runHeader));
+    y = drawSectionTitle(doc, "SCENARIO LENS", y);
+
+    if (sc.if_regulation_tightens) {
+      setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
+      doc.text("If regulation tightens:", PAGE.margin, y);
+      y += PAGE.line * 1.2;
+      y = drawBody(doc, sc.if_regulation_tightens, bounds(doc).w, y);
+      y += PAGE.line * 0.6;
     }
-    
-    // Executive Action Priorities
-    if (priorities && priorities.length > 0) {
-      checkPageOverflow(60);
-      
-      doc.setFontSize(typography.h1.size);
-      doc.setFont('helvetica', typography.h1.weight);
-      doc.setTextColor(...colors.accent);
-      doc.text('YOUR NEXT 90 DAYS', margin, currentY);
-      currentY += 15;
-      
-      priorities.forEach((priority, index) => {
-        checkPageOverflow(30);
-        
-        const priorityHeight = 25;
-        drawCard(margin, currentY, contentWidth, priorityHeight);
-        
-        // Priority number
-        doc.setFillColor(...colors.accent);
-        doc.circle(margin + 15, currentY + 12, 6, 'F');
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...colors.white);
-        doc.text((index + 1).toString(), margin + 12, currentY + 15);
-        
-        // Timeframe badge
-        const timeframeColor = priority.urgency === 'high' ? colors.error : priority.urgency === 'medium' ? colors.warning : colors.success;
-        doc.setFillColor(...timeframeColor);
-        doc.rect(pageWidth - margin - 40, currentY + 5, 35, 8, 'F');
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...colors.white);
-        doc.text(priority.timeframe, pageWidth - margin - 37, currentY + 9.5);
-        
-        // Priority content
-        doc.setFontSize(typography.h3.size);
-        doc.setFont('helvetica', typography.h3.weight);
-        doc.setTextColor(...colors.primary);
-        doc.text(priority.title, margin + 25, currentY + 12);
-        
-        doc.setFontSize(typography.small.size);
-        doc.setFont('helvetica', 'normal');
-        const priorityLines = safeSplitTextToSize(doc, priority.description, contentWidth - 80);
-        doc.text(priorityLines[0] || '', margin + 25, currentY + 18);
-        
-        currentY += priorityHeight + 8;
-      });
-    }
-    
-    // Domain Performance Overview
-    checkPageOverflow(80);
-    
-    doc.setFontSize(typography.h1.size);
-    doc.setFont('helvetica', typography.h1.weight);
-    doc.setTextColor(...colors.accent);
-    doc.text('DOMAIN PERFORMANCE', margin, currentY);
-    currentY += 15;
-    
-    // Create domain performance chart
-    const domainHeight = 60;
-    drawCard(margin, currentY, contentWidth, domainHeight);
-    
-    const domains = Object.entries(data.pillarScores as Record<string, number>);
-    const barWidth = (contentWidth - 40) / domains.length;
-    let barX = margin + 20;
-    
-    domains.forEach(([domain, score]) => {
-      const domainName = CORTEX_PILLARS[domain.toUpperCase() as keyof typeof CORTEX_PILLARS]?.name || domain;
-      const numericScore = Number(score);
-      const barHeight = (numericScore / 4) * 35; // Max height 35mm
-      
-      // Score bar
-      const barColor = numericScore >= 3 ? colors.success : numericScore >= 2 ? colors.warning : colors.error;
-      doc.setFillColor(...barColor);
-      doc.rect(barX, currentY + 40 - barHeight, barWidth - 4, barHeight, 'F');
-      
-      // Score label
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(...colors.white);
-      doc.text(numericScore.toFixed(1), barX + (barWidth - 4) / 2 - 3, currentY + 37 - barHeight / 2);
-      
-      // Domain label (rotated)
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(...colors.primary);
-      
-      const shortName = domainName.length > 15 ? domainName.substring(0, 12) + '...' : domainName;
-      doc.text(shortName, barX - 2, currentY + 50, { angle: 45 });
-      
-      barX += barWidth;
-    });
-    
-    currentY += domainHeight + 15;
-    
-    // Footer
-    addPageFooter();
-    
-    // Generate and download PDF
-    const pdfBlob = doc.output('blob');
-    
-    if (!pdfBlob || pdfBlob.size === 0) {
-      throw new Error('Failed to generate executive PDF');
-    }
-    
-    const url = URL.createObjectURL(pdfBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `cortex-executive-brief-${assessmentId}.pdf`;
-    link.style.display = 'none';
-    document.body.appendChild(link);
-    
-    link.click();
-    
-    setTimeout(() => {
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    }, 100);
-
-  } catch (error) {
-    if (error instanceof Error) {
-      throw new Error(`Executive PDF generation failed: ${error.message}`);
-    } else {
-      throw new Error('Executive PDF generation failed: An unexpected error occurred');
+    if (sc.if_budgets_tighten) {
+      setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
+      doc.text("If budgets tighten:", PAGE.margin, y);
+      y += PAGE.line * 1.2;
+      y = drawBody(doc, sc.if_budgets_tighten, bounds(doc).w, y);
+      y += PAGE.line * 0.6;
     }
   }
+
+  // Disclaimer
+  const disclaimerText = hasMirror ? data.mirror?.disclaimer : data.disclaimer;
+  if (disclaimerText) {
+    ({ cursorY: y } = addPageIfNeeded(doc, 22, y, runHeader));
+    y = drawSectionTitle(doc, "DISCLAIMER", y);
+    setFont(doc, TYPO.small); setText(doc, PALETTE.inkSubtle);
+    y = drawBody(doc, disclaimerText, bounds(doc).w, y);
+  }
+
+  // Finalize footers
+  finalizeFooters(doc, "CORTEX Executive AI Readiness Assessment");
+
+  // Download
+  const blob = doc.output("blob");
+  if (!(blob instanceof Blob)) throw new Error("Failed to generate PDF blob");
+  downloadBlob(blob, `cortex-assessment-${data.assessmentId}.pdf`);
+}
+
+/* ====================================================================================
+   2) OPTIONS STUDIO EXPORT (clean narrative layout)
+==================================================================================== */
+
+export async function handleExportPDF(sessionData: OptionsStudioData, assessmentId: string): Promise<void> {
+  if (!sessionData?.contextProfile || !assessmentId) {
+    throw new Error("Missing required data for PDF generation");
+  }
+
+  const J = await ensureJsPDF();
+  const doc = newDoc(J);
+  const { pw } = bounds(doc);
+
+  // Page 1 header band
+  setFill(doc, PALETTE.ink);
+  doc.rect(0, 0, pw, PAGE.headerBar, "F");
+  setText(doc, PALETTE.white);
+  setFont(doc, TYPO.hero);
+  doc.text("CORTEX™", PAGE.margin, 18);
+  setFont(doc, TYPO.body);
+  doc.text("OPTIONS STUDIO SUMMARY", PAGE.margin, 26);
+
+  const dateText = `Exported: ${new Date(sessionData.exportedAt ?? Date.now()).toLocaleString()}`;
+  const idText = `ID: ${String(assessmentId).slice(0, 8).toUpperCase()}`;
+  doc.text(dateText, pw - PAGE.margin - doc.getTextWidth(dateText), 16);
+  doc.text(idText,  pw - PAGE.margin - doc.getTextWidth(idText),  22);
+
+  let y = PAGE.headerBar + 10;
+
+  // Use Case
+  if ((sessionData as any).useCase) {
+    y = drawSectionTitle(doc, "USE CASE", y);
+    y = drawBody(doc, String((sessionData as any).useCase), bounds(doc).w, y);
+    y += PAGE.line;
+  }
+
+  // Goals
+  if (Array.isArray((sessionData as any).goals) && (sessionData as any).goals.length) {
+    y = drawSectionTitle(doc, "GOALS", y);
+    y = drawBullets(doc, (sessionData as any).goals, bounds(doc).w, y);
+    y += PAGE.line * 0.5;
+  }
+
+  // Compared Options
+  if (Array.isArray(sessionData.selectedOptions) && sessionData.selectedOptions.length) {
+    ({ cursorY: y } = addPageIfNeeded(doc, 20, y, "CORTEX — Options Studio"));
+    y = drawSectionTitle(doc, "COMPARED OPTIONS", y);
+    setFont(doc, TYPO.body); setText(doc, PALETTE.ink);
+
+    for (let i = 0; i < sessionData.selectedOptions.length; i++) {
+      const opt = sessionData.selectedOptions[i] || {} as any;
+      const title = opt.title || opt.id || `Option ${i + 1}`;
+      const desc = opt.shortDescription || opt.description || "";
+
+      ({ cursorY: y } = addPageIfNeeded(doc, 12, y, "CORTEX — Options Studio"));
+      setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
+      doc.text(`${i + 1}. ${title}`, PAGE.margin, y);
+      y += PAGE.line * 1.1;
+
+      setFont(doc, TYPO.body);
+      y = drawBody(doc, String(desc), bounds(doc).w, y);
+      y += 2;
+    }
+  }
+
+  // Emphasized lenses
+  if (Array.isArray(sessionData.emphasizedLenses) && sessionData.emphasizedLenses.length) {
+    ({ cursorY: y } = addPageIfNeeded(doc, 18, y, "CORTEX — Options Studio"));
+    y = drawSectionTitle(doc, "WHAT WE EMPHASIZED", y);
+    y = drawBullets(doc, sessionData.emphasizedLenses, bounds(doc).w, y);
+    y += PAGE.line * 0.5;
+  }
+
+  // Misconception Check (if present)
+  if ((sessionData as any).misconceptionResponses && Object.keys((sessionData as any).misconceptionResponses).length) {
+    ({ cursorY: y } = addPageIfNeeded(doc, 22, y, "CORTEX — Options Studio"));
+    y = drawSectionTitle(doc, "MISCONCEPTION CHECK RESULTS", y);
+
+    const map = MISCONCEPTION_QUESTIONS.reduce((acc, q) => { acc[q.id] = q; return acc; }, {} as Record<string, typeof MISCONCEPTION_QUESTIONS[0]>);
+    for (const [qid, ans] of Object.entries((sessionData as any).misconceptionResponses)) {
+      const q = map[qid];
+      if (!q) continue;
+      const correct = ans === q.correctAnswer;
+      ({ cursorY: y } = addPageIfNeeded(doc, 12, y, "CORTEX — Options Studio"));
+      setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
+      y = drawBody(doc, q.question, bounds(doc).w, y);
+      setFont(doc, TYPO.small);
+      setText(doc, correct ? PALETTE.success : PALETTE.danger);
+      const verdict = correct ? "[CORRECT]" : "[INCORRECT]";
+      doc.text(`Your answer: ${ans ? "True" : "False"} ${verdict}`, PAGE.margin, y + 1);
+      y += PAGE.line * 1.1;
+      if (q.explanation) {
+        setText(doc, PALETTE.inkSubtle);
+        y = drawBody(doc, q.explanation, bounds(doc).w, y);
+      }
+      y += 1.2;
+    }
+  }
+
+  // Reflection Q&A
+  if (sessionData.reflectionAnswers && Object.keys(sessionData.reflectionAnswers).length) {
+    ({ cursorY: y } = addPageIfNeeded(doc, 22, y, "CORTEX — Options Studio"));
+    y = drawSectionTitle(doc, "REFLECTIONS", y);
+    for (const [qid, answer] of Object.entries(sessionData.reflectionAnswers)) {
+      ({ cursorY: y } = addPageIfNeeded(doc, 14, y, "CORTEX — Options Studio"));
+      setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
+      doc.text(qid, PAGE.margin, y);
+      y += PAGE.line * 1.1;
+      setFont(doc, TYPO.body); setText(doc, PALETTE.ink);
+      y = drawBody(doc, String(answer), bounds(doc).w, y);
+      y += 1.5;
+    }
+  }
+
+  // Summary line
+  ({ cursorY: y } = addPageIfNeeded(doc, 10, y, "CORTEX — Options Studio"));
+  setFont(doc, TYPO.small); setText(doc, PALETTE.inkSubtle);
+  const summary = `Options explored: ${sessionData.selectedOptions?.length ?? 0} • Completed: ${(sessionData as any).completed ? "Yes" : "No"}`;
+  doc.text(summary, PAGE.margin, y + 2);
+
+  finalizeFooters(doc, "CORTEX Options Studio");
+
+  const blob = doc.output("blob");
+  if (!(blob instanceof Blob)) throw new Error("Failed to generate PDF blob");
+  downloadBlob(blob, `cortex-options-${assessmentId}.pdf`);
+}
+
+/* ====================================================================================
+   3) EXECUTIVE BRIEF (scores + priorities + insights)
+==================================================================================== */
+
+export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults, assessmentId: string): Promise<void> {
+  if (!data?.contextProfile || !data?.pillarScores || !assessmentId) {
+    throw new Error("Missing required data for executive PDF generation");
+  }
+
+  // Generate insights if missing
+  let insights = data.insights;
+  if (!insights || !Array.isArray(insights) || insights.length === 0) {
+    try {
+      insights = await generateEnhancedExecutiveInsights({
+        contextProfile: data.contextProfile,
+        pillarScores: data.pillarScores
+      } as any);
+    } catch { insights = []; }
+  }
+
+  const J = await ensureJsPDF();
+  const doc = newDoc(J);
+  const { pw } = bounds(doc);
+
+  // Header band
+  setFill(doc, PALETTE.ink);
+  doc.rect(0, 0, pw, PAGE.headerBar, "F");
+  setText(doc, PALETTE.white);
+  setFont(doc, TYPO.hero);
+  doc.text("CORTEX™", PAGE.margin, 18);
+  setFont(doc, TYPO.body);
+  doc.text("EXECUTIVE READINESS BRIEF", PAGE.margin, 26);
+
+  const dateText = `Generated: ${new Date(data.completedAt ?? Date.now()).toLocaleString()}`;
+  const idText = `ID: ${String(assessmentId).slice(0, 8).toUpperCase()}`;
+  doc.text(dateText, pw - PAGE.margin - doc.getTextWidth(dateText), 16);
+  doc.text(idText,  pw - PAGE.margin - doc.getTextWidth(idText),  22);
+
+  let y = PAGE.headerBar + 10;
+
+  // Summary tiles
+  const avg = Number.isFinite(data.averageScore) ? (data.averageScore as number) : undefined;
+  const maturity = data.maturityLevel || (avg ? `Level ${avg.toFixed(1)}` : undefined);
+
+  setFont(doc, TYPO.h1); setText(doc, PALETTE.accent);
+  doc.text("EXECUTIVE SUMMARY", PAGE.margin, y);
+  y += PAGE.line * 2.5;
+
+  if (maturity) {
+    setFont(doc, TYPO.h2); setText(doc, PALETTE.ink);
+    doc.text(`Overall Maturity: ${maturity}`, PAGE.margin, y);
+    y += PAGE.line * 1.8;
+  }
+
+  // Domain bars
+  ({ cursorY: y } = addPageIfNeeded(doc, 40, y, "CORTEX — Executive Brief"));
+  y = drawScoreBars(doc, data.pillarScores, y);
+  y += 2;
+
+  // Priorities (if present)
+  if (Array.isArray(data.priorities) && data.priorities.length) {
+    ({ cursorY: y } = addPageIfNeeded(doc, 18, y, "CORTEX — Executive Brief"));
+    y = drawSectionTitle(doc, "ACTION PRIORITIES", y);
+    const items = data.priorities
+      .slice(0, 6)
+      .map(p => `${p.rank ? `${p.rank}. ` : ""}${normalizeText(p.title || p.summary || "")}`);
+
+    y = drawBullets(doc, items, bounds(doc).w, y);
+    y += PAGE.line * 0.5;
+  }
+
+  // Insights
+  if (Array.isArray(insights) && insights.length) {
+    ({ cursorY: y } = addPageIfNeeded(doc, 22, y, "CORTEX — Executive Brief"));
+    y = drawSectionTitle(doc, "EXECUTIVE INSIGHTS", y);
+    for (const ins of insights.slice(0, 6)) {
+      ({ cursorY: y } = addPageIfNeeded(doc, 14, y, "CORTEX — Executive Brief"));
+      setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
+      doc.text(normalizeText(ins.headline || "Insight"), PAGE.margin, y);
+      y += PAGE.line * 1.1;
+      setFont(doc, TYPO.body); setText(doc, PALETTE.ink);
+      y = drawBody(doc, normalizeText(ins.rationale || ins.detail || ""), bounds(doc).w, y);
+      y += 1.2;
+    }
+  }
+
+  finalizeFooters(doc, "CORTEX Executive Brief");
+
+  const blob = doc.output("blob");
+  if (!(blob instanceof Blob)) throw new Error("Failed to generate PDF blob");
+  downloadBlob(blob, `cortex-executive-${assessmentId}.pdf`);
+}
+
+/* ====================================================================================
+   JSON EXPORT HELPERS (unchanged signatures)
+==================================================================================== */
+
+export function exportJSONResults(results: AssessmentResults): void {
+  const dataStr = JSON.stringify(results, null, 2);
+  const blob = new Blob([dataStr], { type: "application/json" });
+  downloadBlob(blob, `cortex-assessment-${Date.now()}.json`);
+}
+
+export function handleExportJSON(sessionData: OptionsStudioData, filename: string): void {
+  const exportData = {
+    ...sessionData,
+    version: "1.0",
+    exportMetadata: {
+      exportedAt: sessionData.exportedAt,
+      dataStructureVersion: "1.0",
+      sourceApplication: "CORTEX Options Studio"
+    }
+  };
+
+  const dataStr = JSON.stringify(exportData, null, 2);
+  const blob = new Blob([dataStr], { type: "application/json" });
+  downloadBlob(blob, filename || `cortex-options-${Date.now()}.json`);
 }
