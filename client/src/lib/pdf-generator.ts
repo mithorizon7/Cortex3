@@ -732,7 +732,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     y = drawSectionTitle(doc, "ACTION PRIORITIES", y);
     const items = data.priorities
       .slice(0, 6)
-      .map(p => `${p.rank ? `${p.rank}. ` : ""}${normalizeText(p.title || p.summary || "")}`);
+      .map((p, idx) => `${idx + 1}. ${normalizeText(p.title)} ${p.timeframe ? `(${p.timeframe})` : ''}`);
 
     y = drawBullets(doc, items, bounds(doc).w, y);
     y += PAGE.line * 0.5;
