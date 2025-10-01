@@ -679,10 +679,11 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
   let insights = data.insights;
   if (!insights || !Array.isArray(insights) || insights.length === 0) {
     try {
-      insights = await generateEnhancedExecutiveInsights({
+      const result = await generateEnhancedExecutiveInsights({
         contextProfile: data.contextProfile,
         pillarScores: data.pillarScores
       } as any);
+      insights = result.insights || [];
     } catch { insights = []; }
   }
 
