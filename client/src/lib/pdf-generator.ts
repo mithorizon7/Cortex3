@@ -696,8 +696,73 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
 }
 
 /* ====================================================================================
-   3) EXECUTIVE BRIEF (scores + priorities + insights)
+   3) EXECUTIVE BRIEF (comprehensive domain analysis)
 ==================================================================================== */
+
+const DOMAIN_GUIDANCE = {
+  C: {
+    whyMatters: "Clarity turns AI from scattered pilots into business outcomes. When leaders publish a simple, measurable AI ambition and name a single owner with budget authority, teams stop guessing. A routine executive review creates momentum: work that moves the needle is funded and scaled; experiments that don't deliver are sunset. This alignment reduces duplicated effort, accelerates learning, and ties AI to revenue, cost, and risk.",
+    whatGoodLooks: [
+      "A one‑page AI ambition linked to business outcomes and customers",
+      "A named senior owner and a clear split between CoE (enable/govern) and BUs (adopt/deliver)",
+      "Quarterly executive/board review with reallocation decisions (fund/defund)",
+      "Leaders share a common language for AI scope, risks, and value"
+    ],
+    howToImprove: "Progress usually starts with publishing a simple ambition (outcomes, not technologies), then clarifying who owns what between a Center of Excellence and business units. Reviews move from \"show‑and‑tell\" to decide‑and‑do—small amounts of money shift to what works, with clear rationale. Over time, AI outcomes appear in strategy documents and operating plans. In more regulated settings, leadership reviews also check that safeguards and evidence are in place."
+  },
+  O: {
+    whyMatters: "Stable operations and governed data are the difference between a demo and a dependable service. Monitoring, human‑in‑the‑loop where risk warrants it, and basic data hygiene prevent silent failures, surprise bills, and reputational harm.",
+    whatGoodLooks: [
+      "A documented lifecycle: design → deploy → monitor → update → retire",
+      "Logging, alerts, and simple dashboards for usage, cost, latency, and failure rates",
+      "Human review and quality assurance checkpoints where stakes are high",
+      "A searchable data catalogue with owners, lineage, quality thresholds",
+      "A lightweight value/feasibility gate for new use‑cases"
+    ],
+    howToImprove: "Start with monitoring what you already run (latency, cost, error rate) and add simple alerts. Introduce a two‑page intake for new ideas: value hypothesis, data sources, risk level. Designate data owners for key tables or content used by AI. Where decisions affect customers, add human approval until you have evidence that automation is safe."
+  },
+  R: {
+    whyMatters: "Trust and safety make AI adoption sustainable. Stakeholders expect you to know what AI you run, the risks it carries, and how you'll respond when something goes wrong. Basic assurance practices prevent reputational damage and regulatory setbacks.",
+    whatGoodLooks: [
+      "An AI inventory with owners and risk levels",
+      "Scheduled checks for fairness, privacy, and model/data drift",
+      "Periodic red‑teaming for prompts/jailbreaks and data exfiltration attempts",
+      "An incident response runbook with roles and communications",
+      "Internal or third‑party review of controls (as required)"
+    ],
+    howToImprove: "Catalog what you already use (systems, vendors, purpose, data). Schedule basic checks for high‑impact use‑cases and test your defenses with simple adversarial prompts. Draft a one‑page IR plan: who triages, who decides, who informs customers. Regulated contexts often add annual assurance whether internal or external."
+  },
+  T: {
+    whyMatters: "Adoption is about work, not tools. People need role‑specific skills and updated workflows that show when to use AI, when to verify, and how to escalate. Stories and incentives help good behaviors spread.",
+    whatGoodLooks: [
+      "Clear job families with role‑based AI fluency",
+      "SOPs/SOP checklists updated to include AI tasks and checkpoints",
+      "\"Wins and lessons\" shared on a regular rhythm",
+      "Incentives that reward safe, effective use"
+    ],
+    howToImprove: "Pick two or three job families that touch customers or costly processes. Create before/after task maps and add simple guardrails (checklists, approval steps). Offer short, role‑specific training with real examples. Share what works and what fails—both teach."
+  },
+  E: {
+    whyMatters: "Partners and platform choices determine speed, cost, and flexibility. Elastic capacity keeps teams moving; portability and clear terms help you avoid lock‑in and surprises.",
+    whatGoodLooks: [
+      "Elastic capacity and simple FinOps visibility (unit costs, quotas)",
+      "Strategic partners that fill capability gaps",
+      "Exit/portability plans in contracts (export formats, second source)",
+      "Governed APIs and basic interoperability standards"
+    ],
+    howToImprove: "Start by measuring unit costs and watching quotas. Consolidate on a few well‑understood services with clear terms (\"no training on our data/outputs\" when needed). Draft a one‑page exit plan: how we would switch, what we'd export, and a secondary option for critical paths."
+  },
+  X: {
+    whyMatters: "AI changes quickly. Disciplined experimentation—safe sandboxes, small budgets, explicit success and sunset criteria—increases learning velocity and prevents \"pilot purgatory.\"",
+    whatGoodLooks: [
+      "A guarded sandbox with representative data and spending caps",
+      "A ring‑fenced slice of time/credits for experiments",
+      "Every pilot has success and sunset criteria and a decision date",
+      "Lightweight horizon scanning of tech, policy, and competitors"
+    ],
+    howToImprove: "Provide a clear on‑ramp: where to try ideas, what's allowed, and how to request data. Require a simple metric and decision date for every pilot. Run a short horizon brief quarterly to decide what to watch or ignore. Retire experiments on time so resources return to the pool."
+  }
+};
 
 export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults, assessmentId: string): Promise<void> {
   if (!data?.contextProfile || !data?.pillarScores || !assessmentId) {
@@ -706,19 +771,26 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
 
   // Generate insights if missing
   let insights = data.insights;
+  let priorities = data.priorities;
   if (!insights || !Array.isArray(insights) || insights.length === 0) {
     try {
-      const result = await generateEnhancedExecutiveInsights({
-        contextProfile: data.contextProfile,
-        pillarScores: data.pillarScores
-      } as any);
+      const result = await generateEnhancedExecutiveInsights(
+        data.pillarScores,
+        data.triggeredGates || [],
+        data.contextProfile
+      );
       insights = result.insights || [];
-    } catch { insights = []; }
+      priorities = result.priorities || [];
+    } catch { 
+      insights = []; 
+      priorities = [];
+    }
   }
 
   const J = await ensureJsPDF();
   const doc = newDoc(J);
   const { pw } = bounds(doc);
+  const runHeader = "CORTEX — Executive Brief";
 
   // Header band
   setFill(doc, PALETTE.ink);
@@ -727,58 +799,124 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
   setFont(doc, TYPO.hero);
   doc.text("CORTEX™", PAGE.margin, 18);
   setFont(doc, TYPO.body);
-  doc.text("EXECUTIVE READINESS BRIEF", PAGE.margin, 26);
+  doc.text("EXECUTIVE AI READINESS BRIEF", PAGE.margin, 26);
 
-  const dateText = `Generated: ${new Date(data.completedAt ?? Date.now()).toLocaleString()}`;
+  const dateText = `Generated: ${new Date(data.completedAt ?? Date.now()).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`;
   const idText = `ID: ${String(assessmentId).slice(0, 8).toUpperCase()}`;
   doc.text(dateText, pw - PAGE.margin - doc.getTextWidth(dateText), 16);
   doc.text(idText,  pw - PAGE.margin - doc.getTextWidth(idText),  22);
 
+  setFill(doc, PALETTE.success);
+  doc.circle(pw - PAGE.margin - 8, 30, 2, "F");
+  setFont(doc, TYPO.small);
+  doc.text("COMPLETED", pw - PAGE.margin - 25, 31.5);
+
   let y = PAGE.headerBar + 10;
 
-  // Summary tiles
-  const avg = Number.isFinite(data.averageScore) ? (data.averageScore as number) : undefined;
-  const maturity = data.maturityLevel || (avg ? `Level ${avg.toFixed(1)}` : undefined);
+  // Executive Summary
+  const avg = Number.isFinite(data.averageScore) ? (data.averageScore as number) : 
+    (Object.values(data.pillarScores).reduce((sum: number, score: number) => sum + score, 0) / 6);
+  const maturityLevel = avg < 1 ? 'Nascent' : avg < 2 ? 'Emerging' : avg < 3 ? 'Integrated' : 'Leading';
 
-  setFont(doc, TYPO.h1); setText(doc, PALETTE.accent);
-  doc.text("EXECUTIVE SUMMARY", PAGE.margin, y);
-  y += PAGE.line * 2.5;
-
-  if (maturity) {
-    setFont(doc, TYPO.h2); setText(doc, PALETTE.ink);
-    doc.text(`Overall Maturity: ${maturity}`, PAGE.margin, y);
-    y += PAGE.line * 1.8;
-  }
+  y = drawSectionTitle(doc, "EXECUTIVE SUMMARY", y);
+  setFont(doc, TYPO.h2); setText(doc, PALETTE.ink);
+  doc.text(`Overall AI Readiness: ${maturityLevel} (${avg.toFixed(1)}/3)`, PAGE.margin, y);
+  y += PAGE.line * 2;
 
   // Domain bars
-  ({ cursorY: y } = addPageIfNeeded(doc, 40, y, "CORTEX — Executive Brief"));
+  ({ cursorY: y } = addPageIfNeeded(doc, 50, y, runHeader));
   y = drawScoreBars(doc, data.pillarScores, y);
-  y += 2;
+  y += PAGE.line;
 
-  // Priorities (if present)
-  if (Array.isArray(data.priorities) && data.priorities.length) {
-    ({ cursorY: y } = addPageIfNeeded(doc, 18, y, "CORTEX — Executive Brief"));
-    y = drawSectionTitle(doc, "ACTION PRIORITIES", y);
-    const items = data.priorities
-      .slice(0, 6)
-      .map((p, idx) => `${idx + 1}. ${normalizeText(p.title)} ${p.timeframe ? `(${p.timeframe})` : ''}`);
-
-    y = drawBullets(doc, items, bounds(doc).w, y);
+  // Triggered Gates Section
+  if (Array.isArray(data.triggeredGates) && data.triggeredGates.length > 0) {
+    ({ cursorY: y } = addPageIfNeeded(doc, 26, y, runHeader));
+    y = drawSectionTitle(doc, "CRITICAL REQUIREMENTS", y);
+    setFont(doc, TYPO.body); setText(doc, PALETTE.ink);
+    y = drawBody(doc, `Your organizational context triggered ${data.triggeredGates.length} critical requirement${data.triggeredGates.length > 1 ? 's' : ''} that must be addressed before scaling AI:`, bounds(doc).w, y);
     y += PAGE.line * 0.5;
+    
+    const gateItems = data.triggeredGates.map((gate: any) => `${gate.title}: ${gate.reason || gate.explanation || ''}`);
+    y = drawBullets(doc, gateItems, bounds(doc).w, y);
+    y += PAGE.line;
   }
 
-  // Insights
-  if (Array.isArray(insights) && insights.length) {
-    ({ cursorY: y } = addPageIfNeeded(doc, 22, y, "CORTEX — Executive Brief"));
-    y = drawSectionTitle(doc, "EXECUTIVE INSIGHTS", y);
-    for (const ins of insights.slice(0, 6)) {
-      ({ cursorY: y } = addPageIfNeeded(doc, 14, y, "CORTEX — Executive Brief"));
+  // Action Priorities
+  if (Array.isArray(priorities) && priorities.length > 0) {
+    ({ cursorY: y } = addPageIfNeeded(doc, 22, y, runHeader));
+    y = drawSectionTitle(doc, "ACTION PRIORITIES", y);
+    const items = priorities
+      .slice(0, 5)
+      .map((p, idx) => `${idx + 1}. ${normalizeText(p.title)} — ${p.description} ${p.timeframe ? `(${p.timeframe})` : ''}`);
+    y = drawBullets(doc, items, bounds(doc).w, y);
+    y += PAGE.line;
+  }
+
+  // Comprehensive Domain Analysis
+  ({ cursorY: y } = addPageIfNeeded(doc, 22, y, runHeader));
+  y = drawSectionTitle(doc, "DOMAIN ANALYSIS", y);
+  
+  const pillarOrder = ['C', 'O', 'R', 'T', 'E', 'X'];
+  for (const pillarKey of pillarOrder) {
+    const pillar = CORTEX_PILLARS[pillarKey as keyof typeof CORTEX_PILLARS];
+    const guidance = DOMAIN_GUIDANCE[pillarKey as keyof typeof DOMAIN_GUIDANCE];
+    const score = data.pillarScores[pillarKey] || 0;
+    
+    if (!pillar || !guidance) continue;
+    
+    ({ cursorY: y } = addPageIfNeeded(doc, 50, y, runHeader));
+    
+    // Domain header
+    setFont(doc, TYPO.h2); setText(doc, PALETTE.accent);
+    doc.text(`${pillarKey}. ${pillar.name}`, PAGE.margin, y);
+    y += PAGE.line * 1.2;
+    
+    setFont(doc, TYPO.small); setText(doc, PALETTE.inkSubtle);
+    const scoreColor = score >= 2.5 ? PALETTE.success : score >= 1.5 ? PALETTE.warning : PALETTE.danger;
+    setText(doc, scoreColor);
+    const scoreLabel = score === 3 ? 'Leading' : score === 2 ? 'Integrated' : score === 1 ? 'Emerging' : 'Nascent';
+    doc.text(`Current Maturity: ${scoreLabel} (${score}/3)`, PAGE.margin, y);
+    y += PAGE.line * 2;
+    
+    // Why it matters
+    setText(doc, PALETTE.ink);
+    setFont(doc, TYPO.h3);
+    doc.text("Why This Matters", PAGE.margin, y);
+    y += PAGE.line * 1.2;
+    setFont(doc, TYPO.body);
+    y = drawBody(doc, guidance.whyMatters, bounds(doc).w, y);
+    y += PAGE.line * 0.8;
+    
+    // What good looks like
+    ({ cursorY: y } = addPageIfNeeded(doc, 26, y, runHeader));
+    setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
+    doc.text("What Good Looks Like", PAGE.margin, y);
+    y += PAGE.line * 1.2;
+    y = drawBullets(doc, guidance.whatGoodLooks, bounds(doc).w, y);
+    y += PAGE.line * 0.5;
+    
+    // How to improve
+    ({ cursorY: y } = addPageIfNeeded(doc, 18, y, runHeader));
+    setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
+    doc.text("How to Improve", PAGE.margin, y);
+    y += PAGE.line * 1.2;
+    setFont(doc, TYPO.body);
+    y = drawBody(doc, guidance.howToImprove, bounds(doc).w, y);
+    y += PAGE.line * 1.5;
+  }
+
+  // Executive Insights
+  if (Array.isArray(insights) && insights.length > 0) {
+    ({ cursorY: y } = addPageIfNeeded(doc, 22, y, runHeader));
+    y = drawSectionTitle(doc, "STRATEGIC INSIGHTS", y);
+    for (const ins of insights.slice(0, 5)) {
+      ({ cursorY: y } = addPageIfNeeded(doc, 16, y, runHeader));
       setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
       doc.text(normalizeText(ins.title || "Insight"), PAGE.margin, y);
       y += PAGE.line * 1.1;
-      setFont(doc, TYPO.body); setText(doc, PALETTE.ink);
+      setFont(doc, TYPO.body);
       y = drawBody(doc, normalizeText(ins.description || ins.reasoning || ""), bounds(doc).w, y);
-      y += 1.2;
+      y += PAGE.line * 0.8;
     }
   }
 
