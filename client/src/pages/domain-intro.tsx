@@ -207,10 +207,6 @@ export default function DomainIntroPage() {
                     <h1 className="text-3xl font-display font-bold text-foreground">
                       {domainData.code} · {domainData.title}
                     </h1>
-                    <div className="flex items-center space-x-2 mt-2">
-                      <BookOpen className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-muted-foreground font-ui text-sm">30–60 second read</span>
-                    </div>
                   </div>
                 </div>
               </div>

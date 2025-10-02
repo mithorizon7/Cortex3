@@ -38,6 +38,7 @@ export const DOMAIN_INTROS: Record<string, DomainIntroContent> = {
     terms: [
       { term: 'CoE', definition: 'Center of Excellence: small team that sets standards and enables others' },
       { term: 'BU', definition: 'Business Unit: business unit/function that owns outcomes and adoption' },
+      { term: 'RACI', definition: 'Responsible, Accountable, Consulted, Informed: framework for clarifying who does what' },
       { term: 'Reallocation', definition: 'shifting budget/time based on evidence' }
     ],
     evidence: [
@@ -128,7 +129,7 @@ export const DOMAIN_INTROS: Record<string, DomainIntroContent> = {
       },
       {
         condition: 'latency_edge >= 4',
-        note: 'Your extreme latency requirements (<200ms) may preclude cloud AI for critical paths. O1\'s monitoring must track p95/p99 latencies, not just averages. Consider edge deployment strategies.',
+        note: 'Your extreme latency requirements (<200ms) may preclude cloud AI for critical paths. O1\'s monitoring must track 95th and 99th percentile (p95/p99) latencies, not just averages. Consider edge deployment strategies.',
         severity: 'critical'
       },
       {
@@ -199,7 +200,7 @@ export const DOMAIN_INTROS: Record<string, DomainIntroContent> = {
       },
       {
         condition: 'sensitivity >= 4 && scale_throughput >= 3',
-        note: 'Processing sensitive data at scale multiplies breach impact. R1 must include automated PII detection, data minimization rules, and regular privacy impact assessments.',
+        note: 'Processing sensitive data at scale multiplies breach impact. R1 must include automated detection of personally identifiable information (PII), data minimization rules, and regular privacy impact assessments.',
         severity: 'critical'
       },
       {
@@ -326,6 +327,8 @@ export const DOMAIN_INTROS: Record<string, DomainIntroContent> = {
     ],
     terms: [
       { term: 'FinOps', definition: 'tracking and managing cloud/AI spend' },
+      { term: 'API', definition: 'Application Programming Interface: how systems connect and exchange data' },
+      { term: 'DPA', definition: 'Data Processing Agreement: contract terms for how vendors handle your data' },
       { term: 'Clean room', definition: 'controlled environment for data collaboration' },
       { term: 'Portability', definition: 'ability to export/switch with minimal disruption' }
     ],
