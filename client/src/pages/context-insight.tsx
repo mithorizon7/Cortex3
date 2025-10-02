@@ -207,7 +207,7 @@ function ContextInsightPageContent() {
       data-testid="context-insight-page"
     >
       {/* Progress Indicator */}
-      <div className="flex items-center justify-between text-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
         <div className="flex items-center gap-2 text-muted-foreground">
           <span>Context Profile</span>
           <ChevronRight className="h-4 w-4" />
@@ -223,8 +223,8 @@ function ContextInsightPageContent() {
 
       {/* Header */}
       <header className="space-y-4 pb-4">
-        <div className="flex items-start justify-between">
-          <div className="space-y-3">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="space-y-3 flex-1 min-w-0">
             <h1 className="text-3xl md:text-4xl font-bold text-foreground">
               Situation Assessment
             </h1>
@@ -233,7 +233,7 @@ function ContextInsightPageContent() {
             </p>
           </div>
           {data && (
-            <Badge variant="outline" className="bg-green-50 border-green-200 text-green-700 dark:bg-green-950/20 dark:border-green-800 dark:text-green-400">
+            <Badge variant="outline" className="bg-green-50 border-green-200 text-green-700 dark:bg-green-950/20 dark:border-green-800 dark:text-green-400 flex-shrink-0">
               <CheckCircle className="h-3 w-3 mr-1" />
               Complete
             </Badge>
