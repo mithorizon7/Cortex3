@@ -283,6 +283,32 @@ function drawBullets(doc: any, items: string[], maxWidth: number, y: number) {
   return y;
 }
 
+function drawPrompts(doc: any, items: string[], maxWidth: number, y: number) {
+  setFont(doc, TYPO.body);
+  setText(doc, PALETTE.inkSubtle);
+  const indent = 4.5;
+  for (const it of (items || [])) {
+    const bullet = "→ ";
+    const lines = wrap(doc, bullet + normalizeText(it), maxWidth - indent);
+    for (let i = 0; i < lines.length; i++) {
+      const line = i === 0 ? lines[i] : "  " + lines[i];
+      doc.text(line, PAGE.margin + indent, y);
+      y += PAGE.line;
+    }
+    y += 1.5;
+  }
+  return y;
+}
+
+function drawDomainSeparator(doc: any, y: number) {
+  const { pw } = bounds(doc);
+  setStroke(doc, PALETTE.line);
+  doc.setLineWidth(0.5);
+  doc.line(PAGE.margin, y, pw - PAGE.margin, y);
+  doc.setLineWidth(0.2); // reset
+  return y + PAGE.line * 2;
+}
+
 function drawCard(doc: any, x: number, y: number, w: number, header: string, bodyLines: string[][]) {
   // background
   setFill(doc, PALETTE.tint);
@@ -333,7 +359,7 @@ function pillarLabel(id: string) {
 
 function drawScoreBars(doc: any, scores: Record<string, number>, y: number) {
   const { x, w } = bounds(doc);
-  const max = 4;
+  const max = 3;
   const rowH = 8;
   const barW = w * 0.55;
   const labelW = w - barW - 6;
@@ -355,7 +381,7 @@ function drawScoreBars(doc: any, scores: Record<string, number>, y: number) {
     const bw = barW;
     setFill(doc, PALETTE.line);
     doc.rect(bx, y, bw, 4, "F");
-    const color = score >= 3 ? PALETTE.success : score >= 2 ? PALETTE.warning : PALETTE.danger;
+    const color = score >= 2.5 ? PALETTE.success : score >= 1.5 ? PALETTE.warning : PALETTE.danger;
     setFill(doc, color);
     doc.rect(bx, y, (score / max) * bw, 4, "F");
     // number
@@ -876,7 +902,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
   // Executive Summary
   const avg = Number.isFinite(data.averageScore) ? (data.averageScore as number) : 
     (Object.values(data.pillarScores).reduce((sum: number, score: number) => sum + score, 0) / 6);
-  const maturityLevel = avg < 1 ? 'Nascent' : avg < 2 ? 'Emerging' : avg < 3 ? 'Integrated' : 'Leading';
+  const maturityLevel = avg < 1 ? 'Nascent' : avg < 1.5 ? 'Emerging' : avg < 2.5 ? 'Integrated' : 'Leading';
 
   y = drawSectionTitle(doc, "EXECUTIVE SUMMARY", y);
   setFont(doc, TYPO.h2); setText(doc, PALETTE.ink);
@@ -922,7 +948,9 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
       scale_throughput: 'Scale/Throughput',
       build_readiness: 'Build Readiness',
       procurement_constraints: 'Procurement Requirements',
-      edge_operations: 'Edge Operations'
+      edge_operations: 'Edge Operations',
+      data_advantage: 'Data Advantage',
+      finops_priority: 'FinOps Priority'
     };
     
     Object.entries(cp).forEach(([key, value]) => {
@@ -930,7 +958,8 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
         if (typeof value === 'boolean') {
           contextItems.push(`${dimensionLabels[key]}: ${value ? 'Yes' : 'No'}`);
         } else if (typeof value === 'number') {
-          contextItems.push(`${dimensionLabels[key]}: Level ${value}/4`);
+          const scaleLabel = formatScaleValue(key, value);
+          contextItems.push(`${dimensionLabels[key]}: ${scaleLabel || `Level ${value}/4`}`);
         }
       }
     });
