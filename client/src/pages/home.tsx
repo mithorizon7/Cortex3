@@ -15,7 +15,6 @@ import {
 import { AppHeader } from "@/components/navigation/app-header";
 import { ExecutiveCortexHero } from "@/components/executive-cortex-hero";
 import { EnhancedSignInModal } from "@/components/auth/enhanced-sign-in-modal";
-import { AuthDiagnostic } from "@/components/auth/auth-diagnostic";
 import { useAuth } from "@/contexts/auth-context";
 import type { Assessment, PillarScores } from "@shared/schema";
 import { 
@@ -32,31 +31,27 @@ import {
 } from "lucide-react";
 
 const METHODOLOGY_CONTENT = {
-  title: "CORTEX in one page",
+  title: "The Design Thinking Behind CORTEX",
   sections: [
     {
-      title: "What it measures",
-      content: "Six executive domains (Clarity, Operations, Risk, Talent, Ecosystem, Experimentation)."
+      title: "Why We Separate Context from Capability",
+      content: "Your organization's AI readiness has two distinct dimensions: what you're capable of doing (pulse check) and the environment you operate in (context profile). By assessing these separately, we ensure your maturity scores reflect genuine organizational capability while your context shapes the specific guidance and safeguards you receive."
     },
     {
-      title: "How scoring works", 
-      content: "Each pillar is 0–3 based on three binary statements."
+      title: "The Intentionality of Binary Questions", 
+      content: "Each pulse check item is a simple yes/no decision about observable practices. This design eliminates scoring ambiguity and focuses leadership discussions on concrete next steps rather than debating gradations. Three binary choices per domain create a clear 0-3 scale that's immediately actionable."
     },
     {
-      title: "What the context profile does",
-      content: "Tailors guidance and flags non-negotiables (\"gates\") in higher-risk environments; never changes your scores."
+      title: "How Context and Capability Work Together",
+      content: "Your context profile never changes your scores—it contextualizes them. A financial services firm and a media company might both score 2 in Risk/Trust, but their action plans will differ based on regulatory requirements, data sensitivity, and customer expectations captured in their profiles."
     },
     {
-      title: "What you should expect today",
-      content: "A snapshot to align leadership on where to focus next, plus an export you can share."
+      title: "The Research Basis for Six Domains",
+      content: "These domains emerged from studying successful AI transformations across industries. They represent the minimum viable set of organizational capabilities where weakness in any single domain can undermine the entire AI strategy. Each connects directly to executive decision-making rather than technical implementation."
     },
     {
-      title: "What it is not",
-      content: "Not a compliance rating, not a vendor evaluation."
-    },
-    {
-      title: "How to interpret \"gates\"",
-      content: "They are prerequisites (e.g., human-in-the-loop for safety-critical use-cases) to satisfy before scaling."
+      title: "Why This Approach Drives Action",
+      content: "Traditional assessments often produce scores without clear next steps. By combining capability measurement with contextual interpretation, CORTEX generates specific, prioritized recommendations that respect both where you are and where you operate. The result is a discussion tool, not a report card."
     }
   ]
 };
@@ -64,7 +59,6 @@ const METHODOLOGY_CONTENT = {
 export default function HomePage() {
   const [, navigate] = useLocation();
   const [methodologyOpen, setMethodologyOpen] = useState(false);
-  const [diagnosticOpen, setDiagnosticOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [intendedDestination, setIntendedDestination] = useState<string | null>(null);
   const { user, loading } = useAuth();
@@ -184,34 +178,6 @@ export default function HomePage() {
         onOpenChange={setAuthModalOpen}
       />
       
-      {/* Temporary Auth Diagnostic Tool - Remove after login issues are resolved */}
-      {!user && (
-        <div className="fixed bottom-4 right-4 z-50">
-          <Button 
-            onClick={() => setDiagnosticOpen(true)}
-            variant="outline"
-            className="bg-background shadow-lg"
-            data-testid="button-show-auth-diagnostic"
-          >
-            🔧 Auth Diagnostic
-          </Button>
-        </div>
-      )}
-      
-      {/* Auth Diagnostic Sheet */}
-      <Sheet open={diagnosticOpen} onOpenChange={setDiagnosticOpen}>
-        <SheetContent side="right" className="w-[600px] sm:w-[800px]">
-          <SheetHeader>
-            <SheetTitle>🔧 Authentication Diagnostics</SheetTitle>
-            <SheetDescription>
-              Debug authentication issues and get setup guidance.
-            </SheetDescription>
-          </SheetHeader>
-          <div className="mt-6">
-            <AuthDiagnostic />
-          </div>
-        </SheetContent>
-      </Sheet>
 
       {/* Methodology Sheet - moved from identity strip */}
       <Sheet open={methodologyOpen} onOpenChange={setMethodologyOpen}>
@@ -284,11 +250,12 @@ export default function HomePage() {
               <Button 
                 variant="ghost"
                 size="sm"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors p-0 h-auto" 
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors gap-1" 
                 onClick={() => setMethodologyOpen(true)}
                 data-testid="button-view-methodology"
               >
-                View methodology
+                <BookOpen className="h-3 w-3" />
+                Why it's designed this way
               </Button>
             </div>
           </div>
@@ -404,19 +371,19 @@ export default function HomePage() {
             <CardContent className="space-y-3 text-sm">
               <div className="flex items-start gap-2">
                 <CheckCircle className="h-4 w-4 text-accent mt-0.5 flex-shrink-0" />
-                <span>A single-page view of where you stand across six strategic maturity domains (0–3 scale).</span>
+                <span>A visual snapshot of your current AI readiness across six strategic domains.</span>
               </div>
               <div className="flex items-start gap-2">
                 <CheckCircle className="h-4 w-4 text-accent mt-0.5 flex-shrink-0" />
-                <span>Context-specific safeguards to satisfy before scaling (e.g., human checks, basic testing, data handling rules).</span>
+                <span>Context-aware considerations based on your operating environment and risk profile.</span>
               </div>
               <div className="flex items-start gap-2">
                 <CheckCircle className="h-4 w-4 text-accent mt-0.5 flex-shrink-0" />
-                <span>Guidance cards for each domain: why it matters, what good looks like, and practical ways to improve.</span>
+                <span>Domain-specific insights with practical starting points relevant to your situation.</span>
               </div>
               <div className="flex items-start gap-2">
-                <Download className="h-4 w-4 text-accent mt-0.5 flex-shrink-0" />
-                <span>A downloadable brief (PDF/JSON) you can share with your executive team.</span>
+                <CheckCircle className="h-4 w-4 text-accent mt-0.5 flex-shrink-0" />
+                <span>A discussion framework you can use to align leadership on priorities.</span>
               </div>
             </CardContent>
           </Card>
@@ -447,18 +414,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Facilitator note */}
-      <section className="py-8 px-6 bg-background">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-muted/50 border border-border rounded-md p-4">
-            <h4 className="text-sm font-medium mb-2">Facilitator Note</h4>
-            <p className="text-xs text-muted-foreground">
-              If you are completing this on behalf of a team, gather input from: your technology lead, 
-              a risk/assurance contact, and one business unit owner. You can amend answers during the discussion.
-            </p>
-          </div>
-        </div>
-      </section>
 
       {/* Footer */}
       <footer className="border-t border-border py-8 px-6 bg-muted/10">
