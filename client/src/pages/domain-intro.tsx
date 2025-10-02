@@ -13,7 +13,7 @@ import { ProtectedRoute } from "@/components/auth/protected-route";
 import ProgressHeader from "@/components/progress-header";
 import OfflineBanner from "@/components/offline-banner";
 import { DOMAIN_INTROS, FOOTER_COPY } from "@/lib/domain-intros";
-import { ChevronRight, ChevronDown, BookOpen, Target, Lightbulb, CheckSquare, FileText, AlertCircle } from "lucide-react";
+import { ChevronRight, ChevronDown, BookOpen, Target, Lightbulb, CheckSquare, FileText, AlertCircle, AlertTriangle } from "lucide-react";
 
 const DOMAIN_ORDER = ['C', 'O', 'R', 'T', 'E', 'X'];
 
@@ -277,7 +277,7 @@ export default function DomainIntroPage() {
                 <Card className="mb-6 border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/20">
                   <CardHeader>
                     <CardTitle className="flex items-center space-x-2 text-lg text-red-800 dark:text-red-200">
-                      <AlertCircle className="h-5 w-5" />
+                      <AlertTriangle className="h-5 w-5" />
                       <span>Critical Context for Your Organization</span>
                     </CardTitle>
                   </CardHeader>
