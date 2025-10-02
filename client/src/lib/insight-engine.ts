@@ -162,8 +162,32 @@ const PRIORITY_LIBRARY = {
 };
 
 // Context analysis functions
-function analyzeMaturityDistribution(pillarScores: PillarScores) {
+function analyzeMaturityDistribution(pillarScores: PillarScores | null | undefined) {
+  if (!pillarScores || typeof pillarScores !== 'object') {
+    return {
+      avgScore: 0,
+      minScore: 0,
+      maxScore: 0,
+      variance: 0,
+      isUnbalanced: false,
+      hasStrengths: false,
+      hasWeaknesses: true
+    };
+  }
+  
   const scores = Object.values(pillarScores);
+  if (scores.length === 0) {
+    return {
+      avgScore: 0,
+      minScore: 0,
+      maxScore: 0,
+      variance: 0,
+      isUnbalanced: false,
+      hasStrengths: false,
+      hasWeaknesses: true
+    };
+  }
+  
   const avgScore = scores.reduce((sum, score) => sum + score, 0) / scores.length;
   const minScore = Math.min(...scores);
   const maxScore = Math.max(...scores);
@@ -180,7 +204,11 @@ function analyzeMaturityDistribution(pillarScores: PillarScores) {
   };
 }
 
-function identifyWeakestDomains(pillarScores: PillarScores, count: number = 2) {
+function identifyWeakestDomains(pillarScores: PillarScores | null | undefined, count: number = 2) {
+  if (!pillarScores || typeof pillarScores !== 'object') {
+    return [];
+  }
+  
   return Object.entries(pillarScores)
     .sort(([,a], [,b]) => a - b)
     .slice(0, count)
@@ -217,13 +245,18 @@ function analyzeContextFlags(contextProfile: ContextProfile | null | undefined) 
 
 // Main insight generation function
 export function generateEnhancedExecutiveInsights(
-  pillarScores: PillarScores, 
+  pillarScores: PillarScores | null | undefined, 
   gates: any[], 
   contextProfile: ContextProfile | null | undefined
 ): { insights: ExecutiveInsight[], priorities: ActionPriority[] } {
   
   const insights: ExecutiveInsight[] = [];
   const priorities: ActionPriority[] = [];
+  
+  // Guard against null/undefined pillarScores
+  if (!pillarScores || typeof pillarScores !== 'object') {
+    return { insights: [], priorities: [] };
+  }
   
   // Analyze the assessment data
   const maturity = analyzeMaturityDistribution(pillarScores);
