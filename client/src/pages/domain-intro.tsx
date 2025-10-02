@@ -7,13 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { AppHeader } from "@/components/navigation/app-header";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import ProgressHeader from "@/components/progress-header";
 import OfflineBanner from "@/components/offline-banner";
 import { DOMAIN_INTROS, FOOTER_COPY } from "@/lib/domain-intros";
-import { ChevronRight, ChevronDown, BookOpen, Target, Lightbulb, CheckSquare, FileText, AlertCircle, AlertTriangle } from "lucide-react";
+import { ChevronRight, BookOpen, Target, Lightbulb, CheckSquare, FileText, AlertCircle, AlertTriangle } from "lucide-react";
 
 const DOMAIN_ORDER = ['C', 'O', 'R', 'T', 'E', 'X'];
 
@@ -21,7 +20,6 @@ export default function DomainIntroPage() {
   const [, navigate] = useLocation();
   const { domain, id: assessmentId } = useParams();
   const [skipIntros, setSkipIntros] = useState(false);
-  const [showDeepDive, setShowDeepDive] = useState(false);
 
   // Load skip preference from localStorage
   useEffect(() => {
@@ -370,24 +368,6 @@ export default function DomainIntroPage() {
                   </CardContent>
                 </Card>
 
-                {/* Deep Dive (Collapsible) */}
-                <Collapsible open={showDeepDive} onOpenChange={setShowDeepDive}>
-                  <CollapsibleTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between">
-                      <span>Need detail?</span>
-                      {showDeepDive ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                    </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="mt-4">
-                    <Card>
-                      <CardContent className="pt-6">
-                        <p className="text-sm text-muted-foreground font-ui">
-                          Deep dive content would be available here - detailed methodology, examples, and implementation guidance for the {domainData.title} domain.
-                        </p>
-                      </CardContent>
-                    </Card>
-                  </CollapsibleContent>
-                </Collapsible>
               </div>
             </div>
           </div>
