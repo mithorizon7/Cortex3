@@ -236,10 +236,6 @@ export default function HomePage() {
                       <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-lg group-hover:shadow-blue-500/25 transition-all duration-300 group-hover:rotate-3">
                         <span className="group-hover:scale-110 transition-transform duration-300">1</span>
                       </div>
-                      {/* Icon overlay */}
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <ClipboardList className="h-6 w-6 text-white/20 group-hover:text-white/40 transition-colors duration-300" />
-                      </div>
                     </div>
                   </div>
                   
@@ -273,10 +269,6 @@ export default function HomePage() {
                       <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-lg group-hover:shadow-purple-500/25 transition-all duration-300 group-hover:rotate-3">
                         <span className="group-hover:scale-110 transition-transform duration-300">2</span>
                       </div>
-                      {/* Icon overlay */}
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <Activity className="h-6 w-6 text-white/20 group-hover:text-white/40 transition-colors duration-300" />
-                      </div>
                     </div>
                   </div>
                   
@@ -306,10 +298,6 @@ export default function HomePage() {
                     <div className="relative">
                       <div className="w-14 h-14 rounded-full bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center text-white font-bold text-lg shadow-lg group-hover:shadow-amber-500/25 transition-all duration-300 group-hover:rotate-3">
                         <span className="group-hover:scale-110 transition-transform duration-300">3</span>
-                      </div>
-                      {/* Icon overlay */}
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <Trophy className="h-6 w-6 text-white/20 group-hover:text-white/40 transition-colors duration-300" />
                       </div>
                       {/* Glow effect for final step */}
                       <div className="absolute inset-0 rounded-full animate-pulse bg-amber-500/20 blur-xl group-hover:bg-amber-500/30 transition-colors duration-300"></div>
