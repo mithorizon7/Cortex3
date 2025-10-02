@@ -157,16 +157,14 @@ export const CONTEXT_ITEMS = [
   { 
     key: 'procurement_constraints', 
     label: 'Do you have procurement requirements?', 
-    description: 'This includes public sector RFPs, security clearances, or mandatory vendor approval processes.', 
-    type: 'boolean' as const,
-    examples: ['Government contracts', 'Enterprise security reviews', 'Public company compliance']
+    description: 'Answer YES if you deal with government RFPs, security clearances, multi-layered approval processes, or mandatory vendor certifications.', 
+    type: 'boolean' as const
   },
   { 
     key: 'edge_operations', 
     label: 'Do you operate industrial systems?', 
-    description: 'This includes manufacturing equipment, field operations, or systems that can\'t always connect to the internet.', 
-    type: 'boolean' as const,
-    examples: ['Manufacturing/SCADA', 'Field equipment', 'Remote operations', 'Autonomous vehicles']
+    description: 'Answer YES if you run manufacturing equipment, field operations with intermittent connectivity, SCADA systems, or autonomous vehicles that can\'t rely on constant internet access.', 
+    type: 'boolean' as const
   },
 ];
 
