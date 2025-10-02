@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Loader2, Brain, Compass, TrendingUp, MessageSquare, FileText, CheckCircle, AlertTriangle, ListTodo, Shield, Copy, ArrowRight, ChevronRight } from "lucide-react";
+import { AlertCircle, Loader2, Brain, FileText, CheckCircle, AlertTriangle, Copy, ArrowRight, ChevronRight } from "lucide-react";
 import { generateSituationAssessmentBrief, type SituationAssessmentData } from "@/lib/pdf-generator";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { LoadingTips } from "@/components/situation-assessment/LoadingTips";
@@ -81,85 +81,6 @@ function ErrorFallback({ error }: { error: Error }) {
         )}
       </AlertDescription>
     </Alert>
-  );
-}
-
-function renderDiscussionPrompts(situationAssessment: SituationAssessment | null) {
-  // Check if we have Situation Assessment 2.0 data with specific actions and watchouts
-  const hasActions = situationAssessment?.actions && situationAssessment.actions.length > 0;
-  const hasWatchouts = situationAssessment?.watchouts && situationAssessment.watchouts.length > 0;
-  
-  if (hasActions || hasWatchouts) {
-    // Generate targeted prompts based on actual situation assessment data
-    const prompts = [];
-    
-    // Prompt 1: Focus on prioritizing actions
-    if (hasActions) {
-      prompts.push({
-        id: "action-priority",
-        text: `Of the ${situationAssessment.actions!.length} leadership actions identified, which one could deliver the clearest <strong>customer impact</strong> within 60-90 days?`
-      });
-    } else {
-      prompts.push({
-        id: "generic-advantage",
-        text: `Which <strong>advantage</strong> in the reflection could power an early win, and which <strong>constraint</strong> would most undermine it?`
-      });
-    }
-    
-    // Prompt 2: Focus on de-risking based on watchouts
-    if (hasWatchouts) {
-      prompts.push({
-        id: "watchout-mitigation",
-        text: `Looking at the watch-outs identified, what <strong>specific guardrails</strong> (rollback plans, monitoring, approval gates) should be in place before moving forward?`
-      });
-    } else {
-      prompts.push({
-        id: "generic-impact",
-        text: `Where would <strong>customer-visible impact</strong> be clearest within 60–90 days without increasing risk?`
-      });
-    }
-    
-    // Prompt 3: Focus on balancing actions against watchouts
-    if (hasActions && hasWatchouts) {
-      prompts.push({
-        id: "action-watchout-balance",
-        text: `Which leadership action would be most constrained by the watch-outs, and how could you <strong>sequence initiatives</strong> to minimize that tension?`
-      });
-    } else {
-      prompts.push({
-        id: "generic-guardrails",
-        text: `What <strong>de-risking guardrails</strong> (Human-in-the-Loop, rollback path, audit trail) should be present from day one?`
-      });
-    }
-    
-    return (
-      <ul className="space-y-4 pl-1">
-        {prompts.map((prompt, index) => (
-          <li key={prompt.id} className="flex items-start gap-3 text-sm text-foreground leading-relaxed" data-testid={`discussion-prompt-${index + 1}`}>
-            <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0" />
-            <span dangerouslySetInnerHTML={{ __html: prompt.text }} />
-          </li>
-        ))}
-      </ul>
-    );
-  }
-  
-  // Fallback to generic prompts when no specific data is available
-  return (
-    <ul className="space-y-4 pl-1">
-      <li className="flex items-start gap-3 text-sm text-foreground leading-relaxed" data-testid="discussion-prompt-1">
-        <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0" />
-        <span>Which <strong>advantage</strong> in the reflection could power an early win, and which <strong>constraint</strong> would most undermine it?</span>
-      </li>
-      <li className="flex items-start gap-3 text-sm text-foreground leading-relaxed" data-testid="discussion-prompt-2">
-        <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0" />
-        <span>Where would <strong>customer-visible impact</strong> be clearest within 60–90 days without increasing risk?</span>
-      </li>
-      <li className="flex items-start gap-3 text-sm text-foreground leading-relaxed" data-testid="discussion-prompt-3">
-        <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0" />
-        <span>What <strong>de-risking guardrails</strong> (Human-in-the-Loop, rollback path, audit trail) should be present from day one?</span>
-      </li>
-    </ul>
   );
 }
 
