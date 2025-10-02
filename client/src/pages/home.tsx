@@ -27,7 +27,10 @@ import {
   Users,
   HelpCircle,
   BookOpen,
-  Compass
+  Compass,
+  ClipboardList,
+  Activity,
+  Trophy
 } from "lucide-react";
 
 const METHODOLOGY_CONTENT = {
@@ -216,26 +219,117 @@ export default function HomePage() {
           </p>
           
 
-          <ol className="space-y-4" data-testid="list-assessment-steps">
-            <li>
-              <div className="font-medium">Step 1 — Context</div>
-              <div className="text-sm text-muted-foreground">
-                Begin with a quick profile of the conditions you operate in. This information shapes the advice and highlights where extra care may be needed. It does not change your scores.
+          <div className="space-y-5" data-testid="list-assessment-steps">
+            {/* Step 1 - Context Profile */}
+            <div className="group relative">
+              {/* Connection line to next step */}
+              <div className="absolute left-[1.875rem] top-[3.5rem] w-[2px] h-[calc(100%+1rem)] bg-gradient-to-b from-blue-500/20 to-purple-500/20 hidden sm:block"></div>
+              
+              <div className="relative bg-gradient-to-br from-card/80 to-card/60 backdrop-blur-sm border border-border/50 rounded-xl p-5 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:border-blue-500/30 overflow-hidden">
+                {/* Gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                
+                <div className="relative flex gap-4">
+                  {/* Step number badge */}
+                  <div className="flex-shrink-0">
+                    <div className="relative">
+                      <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-lg group-hover:shadow-blue-500/25 transition-all duration-300 group-hover:rotate-3">
+                        <span className="group-hover:scale-110 transition-transform duration-300">1</span>
+                      </div>
+                      {/* Icon overlay */}
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <ClipboardList className="h-6 w-6 text-white/20 group-hover:text-white/40 transition-colors duration-300" />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Content */}
+                  <div className="flex-1 pt-1">
+                    <h3 className="font-semibold text-base mb-1.5 flex items-center gap-2">
+                      Step 1 — Context Profile
+                      <ClipboardList className="h-4 w-4 text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    </h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Begin with a quick profile of the conditions you operate in. This information shapes the advice and highlights where extra care may be needed. It does not change your scores.
+                    </p>
+                  </div>
+                </div>
               </div>
-            </li>
-            <li>
-              <div className="font-medium">Step 2 — Pulse Check</div>
-              <div className="text-sm text-muted-foreground">
-                Review 18 items that reflect how your organization is operating today. The result is a straightforward score per domain that shows strengths and where there is room to improve.
+            </div>
+
+            {/* Step 2 - Pulse Check */}
+            <div className="group relative">
+              {/* Connection line to next step */}
+              <div className="absolute left-[1.875rem] top-[3.5rem] w-[2px] h-[calc(100%+1rem)] bg-gradient-to-b from-purple-500/20 to-amber-500/20 hidden sm:block"></div>
+              
+              <div className="relative bg-gradient-to-br from-card/80 to-card/60 backdrop-blur-sm border border-border/50 rounded-xl p-5 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:border-purple-500/30 overflow-hidden">
+                {/* Gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                
+                <div className="relative flex gap-4">
+                  {/* Step number badge */}
+                  <div className="flex-shrink-0">
+                    <div className="relative">
+                      <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-lg group-hover:shadow-purple-500/25 transition-all duration-300 group-hover:rotate-3">
+                        <span className="group-hover:scale-110 transition-transform duration-300">2</span>
+                      </div>
+                      {/* Icon overlay */}
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <Activity className="h-6 w-6 text-white/20 group-hover:text-white/40 transition-colors duration-300" />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Content */}
+                  <div className="flex-1 pt-1">
+                    <h3 className="font-semibold text-base mb-1.5 flex items-center gap-2">
+                      Step 2 — Pulse Check
+                      <Activity className="h-4 w-4 text-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    </h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Review 18 items that reflect how your organization is operating today. The result is a straightforward score per domain that shows strengths and where there is room to improve.
+                    </p>
+                  </div>
+                </div>
               </div>
-            </li>
-            <li>
-              <div className="font-medium">Step 3 — Results</div>
-              <div className="text-sm text-muted-foreground">
-                View a honeycomb chart summarizing your AI maturity, along with tailored cautions where risk is higher. Each domain includes a short card that explains why it matters and typical ways organizations strengthen that area. A downloadable brief is available at the end.
+            </div>
+
+            {/* Step 3 - Results */}
+            <div className="group relative">
+              <div className="relative bg-gradient-to-br from-card/80 to-card/60 backdrop-blur-sm border border-border/50 rounded-xl p-5 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:border-amber-500/30 overflow-hidden">
+                {/* Gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                
+                <div className="relative flex gap-4">
+                  {/* Step number badge */}
+                  <div className="flex-shrink-0">
+                    <div className="relative">
+                      <div className="w-14 h-14 rounded-full bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center text-white font-bold text-lg shadow-lg group-hover:shadow-amber-500/25 transition-all duration-300 group-hover:rotate-3">
+                        <span className="group-hover:scale-110 transition-transform duration-300">3</span>
+                      </div>
+                      {/* Icon overlay */}
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <Trophy className="h-6 w-6 text-white/20 group-hover:text-white/40 transition-colors duration-300" />
+                      </div>
+                      {/* Glow effect for final step */}
+                      <div className="absolute inset-0 rounded-full animate-pulse bg-amber-500/20 blur-xl group-hover:bg-amber-500/30 transition-colors duration-300"></div>
+                    </div>
+                  </div>
+                  
+                  {/* Content */}
+                  <div className="flex-1 pt-1">
+                    <h3 className="font-semibold text-base mb-1.5 flex items-center gap-2">
+                      Step 3 — Results
+                      <Trophy className="h-4 w-4 text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    </h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      View a honeycomb chart summarizing your AI maturity, along with tailored cautions where risk is higher. Each domain includes a short card that explains why it matters and typical ways organizations strengthen that area. A downloadable brief is available at the end.
+                    </p>
+                  </div>
+                </div>
               </div>
-            </li>
-          </ol>
+            </div>
+          </div>
 
 
             <div className="flex items-center gap-4 pt-2">
