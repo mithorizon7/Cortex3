@@ -708,7 +708,17 @@ const DOMAIN_GUIDANCE = {
       "Quarterly executive/board review with reallocation decisions (fund/defund)",
       "Leaders share a common language for AI scope, risks, and value"
     ],
-    howToImprove: "Progress usually starts with publishing a simple ambition (outcomes, not technologies), then clarifying who owns what between a Center of Excellence and business units. Reviews move from \"show‑and‑tell\" to decide‑and‑do—small amounts of money shift to what works, with clear rationale. Over time, AI outcomes appear in strategy documents and operating plans. In more regulated settings, leadership reviews also check that safeguards and evidence are in place."
+    howToImprove: "Progress usually starts with publishing a simple ambition (outcomes, not technologies), then clarifying who owns what between a Center of Excellence and business units. Reviews move from \"show‑and‑tell\" to decide‑and‑do—small amounts of money shift to what works, with clear rationale. Over time, AI outcomes appear in strategy documents and operating plans. In more regulated settings, leadership reviews also check that safeguards and evidence are in place.",
+    commonPitfalls: [
+      "Vision without ownership; ownership without budget",
+      "Treating the CoE as a gatekeeper instead of an enabler",
+      "Endless exploration with no reallocation"
+    ],
+    discussionPrompts: [
+      "What two business outcomes will AI influence this year?",
+      "Who is accountable for those outcomes and what budget do they control?",
+      "What will we stop doing if it doesn't perform?"
+    ]
   },
   O: {
     whyMatters: "Stable operations and governed data are the difference between a demo and a dependable service. Monitoring, human‑in‑the‑loop where risk warrants it, and basic data hygiene prevent silent failures, surprise bills, and reputational harm.",
@@ -719,7 +729,17 @@ const DOMAIN_GUIDANCE = {
       "A searchable data catalogue with owners, lineage, quality thresholds",
       "A lightweight value/feasibility gate for new use‑cases"
     ],
-    howToImprove: "Start with monitoring what you already run (latency, cost, error rate) and add simple alerts. Introduce a two‑page intake for new ideas: value hypothesis, data sources, risk level. Designate data owners for key tables or content used by AI. Where decisions affect customers, add human approval until you have evidence that automation is safe."
+    howToImprove: "Start with monitoring what you already run (latency, cost, error rate) and add simple alerts. Introduce a two‑page intake for new ideas: value hypothesis, data sources, risk level. Designate data owners for key tables or content used by AI. Where decisions affect customers, add human approval until you have evidence that automation is safe.",
+    commonPitfalls: [
+      "Over‑engineering MLOps before any value has shipped",
+      "No drift or cost alerts; discovering issues from users or invoices",
+      "Unowned data; stale or inconsistent sources"
+    ],
+    discussionPrompts: [
+      "What do we measure today on our AI services? What's missing?",
+      "Which one dataset, if cleaned and owned, would unlock the most value?",
+      "Where should a human stay in the loop for now?"
+    ]
   },
   R: {
     whyMatters: "Trust and safety make AI adoption sustainable. Stakeholders expect you to know what AI you run, the risks it carries, and how you'll respond when something goes wrong. Basic assurance practices prevent reputational damage and regulatory setbacks.",
@@ -730,7 +750,17 @@ const DOMAIN_GUIDANCE = {
       "An incident response runbook with roles and communications",
       "Internal or third‑party review of controls (as required)"
     ],
-    howToImprove: "Catalog what you already use (systems, vendors, purpose, data). Schedule basic checks for high‑impact use‑cases and test your defenses with simple adversarial prompts. Draft a one‑page IR plan: who triages, who decides, who informs customers. Regulated contexts often add annual assurance whether internal or external."
+    howToImprove: "Catalog what you already use (systems, vendors, purpose, data). Schedule basic checks for high‑impact use‑cases and test your defenses with simple adversarial prompts. Draft a one‑page IR plan: who triages, who decides, who informs customers. Regulated contexts often add annual assurance whether internal or external.",
+    commonPitfalls: [
+      "Policy documents without monitoring",
+      "Unknown owners; no one reacts when metrics drift",
+      "Treating red‑teaming as a one‑time event"
+    ],
+    discussionPrompts: [
+      "Which AI system could create the most damage if it failed? Do we monitor it?",
+      "Who picks up the phone when an AI incident occurs?",
+      "How often do we test for bias, privacy, and jailbreaks?"
+    ]
   },
   T: {
     whyMatters: "Adoption is about work, not tools. People need role‑specific skills and updated workflows that show when to use AI, when to verify, and how to escalate. Stories and incentives help good behaviors spread.",
@@ -740,7 +770,17 @@ const DOMAIN_GUIDANCE = {
       "\"Wins and lessons\" shared on a regular rhythm",
       "Incentives that reward safe, effective use"
     ],
-    howToImprove: "Pick two or three job families that touch customers or costly processes. Create before/after task maps and add simple guardrails (checklists, approval steps). Offer short, role‑specific training with real examples. Share what works and what fails—both teach."
+    howToImprove: "Pick two or three job families that touch customers or costly processes. Create before/after task maps and add simple guardrails (checklists, approval steps). Offer short, role‑specific training with real examples. Share what works and what fails—both teach.",
+    commonPitfalls: [
+      "Generic training without job redesign",
+      "Incentives that reward activity over outcomes",
+      "\"One wizard\" knows everything; no diffusion"
+    ],
+    discussionPrompts: [
+      "Which roles will benefit most from AI in 90 days?",
+      "What checkpoints keep customers safe while we learn?",
+      "How will we recognize and reward smart usage?"
+    ]
   },
   E: {
     whyMatters: "Partners and platform choices determine speed, cost, and flexibility. Elastic capacity keeps teams moving; portability and clear terms help you avoid lock‑in and surprises.",
@@ -750,7 +790,17 @@ const DOMAIN_GUIDANCE = {
       "Exit/portability plans in contracts (export formats, second source)",
       "Governed APIs and basic interoperability standards"
     ],
-    howToImprove: "Start by measuring unit costs and watching quotas. Consolidate on a few well‑understood services with clear terms (\"no training on our data/outputs\" when needed). Draft a one‑page exit plan: how we would switch, what we'd export, and a secondary option for critical paths."
+    howToImprove: "Start by measuring unit costs and watching quotas. Consolidate on a few well‑understood services with clear terms (\"no training on our data/outputs\" when needed). Draft a one‑page exit plan: how we would switch, what we'd export, and a secondary option for critical paths.",
+    commonPitfalls: [
+      "Vendor lock‑in via proprietary formats and unclear rights",
+      "Quota bottlenecks; budget surprises",
+      "One‑off integrations that don't scale"
+    ],
+    discussionPrompts: [
+      "Which costs or quotas block us most often?",
+      "What contractual term would protect our data and options?",
+      "If our primary vendor failed tomorrow, what's our plan?"
+    ]
   },
   X: {
     whyMatters: "AI changes quickly. Disciplined experimentation—safe sandboxes, small budgets, explicit success and sunset criteria—increases learning velocity and prevents \"pilot purgatory.\"",
@@ -760,7 +810,17 @@ const DOMAIN_GUIDANCE = {
       "Every pilot has success and sunset criteria and a decision date",
       "Lightweight horizon scanning of tech, policy, and competitors"
     ],
-    howToImprove: "Provide a clear on‑ramp: where to try ideas, what's allowed, and how to request data. Require a simple metric and decision date for every pilot. Run a short horizon brief quarterly to decide what to watch or ignore. Retire experiments on time so resources return to the pool."
+    howToImprove: "Provide a clear on‑ramp: where to try ideas, what's allowed, and how to request data. Require a simple metric and decision date for every pilot. Run a short horizon brief quarterly to decide what to watch or ignore. Retire experiments on time so resources return to the pool.",
+    commonPitfalls: [
+      "Pilots with no metrics or end dates",
+      "Sandboxes with real data but no guardrails",
+      "Chasing every new model without a hypothesis"
+    ],
+    discussionPrompts: [
+      "Which experiments have been running for months without a decision?",
+      "What would \"good enough\" look like to promote or retire a pilot?",
+      "Who scans the horizon, and what did they flag this quarter?"
+    ]
   }
 };
 
@@ -775,7 +835,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
   if (!insights || !Array.isArray(insights) || insights.length === 0) {
     try {
       const result = await generateEnhancedExecutiveInsights(
-        data.pillarScores,
+        data.pillarScores as any,
         data.triggeredGates || [],
         data.contextProfile
       );
@@ -841,15 +901,111 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     y += PAGE.line;
   }
 
+  // Organizational Context Summary
+  if (data.contextProfile) {
+    ({ cursorY: y } = addPageIfNeeded(doc, 28, y, runHeader));
+    y = drawSectionTitle(doc, "ORGANIZATIONAL CONTEXT", y);
+    setFont(doc, TYPO.body); setText(doc, PALETTE.ink);
+    y = drawBody(doc, "Your assessment captured the following organizational dimensions that shape your AI readiness requirements:", bounds(doc).w, y);
+    y += PAGE.line * 0.5;
+    
+    const contextItems: string[] = [];
+    const cp = data.contextProfile;
+    
+    const dimensionLabels: Record<string, string> = {
+      regulatory_intensity: 'Regulatory Intensity',
+      safety_criticality: 'Safety Criticality',
+      data_sensitivity: 'Data Sensitivity',
+      brand_exposure: 'Brand Exposure',
+      clock_speed: 'Market Clock Speed',
+      latency_edge: 'Latency Requirements',
+      scale_throughput: 'Scale/Throughput',
+      build_readiness: 'Build Readiness',
+      procurement_constraints: 'Procurement Requirements',
+      edge_operations: 'Edge Operations'
+    };
+    
+    Object.entries(cp).forEach(([key, value]) => {
+      if (value != null && dimensionLabels[key]) {
+        if (typeof value === 'boolean') {
+          contextItems.push(`${dimensionLabels[key]}: ${value ? 'Yes' : 'No'}`);
+        } else if (typeof value === 'number') {
+          contextItems.push(`${dimensionLabels[key]}: Level ${value}/4`);
+        }
+      }
+    });
+    
+    if (contextItems.length > 0) {
+      y = drawBullets(doc, contextItems, bounds(doc).w, y);
+      y += PAGE.line;
+    }
+  }
+
+  // Value Overlay Metrics (if configured)
+  if (data.valueOverlay) {
+    ({ cursorY: y } = addPageIfNeeded(doc, 28, y, runHeader));
+    y = drawSectionTitle(doc, "VALUE METRICS", y);
+    setFont(doc, TYPO.body); setText(doc, PALETTE.ink);
+    y = drawBody(doc, "You have configured the following business metrics to track AI impact:", bounds(doc).w, y);
+    y += PAGE.line * 0.5;
+    
+    const vo = data.valueOverlay as any;
+    const metricItems: string[] = [];
+    
+    ['C', 'O', 'R', 'T', 'E', 'X'].forEach(pillarKey => {
+      const pillarData = vo[pillarKey];
+      if (pillarData?.metricId && pillarData?.metricName) {
+        const pillarName = CORTEX_PILLARS[pillarKey as keyof typeof CORTEX_PILLARS]?.name || pillarKey;
+        let metricStr = `${pillarName}: ${pillarData.metricName}`;
+        
+        if (pillarData.baseline != null && pillarData.target != null) {
+          metricStr += ` (baseline: ${pillarData.baseline}, target: ${pillarData.target}`;
+          if (pillarData.unit) metricStr += ` ${pillarData.unit}`;
+          metricStr += ')';
+        }
+        
+        if (pillarData.cadence) {
+          metricStr += ` — ${pillarData.cadence} updates`;
+        }
+        
+        metricItems.push(metricStr);
+      }
+    });
+    
+    if (metricItems.length > 0) {
+      y = drawBullets(doc, metricItems, bounds(doc).w, y);
+      y += PAGE.line;
+    }
+  }
+
   // Action Priorities
   if (Array.isArray(priorities) && priorities.length > 0) {
     ({ cursorY: y } = addPageIfNeeded(doc, 22, y, runHeader));
     y = drawSectionTitle(doc, "ACTION PRIORITIES", y);
-    const items = priorities
-      .slice(0, 5)
-      .map((p, idx) => `${idx + 1}. ${normalizeText(p.title)} — ${p.description} ${p.timeframe ? `(${p.timeframe})` : ''}`);
-    y = drawBullets(doc, items, bounds(doc).w, y);
-    y += PAGE.line;
+    
+    for (let idx = 0; idx < Math.min(5, priorities.length); idx++) {
+      const p = priorities[idx];
+      ({ cursorY: y } = addPageIfNeeded(doc, 12, y, runHeader));
+      
+      setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
+      const titleText = `${idx + 1}. ${normalizeText(p.title)}`;
+      doc.text(titleText, PAGE.margin, y);
+      y += PAGE.line * 1.1;
+      
+      if (p.timeframe) {
+        setFont(doc, TYPO.small); setText(doc, PALETTE.inkSubtle);
+        doc.text(`Timeframe: ${p.timeframe}`, PAGE.margin + 6, y);
+        y += PAGE.line * 1.1;
+      }
+      
+      if (p.description) {
+        setFont(doc, TYPO.body); setText(doc, PALETTE.ink);
+        y = drawBody(doc, normalizeText(p.description), bounds(doc).w - 6, y);
+      }
+      
+      y += PAGE.line * 0.5;
+    }
+    y += PAGE.line * 0.5;
   }
 
   // Comprehensive Domain Analysis
@@ -902,7 +1058,29 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     y += PAGE.line * 1.2;
     setFont(doc, TYPO.body);
     y = drawBody(doc, guidance.howToImprove, bounds(doc).w, y);
-    y += PAGE.line * 1.5;
+    y += PAGE.line * 0.8;
+    
+    // Common pitfalls
+    if (guidance.commonPitfalls && guidance.commonPitfalls.length > 0) {
+      ({ cursorY: y } = addPageIfNeeded(doc, 20, y, runHeader));
+      setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
+      doc.text("Common Pitfalls", PAGE.margin, y);
+      y += PAGE.line * 1.2;
+      y = drawBullets(doc, guidance.commonPitfalls, bounds(doc).w, y);
+      y += PAGE.line * 0.5;
+    }
+    
+    // Discussion prompts
+    if (guidance.discussionPrompts && guidance.discussionPrompts.length > 0) {
+      ({ cursorY: y } = addPageIfNeeded(doc, 20, y, runHeader));
+      setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
+      doc.text("Discussion Prompts", PAGE.margin, y);
+      y += PAGE.line * 1.2;
+      y = drawBullets(doc, guidance.discussionPrompts, bounds(doc).w, y);
+      y += PAGE.line * 1.5;
+    } else {
+      y += PAGE.line * 0.7;
+    }
   }
 
   // Executive Insights
