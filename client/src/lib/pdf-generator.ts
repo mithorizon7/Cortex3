@@ -358,6 +358,14 @@ function pillarLabel(id: string) {
   return (CORTEX_PILLARS?.[key]?.name as string) || id;
 }
 
+function getMaturityLevel(score: number): string {
+  return score < 1 ? 'Nascent' : score < 1.5 ? 'Emerging' : score < 2.5 ? 'Integrated' : 'Leading';
+}
+
+function getMaturityColor(score: number): string {
+  return score >= 2.5 ? PALETTE.success : score >= 1.5 ? PALETTE.warning : PALETTE.danger;
+}
+
 function drawScoreBars(doc: any, scores: Record<string, number>, y: number) {
   const { x, w } = bounds(doc);
   const max = 3;
@@ -382,7 +390,7 @@ function drawScoreBars(doc: any, scores: Record<string, number>, y: number) {
     const bw = barW;
     setFill(doc, PALETTE.line);
     doc.rect(bx, y, bw, 4, "F");
-    const color = score >= 2.5 ? PALETTE.success : score >= 1.5 ? PALETTE.warning : PALETTE.danger;
+    const color = getMaturityColor(score);
     setFill(doc, color);
     doc.rect(bx, y, (score / max) * bw, 4, "F");
     // number
@@ -913,7 +921,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
   // Executive Summary
   const avg = Number.isFinite(data.averageScore) ? (data.averageScore as number) : 
     (Object.values(data.pillarScores).reduce((sum: number, score: number) => sum + score, 0) / 6);
-  const maturityLevel = avg < 1 ? 'Nascent' : avg < 1.5 ? 'Emerging' : avg < 2.5 ? 'Integrated' : 'Leading';
+  const maturityLevel = getMaturityLevel(avg);
 
   y = drawSectionTitle(doc, "EXECUTIVE SUMMARY", y);
   setFont(doc, TYPO.h2); setText(doc, PALETTE.ink);
@@ -1088,9 +1096,9 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     setFont(doc, TYPO.h2); setText(doc, PALETTE.accent);
     doc.text(`${pillarKey}. ${pillar.name}`, PAGE.margin, y);
     
-    // Score badge on same line
-    const scoreColor = score >= 2.5 ? PALETTE.success : score >= 1.5 ? PALETTE.warning : PALETTE.danger;
-    const scoreLabel = score >= 2.5 ? 'Leading' : score >= 1.5 ? 'Integrated' : score >= 0.5 ? 'Emerging' : 'Nascent';
+    // Score badge on same line (using consistent thresholds with overall maturity)
+    const scoreColor = getMaturityColor(score);
+    const scoreLabel = getMaturityLevel(score);
     setFont(doc, TYPO.small);
     setText(doc, scoreColor);
     const scoreText = `${scoreLabel} (${score.toFixed(1)}/3)`;
