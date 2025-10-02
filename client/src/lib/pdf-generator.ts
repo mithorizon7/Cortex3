@@ -210,13 +210,14 @@ function ensureJsPDF() {
   });
 }
 
-function newDoc(J: any) {
+function newDoc(J: any, metadata?: { title?: string; subject?: string; keywords?: string }) {
   const doc = new J("p", "mm", "a4");
   doc.setProperties({
-    title: "CORTEX Brief",
-    subject: "Executive PDF",
-    creator: "CORTEX",
-    author: "CORTEX"
+    title: metadata?.title || "CORTEX Brief",
+    subject: metadata?.subject || "Executive AI Readiness Assessment",
+    creator: "CORTEX™ Executive AI Readiness Platform",
+    author: "CORTEX",
+    keywords: metadata?.keywords || "AI, readiness, assessment, executive, strategy"
   });
   return doc;
 }
@@ -874,7 +875,17 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
   }
 
   const J = await ensureJsPDF();
-  const doc = newDoc(J);
+  const contextTypes = [];
+  if (data.contextProfile?.regulatory_intensity && data.contextProfile.regulatory_intensity >= 3) contextTypes.push('Regulated');
+  if (data.contextProfile?.safety_criticality && data.contextProfile.safety_criticality >= 3) contextTypes.push('Safety-Critical');
+  if (data.contextProfile?.data_sensitivity && data.contextProfile.data_sensitivity >= 3) contextTypes.push('Data-Sensitive');
+  const contextKeywords = contextTypes.length > 0 ? contextTypes.join(', ') : 'Enterprise';
+  
+  const doc = newDoc(J, {
+    title: `CORTEX Executive Brief - ${String(assessmentId).slice(0, 8).toUpperCase()}`,
+    subject: `AI Readiness Assessment for ${contextKeywords} Organization`,
+    keywords: `AI readiness, ${contextKeywords}, executive assessment, CORTEX, strategy`
+  });
   const { pw } = bounds(doc);
   const runHeader = "CORTEX — Executive Brief";
 
@@ -907,7 +918,22 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
   y = drawSectionTitle(doc, "EXECUTIVE SUMMARY", y);
   setFont(doc, TYPO.h2); setText(doc, PALETTE.ink);
   doc.text(`Overall AI Readiness: ${maturityLevel} (${avg.toFixed(1)}/3)`, PAGE.margin, y);
-  y += PAGE.line * 2;
+  y += PAGE.line * 1.5;
+  
+  // Quick overview
+  setFont(doc, TYPO.body); setText(doc, PALETTE.ink);
+  const domainCount = Object.keys(data.pillarScores).length;
+  const strongDomains = Object.values(data.pillarScores).filter(s => s >= 2.5).length;
+  const developingDomains = Object.values(data.pillarScores).filter(s => s >= 1.5 && s < 2.5).length;
+  const emergingDomains = Object.values(data.pillarScores).filter(s => s < 1.5).length;
+  
+  let summaryText = `This assessment evaluates your organization across ${domainCount} CORTEX domains. `;
+  if (strongDomains > 0) summaryText += `${strongDomains} ${strongDomains === 1 ? 'domain shows' : 'domains show'} strong maturity. `;
+  if (developingDomains > 0) summaryText += `${developingDomains} ${developingDomains === 1 ? 'requires' : 'require'} focused development. `;
+  if (emergingDomains > 0) summaryText += `${emergingDomains} ${emergingDomains === 1 ? 'is' : 'are'} in early stages. `;
+  
+  y = drawBody(doc, summaryText, bounds(doc).w, y);
+  y += PAGE.line * 1.5;
 
   // Domain bars
   ({ cursorY: y } = addPageIfNeeded(doc, 50, y, runHeader));
@@ -1042,25 +1068,34 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
   y = drawSectionTitle(doc, "DOMAIN ANALYSIS", y);
   
   const pillarOrder = ['C', 'O', 'R', 'T', 'E', 'X'];
-  for (const pillarKey of pillarOrder) {
+  for (let i = 0; i < pillarOrder.length; i++) {
+    const pillarKey = pillarOrder[i];
     const pillar = CORTEX_PILLARS[pillarKey as keyof typeof CORTEX_PILLARS];
     const guidance = DOMAIN_GUIDANCE[pillarKey as keyof typeof DOMAIN_GUIDANCE];
     const score = data.pillarScores[pillarKey] || 0;
     
     if (!pillar || !guidance) continue;
     
-    ({ cursorY: y } = addPageIfNeeded(doc, 50, y, runHeader));
+    // Add separator between domains (but not before the first one)
+    if (i > 0) {
+      ({ cursorY: y } = addPageIfNeeded(doc, 8, y, runHeader));
+      y = drawDomainSeparator(doc, y);
+    }
     
-    // Domain header
+    ({ cursorY: y } = addPageIfNeeded(doc, 55, y, runHeader));
+    
+    // Domain header with score badge
     setFont(doc, TYPO.h2); setText(doc, PALETTE.accent);
     doc.text(`${pillarKey}. ${pillar.name}`, PAGE.margin, y);
-    y += PAGE.line * 1.2;
     
-    setFont(doc, TYPO.small); setText(doc, PALETTE.inkSubtle);
+    // Score badge on same line
     const scoreColor = score >= 2.5 ? PALETTE.success : score >= 1.5 ? PALETTE.warning : PALETTE.danger;
+    const scoreLabel = score >= 2.5 ? 'Leading' : score >= 1.5 ? 'Integrated' : score >= 0.5 ? 'Emerging' : 'Nascent';
+    setFont(doc, TYPO.small);
     setText(doc, scoreColor);
-    const scoreLabel = score === 3 ? 'Leading' : score === 2 ? 'Integrated' : score === 1 ? 'Emerging' : 'Nascent';
-    doc.text(`Current Maturity: ${scoreLabel} (${score}/3)`, PAGE.margin, y);
+    const scoreText = `${scoreLabel} (${score.toFixed(1)}/3)`;
+    const scoreX = bounds(doc).pw - PAGE.margin - doc.getTextWidth(scoreText);
+    doc.text(scoreText, scoreX, y);
     y += PAGE.line * 2;
     
     // Why it matters
@@ -1093,22 +1128,20 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     if (guidance.commonPitfalls && guidance.commonPitfalls.length > 0) {
       ({ cursorY: y } = addPageIfNeeded(doc, 20, y, runHeader));
       setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
-      doc.text("Common Pitfalls", PAGE.margin, y);
+      doc.text("Common Pitfalls to Avoid", PAGE.margin, y);
       y += PAGE.line * 1.2;
       y = drawBullets(doc, guidance.commonPitfalls, bounds(doc).w, y);
       y += PAGE.line * 0.5;
     }
     
-    // Discussion prompts
+    // Discussion prompts (styled differently)
     if (guidance.discussionPrompts && guidance.discussionPrompts.length > 0) {
       ({ cursorY: y } = addPageIfNeeded(doc, 20, y, runHeader));
       setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
-      doc.text("Discussion Prompts", PAGE.margin, y);
+      doc.text("Strategic Discussion Questions", PAGE.margin, y);
       y += PAGE.line * 1.2;
-      y = drawBullets(doc, guidance.discussionPrompts, bounds(doc).w, y);
-      y += PAGE.line * 1.5;
-    } else {
-      y += PAGE.line * 0.7;
+      y = drawPrompts(doc, guidance.discussionPrompts, bounds(doc).w, y);
+      y += PAGE.line * 0.8;
     }
   }
 
