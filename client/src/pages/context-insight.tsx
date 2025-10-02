@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Loader2, Brain, Compass, TrendingUp, MessageSquare, FileText, CheckCircle, AlertTriangle, ListTodo, Shield, Copy } from "lucide-react";
+import { AlertCircle, Loader2, Brain, Compass, TrendingUp, MessageSquare, FileText, CheckCircle, AlertTriangle, ListTodo, Shield, Copy, ArrowRight, ChevronRight } from "lucide-react";
 import { generateSituationAssessmentBrief, type SituationAssessmentData } from "@/lib/pdf-generator";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { LoadingTips } from "@/components/situation-assessment/LoadingTips";
@@ -282,144 +282,128 @@ function ContextInsightPageContent() {
 
   return (
     <section 
-      className="max-w-7xl mx-auto px-6 py-10 space-y-8"
+      className="max-w-5xl mx-auto px-6 py-10 space-y-8"
       data-testid="context-insight-page"
     >
+      {/* Progress Indicator */}
+      <div className="flex items-center justify-between text-sm">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <span>Context Profile</span>
+          <ChevronRight className="h-4 w-4" />
+          <span className="text-foreground font-medium">Situation Assessment</span>
+          <ChevronRight className="h-4 w-4" />
+          <span>Pulse Check</span>
+        </div>
+        <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-950/20 dark:text-green-400 dark:border-green-800">
+          <CheckCircle className="h-3 w-3 mr-1" />
+          Stage 2 of 3
+        </Badge>
+      </div>
+
       {/* Header */}
-      <header className="space-y-3 pb-2">
-        <h1 className="text-2xl md:text-3xl font-semibold text-foreground">
-          Situation Assessment
-        </h1>
-        <p className="text-base text-muted-foreground leading-relaxed">
-          Strategic analysis tailored to your organizational context. Executive insights to inform leadership discussion.
-        </p>
+      <header className="space-y-4 pb-4">
+        <div className="flex items-start justify-between">
+          <div className="space-y-3">
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground">
+              Situation Assessment
+            </h1>
+            <p className="text-lg text-muted-foreground leading-relaxed max-w-3xl">
+              Strategic analysis tailored to your organizational context
+            </p>
+          </div>
+          {data && (
+            <Badge variant="outline" className="bg-green-50 border-green-200 text-green-700 dark:bg-green-950/20 dark:border-green-800 dark:text-green-400">
+              <CheckCircle className="h-3 w-3 mr-1" />
+              Complete
+            </Badge>
+          )}
+        </div>
       </header>
 
-      {/* Main Content - Two Column Layout */}
-      <div className="grid lg:grid-cols-3 gap-8 items-start">
-        {/* Left Card: Context Reflection (Main) - Takes 2 columns */}
-        <div className="lg:col-span-2">
-          <Card className="w-full" data-testid="card-situation-assessment">
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-3 text-xl">
-                  <Brain className="h-5 w-5 text-primary" />
-                  Situation Assessment
-                </CardTitle>
-                <div className="flex items-center gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => {
-                      if (data?.insight) {
-                        navigator.clipboard.writeText(data.insight + "\n\n" + data.disclaimer);
-                      }
-                    }}
-                    disabled={!data?.insight}
-                    data-testid="button-copy-reflection"
-                  >
-                    <Copy className="h-4 w-4 mr-2" />
-                    Copy
-                  </Button>
+      {/* Main Content - Full Width */}
+      <div className="space-y-6">
+        <Card className="w-full border-2" data-testid="card-situation-assessment">
+          <CardHeader className="pb-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-3 text-2xl">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Brain className="h-6 w-6 text-primary" />
                 </div>
-              </div>
-              <p className="text-sm text-muted-foreground mt-2">
-                Executive narrative analyzing what your organizational context enables and constrains, with implications for early AI strategy.
-              </p>
-            </CardHeader>
-            <CardContent className="pt-0">
-              {isLoading ? (
-                <EducationalLoader />
-              ) : isError && error ? (
-                <ErrorFallback error={error} />
-              ) : data ? (
-                <div className="animate-in fade-in duration-300">
-                  <SituationAssessmentCard mirror={data} onRetry={() => generateSituationAssessment(id!)} />
-                </div>
-              ) : null}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Right Card: Discussion Prompts */}
-        <div className="lg:col-span-1">
-          <Card className="h-fit" data-testid="card-discussion-prompts">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-3 text-xl">
-                <MessageSquare className="h-5 w-5 text-primary" />
-                Discussion Prompts
+                <span>Your Strategic Context</span>
               </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6 pt-0">
-              <div className="space-y-5">
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Strategic questions for executive discussion based on your situation assessment:
-                </p>
-                {renderDiscussionPrompts(data)}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => {
+                  if (data?.insight) {
+                    navigator.clipboard.writeText(data.insight + "\n\n" + data.disclaimer);
+                    toast({
+                      title: "Copied to clipboard",
+                      description: "Situation assessment text has been copied."
+                    });
+                  }
+                }}
+                disabled={!data?.insight}
+                data-testid="button-copy-reflection"
+              >
+                <Copy className="h-4 w-4 mr-2" />
+                Copy Text
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0 pb-8">
+            {isLoading ? (
+              <EducationalLoader />
+            ) : isError && error ? (
+              <ErrorFallback error={error} />
+            ) : data ? (
+              <div className="animate-in fade-in duration-500">
+                <SituationAssessmentCard mirror={data} onRetry={() => generateSituationAssessment(id!)} />
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            ) : null}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Footer Actions */}
-      <footer className="flex items-center justify-end gap-4 pt-8 border-t" data-testid="footer-actions">
-        <Button
-          variant="secondary"
-          onClick={() => {
-            if (!data) return;
-            // Save to Action Plan functionality
-            const contextData = {
-              headline: (data as any).headline,
-              actions: (data as any).actions,
-              watchouts: (data as any).watchouts,
-              scenarios: (data as any).scenarios
-            };
-            
-            // Store in localStorage for now (future: integrate with action plan service)
-            const savedPlans = JSON.parse(localStorage.getItem('cortex_action_plans') || '[]');
-            const newPlan = {
-              id: Date.now().toString(),
-              assessmentId: id,
-              timestamp: new Date().toISOString(),
-              ...contextData
-            };
-            savedPlans.push(newPlan);
-            localStorage.setItem('cortex_action_plans', JSON.stringify(savedPlans));
-            
-            toast({
-              title: "Added to Action Plan",
-              description: "Situation assessment and next steps saved for future reference."
-            });
-          }}
-          disabled={!data || isLoading}
-          data-testid="button-save-to-plan"
-        >
-          Save to Plan
-        </Button>
-        <Button 
-          variant="outline" 
-          onClick={handleDownloadBrief}
-          disabled={!data || isLoading || !assessmentData || assessmentLoading || isGeneratingPDF}
-          data-testid="button-download-brief"
-        >
-          {isGeneratingPDF ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Generating PDF...
-            </>
-          ) : (
-            <>
-              <FileText className="w-4 h-4 mr-2" />
-              Download Brief
-            </>
-          )}
-        </Button>
-        <Link to={`/pulse/${id}`} data-testid="link-proceed-pulse">
-          <Button size="default" data-testid="button-proceed-pulse">
-            Continue to Pulse Check
-          </Button>
-        </Link>
+      <footer className="space-y-6 pt-8" data-testid="footer-actions">
+        <div className="border-t pt-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+            <div className="space-y-1">
+              <h3 className="text-lg font-semibold text-foreground">Ready for the next step?</h3>
+              <p className="text-sm text-muted-foreground">
+                Continue to Pulse Check to assess your current AI readiness across six domains
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={handleDownloadBrief}
+                disabled={!data || isLoading || !assessmentData || assessmentLoading || isGeneratingPDF}
+                data-testid="button-download-brief"
+              >
+                {isGeneratingPDF ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <FileText className="w-4 h-4 mr-2" />
+                    Download PDF
+                  </>
+                )}
+              </Button>
+              <Link to={`/pulse/${id}`} data-testid="link-proceed-pulse">
+                <Button size="lg" className="gap-2" data-testid="button-proceed-pulse">
+                  Continue to Pulse Check
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
       </footer>
     </section>
   );
