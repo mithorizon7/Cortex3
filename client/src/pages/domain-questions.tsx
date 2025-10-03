@@ -16,7 +16,7 @@ import { PULSE_QUESTIONS, CORTEX_PILLARS } from "@/lib/cortex";
 import { apiRequest, getNetworkError } from "@/lib/queryClient";
 import { getEnhancedErrorMessage } from "@/lib/error-utils";
 import { useToast } from "@/hooks/use-toast";
-import { ChevronLeft, ChevronRight, CheckCircle, XCircle, HelpCircle, Clock, Target } from "lucide-react";
+import { ChevronLeft, ChevronRight, CheckCircle, XCircle, PlayCircle, Circle, Clock, Target } from "lucide-react";
 
 const DOMAIN_ORDER = ['C', 'O', 'R', 'T', 'E', 'X'];
 
@@ -35,7 +35,7 @@ export default function DomainQuestionsPage() {
   const { toast } = useToast();
   const { domain, id: assessmentId } = useParams();
   
-  const [responses, setResponses] = useState<Record<string, boolean | null>>({});
+  const [responses, setResponses] = useState<Record<string, number>>({});
   
   const { data: assessment, isLoading } = useQuery({
     queryKey: ['/api/assessments', assessmentId],
@@ -103,7 +103,7 @@ export default function DomainQuestionsPage() {
     },
   });
 
-  const handleResponseChange = (questionId: string, value: boolean | null) => {
+  const handleResponseChange = (questionId: string, value: number) => {
     setResponses(prev => ({
       ...prev,
       [questionId]: value
@@ -262,15 +262,15 @@ export default function DomainQuestionsPage() {
                       {question.id}. {question.text}
                     </h3>
                     
-                    <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-4 sm:space-x-4">
+                    <div className="grid grid-cols-2 sm:flex sm:flex-row sm:justify-center gap-3 sm:gap-4">
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
-                              variant={responses[question.id] === false ? "accent" : "outline"}
+                              variant={responses[question.id] === 0 ? "accent" : "outline"}
                               size="lg"
-                              onClick={() => handleResponseChange(question.id, false)}
-                              className="flex items-center justify-center space-x-2 min-w-[120px] sm:min-w-[100px] font-ui"
+                              onClick={() => handleResponseChange(question.id, 0)}
+                              className="flex items-center justify-center space-x-2 font-ui"
                               data-testid={`button-no-${question.id}`}
                             >
                               <XCircle className="h-5 w-5" />
@@ -278,7 +278,7 @@ export default function DomainQuestionsPage() {
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>This statement is not true for your organization today</p>
+                            <p>This is not in place today</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -287,18 +287,18 @@ export default function DomainQuestionsPage() {
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
-                              variant={responses[question.id] === null ? "secondary" : "outline"}
+                              variant={responses[question.id] === 0.25 ? "secondary" : "outline"}
                               size="lg"
-                              onClick={() => handleResponseChange(question.id, null)}
-                              className="flex items-center justify-center space-x-2 min-w-[120px] sm:min-w-[100px] font-ui"
-                              data-testid={`button-unsure-${question.id}`}
+                              onClick={() => handleResponseChange(question.id, 0.25)}
+                              className="flex items-center justify-center space-x-2 font-ui"
+                              data-testid={`button-started-${question.id}`}
                             >
-                              <HelpCircle className="h-5 w-5" />
-                              <span>Unsure</span>
+                              <PlayCircle className="h-5 w-5" />
+                              <span>Started</span>
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>Unsure means you're not confident either way. We'll flag it as a follow-up and it won't affect your score.</p>
+                            <p>Work has begun and first concrete steps exist, but not yet largely implemented</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -307,10 +307,30 @@ export default function DomainQuestionsPage() {
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
-                              variant={responses[question.id] === true ? "default" : "outline"}
+                              variant={responses[question.id] === 0.5 ? "secondary" : "outline"}
                               size="lg"
-                              onClick={() => handleResponseChange(question.id, true)}
-                              className="flex items-center justify-center space-x-2 min-w-[120px] sm:min-w-[100px] font-ui"
+                              onClick={() => handleResponseChange(question.id, 0.5)}
+                              className="flex items-center justify-center space-x-2 font-ui"
+                              data-testid={`button-mostly-${question.id}`}
+                            >
+                              <Circle className="h-5 w-5" />
+                              <span>Mostly</span>
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>This is largely implemented and working in practice; only minor gaps remain</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant={responses[question.id] === 1 ? "default" : "outline"}
+                              size="lg"
+                              onClick={() => handleResponseChange(question.id, 1)}
+                              className="flex items-center justify-center space-x-2 font-ui"
                               data-testid={`button-yes-${question.id}`}
                             >
                               <CheckCircle className="h-5 w-5" />
@@ -318,7 +338,7 @@ export default function DomainQuestionsPage() {
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>This statement is true across your organization today and you could point to evidence</p>
+                            <p>Fully true today across the organization, with evidence we could cite</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -327,10 +347,17 @@ export default function DomainQuestionsPage() {
                     {responses[question.id] !== undefined && (
                       <div className="text-center mt-4">
                         <Badge 
-                          variant={responses[question.id] === true ? "default" : responses[question.id] === false ? "accent" : "secondary"}
+                          variant={
+                            responses[question.id] === 1 ? "default" : 
+                            responses[question.id] === 0 ? "accent" : 
+                            "secondary"
+                          }
                           className="text-sm"
                         >
-                          {responses[question.id] === true ? 'Yes' : responses[question.id] === false ? 'No' : 'Unsure'}
+                          {responses[question.id] === 1 ? 'Yes' : 
+                           responses[question.id] === 0.5 ? 'Mostly' : 
+                           responses[question.id] === 0.25 ? 'Started' : 
+                           'No'}
                         </Badge>
                       </div>
                     )}

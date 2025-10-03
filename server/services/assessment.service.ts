@@ -136,10 +136,10 @@ export class AssessmentService {
     assessmentId: string, 
     pulseResponses: unknown
   ): Promise<Assessment | null> {
-    // Validate pulse responses (now supports true/false/null)
+    // Validate pulse responses (now supports numeric values: 0, 0.25, 0.5, 1)
     const validatedResponses = pulseResponsesSchema.parse(pulseResponses);
     
-    // Calculate pillar scores (count of true responses) and confidence gaps (count of null responses)
+    // Calculate pillar scores (sum of numeric responses) and confidence gaps (deprecated, returns zeros)
     const pillarScores = this.calculatePillarScores(validatedResponses);
     const confidenceGaps = this.calculateConfidenceGaps(validatedResponses);
     
