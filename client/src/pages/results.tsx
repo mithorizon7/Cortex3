@@ -158,6 +158,17 @@ export default function ResultsPage() {
       return;
     }
     
+    // Validate that all domains are scored (no partial assessments in PDF)
+    const scoredCount = Object.values(assessment.pillarScores).filter(score => score !== undefined && score !== null).length;
+    if (scoredCount < 6) {
+      toast({
+        title: "Incomplete Assessment",
+        description: `Please complete all ${6 - scoredCount} remaining domains before generating the executive brief.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
     // Validate that context profile exists
     if (!assessment.contextProfile) {
       toast({
@@ -176,8 +187,11 @@ export default function ResultsPage() {
         assessment.contextProfile as ContextProfile
       );
 
-      // Calculate maturity metrics
-      const avgScore = Object.values(assessment.pillarScores as PillarScores).reduce((sum, score) => sum + score, 0) / 6;
+      // Calculate maturity metrics (only from answered domains)
+      const scoredPillarValues = Object.values(assessment.pillarScores as PillarScores).filter(score => score !== undefined && score !== null);
+      const avgScore = scoredPillarValues.length > 0 
+        ? scoredPillarValues.reduce((sum, score) => sum + score, 0) / scoredPillarValues.length 
+        : 0;
       const maturityLevel = avgScore < 1 ? 'Nascent' : avgScore < 2 ? 'Emerging' : avgScore < 3 ? 'Integrated' : 'Leading';
 
       // Prepare enhanced assessment data
@@ -271,9 +285,8 @@ export default function ResultsPage() {
     );
   }
 
-  // Create default pillar scores if missing to ensure consistent UI
-  const defaultPillarScores: PillarScores = { C: 0, O: 0, R: 0, T: 0, E: 0, X: 0 };
-  const pillarScores = assessment.pillarScores as PillarScores || defaultPillarScores;
+  // Use partial pillar scores from assessment (don't fill missing ones with 0)
+  const pillarScores = (assessment.pillarScores as PillarScores) || {};
   const triggeredGates = (assessment.triggeredGates as any[]) || [];
   const contextProfile = assessment.contextProfile as ContextProfile;
   const priorityMoves = (assessment as any).priorityMoves?.moves || [];
@@ -281,12 +294,21 @@ export default function ResultsPage() {
   const contentTags = (assessment as any).contentTags || [];
   
   // Check if assessment data is incomplete
-  const isDataIncomplete = !assessment.pillarScores || Object.values(assessment.pillarScores).every(score => score === 0);
+  // An assessment is incomplete if:
+  // 1. No pillar scores exist at all, OR
+  // 2. Some domains are not scored (undefined/null values), OR
+  // 3. Less than all 6 domains have scores
+  const totalDomains = 6;
+  const scoredDomainCount = Object.values(pillarScores).filter(score => score !== undefined && score !== null).length;
+  const isDataIncomplete = !assessment.pillarScores || scoredDomainCount === 0 || scoredDomainCount < totalDomains;
   
   const { insights, priorities } = generateEnhancedExecutiveInsights(pillarScores, triggeredGates, contextProfile);
   
-  // Guard against null/undefined pillarScores
-  const avgScore = pillarScores ? Object.values(pillarScores).reduce((sum, score) => sum + score, 0) / 6 : 0;
+  // Calculate average score only from answered domains
+  const scoredValues = Object.values(pillarScores).filter(score => score !== undefined && score !== null);
+  const avgScore = scoredValues.length > 0 
+    ? scoredValues.reduce((sum, score) => sum + score, 0) / scoredValues.length 
+    : 0;
   const maturityLevel = avgScore < 1 ? 'Nascent' : avgScore < 2 ? 'Emerging' : avgScore < 3 ? 'Integrated' : 'Leading';
 
   return (

@@ -127,14 +127,14 @@ export const pulseResponsesSchema = z.record(
 );
 export type PulseResponses = z.infer<typeof pulseResponsesSchema>;
 
-// Pillar Scores
+// Pillar Scores - optional fields for partial assessments (domains not yet answered)
 export const pillarScoresSchema = z.object({
-  C: z.number().min(0).max(3),
-  O: z.number().min(0).max(3),
-  R: z.number().min(0).max(3),
-  T: z.number().min(0).max(3),
-  E: z.number().min(0).max(3),
-  X: z.number().min(0).max(3),
+  C: z.number().min(0).max(3).optional(),
+  O: z.number().min(0).max(3).optional(),
+  R: z.number().min(0).max(3).optional(),
+  T: z.number().min(0).max(3).optional(),
+  E: z.number().min(0).max(3).optional(),
+  X: z.number().min(0).max(3).optional(),
 });
 
 export type PillarScores = z.infer<typeof pillarScoresSchema>;

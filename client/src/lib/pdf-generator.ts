@@ -957,8 +957,10 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
 
   // Executive Summary
   const pillarKeys = Object.keys(data.pillarScores);
+  // Calculate average only from answered domains (filter undefined/null)
+  const scoredValues = Object.values(data.pillarScores).filter((score): score is number => score !== undefined && score !== null);
   const avg = Number.isFinite(data.averageScore) ? (data.averageScore as number) : 
-    (Object.values(data.pillarScores).reduce((sum: number, score: number) => sum + score, 0) / pillarKeys.length);
+    (scoredValues.length > 0 ? scoredValues.reduce((sum: number, score: number) => sum + score, 0) / scoredValues.length : 0);
   const maturityLevel = getMaturityLevel(avg);
 
   y = drawSectionTitle(doc, "EXECUTIVE SUMMARY", y);

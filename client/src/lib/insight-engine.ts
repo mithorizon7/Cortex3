@@ -175,7 +175,8 @@ function analyzeMaturityDistribution(pillarScores: PillarScores | null | undefin
     };
   }
   
-  const scores = Object.values(pillarScores);
+  // Filter out undefined/null values (unanswered domains)
+  const scores = Object.values(pillarScores).filter((score): score is number => score !== undefined && score !== null);
   if (scores.length === 0) {
     return {
       avgScore: 0,
@@ -209,12 +210,14 @@ function identifyWeakestDomains(pillarScores: PillarScores | null | undefined, c
     return [];
   }
   
+  // Filter out undefined/null values (unanswered domains) before sorting
   return Object.entries(pillarScores)
-    .sort(([,a], [,b]) => a - b)
+    .filter(([, score]) => score !== undefined && score !== null)
+    .sort(([,a], [,b]) => (a as number) - (b as number))
     .slice(0, count)
     .map(([pillar, score]) => ({
       pillar,
-      score,
+      score: score as number,
       name: CORTEX_PILLARS[pillar.toUpperCase() as keyof typeof CORTEX_PILLARS]?.name || pillar
     }));
 }

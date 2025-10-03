@@ -90,6 +90,9 @@ export default function HoneycombRadar({ pillarScores, className }: HoneycombRad
               {/* Filled areas for each pillar */}
               {pillarOrder.map((pillar, index) => {
                 const score = pillarScores[pillar as keyof PillarScores];
+                // Don't render if score is undefined or null (not answered yet)
+                if (score === undefined || score === null) return null;
+                // Don't render score of 0 (no visual area to show)
                 if (score === 0) return null;
                 
                 const radius = calculateRingRadius(score, maxRadius);
@@ -170,6 +173,20 @@ export default function HoneycombRadar({ pillarScores, className }: HoneycombRad
           <TableBody>
             {pillarOrder.map((pillar) => {
               const score = pillarScores[pillar as keyof PillarScores];
+              
+              // Handle missing scores (not answered yet)
+              if (score === undefined || score === null) {
+                return (
+                  <TableRow key={pillar}>
+                    <TableCell>{CORTEX_PILLARS[pillar as keyof typeof CORTEX_PILLARS].name}</TableCell>
+                    <TableCell className="text-center text-muted-foreground">Not assessed</TableCell>
+                    <TableCell>
+                      <span className="text-muted-foreground">—</span>
+                    </TableCell>
+                  </TableRow>
+                );
+              }
+              
               const stageIndex = Math.floor(score);
               const stage = MATURITY_STAGES[stageIndex];
               

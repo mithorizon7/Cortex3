@@ -1,0 +1,93 @@
+We’re going to make a set of colors that are specific to the 6 cortex areas. They should only be used for the specific headlines or graphics that represent any of the 6 core “CORTEX” areas, including in at the top of each section in the pulse, in the results page after the pulse, and on the hex graphics to add visual interest. Here is what you need to know. 
+
+Below is a clean, final mapping of distinct, on‑brand colors to each CORTEX domain, with light/dark tokens, tints, and usage notes. It keeps semantic colors (success/warning/error/info) intact while giving each domain a consistent visual identity across charts, honeycomb, tabs, and badges. (Hues are from your approved palette + the info blue family.)
+
+
+
+CORTEX Domain → Color Map (hex)
+C — Clarity & Command
+* Primary Accent (500): #0C63D6
+* Light Tint (50–100): #E9F3FF
+* Dark Accent (500-dark): #5592E2
+O — Operations & Data
+* Primary Accent (500): #007561
+* Light Tint (50–100): #E6F4F1
+* Dark Accent (500-dark): #339181
+R — Risk / Trust / Security
+* Primary Accent (500): #750014
+* Light Tint (50–100): #FDEBEC
+* Dark Accent (500-dark): #9E4C5A
+T — Talent & Culture
+* Primary Accent (500): #FFA72E  (lightened Orange Peel)
+* Light Tint (50–100): #FFF4E5
+* Dark Accent (500-dark): #FFB347
+E — Ecosystem & Infrastructure
+* Primary Accent (500): #339181  (teal derived from Pine Green family)
+* Light Tint (50–100): #DDF2EF
+* Dark Accent (500-dark): #55A69A
+X — Experimentation & Evolution
+* Primary Accent (500): #69B3FF
+* Light Tint (50–100): #D9ECFF
+* Dark Accent (500-dark): #A0CCFF
+
+SCSS Tokens (drop-in)
+
+/* C — Clarity & Command */
+$domain-c-500:      #0C63D6;
+$domain-c-50:       #E9F3FF;
+$domain-c-500-dark: #5592E2;
+
+/* O — Operations & Data */
+$domain-o-500:      #007561;
+$domain-o-50:       #E6F4F1;
+$domain-o-500-dark: #339181;
+
+/* R — Risk / Trust / Security */
+$domain-r-500:      #750014;
+$domain-r-50:       #FDEBEC;
+$domain-r-500-dark: #9E4C5A;
+
+/* T — Talent & Culture */
+$domain-t-500:      #FFA72E;
+$domain-t-50:       #FFF4E5;
+$domain-t-500-dark: #FFB347;
+
+/* E — Ecosystem & Infrastructure */
+$domain-e-500:      #339181;
+$domain-e-50:       #DDF2EF;
+$domain-e-500-dark: #55A69A;
+
+/* X — Experimentation & Evolution */
+$domain-x-500:      #69B3FF;
+$domain-x-50:       #D9ECFF;
+$domain-x-500-dark: #A0CCFF;
+
+Quick usage rules
+* Use 50 tints for backgrounds/badges; use 500 for strokes, icons, and chart series.
+* In Dark Mode, swap to the 500-dark accents; backgrounds remain dark neutrals.
+* Keep semantic colors as defined (Success = Pine Green, Warning = Orange Peel, Error = Rosewood, Info = Baby Blue/Cornflower). Do not use domain colors for status banners.
+
+
+Usage Rules (keep domains clear, semantics crisp)
+1) Honeycomb / Radar (Results):
+* Fill each domain cell with its 50 tint at ~30–40% opacity; outline/labels in 500.
+* When overlaying user vs. cohort later, keep user in 500 solid line, cohort in 500 dashed + lower opacity.
+2) Tabs, Chips, Section Headers:
+* Background: 50 tint; Text/left border: 500.
+* Active state: increase tint opacity slightly (never flood with pure 500 fills for large areas).
+3) Icons & Small Accents:
+* Use 500 for strokes/fills on light; use 500‑dark in Dark Mode.
+* For inline badges, use 50 background + 500 icon.
+4) Charts (multi‑series by domain):
+* Map series colors to the 500 values above.
+* When red (R) and green (O) appear together, add shape/pattern differences for CVD support.
+* Avoid using domain R/T hues for status encodings—status still uses semantic tokens.
+5) Do / Don’t:
+* Do use domain colors to orient the user (wayfinding).
+* Don’t use domain colors for toasts/banners or validation; stick to semantic tokens.
+* Don’t render long body text in 500 hues; keep text in Rich Black (light) / off‑white (dark).
+
+Accessibility Quick Checks
+* Domain labels in 500 on white pass AA (all listed values do).
+* Tinted backgrounds (50) with Rich Black text exceed 7:1 (AA+).
+* On dark, 500‑dark values maintain ≥4.5:1 against dark surfaces for icons/labels; body copy still uses your primary text color.

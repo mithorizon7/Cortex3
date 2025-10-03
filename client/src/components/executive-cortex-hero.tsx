@@ -14,15 +14,20 @@ const DEFAULT_PILLARS: Pillar[] = [
   { key: "X", label: "X", level: 1 },
 ];
 
-// Convert PillarScores to internal Pillar format
+// Convert PillarScores to internal Pillar format (handles undefined scores)
 function convertPillarScoresToPillars(scores: PillarScores): Pillar[] {
+  const getLevel = (score: number | undefined): Level => {
+    if (score === undefined || score === null) return 0;
+    return Math.max(0, Math.min(3, Math.floor(score))) as Level;
+  };
+  
   return [
-    { key: "C", label: "C", level: Math.max(0, Math.min(3, scores.C)) as Level },
-    { key: "O", label: "O", level: Math.max(0, Math.min(3, scores.O)) as Level },
-    { key: "R", label: "R", level: Math.max(0, Math.min(3, scores.R)) as Level },
-    { key: "T", label: "T", level: Math.max(0, Math.min(3, scores.T)) as Level },
-    { key: "E", label: "E", level: Math.max(0, Math.min(3, scores.E)) as Level },
-    { key: "X", label: "X", level: Math.max(0, Math.min(3, scores.X)) as Level },
+    { key: "C", label: "C", level: getLevel(scores.C) },
+    { key: "O", label: "O", level: getLevel(scores.O) },
+    { key: "R", label: "R", level: getLevel(scores.R) },
+    { key: "T", label: "T", level: getLevel(scores.T) },
+    { key: "E", label: "E", level: getLevel(scores.E) },
+    { key: "X", label: "X", level: getLevel(scores.X) },
   ];
 }
 

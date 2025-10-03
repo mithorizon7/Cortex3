@@ -86,8 +86,8 @@ export class AssessmentService {
       updateData.pulseResponses = data.pulseResponses;
     }
     
-    // Handle pillar scores updates
-    if (data.pillarScores) {
+    // Handle pillar scores updates (allow empty objects for partial assessments)
+    if (data.pillarScores !== undefined) {
       updateData.pillarScores = data.pillarScores;
     }
     
