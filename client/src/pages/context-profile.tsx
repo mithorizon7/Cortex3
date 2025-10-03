@@ -236,7 +236,10 @@ export default function ContextProfilePage() {
                               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs text-muted-foreground font-ui">
                                 {item.examples.map((example, idx) => (
                                   <div key={idx} className="flex items-center space-x-2">
-                                    <span className="bg-primary/20 px-2 py-1 rounded font-medium font-mono text-primary">
+                                    <span 
+                                      className="px-2 py-1 rounded font-medium font-mono text-white"
+                                      style={{ backgroundColor: '#339181' }}
+                                    >
                                       {idx}
                                     </span>
                                     <span>{example}</span>
@@ -276,14 +279,20 @@ export default function ContextProfilePage() {
                                 </div>
                                 
                                 <div className="text-center">
-                                  <div className={`inline-flex items-center space-x-3 p-5 sm:p-4 rounded-lg transition-all duration-300 ${
-                                    touchedFields.has(item.key) 
-                                      ? 'bg-primary/10 border-2 border-primary/30' 
-                                      : 'bg-muted border-2 border-transparent'
-                                  }`}>
-                                    <span className={`text-xl sm:text-lg font-bold transition-colors duration-300 ${
-                                      touchedFields.has(item.key) ? 'text-primary' : 'text-muted-foreground'
-                                    }`}>
+                                  <div 
+                                    className={`inline-flex items-center space-x-3 p-5 sm:p-4 rounded-lg border-2 transition-all duration-300 ${
+                                      touchedFields.has(item.key) 
+                                        ? 'border-[#0C63D6]/30' 
+                                        : 'bg-muted border-transparent'
+                                    }`}
+                                    style={touchedFields.has(item.key) ? { backgroundColor: '#E9F3FF' } : {}}
+                                  >
+                                    <span 
+                                      className={`text-xl sm:text-lg font-bold transition-colors duration-300 ${
+                                        touchedFields.has(item.key) ? '' : 'text-muted-foreground'
+                                      }`}
+                                      style={touchedFields.has(item.key) ? { color: '#0C63D6' } : {}}
+                                    >
                                       {field.value}/4
                                     </span>
                                     {item.labels && (
@@ -297,10 +306,16 @@ export default function ContextProfilePage() {
                                 </div>
 
                                 {item.anchors && (
-                                  <div className={`p-4 bg-primary/5 rounded-lg border border-primary/15 transition-opacity duration-300 ${
-                                    touchedFields.has(item.key) ? 'opacity-100' : 'opacity-70'
-                                  }`}>
-                                    <p className="text-sm font-medium text-primary mb-2 font-ui">
+                                  <div 
+                                    className={`p-4 rounded-lg border transition-opacity duration-300 ${
+                                      touchedFields.has(item.key) ? 'opacity-100 border-[#339181]/20' : 'opacity-70 border-border'
+                                    }`}
+                                    style={touchedFields.has(item.key) ? { backgroundColor: '#DDF2EF' } : { backgroundColor: 'hsl(var(--muted))' }}
+                                  >
+                                    <p 
+                                      className="text-sm font-medium mb-2 font-ui"
+                                      style={touchedFields.has(item.key) ? { color: '#339181' } : {}}
+                                    >
                                       What this level means:
                                     </p>
                                     <p className="text-sm text-foreground/80 font-ui">
@@ -313,11 +328,11 @@ export default function ContextProfilePage() {
                               <div className={`transition-opacity duration-300 ${
                                 touchedFields.has(item.key) ? 'opacity-100' : 'opacity-60'
                               }`}>
-                                {item.examples && (
+                                {(item as any).examples && (
                                   <div className="mb-6 sm:mb-4 p-4 sm:p-3 bg-muted rounded-lg">
                                     <p className="text-sm font-medium mb-2">This typically includes:</p>
                                     <div className="text-sm text-muted-foreground">
-                                      {item.examples.join(' • ')}
+                                      {(item as any).examples.join(' • ')}
                                     </div>
                                   </div>
                                 )}
