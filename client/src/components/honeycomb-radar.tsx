@@ -1,28 +1,16 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { PillarScores, ConfidenceGaps } from "@shared/schema";
+import { PillarScores } from "@shared/schema";
 import { CORTEX_PILLARS, calculateRingRadius, getPillarPosition, getStageColor, MATURITY_STAGES } from "@/lib/cortex";
-import { BarChart3, AlertTriangle } from "lucide-react";
+import { BarChart3 } from "lucide-react";
 
 interface HoneycombRadarProps {
   pillarScores: PillarScores;
-  confidenceGaps?: ConfidenceGaps;
   className?: string;
 }
 
-// Helper function to get confidence level based on unsure count
-function getConfidenceLevel(unsureCount: number): { level: string; color: string; opacity: string } {
-  if (unsureCount === 0) {
-    return { level: 'High', color: 'rgb(34, 197, 94)', opacity: '0.8' }; // green-500
-  } else if (unsureCount === 1) {
-    return { level: 'Medium', color: 'rgb(245, 158, 11)', opacity: '0.7' }; // amber-500  
-  } else {
-    return { level: 'Low', color: 'rgb(239, 68, 68)', opacity: '0.6' }; // red-500
-  }
-}
-
-export default function HoneycombRadar({ pillarScores, confidenceGaps, className }: HoneycombRadarProps) {
+export default function HoneycombRadar({ pillarScores, className }: HoneycombRadarProps) {
   const [showTable, setShowTable] = useState(false);
   
   const centerX = 200;
@@ -125,58 +113,12 @@ export default function HoneycombRadar({ pillarScores, confidenceGaps, className
                 );
               })}
               
-              {/* Confidence gap overlays */}
-              {confidenceGaps && pillarOrder.map((pillar, index) => {
-                const score = pillarScores[pillar as keyof PillarScores];
-                const unsureCount = confidenceGaps[pillar as keyof ConfidenceGaps];
-                if (score === 0 || unsureCount === 0) return null;
-                
-                const radius = calculateRingRadius(score, maxRadius);
-                const angle = (index * Math.PI) / 3 - Math.PI / 2;
-                const nextAngle = ((index + 1) * Math.PI) / 3 - Math.PI / 2;
-                
-                const x1 = centerX + radius * Math.cos(angle);
-                const y1 = centerY + radius * Math.sin(angle);
-                const x2 = centerX + radius * Math.cos(nextAngle);
-                const y2 = centerY + radius * Math.sin(nextAngle);
-                
-                const { color, opacity } = getConfidenceLevel(unsureCount);
-                
-                return (
-                  <g key={`confidence-${pillar}`}>
-                    {/* Create defs for dotted pattern */}
-                    <defs>
-                      <pattern 
-                        id={`dots-${pillar}`} 
-                        x="0" y="0" width="8" height="8" 
-                        patternUnits="userSpaceOnUse"
-                      >
-                        <circle cx="4" cy="4" r="1.5" fill={color} fillOpacity={opacity} />
-                      </pattern>
-                    </defs>
-                    
-                    {/* Apply dotted overlay to the filled area */}
-                    <path 
-                      d={`M ${centerX},${centerY} L ${x1},${y1} A ${radius} ${radius} 0 0 1 ${x2},${y2} Z`}
-                      fill={`url(#dots-${pillar})`}
-                      stroke={color}
-                      strokeWidth="1"
-                      strokeDasharray="3,3"
-                      strokeOpacity={opacity}
-                    />
-                  </g>
-                );
-              })}
-              
-              {/* Labels with confidence indicators */}
+              {/* Labels */}
               {pillarOrder.map((pillar, index) => {
                 const labelRadius = maxRadius + 20;
                 const angle = (index * Math.PI) / 3 - Math.PI / 2;
                 const x = centerX + labelRadius * Math.cos(angle);
                 const y = centerY + labelRadius * Math.sin(angle);
-                
-                const unsureCount = confidenceGaps?.[pillar as keyof ConfidenceGaps] || 0;
-                const { level, color } = getConfidenceLevel(unsureCount);
                 
                 return (
                   <g key={`label-${pillar}`}>
@@ -189,28 +131,6 @@ export default function HoneycombRadar({ pillarScores, confidenceGaps, className
                     >
                       {pillar}
                     </text>
-                    
-                    {/* Confidence indicator */}
-                    {confidenceGaps && (
-                      <g>
-                        <text 
-                          x={x} 
-                          y={y + 18} 
-                          textAnchor="middle" 
-                          className="text-xs fill-muted-foreground"
-                        >
-                          Conf: {level}
-                        </text>
-                        {/* Small dot indicator */}
-                        <circle 
-                          cx={x + 25} 
-                          cy={y + 14} 
-                          r="3" 
-                          fill={color} 
-                          opacity="0.8"
-                        />
-                      </g>
-                    )}
                   </g>
                 );
               })}
@@ -243,38 +163,25 @@ export default function HoneycombRadar({ pillarScores, confidenceGaps, className
           <TableHeader>
             <TableRow>
               <TableHead>Domain</TableHead>
-              <TableHead className="text-center">Stage</TableHead>
+              <TableHead className="text-center">Score</TableHead>
               <TableHead>Status</TableHead>
-              {confidenceGaps && <TableHead>Confidence</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             {pillarOrder.map((pillar) => {
               const score = pillarScores[pillar as keyof PillarScores];
-              const stage = MATURITY_STAGES[score];
-              const unsureCount = confidenceGaps?.[pillar as keyof ConfidenceGaps] || 0;
-              const { level, color } = getConfidenceLevel(unsureCount);
+              const stageIndex = Math.floor(score);
+              const stage = MATURITY_STAGES[stageIndex];
               
               return (
                 <TableRow key={pillar}>
                   <TableCell>{CORTEX_PILLARS[pillar as keyof typeof CORTEX_PILLARS].name}</TableCell>
-                  <TableCell className="text-center">{score}</TableCell>
+                  <TableCell className="text-center">{score.toFixed(2)}/3</TableCell>
                   <TableCell>
                     <span style={{ color: stage.color }} className="font-medium">
                       {stage.name}
                     </span>
                   </TableCell>
-                  {confidenceGaps && (
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <div 
-                          className="w-3 h-3 rounded-full" 
-                          style={{ backgroundColor: color }}
-                        />
-                        <span className="text-sm">{level} ({3 - unsureCount}/3)</span>
-                      </div>
-                    </TableCell>
-                  )}
                 </TableRow>
               );
             })}

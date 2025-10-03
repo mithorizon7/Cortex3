@@ -203,7 +203,9 @@ export function getPillarPosition(pillarIndex: number, radius: number, centerX: 
 }
 
 export function getStageColor(stage: number): string {
-  return MATURITY_STAGES[stage]?.color || '#64748b';
+  // Use floor to get the base stage for fractional scores (e.g., 1.5 -> stage 1)
+  const stageIndex = Math.floor(stage);
+  return MATURITY_STAGES[stageIndex]?.color || '#64748b';
 }
 
 export function getPriorityLevel(pillarScores: PillarScores, contextProfile: ContextProfile): { pillar: string; priority: number }[] {
