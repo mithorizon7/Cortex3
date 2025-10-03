@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Info, Edit3, HelpCircle } from 'lucide-react';
 import { getMetricsByPillar, getMetricById, getMetricContextExplanation, type Metric } from '@/lib/value-overlay';
 import { getMetricGuide } from '@/lib/metric-guides';
@@ -20,38 +19,89 @@ interface ValueMetricChipProps {
 }
 
 export function ValueMetricChip({ pillar, metric, contextProfile, onChangeMetric }: ValueMetricChipProps) {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isInfoOpen, setIsInfoOpen] = useState(false);
+  const [isChangeOpen, setIsChangeOpen] = useState(false);
   const alternateMetrics = getMetricsByPillar(pillar).filter(m => m.id !== metric.id);
   const contextExplanation = contextProfile ? getMetricContextExplanation(metric.id, contextProfile) : null;
+  const metricGuide = getMetricGuide(metric.id);
 
   const handleMetricChange = (metricId: string) => {
     onChangeMetric?.(metricId);
-    setIsDialogOpen(false);
+    setIsChangeOpen(false);
+  };
+
+  // Format the metric guide content with markdown-like formatting
+  const formatMetricGuide = (content: string) => {
+    const formatted = content
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .split('\n\n')
+      .map(para => para.trim())
+      .filter(para => para.length > 0)
+      .map(para => `<p>${para.replace(/\n/g, '<br/>')}</p>`)
+      .join('');
+    
+    return DOMPurify.sanitize(formatted, {
+      ALLOWED_TAGS: ['p', 'strong', 'em', 'br'],
+      ALLOWED_ATTR: []
+    });
   };
 
   return (
     <div className="flex items-center gap-2 mb-4">
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Badge variant="secondary" className="text-sm px-3 py-1 cursor-help" data-testid={`badge-metric-${pillar.toLowerCase()}`}>
-              <Info className="w-3 h-3 mr-1" />
+      {/* Metric Info Dialog */}
+      <Dialog open={isInfoOpen} onOpenChange={setIsInfoOpen}>
+        <DialogTrigger asChild>
+          <Button 
+            variant="secondary" 
+            className="text-sm px-3 py-1 h-auto"
+            data-testid={`button-metric-info-${pillar.toLowerCase()}`}
+          >
+            <Info className="w-3 h-3 mr-1" />
+            {metric.name}
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Info className="w-5 h-5" />
               {metric.name}
-            </Badge>
-          </TooltipTrigger>
-          <TooltipContent className="max-w-xs">
-            <p className="font-medium mb-1">Metric to track</p>
-            <p className="text-sm text-muted-foreground">{metric.definition}</p>
-            {contextExplanation && (
-              <p className="text-xs mt-2 text-blue-600 dark:text-blue-400">
-                💡 {contextExplanation}
-              </p>
-            )}
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {/* Quick Definition */}
+            <div className="bg-muted p-4 rounded-lg">
+              <div className="font-medium text-sm mb-2">What this measures</div>
+              <div className="text-sm text-muted-foreground">{metric.definition}</div>
+            </div>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            {/* Context Explanation if available */}
+            {contextExplanation && (
+              <div className="bg-blue-50 dark:bg-blue-950/30 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div className="font-medium text-sm mb-2 text-blue-900 dark:text-blue-100">
+                  💡 Why this metric fits your organization
+                </div>
+                <div className="text-sm text-blue-700 dark:text-blue-300">{contextExplanation}</div>
+              </div>
+            )}
+
+            {/* Full Measurement Guide */}
+            {metricGuide && (
+              <div className="prose prose-sm max-w-none">
+                <div className="font-medium text-sm mb-3">How to measure it</div>
+                <div 
+                  className="text-sm leading-relaxed"
+                  dangerouslySetInnerHTML={{ 
+                    __html: formatMetricGuide(metricGuide.content)
+                  }} 
+                />
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Change Metric Dialog */}
+      <Dialog open={isChangeOpen} onOpenChange={setIsChangeOpen}>
         <DialogTrigger asChild>
           <Button variant="ghost" size="sm" className="text-xs px-2 h-6" data-testid={`button-change-metric-${pillar.toLowerCase()}`}>
             <Edit3 className="w-3 h-3 mr-1" />
