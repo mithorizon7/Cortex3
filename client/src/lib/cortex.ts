@@ -1,12 +1,12 @@
 import { ContextProfile, PillarScores, Gate } from "@shared/schema";
 
 export const CORTEX_PILLARS = {
-  C: { name: "Clarity & Command", icon: "bullseye", description: "Leadership owns a value-anchored AI ambition and operating model" },
-  O: { name: "Operations & Data", icon: "cogs", description: "Reliable, monitored AI in production with governed data" },
-  R: { name: "Risk, Trust & Security", icon: "shield-alt", description: "Demonstrable safety, fairness, privacy, and security" },
-  T: { name: "Talent & Culture", icon: "users", description: "Skills, incentives, and job redesign for AI adoption" },
-  E: { name: "Ecosystem & Infrastructure", icon: "network-wired", description: "Partners and platform capacity that scale economically" },
-  X: { name: "Experimentation & Evolution", icon: "flask", description: "Safe, disciplined learning cycles with clear success/sunset criteria" }
+  C: { name: "Clarity & Command", icon: "bullseye", description: "Leadership owns a value-anchored AI ambition and operating model", color: "#750014" }, // MIT Rosewood
+  O: { name: "Operations & Data", icon: "cogs", description: "Reliable, monitored AI in production with governed data", color: "#007561" }, // Pine Green
+  R: { name: "Risk, Trust & Security", icon: "shield-alt", description: "Demonstrable safety, fairness, privacy, and security", color: "#FF9F1C" }, // Orange Peel
+  T: { name: "Talent & Culture", icon: "users", description: "Skills, incentives, and job redesign for AI adoption", color: "#D4AF37" }, // Gold
+  E: { name: "Ecosystem & Infrastructure", icon: "network-wired", description: "Partners and platform capacity that scale economically", color: "#4A90E2" }, // Blue
+  X: { name: "Experimentation & Evolution", icon: "flask", description: "Safe, disciplined learning cycles with clear success/sunset criteria", color: "#9B59B6" } // Purple
 };
 
 export const PULSE_QUESTIONS = [
@@ -206,6 +206,10 @@ export function getStageColor(stage: number): string {
   // Use floor to get the base stage for fractional scores (e.g., 1.5 -> stage 1)
   const stageIndex = Math.floor(stage);
   return MATURITY_STAGES[stageIndex]?.color || '#8B959E'; // CORTEX Silver Gray fallback
+}
+
+export function getPillarColor(pillar: string): string {
+  return CORTEX_PILLARS[pillar as keyof typeof CORTEX_PILLARS]?.color || '#8B959E';
 }
 
 export function getPriorityLevel(pillarScores: PillarScores, contextProfile: ContextProfile): { pillar: string; priority: number }[] {

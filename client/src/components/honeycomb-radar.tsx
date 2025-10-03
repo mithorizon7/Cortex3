@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PillarScores } from "@shared/schema";
-import { CORTEX_PILLARS, calculateRingRadius, getPillarPosition, getStageColor, MATURITY_STAGES } from "@/lib/cortex";
+import { CORTEX_PILLARS, calculateRingRadius, getPillarPosition, getPillarColor, MATURITY_STAGES } from "@/lib/cortex";
 import { BarChart3 } from "lucide-react";
 
 interface HoneycombRadarProps {
@@ -104,13 +104,15 @@ export default function HoneycombRadar({ pillarScores, className }: HoneycombRad
                 const x2 = centerX + radius * Math.cos(nextAngle);
                 const y2 = centerY + radius * Math.sin(nextAngle);
                 
+                const pillarColor = getPillarColor(pillar);
+                
                 return (
                   <path 
                     key={`fill-${pillar}`}
                     d={`M ${centerX},${centerY} L ${x1},${y1} A ${radius} ${radius} 0 0 1 ${x2},${y2} Z`}
-                    fill={getStageColor(score)}
-                    fillOpacity="0.6"
-                    stroke={getStageColor(score)}
+                    fill={pillarColor}
+                    fillOpacity="0.7"
+                    stroke={pillarColor}
                     strokeWidth="2"
                   />
                 );
@@ -145,18 +147,21 @@ export default function HoneycombRadar({ pillarScores, className }: HoneycombRad
               </text>
             </svg>
             
-            {/* Legend */}
+            {/* Legend - Domain Colors */}
             <div className="flex justify-center mt-4">
-              <div className="flex flex-wrap gap-4 text-sm">
-                {MATURITY_STAGES.slice(1).map((stage) => (
-                  <div key={stage.level} className="flex items-center space-x-2">
-                    <div 
-                      className="w-3 h-3 rounded" 
-                      style={{ backgroundColor: stage.color }}
-                    />
-                    <span>{stage.name} ({stage.level})</span>
-                  </div>
-                ))}
+              <div className="flex flex-wrap gap-4 text-sm justify-center">
+                {pillarOrder.map((pillar) => {
+                  const pillarInfo = CORTEX_PILLARS[pillar as keyof typeof CORTEX_PILLARS];
+                  return (
+                    <div key={pillar} className="flex items-center space-x-2">
+                      <div 
+                        className="w-3 h-3 rounded" 
+                        style={{ backgroundColor: pillarInfo.color }}
+                      />
+                      <span className="text-muted-foreground">{pillar} - {pillarInfo.name}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -190,12 +195,22 @@ export default function HoneycombRadar({ pillarScores, className }: HoneycombRad
               const stageIndex = Math.floor(score);
               const stage = MATURITY_STAGES[stageIndex];
               
+              const pillarInfo = CORTEX_PILLARS[pillar as keyof typeof CORTEX_PILLARS];
+              
               return (
                 <TableRow key={pillar}>
-                  <TableCell>{CORTEX_PILLARS[pillar as keyof typeof CORTEX_PILLARS].name}</TableCell>
-                  <TableCell className="text-center">{score.toFixed(2)}/3</TableCell>
                   <TableCell>
-                    <span style={{ color: stage.color }} className="font-medium">
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-3 h-3 rounded" 
+                        style={{ backgroundColor: pillarInfo.color }}
+                      />
+                      {pillarInfo.name}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-center font-medium">{score.toFixed(2)}/3</TableCell>
+                  <TableCell>
+                    <span className="text-muted-foreground">
                       {stage.name}
                     </span>
                   </TableCell>
