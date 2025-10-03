@@ -535,7 +535,7 @@ This is not bureaucracy; it is management hygiene. Clear direction + clear owner
     category: 'context',
     tags: ['enterprise', 'transformation', 'scale'],
     overview: 'Enterprises need systematic approaches that work across business units. Focus on platforms, governance, and change management at scale.',
-    body: `**What it is:** A comprehensive approach to deploying AI across complex organizations with multiple business units, legacy systems, and stakeholder groups. This requires platforms that scale, governance that doesn't suffocate, and change management that actually works.
+    body: `**What it is:** A comprehensive approach to deploying AI across complex organizations with multiple business units, legacy systems, and stakeholder groups. This requires platforms that scale, governance that does not suffocate, and change management that actually works.
 
 **Why it matters:** Enterprises have unique advantages (data, resources, customer relationships) and challenges (complexity, inertia, risk aversion). Success requires leveraging advantages while managing challenges systematically.
 
@@ -557,6 +557,100 @@ This is not bureaucracy; it is management hygiene. Clear direction + clear owner
 • Transformation fatigue from too many initiatives
 
 **Quick checklist:** Build platform capabilities; implement federated model; launch lighthouse projects; establish governance board; develop talent strategy.`
+  },
+
+  // Additional critical executive guides
+  gate_roi_measurement: {
+    id: 'gate.roi_measurement',
+    title: 'AI ROI Measurement — Proving Value Beyond the Hype',
+    category: 'gate',
+    tags: ['roi', 'value', 'measurement'],
+    overview: 'Most AI ROI calculations are fantasy. Focus on measurable business outcomes, true cost accounting, and honest attribution of value.',
+    body: `**What it is:** A disciplined approach to measuring the actual return on AI investments, accounting for all costs (direct and hidden) and attributing value accurately to AI versus other factors.
+
+**Why it matters:** Without rigorous ROI measurement, you cannot distinguish valuable AI investments from expensive science projects. Boards and investors demand proof of value, not promises of potential.
+
+**How to implement:**
+1. **Define success metrics upfront:** Before any AI project, document the specific business metrics it will improve (revenue per customer, processing time, error rate). No fuzzy "improve efficiency" goals.
+2. **True cost accounting:** Include all costs: licenses, compute, storage, integration, training, change management, and opportunity cost of talent. Most projects cost 2-3x the initial estimate.
+3. **Control group comparison:** Where possible, run AI and non-AI processes in parallel. Measure the delta. This provides clean attribution of value to AI.
+4. **Time-to-value tracking:** Measure not just eventual ROI but how long it takes to achieve positive returns. Many AI projects have positive ROI eventually but negative NPV due to slow realization.
+5. **Portfolio view:** Expect 30% of AI projects to fail, 50% to break even, and 20% to deliver outsized returns. Manage a portfolio, not individual bets.
+
+**Options by context:**
+• **Cost reduction focus:** Emphasize efficiency metrics and headcount avoidance.
+• **Revenue growth focus:** Track customer acquisition, retention, and lifetime value.
+• **Risk reduction focus:** Quantify prevented losses and compliance savings.
+
+**Pitfalls:**
+• Attributing all improvement to AI when multiple factors contribute
+• Ignoring hidden costs like technical debt and maintenance
+• ROI theater—manipulating metrics to show success
+
+**Quick checklist:** Define metrics upfront; account for true costs; use control groups; track time-to-value; manage portfolio returns.`
+  },
+
+  gate_vendor_selection: {
+    id: 'gate.vendor_selection',
+    title: 'AI Vendor Selection — Beyond the Demo Magic',
+    category: 'gate',
+    tags: ['vendor', 'procurement', 'selection'],
+    overview: 'Choose AI vendors based on production readiness, not demo impressiveness. Focus on integration complexity, total cost, and vendor stability.',
+    body: `**What it is:** A systematic process for evaluating and selecting AI vendors that goes beyond feature checklists to assess real implementation risk, total cost of ownership, and long-term viability.
+
+**Why it matters:** Bad vendor choices create technical debt, vendor lock-in, and integration nightmares that can take years to unwind. The switching costs for AI systems are extremely high once data and workflows are embedded.
+
+**How to implement:**
+1. **Proof of concept requirements:** Demand a POC with your data, your use case, and your constraints. Many impressive demos fail with real-world complexity.
+2. **Integration assessment:** How many APIs, data formats, and authentication methods are involved? Each integration point is a failure point. Simpler is better.
+3. **Total cost modeling:** Model costs at 10x current volume. Include API calls, data transfer, support, and professional services. Many AI vendors have surprising cost cliffs.
+4. **Reference customer diligence:** Talk to customers at your scale, in your industry, with your use case. Ask about surprises, hidden costs, and what they wish they knew before signing.
+5. **Escape clause negotiation:** Include performance SLAs, cost caps, and data portability requirements. Plan your divorce before the marriage.
+
+**Options by context:**
+• **Regulated industries:** Prioritize vendors with compliance certifications and audit trails.
+• **High-scale operations:** Focus on latency, throughput, and cost-per-transaction.
+• **Innovation focus:** Accept more vendor risk for cutting-edge capabilities.
+
+**Pitfalls:**
+• Choosing based on features rather than production readiness
+• Underestimating integration and change management costs
+• No backup plan when vendors fail or get acquired
+
+**Quick checklist:** Require real POCs; assess integration complexity; model total costs; check references thoroughly; negotiate escape clauses.`
+  },
+
+  context_board_governance: {
+    id: 'context.board_governance',
+    title: 'AI Governance for Boards — What Directors Must Know',
+    category: 'context',
+    tags: ['governance', 'board', 'leadership'],
+    overview: 'Board directors need to understand AI risks and opportunities without becoming technologists. Focus on strategic questions, risk oversight, and competitive positioning.',
+    body: `**What it is:** A framework for board-level oversight of AI initiatives that balances innovation encouragement with appropriate risk management, focusing on strategic rather than technical considerations.
+
+**Why it matters:** AI creates both existential opportunities and existential risks. Boards that do not engage with AI governance may face regulatory penalties, competitive obsolescence, or catastrophic failures. Directors have a fiduciary duty to understand AI's impact on the business.
+
+**How to implement:**
+1. **AI literacy baseline:** Ensure all directors understand AI basics: what it can do, what it cannot do, and how it creates value. Bring in experts for board education sessions quarterly.
+2. **Strategic positioning:** Where does AI create competitive advantage versus competitive parity? Which capabilities should we build, buy, or borrow? How fast are competitors moving?
+3. **Risk framework:** Understand the company's AI risk appetite and controls. Review high-impact AI systems quarterly. Ensure incident response plans exist and are tested.
+4. **Investment governance:** Review AI portfolio performance against strategic objectives. Are we investing enough? Too much? In the right areas? Challenge management on ROI.
+5. **Talent and culture:** Does the company have the talent to execute its AI strategy? Is the culture ready for AI-driven change? Review talent metrics and culture assessments.
+
+**Questions boards should ask:**
+• How does our AI maturity compare to competitors?
+• What would happen if our AI systems failed for 24 hours?
+• Are we complying with emerging AI regulations?
+• How are we addressing AI bias and fairness?
+• What is our AI investment returning?
+
+**Red flags for boards:**
+• No clear AI strategy tied to business strategy
+• AI initiatives with no measurable business outcomes
+• No board member with technology expertise
+• Management cannot explain AI risks in business terms
+
+**Quick checklist:** Establish AI literacy; review competitive position; implement risk oversight; govern investments; monitor talent readiness.`
   }
 };
 
