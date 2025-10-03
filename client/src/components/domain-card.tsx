@@ -2,12 +2,14 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { CORTEX_PILLARS, MATURITY_STAGES, getStageColor } from "@/lib/cortex";
-import { getMicroGuidesByPillar, getMicroGuidesByTags } from "@/lib/micro-guides";
+import { getMicroGuidesByPillar, getMicroGuidesByTags, type MicroGuide } from "@/lib/micro-guides";
 import { getMetricById, getContextAwareDefaults, getDefaultMetricForPillar } from "@/lib/value-overlay";
 import { ValueMetricChip, ValueInputFields, HowToMeasureDialog } from "@/components/value-overlay";
 import { Star, Info, Target, Cog, Shield, Users, Network, Lightbulb, TrendingUp, ArrowRight, BookOpen, ChevronDown, HelpCircle, CheckSquare } from "lucide-react";
 import { useState } from "react";
+import DOMPurify from "dompurify";
 import type { ValueOverlay, ValueOverlayPillar, ContextProfile } from "@shared/schema";
 
 // Local types for guides with optional steps
@@ -18,6 +20,103 @@ interface GuideStep {
 }
 
 type GuideWithSteps = import("@/lib/micro-guides").MicroGuide & { steps?: GuideStep[] };
+
+// MicroGuide Dialog Component
+interface MicroGuideDialogProps {
+  guide: MicroGuide | GuideWithSteps;
+  children: React.ReactNode;
+}
+
+function MicroGuideDialog({ guide, children }: MicroGuideDialogProps) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  // Format the body content with markdown-like formatting
+  const formatBody = (text: string) => {
+    return DOMPurify.sanitize(
+      text
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/^(.*)$/, '<p>$1</p>')
+        .replace(/• /g, '<br/>• '),
+      {
+        ALLOWED_TAGS: ['p', 'strong', 'em', 'br', 'ul', 'ol', 'li'],
+        ALLOWED_ATTR: []
+      }
+    );
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        {children}
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <BookOpen className="w-5 h-5" />
+            {guide.title}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          {/* Category and Tags */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge variant="secondary" className="text-xs">
+              {guide.category}
+            </Badge>
+            {guide.pillar && (
+              <Badge variant="outline" className="text-xs">
+                {CORTEX_PILLARS[guide.pillar as keyof typeof CORTEX_PILLARS]?.name || guide.pillar}
+              </Badge>
+            )}
+            {guide.tags.map(tag => (
+              <Badge key={tag} variant="outline" className="text-xs">
+                {tag}
+              </Badge>
+            ))}
+          </div>
+
+          {/* Overview */}
+          <div className="bg-muted p-4 rounded-lg">
+            <div className="font-medium text-sm mb-2">Overview</div>
+            <div className="text-sm text-muted-foreground">{guide.overview}</div>
+          </div>
+          
+          {/* Full Body Content */}
+          <div className="prose prose-sm max-w-none">
+            <div 
+              className="text-sm leading-relaxed"
+              dangerouslySetInnerHTML={{ 
+                __html: formatBody(guide.body)
+              }} 
+            />
+          </div>
+
+          {/* Steps if available */}
+          {'steps' in guide && guide.steps && guide.steps.length > 0 && (
+            <div className="border-t pt-4">
+              <div className="font-medium text-sm mb-3">Implementation Steps</div>
+              <div className="space-y-2">
+                {guide.steps.map((step: GuideStep) => (
+                  <div key={step.order} className="flex items-start space-x-3">
+                    <div className="bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
+                      {step.order}
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-medium text-sm">{step.title}</div>
+                      {step.timeframe && (
+                        <div className="text-xs text-muted-foreground mt-0.5">{step.timeframe}</div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 interface DomainCardProps {
   pillar: string;
@@ -415,9 +514,16 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
                   <div key={guide.id} className="bg-muted/30 p-3 rounded-lg border border-muted/50">
                     <div className="flex items-start justify-between mb-2">
                       <h5 className="font-medium text-sm">{guide.title}</h5>
-                      <Badge variant="outline" className="text-xs">
-                        {guide.steps?.length ? `${guide.steps.length} steps` : 'Guide'}
-                      </Badge>
+                      <MicroGuideDialog guide={guide}>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="text-xs h-6 px-2"
+                          data-testid={`button-guide-${guide.id}`}
+                        >
+                          {guide.steps?.length ? `${guide.steps.length} steps` : 'Guide'}
+                        </Button>
+                      </MicroGuideDialog>
                     </div>
                     <p className="text-xs text-muted-foreground mb-2">{guide.overview}</p>
                     
