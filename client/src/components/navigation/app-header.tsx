@@ -2,10 +2,11 @@ import React from 'react';
 import { Link } from 'wouter';
 import { AuthButton } from '@/components/auth/auth-button';
 import { Button } from '@/components/ui/button';
-import { Brain, Home, BarChart3, HelpCircle, Users, LayoutDashboard } from 'lucide-react';
+import { Brain, Home, BarChart3, HelpCircle, Users, LayoutDashboard, TrendingUp } from 'lucide-react';
 import { useLatestAssessment } from '@/hooks/useLatestAssessment';
 import { useAuth } from '@/contexts/auth-context';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface AppHeaderProps {
   showIdentityInline?: boolean;
@@ -24,6 +25,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 }) => {
   const { data: latestAssessment } = useLatestAssessment();
   const { userProfile } = useAuth();
+  
+  // Check if pulse check is completed (pillarScores indicates completion)
+  const isPulseCheckCompleted = latestAssessment && (latestAssessment as any)?.pillarScores;
   
   // Smart navigation: go to results if completed assessment exists, otherwise start new assessment
   const assessmentPath = latestAssessment ? `/results/${latestAssessment.id}` : '/context-profile';
@@ -66,6 +70,40 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                   Home
                 </Button>
               </Link>
+              
+              {/* Prominent Strategic Profile Button */}
+              {isPulseCheckCompleted ? (
+                <Link href={`/results/${latestAssessment.id}`}>
+                  <Button 
+                    variant="default" 
+                    size="sm" 
+                    className="font-ui font-semibold"
+                    data-testid="nav-strategic-profile"
+                  >
+                    <TrendingUp className="h-4 w-4 mr-2" />
+                    Strategic Profile
+                  </Button>
+                </Link>
+              ) : (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      disabled
+                      className="font-ui font-medium text-muted-foreground/50 cursor-not-allowed"
+                      data-testid="nav-strategic-profile-disabled"
+                    >
+                      <TrendingUp className="h-4 w-4 mr-2" />
+                      Strategic Profile
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Complete the pulse check to view your strategic profile</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              
               <Link href={assessmentPath}>
                 <Button variant="ghost" size="sm" className="font-ui font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-assessment">
                   <BarChart3 className="h-4 w-4 mr-2" />
@@ -92,6 +130,41 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           )}
           
           <div className="flex items-center space-x-3 sm:space-x-2">
+            {/* Mobile Strategic Profile Button */}
+            {showNav && (
+              isPulseCheckCompleted ? (
+                <Link href={`/results/${latestAssessment.id}`}>
+                  <Button 
+                    variant="default" 
+                    size="sm" 
+                    className="md:hidden font-ui font-semibold"
+                    data-testid="nav-strategic-profile-mobile"
+                  >
+                    <TrendingUp className="h-4 w-4 mr-1" />
+                    Profile
+                  </Button>
+                </Link>
+              ) : (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      disabled
+                      className="md:hidden font-ui font-medium text-muted-foreground/50 cursor-not-allowed"
+                      data-testid="nav-strategic-profile-mobile-disabled"
+                    >
+                      <TrendingUp className="h-4 w-4 mr-1" />
+                      Profile
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Complete the pulse check first</p>
+                  </TooltipContent>
+                </Tooltip>
+              )
+            )}
+            
             {/* Cohort Display */}
             {userProfile?.cohort && (
               <Badge 
