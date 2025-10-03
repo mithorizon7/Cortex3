@@ -13,7 +13,7 @@ import { QuestionSkeleton } from "@/components/skeleton-loader";
 import { AppHeader } from "@/components/navigation/app-header";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { PULSE_QUESTIONS, CORTEX_PILLARS } from "@/lib/cortex";
-import { apiRequest, getNetworkError } from "@/lib/queryClient";
+import { queryClient, apiRequest, getNetworkError } from "@/lib/queryClient";
 import { getEnhancedErrorMessage } from "@/lib/error-utils";
 import { useToast } from "@/hooks/use-toast";
 import { ChevronLeft, ChevronRight, CheckCircle, XCircle, PlayCircle, Circle, Clock, Target } from "lucide-react";
@@ -54,8 +54,14 @@ export default function DomainQuestionsPage() {
       const response = await apiRequest("PATCH", `/api/assessments/${assessmentId}/pulse`, { pulseResponses });
       return response.json();
     },
-    onSuccess: async () => {
-      // CRITICAL: Invalidate cache to ensure next domain loads fresh data with all accumulated responses
+    onSuccess: async (updatedAssessment) => {
+      // CRITICAL: Update local state with the merged responses from the backend
+      // The backend has accumulated all responses across domains, so we need to sync our local state
+      if (updatedAssessment?.pulseResponses) {
+        setResponses(updatedAssessment.pulseResponses);
+      }
+      
+      // Invalidate cache to ensure fresh data on next load
       await queryClient.invalidateQueries({ queryKey: ['/api/assessments', assessmentId] });
       
       // Navigate to next domain or results
