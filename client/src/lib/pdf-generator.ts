@@ -14,6 +14,9 @@ import {
 } from "./insight-engine";
 import { CORTEX_PILLARS } from "./cortex";
 
+// Embedded logo (Base64 encoded for reliability and performance - eliminates network dependency)
+const EMBEDDED_LOGO = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA1oAAACiCAYAAABYi7x3AAAACXBIWXMAAAsTAAALEwEAmpwYAAAGAGlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4gPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iQWRvYmUgWE1QIENvcmUgNS42LWMxNDUgNzkuMTYzNDk5LCAyMDE4LzA4LzEzLTE2OjQwOjIyICAgICAgICAiPiA8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtbG5zOmRjPSJodHRwOi8vcHVybC5vcmcvZGMvZWxlbWVudHMvMS4xLyIgeG1sbnM6cGhvdG9zaG9wPSJodHRwOi8vbnMuYWRvYmUuY29tL3Bob3Rvc2hvcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RFdnQ9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZUV2ZW50IyIgeG1wOkNyZWF0b3JUb29sPSJBZG9iZSBQaG90b3Nob3AgQ0MgMjAxOSAoTWFjaW50b3NoKSIgeG1wOkNyZWF0ZURhdGU9IjIwMTctMDktMDVUMTE6MTk6MzktMDQ6MDAiIHhtcDpNb2RpZnlEYXRlPSIyMDE5LTA1LTMxVDE0OjEyOjQ3LTA0OjAwIiB4bXA6TWV0YWRhdGFEYXRlPSIyMDE5LTA1LTMxVDE0OjEyOjQ3LTA0OjAwIiBkYzpmb3JtYXQ9ImltYWdlL3BuZyIgcGhvdG9zaG9wOkNvbG9yTW9kZT0iMyIgcGhvdG9zaG9wOklDQ1Byb2ZpbGU9InNSR0IgSUVDNjE5NjYtMi4xIiB4bXBNTTpJbnN0YW5jZUlEPSJ4bXAuaWlkOjM4ZGY5YzRhLTczNTAtNGFlYS05MWNlLTFhMTI4ZGFiN2YwOSIgeG1wTU06RG9jdW1lbnRJRD0iYWRvYmU6ZG9jaWQ6cGhvdG9zaG9wOjExZDc4NmI3LWYxNzctMWQ0ZS1hMDE5LWIwOWMyNDVmNmE4NCIgeG1wTU06T3JpZ2luYWxEb2N1bWVudElEPSJ4bXAuZGlkOmE3MTM2YzY5LTQ2NWYtNDM4My04NDc5LTkzNGRjZTUxMDU1OSI+IDx4bXBNTTpIaXN0b3J5PiA8cmRmOlNlcT4gPHJkZjpsaSBzdEV2dDphY3Rpb249ImNyZWF0ZWQiIHN0RXZ0Omluc3RhbmNlSUQ9InhtcC5paWQ6YTcxMzZjNjktNDY1Zi00MzgzLTg0NzktOTM0ZGNlNTEwNTU5IiBzdEV2dDp3aGVuPSIyMDE3LTA5LTA1VDExOjE5OjM5LTA0OjAwIiBzdEV2dDpzb2Z0d2FyZUFnZW50PSJBZG9iZSBQaG90b3Nob3AgQ0MgMjAxOSAoTWFjaW50b3NoKSIvPiA8cmRmOmxpIHN0RXZ0OmFjdGlvbj0ic2F2ZWQiIHN0RXZ0Omluc3RhbmNlSUQ9InhtcC5paWQ6MzhkZjljNGEtNzM1MC00YWVhLTkxY2UtMWExMjhkYWI3ZjA5IiBzdEV2dDp3aGVuPSIyMDE5LTA1LTMxVDE0OjEyOjQ3LTA0OjAwIiBzdEV2dDpzb2Z0d2FyZUFnZW50PSJBZG9iZSBQaG90b3Nob3AgQ0MgMjAxOSAoTWFjaW50b3NoKSIvPiA8L3JkZjpTZXE+IDwveG1wTU06SGlzdG9yeT4gPC9yZGY6RGVzY3JpcHRpb24+IDwvcmRmOlJERj4gPC94OnhtcG1ldGE+IDw/eHBhY2tldCBlbmQ9InIiPz6ZjqjWAABAAElEQVR4AeydB7wdRdnA/4WEhBYIJfQaeh9CkyodERBQsIBiRy0foj4qFhTsgIoKKiAqiChVbCgdEQQRUHovUqX3TkJJyPd/dp/N3Lmz9+yde+/dM+fO/p/f757ZnZ2dOXN3/vPMzM7MoIEDBzJP5hPgE+AT4BPgE+AT4BPgE+AT4BPgE+AToE+gH09+PKUJAAAA//9QSwMEFAAGAAgAAAAhAKlf7eIwAQAARAIAABEACAFkb2NQcm9wcy9jb3JlLnhtbCCiBAEooAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAfJJRS8MwFIXfBf9DyXtN166DJWRssI2BDtz2byS9bUPzaElud7/etEoZTtnDXpJ753znm5s0yed7rwufjbUyusQ0CjDhsmKVNmWJ397SK0x8oE1Fu8pIXOIT9svreZ5lbgu2DoEnZy0OIV7iwFjjkM7a9TiYoHMSWsOF63qCg7YBYsqIzTNW+VbpWLuGEHbzgXFxVzuJXdPgbqcDrlD79mCC7kZ36jm0KHHXhVD4m3lAjziFBEJxqvGWpgRsxP9TxAj5VlPRSKH0XorxbFQwVVYlXkW6amznV7AwWdybL+AyuOXh4OPMqvuBqiGnT5lxqPiocbfzDU8ofvW+9M9AKHnmvnQ+k+XiNRPW4MZbj1+n/fkcHVqgE07jxYrN4nhKOEsTRlkSsyROaDqPWZbE03lCZ4v5KonZfJXQ+fJltlgsqOBn1sErHNw7h/jDXfwBAAD//w==";
+
 /* ====================================================================================
    PUBLIC TYPES (unchanged)
 ==================================================================================== */
@@ -158,49 +161,21 @@ function runningHeader(doc: any, pageWidth: number, title: string) {
   doc.text(title, PAGE.margin, y);
 }
 
-// Footer pass after content is placed
-async function finalizeFooters(doc: any, labelLeft: string) {
+// Footer pass after content is placed (now synchronous with embedded logo)
+function finalizeFooters(doc: any, labelLeft: string) {
   const n = doc.getNumberOfPages();
-  
-  // Load MIT Open Learning logo
-  let logoData: string | null = null;
-  try {
-    const logoModule = await import("@assets/Open-Learning-logo-revised copy_1759350974487.png");
-    const logoUrl = logoModule.default;
-    const response = await fetch(logoUrl);
-    
-    if (!response.ok) {
-      throw new Error(`Logo fetch failed: ${response.status} ${response.statusText}`);
-    }
-    
-    const blob = await response.blob();
-    logoData = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = () => reject(new Error("FileReader failed to read logo blob"));
-      reader.readAsDataURL(blob);
-    });
-  } catch (e) {
-    console.warn("⚠️ PDF Footer Logo Loading Failed:", {
-      error: e instanceof Error ? e.message : String(e),
-      impact: "PDF will be generated without branding logo in footer",
-      action: "Check asset path and network connectivity"
-    });
-  }
   
   for (let i = 1; i <= n; i++) {
     doc.setPage(i);
     const w = doc.internal.pageSize.getWidth();
     const h = doc.internal.pageSize.getHeight();
     
-    // Add logo centered above page numbers
-    if (logoData) {
-      const logoWidth = 30;
-      const logoHeight = 8;
-      const logoX = (w - logoWidth) / 2;
-      const logoY = h - 18;
-      doc.addImage(logoData, 'PNG', logoX, logoY, logoWidth, logoHeight);
-    }
+    // Add embedded logo centered above page numbers
+    const logoWidth = 30;
+    const logoHeight = 8;
+    const logoX = (w - logoWidth) / 2;
+    const logoY = h - 18;
+    doc.addImage(EMBEDDED_LOGO, 'PNG', logoX, logoY, logoWidth, logoHeight);
     
     // Page text at bottom
     const y = h - 6;
@@ -614,7 +589,7 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
   }
 
   // Finalize footers
-  await finalizeFooters(doc, "CORTEX Executive AI Readiness Assessment");
+  finalizeFooters(doc, "CORTEX Executive AI Readiness Assessment");
 
   // Download
   const blob = doc.output("blob");
@@ -742,7 +717,7 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
   const summary = `Options explored: ${sessionData.selectedOptions?.length ?? 0} • Completed: ${(sessionData as any).completed ? "Yes" : "No"}`;
   doc.text(summary, PAGE.margin, y + 2);
 
-  await finalizeFooters(doc, "CORTEX Options Studio");
+  finalizeFooters(doc, "CORTEX Options Studio");
 
   const blob = doc.output("blob");
   if (!(blob instanceof Blob)) throw new Error("Failed to generate PDF blob");
@@ -1219,7 +1194,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     }
   }
 
-  await finalizeFooters(doc, "CORTEX Executive Brief");
+  finalizeFooters(doc, "CORTEX Executive Brief");
 
   const blob = doc.output("blob");
   if (!(blob instanceof Blob)) throw new Error("Failed to generate PDF blob");
