@@ -1,0 +1,82 @@
+# Introduction & Rationale for the New Pulse Check Scoring
+
+## Purpose (what this change is solving)
+
+The current Pulse Check uses a binary “Yes only if fully true” model. It is intentionally rigorous—but in practice most executive teams are early in their AI journey, so they see walls of zeros. That is honest, but it’s demotivating, hides meaningful partial progress, and blunts our ability to guide the next best step.
+
+We’re introducing a four-level, anchored scale—**No (0), Started (0.25), Mostly (0.5), Yes (1.0)**—to preserve rigor **and** surface progress. This change keeps “Yes” as the gold standard while adding calibrated partial credit so leaders can see movement, you can prioritize interventions with more signal, and the platform can track improvement over time.
+
+## What’s changing (at a glance)
+
+* **Answer set:** from 3 options (No/Unsure/Yes) to **4 options (No/Started/Mostly/Yes)**. “Unsure” is removed; users must choose the best-fit progress state.
+* **Scoring:** each question contributes **0 / 0.25 / 0.5 / 1.0** points rather than binary 0/1.
+* **Maturity mapping (0–3 per domain):** we’ll still display the 0–3 domain score. Stage color/label stays tied to the **floor** of that score (e.g., 1.7 is still “Emerging”), ensuring we don’t inflate stage claims while still showing fractional progress.
+* **Visualization:** honeycomb radar already supports continuous values; we’ll remove the “confidence/unsure” overlay and show fractional fill for real progress.
+* **Guidance logic:** thresholds, “gates,” and recommendations continue to key off the stage floor plus underlying fractional scores for finer prioritization.
+* **Reporting & exports:** scores and language will reflect the four anchors and partial credit.
+
+## Why this matters (for leaders, outcomes, and measurement)
+
+**1) Better executive experience, same rigor.**
+Leaders keep the high bar—**“Mark ‘Yes’ only if fully true today.”** But they now see credit for concrete steps in flight. This reduces discouragement and drives engagement while still making it obvious that only “Yes” unlocks the next maturity plateau.
+
+**2) Stronger signal for prioritization and ROI.**
+Binary scoring collapses most early-stage firms into the same low bin. Partial credit spreads those teams across a meaningful range, improving:
+
+* **Differentiation** (who is closer to done and where),
+* **Guidance relevance** (which gaps to close first),
+* **Progress tracking** (baseline → improvements across quarters).
+
+**3) Better psychometrics without gaming.**
+Anchored descriptors (“Started,” “Mostly”) reduce over-claiming while capturing real partials. Tying the **stage label to the floor** of the score keeps incentives aligned: partials are visible, but **stages are earned**.
+
+**4) Clearer narrative and momentum.**
+Executives see a credible path: No → Started → Mostly → Yes. That creates urgency and a realistic playbook for moving domains from 0 to 3.
+
+## What does not change (our guardrails)
+
+* **CORTEX domains and 0–3 maturity spine** remain the backbone.
+* **“Yes only if fully true today”** remains the standard for completion and stage advancement.
+* **Context-aware guidance** still adapts by industry, risk, and constraints.
+* **Equal-area honeycomb** still provides truthful visual ratios.
+
+## The four answer anchors (stakeholder-ready wording)
+
+* **No (0):** *This is not in place today.*
+* **Started (0.25):** *Work has begun and the first concrete steps exist, but it’s not yet largely implemented.*
+* **Mostly (0.5):** *This is largely implemented and working in practice; only minor gaps remain.*
+* **Yes (1.0):** *Fully true today across the organization, with evidence we could cite.*
+
+> These anchors are concise on screen and specific enough to calibrate honest, repeatable responses.
+
+## What this unlocks for the platform
+
+* **Sharper coaching:** Priority moves can weight **how far** from “Yes” each item is (0.25 vs 0.5) to propose the most leverageable next step.
+* **Progress analytics:** Fractional deltas allow **before/after** storytelling within quarters and across cohorts.
+* **Roadmapping:** The platform can recommend **targeted “lift”** (e.g., converting 0.5→1.0 on a few high-leverage controls) rather than generic “do more.”
+* **Sales & success:** Early customers avoid demoralizing zeros, see value quickly, and are more likely to re-assess to capture gains.
+
+## Risks & our safeguards
+
+* **Risk: grade inflation via “Mostly.”**
+  **Mitigation:** anchored definitions in tooltips, examples in training, and stage floor mapping preserves integrity of stage labels.
+* **Risk: removal of “Unsure” forces guesses.**
+  **Mitigation:** anchors encourage the lowest truthful state; leaders who truly don’t know should pick **No** or **Started** and capture that as a follow-up action in notes.
+* **Risk: comparability with past binary runs.**
+  **Mitigation:** back-compat mapping (true→1, false/null→0) keeps historic data readable; trendlines remain directionally valid and become more sensitive going forward.
+
+## What success looks like (early KPIs)
+
+* **Distribution shift:** fewer all-zero domains; meaningful spread across 0.25/0.5/1.0 item levels.
+* **Retention & completion:** higher Pulse Check completion rates and lower abandon after first domain.
+* **Action uptake:** increased conversion of **Started→Mostly→Yes** between assessments.
+* **Guidance precision:** higher click-through and completion of recommended actions tied to items near 0.5.
+* **Leadership confidence:** qualitative feedback that results feel both honest and motivating.
+
+## Vision: from audit to accelerator
+
+This change reframes the Pulse Check from a pass/fail audit into a **progress engine**. It keeps the bar high for “Yes,” while showing leaders exactly where they are on the path—and how to move one notch closer, this quarter. The outcome is a platform that not only **diagnoses** AI readiness with integrity, but **accelerates** it with momentum.
+
+---
+
+**Confidence:** High on the product rationale, incentives, and measurement logic; medium on the exact micro-copy of the four labels (those can be tuned after a quick UX read and pilot feedback).

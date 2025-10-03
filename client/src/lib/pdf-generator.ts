@@ -945,8 +945,9 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
   let y = PAGE.headerBar + 10;
 
   // Executive Summary
+  const pillarKeys = Object.keys(data.pillarScores);
   const avg = Number.isFinite(data.averageScore) ? (data.averageScore as number) : 
-    (Object.values(data.pillarScores).reduce((sum: number, score: number) => sum + score, 0) / 6);
+    (Object.values(data.pillarScores).reduce((sum: number, score: number) => sum + score, 0) / pillarKeys.length);
   const maturityLevel = getMaturityLevel(avg);
 
   y = drawSectionTitle(doc, "EXECUTIVE SUMMARY", y);
