@@ -8,6 +8,48 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### October 3, 2025 - Comprehensive CORTEX Color Palette Compliance Audit
+**Objective**: Ensure 100% compliance with CORTEX Light Theme Color Style Guide across all visualizations, charts, and UI elements.
+
+**Files Updated**:
+1. **MATURITY_STAGES Colors** (`client/src/lib/cortex.ts`):
+   - Nascent (0): #8B959E (Silver Gray)
+   - Emerging (1): #750014 (MIT Rosewood)
+   - Integrated (2): #007561 (Pine Green)
+   - Leading (3): #FF9F1C (Orange Peel)
+   - Fixed getStageColor fallback from #64748b to #8B959E
+
+2. **PDF Generator PALETTE** (`client/src/lib/pdf-generator.ts`):
+   - ink: #011627 (Rich Black)
+   - inkSubtle: #8B959E (Silver Gray)
+   - accent: #007561 (Pine Green)
+   - success: #007561 (Pine Green)
+   - warning: #FF9F1C (Orange Peel)
+   - danger: #750014 (MIT Rosewood)
+   - line: #DDE1E6 (Light Gray 2)
+   - tint: #F2F4F8 (Light Gray 1)
+
+3. **Seven Lenses Radar** (`client/src/components/seven-lenses-radar.tsx`):
+   - Updated CHART_COLORS sequence: Pine Green → Orange Peel → Rosewood → Rich Black → Silver Gray
+   - Ensures executive-grade data visualization with brand colors
+
+4. **Admin Dashboard** (`client/src/pages/admin-dashboard.tsx`):
+   - Updated all Bar chart fills to #007561 (Pine Green)
+   - Removed unused COLORS array
+
+5. **Tailwind Config** (`tailwind.config.ts`):
+   - Updated all cortex-* status colors to official CORTEX palette
+
+6. **Home Page Assessment Scale** (`client/src/pages/home.tsx`):
+   - Level 0: #8B959E (Silver Gray)
+   - Level 1: #750014 (MIT Rosewood)
+   - Level 2: #007561 (Pine Green)
+   - Level 3: #FF9F1C (Orange Peel) - removed gradient with off-palette color
+
+**Verification**: Repository-wide scan confirmed no hardcoded hex colors remain outside the approved CORTEX palette (5 core colors + supporting grays).
+
+**Impact**: All visualizations, charts, and UI elements now strictly adhere to the CORTEX Light Theme Color Palette, ensuring consistent brand identity and executive-grade presentation across the entire platform.
+
 ### October 3, 2025 - Value Overlay Metric Badges: Tooltip Replaced with Clickable Dialog
 **Issue**: Value Overlay metric badges used a hover-only tooltip to display metric information, which was:
 - Confusing due to `cursor-help` and Info icon suggesting clickability but not being clickable
