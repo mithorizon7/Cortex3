@@ -14,7 +14,7 @@ export function Footer() {
           />
           <Link 
             to="/decide"
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors underline"
+            className="text-xs text-accent hover:text-accent/80 transition-colors underline"
             data-testid="footer-options-studio-link"
           >
             Options Studio
