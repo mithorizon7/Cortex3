@@ -224,6 +224,7 @@ export class AssessmentService {
   
   /**
    * Calculate pillar scores from pulse responses (sum of numeric values: 0, 0.25, 0.5, 1)
+   * Only includes pillars that have at least one response (prevents showing 0 for unanswered domains)
    * @private
    */
   private calculatePillarScores(responses: Record<string, number | boolean | null>): Record<string, number> {
@@ -239,6 +240,14 @@ export class AssessmentService {
     const scores: Record<string, number> = {};
     
     for (const [pillar, questions] of Object.entries(pillarQuestions)) {
+      // Check if any question in this pillar has been answered
+      const hasResponses = questions.some(q => responses[q] !== undefined);
+      
+      if (!hasResponses) {
+        // Skip pillars with no responses - don't set them to 0
+        continue;
+      }
+      
       let total = 0;
       for (const q of questions) {
         const val = responses[q];
