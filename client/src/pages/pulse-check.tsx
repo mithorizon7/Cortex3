@@ -216,7 +216,7 @@ export default function PulseCheckPage() {
           </div>
           <div className="mb-4 space-y-3">
             <p className="text-lg text-muted-foreground font-ui">
-              Mark <strong>"Yes"</strong> only if it is <strong>true across your organization today</strong> and you could point to evidence if asked. Use <strong>"Unsure"</strong> if you're not certain. Each "Yes" earns a point; your domain score is 0–3.
+              Mark <strong>"Yes"</strong> only if the statement is fully true today (completely implemented) and you could point to evidence if asked. Use <strong>"Mostly"</strong> if almost complete, <strong>"Started"</strong> if work has begun, or <strong>"No"</strong> if not in place. Your domain score is 0–3 based on partial credit.
             </p>
             
             <div className="bg-primary/5 rounded-lg p-4 border border-primary/15">
