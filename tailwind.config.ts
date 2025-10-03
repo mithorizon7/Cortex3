@@ -76,19 +76,19 @@ export default {
           border: "var(--sidebar-accent-border)"
         },
         status: {
-          online: "rgb(34 197 94)",
-          away: "rgb(245 158 11)",
-          busy: "rgb(239 68 68)",
-          offline: "rgb(156 163 175)",
+          online: "#007561",    // Pine Green (success)
+          away: "#FF9F1C",      // Orange Peel (warning)
+          busy: "#750014",      // MIT Rosewood (destructive)
+          offline: "#8B959E",   // Silver Gray (muted)
         },
-        // CORTEX specific colors
-        'cortex-red': '#ef4444',
-        'cortex-orange': '#f97316',
-        'cortex-yellow': '#eab308',
-        'cortex-green': '#22c55e',
-        'cortex-emerald': '#10b981',
-        'cortex-blue': '#3b82f6',
-        'cortex-amber': '#d97706',
+        // CORTEX brand colors for direct use
+        'cortex-rosewood': '#750014',    // MIT Rosewood (primary)
+        'cortex-pine': '#007561',        // Pine Green (secondary)
+        'cortex-orange': '#FF9F1C',      // Orange Peel (tertiary)
+        'cortex-black': '#011627',       // Rich Black (text)
+        'cortex-powder': '#FDFFFC',      // Baby Powder (background)
+        'cortex-gray': '#8B959E',        // Silver Gray (muted)
+        'cortex-gray-light': '#DDE1E6',  // Light Gray 2 (borders)
       },
       fontFamily: {
         sans: ["var(--font-sans)"],

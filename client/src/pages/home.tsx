@@ -368,7 +368,7 @@ export default function HomePage() {
               <div className="text-center space-y-3">
                 <div 
                   className="w-16 h-16 rounded-full mx-auto flex items-center justify-center font-bold text-white text-lg shadow-lg"
-                  style={{ backgroundColor: "hsl(220, 15%, 60%)" }}
+                  style={{ backgroundColor: "#8B959E" }}
                 >
                   0
                 </div>
@@ -382,7 +382,7 @@ export default function HomePage() {
               <div className="text-center space-y-3">
                 <div 
                   className="w-16 h-16 rounded-full mx-auto flex items-center justify-center font-bold text-white text-lg shadow-lg"
-                  style={{ backgroundColor: "hsl(217, 91%, 60%)" }}
+                  style={{ backgroundColor: "#750014" }}
                 >
                   1
                 </div>
@@ -396,7 +396,7 @@ export default function HomePage() {
               <div className="text-center space-y-3">
                 <div 
                   className="w-16 h-16 rounded-full mx-auto flex items-center justify-center font-bold text-white text-lg shadow-lg"
-                  style={{ backgroundColor: "hsl(158, 64%, 52%)" }}
+                  style={{ backgroundColor: "#007561" }}
                 >
                   2
                 </div>
@@ -412,8 +412,8 @@ export default function HomePage() {
                   <div 
                     className="w-16 h-16 rounded-full mx-auto flex items-center justify-center font-bold text-white text-lg shadow-xl relative overflow-hidden"
                     style={{ 
-                      background: "linear-gradient(135deg, hsl(45, 100%, 51%) 0%, hsl(38, 100%, 45%) 100%)",
-                      boxShadow: "0 8px 25px -5px hsla(45, 100%, 51%, 0.4), 0 4px 12px -2px hsla(45, 100%, 51%, 0.2)"
+                      backgroundColor: "#FF9F1C",
+                      boxShadow: "0 8px 25px -5px rgba(255, 159, 28, 0.4), 0 4px 12px -2px rgba(255, 159, 28, 0.2)"
                     }}
                   >
                     <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/20 to-transparent"></div>
@@ -422,7 +422,7 @@ export default function HomePage() {
                   <div 
                     className="absolute inset-0 w-16 h-16 rounded-full mx-auto animate-pulse"
                     style={{
-                      boxShadow: "0 0 20px hsla(45, 100%, 51%, 0.3)",
+                      boxShadow: "0 0 20px rgba(255, 159, 28, 0.3)",
                       animationDuration: "3s"
                     }}
                   ></div>

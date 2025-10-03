@@ -765,8 +765,6 @@ function AnalyticsOverview() {
     { pillar: 'Evolution', avg: analyticsData.reduce((sum: number, c: any) => sum + (c.averagePillarScores.X || 0), 0) / analyticsData.length },
   ];
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
-
   return (
     <div className="space-y-6">
       {/* Key Metrics */}
@@ -841,7 +839,7 @@ function AnalyticsOverview() {
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip formatter={(value: any, name: string) => [`${value}%`, 'Completion Rate']} />
-                <Bar dataKey="completionRate" fill="#8884d8" />
+                <Bar dataKey="completionRate" fill="#007561" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -860,7 +858,7 @@ function AnalyticsOverview() {
                 <XAxis dataKey="pillar" />
                 <YAxis domain={[0, 3]} />
                 <Tooltip formatter={(value: any) => [value?.toFixed(2), 'Average Score']} />
-                <Bar dataKey="avg" fill="#82ca9d" />
+                <Bar dataKey="avg" fill="#007561" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>

@@ -169,10 +169,10 @@ export const CONTEXT_ITEMS = [
 ];
 
 export const MATURITY_STAGES = [
-  { level: 0, name: 'Nascent', description: 'Ad hoc, minimal capability, no consistent practices', color: '#64748b' },
-  { level: 1, name: 'Emerging', description: 'Early structures exist; partial coverage and inconsistent execution', color: '#ef4444' },
-  { level: 2, name: 'Integrated', description: 'Documented practices, clear ownership, reliable execution at scale', color: '#3b82f6' },
-  { level: 3, name: 'Leading', description: 'Institutionalized capabilities, continuous improvement, and measurable business impact', color: '#10b981' },
+  { level: 0, name: 'Nascent', description: 'Ad hoc, minimal capability, no consistent practices', color: '#8B959E' }, // Silver Gray (muted)
+  { level: 1, name: 'Emerging', description: 'Early structures exist; partial coverage and inconsistent execution', color: '#750014' }, // MIT Rosewood (chart-3)
+  { level: 2, name: 'Integrated', description: 'Documented practices, clear ownership, reliable execution at scale', color: '#007561' }, // Pine Green (chart-1)
+  { level: 3, name: 'Leading', description: 'Institutionalized capabilities, continuous improvement, and measurable business impact', color: '#FF9F1C' }, // Orange Peel (chart-2)
 ];
 
 // Equal-area ring calculations for honeycomb radar
@@ -205,7 +205,7 @@ export function getPillarPosition(pillarIndex: number, radius: number, centerX: 
 export function getStageColor(stage: number): string {
   // Use floor to get the base stage for fractional scores (e.g., 1.5 -> stage 1)
   const stageIndex = Math.floor(stage);
-  return MATURITY_STAGES[stageIndex]?.color || '#64748b';
+  return MATURITY_STAGES[stageIndex]?.color || '#8B959E'; // CORTEX Silver Gray fallback
 }
 
 export function getPriorityLevel(pillarScores: PillarScores, contextProfile: ContextProfile): { pillar: string; priority: number }[] {

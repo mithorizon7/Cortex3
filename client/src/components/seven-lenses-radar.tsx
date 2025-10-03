@@ -20,16 +20,16 @@ interface SevenLensesRadarProps {
   className?: string;
 }
 
-// Color palette for different options in the radar chart
+// Color palette for different options in the radar chart - CORTEX palette
 const CHART_COLORS = [
-  '#2563eb', // blue-600
-  '#dc2626', // red-600
-  '#16a34a', // green-600
-  '#ca8a04', // yellow-600
-  '#9333ea', // violet-600
-  '#ea580c', // orange-600
-  '#0891b2', // cyan-600
-  '#be123c', // rose-600
+  '#007561', // Pine Green (chart-1)
+  '#FF9F1C', // Orange Peel (chart-2)
+  '#750014', // MIT Rosewood (chart-3)
+  '#011627', // Rich Black (chart-4)
+  '#8B959E', // Silver Gray (muted)
+  '#007561', // Pine Green (repeats for more options)
+  '#FF9F1C', // Orange Peel
+  '#750014', // MIT Rosewood
 ];
 
 interface RadarDataPoint {

@@ -81,14 +81,14 @@ export interface EnhancedAssessmentResults extends AssessmentResults {
 type RGB = [number, number, number];
 
 const PALETTE = {
-  ink: hexToRgb("#0F172A"),            // slate-900
-  inkSubtle: hexToRgb("#334155"),      // slate-700
-  accent: hexToRgb("#6366F1"),         // indigo-500
-  success: hexToRgb("#22C55E"),        // green-500
-  warning: hexToRgb("#F59E0B"),        // amber-500
-  danger: hexToRgb("#EF4444"),         // red-500
-  line: hexToRgb("#E5E7EB"),           // gray-200
-  tint: hexToRgb("#F8FAFC"),           // slate-50
+  ink: hexToRgb("#011627"),            // Rich Black (CORTEX text color)
+  inkSubtle: hexToRgb("#8B959E"),      // Silver Gray (CORTEX muted text)
+  accent: hexToRgb("#007561"),         // Pine Green (CORTEX secondary accent)
+  success: hexToRgb("#007561"),        // Pine Green (CORTEX success color)
+  warning: hexToRgb("#FF9F1C"),        // Orange Peel (CORTEX warning color)
+  danger: hexToRgb("#750014"),         // MIT Rosewood (CORTEX destructive color)
+  line: hexToRgb("#DDE1E6"),           // Light Gray 2 (CORTEX border color)
+  tint: hexToRgb("#F2F4F8"),           // Light Gray 1 (CORTEX secondary background)
   white: [255, 255, 255] as RGB,
   black: [0, 0, 0] as RGB
 };
