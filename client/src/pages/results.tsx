@@ -148,6 +148,16 @@ export default function ResultsPage() {
   const handleExportPDF = async () => {
     if (!assessment) return;
     
+    // Validate that pillar scores exist
+    if (!assessment.pillarScores) {
+      toast({
+        title: "Incomplete Assessment",
+        description: "Please complete the pulse check before generating the executive brief.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
       // Generate enhanced insights for executive PDF
       const enhancedInsights = generateEnhancedExecutiveInsights(
@@ -192,6 +202,16 @@ export default function ResultsPage() {
 
   const handleExportJSON = () => {
     if (!assessment) return;
+    
+    // Validate that pillar scores exist
+    if (!assessment.pillarScores) {
+      toast({
+        title: "Incomplete Assessment",
+        description: "Please complete the pulse check before exporting data.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     exportJSONResults({
       contextProfile: assessment.contextProfile as ContextProfile,

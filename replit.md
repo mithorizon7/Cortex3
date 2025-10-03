@@ -8,6 +8,15 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### October 3, 2025 - PDF Export Validation Fix
+**Issue**: When users attempted to generate the executive brief PDF, the export failed with error "Object.values requires that input parameter not be null or undefined". This occurred when trying to export results before completing the pulse check.
+
+**Root Cause**: The PDF and JSON export handlers in `client/src/pages/results.tsx` were attempting to process `assessment.pillarScores` without first validating that it exists. When users navigated to the results page without completing the pulse check, `pillarScores` would be null, causing `Object.values(assessment.pillarScores)` to throw an error.
+
+**Solution**: Added validation checks in both `handleExportPDF` and `handleExportJSON` to ensure pillarScores exists before attempting export operations. When pillarScores is missing, users now receive a clear error message: "Please complete the pulse check before generating the executive brief" (or "before exporting data" for JSON export).
+
+**Impact**: Users can no longer trigger export crashes by attempting to export incomplete assessments. The application now provides clear guidance about completing the pulse check before exporting results.
+
 ### October 3, 2025 - Results Page Cache Invalidation Fix
 **Issue**: After completing the pulse check, the results page displayed all domains as "Nascent" with static placeholder data (all scores showing 0, all confidence showing "High"), regardless of the actual pulse check responses provided by the user. This made the assessment appear non-functional.
 
