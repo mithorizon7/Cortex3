@@ -264,8 +264,19 @@ export class AssessmentService {
       // Check if any question in this pillar has been answered
       const hasResponses = questions.some(q => responses[q] !== undefined);
       
+      logger.debug(`Pillar ${pillar} scoring check`, {
+        additionalContext: {
+          pillar,
+          questions,
+          hasResponses,
+          questionValues: questions.map(q => ({ [q]: responses[q] })),
+          operation: 'pillar_scoring_check'
+        }
+      });
+      
       if (!hasResponses) {
         // Skip pillars with no responses - don't set them to 0
+        logger.debug(`Skipping pillar ${pillar} - no responses`);
         continue;
       }
       
@@ -274,14 +285,45 @@ export class AssessmentService {
         const val = responses[q];
         if (typeof val === 'number') {
           total += val;
+          logger.debug(`Adding numeric value for ${q}`, {
+            additionalContext: {
+              question: q,
+              value: val,
+              runningTotal: total
+            }
+          });
         }
         // Legacy support: treat true as 1, false/null as 0
         else if (val === true) {
           total += 1;
+          logger.debug(`Adding legacy boolean for ${q}`, {
+            additionalContext: {
+              question: q,
+              value: 1,
+              runningTotal: total
+            }
+          });
+        } else {
+          logger.debug(`Skipping value for ${q}`, {
+            additionalContext: {
+              question: q,
+              value: val,
+              type: typeof val
+            }
+          });
         }
       }
       scores[pillar] = total;
+      logger.debug(`Final pillar ${pillar} score: ${total}`);
     }
+
+    logger.info('Final calculated scores', {
+      additionalContext: {
+        scores,
+        scoredPillars: Object.keys(scores),
+        operation: 'final_pillar_scores'
+      }
+    });
 
     return scores;
   }

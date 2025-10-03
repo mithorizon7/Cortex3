@@ -185,7 +185,11 @@ router.patch('/:id/pulse', requireAuthMiddleware, async (req: Request, res: Resp
         operation: 'update_pulse_responses',
         assessmentId,
         incidentId,
-        responseCount: req.body.pulseResponses ? Object.keys(req.body.pulseResponses).length : 0
+        responseCount: req.body.pulseResponses ? Object.keys(req.body.pulseResponses).length : 0,
+        sampleResponses: req.body.pulseResponses ? Object.entries(req.body.pulseResponses).slice(0, 5).reduce((acc: any, [k, v]) => {
+          acc[k] = { value: v, type: typeof v };
+          return acc;
+        }, {}) : {}
       }
     });
     
