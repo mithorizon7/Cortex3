@@ -8,6 +8,16 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### October 3, 2025 - PDF Logo Error Handling
+**Issue**: PDF generation failed with "CRC mismatch for chunk iTXt" error when embedding logo due to PNG metadata chunks that jsPDF cannot process.
+
+**Solution**: Added try-catch error handling around logo embedding in `finalizeFooters()` function (pdf-generator.ts lines 177-186):
+- Logo embedding wrapped in try-catch block
+- If logo fails to load, logs warning and continues PDF generation without logo
+- Ensures PDF generation completes successfully even if logo has compatibility issues
+
+**Impact**: Situation Assessment PDFs now generate reliably without crashing due to logo metadata issues. The PDF completes successfully with or without the logo.
+
 ### October 3, 2025 - Strategic Profile Navigation Button
 **Feature**: Added prominent "Strategic Profile" navigation button in the application header for quick access to assessment results.
 

@@ -170,12 +170,17 @@ function finalizeFooters(doc: any, labelLeft: string) {
     const w = doc.internal.pageSize.getWidth();
     const h = doc.internal.pageSize.getHeight();
     
-    // Add embedded logo centered above page numbers
-    const logoWidth = 30;
-    const logoHeight = 8;
-    const logoX = (w - logoWidth) / 2;
-    const logoY = h - 18;
-    doc.addImage(EMBEDDED_LOGO, 'PNG', logoX, logoY, logoWidth, logoHeight);
+    // Add embedded logo centered above page numbers (with error handling)
+    try {
+      const logoWidth = 30;
+      const logoHeight = 8;
+      const logoX = (w - logoWidth) / 2;
+      const logoY = h - 18;
+      doc.addImage(EMBEDDED_LOGO, 'PNG', logoX, logoY, logoWidth, logoHeight);
+    } catch (error) {
+      // Logo failed to load - skip it and continue with PDF generation
+      console.warn('Logo could not be added to PDF footer:', error);
+    }
     
     // Page text at bottom
     const y = h - 6;
