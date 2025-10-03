@@ -627,16 +627,17 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
   let y = PAGE.headerBar + 10;
 
   // Use Case
-  if ((sessionData as any).useCase) {
+  if (sessionData.useCase) {
     y = drawSectionTitle(doc, "USE CASE", y);
-    y = drawBody(doc, String((sessionData as any).useCase), bounds(doc).w, y);
+    y = drawBody(doc, String(sessionData.useCase), bounds(doc).w, y);
     y += PAGE.line;
   }
 
   // Goals
-  if (Array.isArray((sessionData as any).goals) && (sessionData as any).goals.length) {
+  const goals = sessionData.goals ?? [];
+  if (goals.length) {
     y = drawSectionTitle(doc, "GOALS", y);
-    y = drawBullets(doc, (sessionData as any).goals, bounds(doc).w, y);
+    y = drawBullets(doc, goals, bounds(doc).w, y);
     y += PAGE.line * 0.5;
   }
 
@@ -671,12 +672,13 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
   }
 
   // Misconception Check (if present)
-  if ((sessionData as any).misconceptionResponses && Object.keys((sessionData as any).misconceptionResponses).length) {
+  const responses = sessionData.misconceptionResponses ?? {};
+  if (Object.keys(responses).length) {
     ({ cursorY: y } = addPageIfNeeded(doc, 22, y, "CORTEX — Options Studio"));
     y = drawSectionTitle(doc, "MISCONCEPTION CHECK RESULTS", y);
 
     const map = MISCONCEPTION_QUESTIONS.reduce((acc, q) => { acc[q.id] = q; return acc; }, {} as Record<string, typeof MISCONCEPTION_QUESTIONS[0]>);
-    for (const [qid, ans] of Object.entries((sessionData as any).misconceptionResponses)) {
+    for (const [qid, ans] of Object.entries(responses)) {
       const q = map[qid];
       if (!q) continue;
       const correct = ans === q.correctAnswer;
@@ -714,7 +716,7 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
   // Summary line
   ({ cursorY: y } = addPageIfNeeded(doc, 10, y, "CORTEX — Options Studio"));
   setFont(doc, TYPO.small); setText(doc, PALETTE.inkSubtle);
-  const summary = `Options explored: ${sessionData.selectedOptions?.length ?? 0} • Completed: ${(sessionData as any).completed ? "Yes" : "No"}`;
+  const summary = `Options explored: ${sessionData.selectedOptions?.length ?? 0} • Completed: ${sessionData.completed === true ? "Yes" : "No"}`;
   doc.text(summary, PAGE.margin, y + 2);
 
   finalizeFooters(doc, "CORTEX Options Studio");

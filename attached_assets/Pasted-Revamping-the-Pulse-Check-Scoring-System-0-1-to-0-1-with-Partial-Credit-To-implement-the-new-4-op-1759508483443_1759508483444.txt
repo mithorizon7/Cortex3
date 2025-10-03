@@ -1,0 +1,173 @@
+Revamping the Pulse Check Scoring System (0–1 to 0–1 with Partial Credit)
+
+To implement the new 4-option scoring (No / Started / Mostly / Yes = 0, 0.25, 0.5, 1 points), we need to update both backend calculations and frontend UI elements. Below is a comprehensive plan covering data model changes, scoring logic, UI adjustments, visualizations, and testing to ensure a smooth transition from the old binary system to the new partial-credit system.
+
+1. Update Data Model and Scoring Logic (Backend)
+
+Change Pulse Response Data Type: Currently, pulse responses are stored as boolean | null for Yes/No/Unsure ￼. We must change this to a numeric scale. For example, use number values 0, 0.25, 0.5, 1 to represent No, Started, Mostly, Yes respectively. In the schema, update the Zod schema for pulseResponses to accept these numeric values (and remove boolean/null). For instance:
+
+export const pulseResponsesSchema = z.record(
+  z.string(), 
+  z.union([z.literal(0), z.literal(0.25), z.literal(0.5), z.literal(1)])
+);
+
+This will allow the PATCH API to accept the four scores. (If any existing records still use booleans, plan a migration or a conversion in code when loading, as discussed in section 5 below.)
+
+Revise Score Calculation: In the assessment service, modify the calculatePillarScores function to sum these numeric responses instead of counting only true values. Currently it counts true per pillar ￼:
+
+const yesCount = questions.filter(q => responses[q] === true).length;
+scores[pillar] = yesCount;
+
+Change this to iterate and sum numeric values for each question. For example:
+
+for (const [pillar, questions] of Object.entries(pillarQuestions)) {
+  let total = 0;
+  for (const q of questions) {
+    const val = responses[q];
+    if (typeof val === 'number') {
+      total += val;
+    } 
+    // treat undefined as 0 (unanswered or not started)
+  }
+  scores[pillar] = total;
+}
+
+This way each question contributes 0, 0.25, 0.5, or 1 to the pillar’s score. The pillar scores will now be fractional (e.g. 1.5) instead of strictly integers ￼ ￼. Ensure the pillarScores schema still allows any number 0–3 (which it does) so fractional values are valid.
+
+Remove/Repurpose Confidence Gaps: The concept of “Unsure” is being removed, so confidence gaps (count of unsure answers) are no longer needed. In calculateConfidenceGaps, currently it counts responses[q] === null for each pillar ￼. You can retire this function or have it return all zeros. Likewise, stop using confidenceGaps in the update flow. For example, in updatePulseResponses, you can drop the confidenceGaps calculation and just pass an empty or zeroed object to the DB ￼. If the database field confidenceGaps is not needed, it can be set to null or a default {C:0,…} on update to avoid breaking any code expecting it.
+
+Pillar Score Interpretation: We will treat the summed pillar score (0–3 with fractions) as the maturity level for visualization and guidance. However, for categorizing stages (Nascent, Emerging, Integrated, Leading), use the floor of the score (i.e. require a full integer to reach the next stage). This preserves the idea that only fully completed items “count” toward achieving the next maturity stage. For instance, if a pillar totals 2.5, we still classify it as Integrated (2) rather than Leading, since it hasn’t reached a full 3. In practice, we can implement this when assigning colors or labels (see Visualization below). The average maturity calculation for the overall profile can similarly use thresholds (as it already does: <1 = Nascent, <2 = Emerging, <3 = Integrated, else Leading [oai_citation:6‡GitHub](https://github.com/mithorizon7/Cortex3/blob/62a3be6b6a487f1899d7651a63f04202e42aba0d/client/src/pages/results.tsx#L259-L267)).
+
+2. Frontend – Expanding Pulse Check Answer Options
+
+Add Two New Answer Choices: In the Pulse Check question UI, we currently have three buttons: No, Unsure, Yes ￼ ￼ ￼. We need to have four options:
+	•	No – not in place (0 points)
+	•	Started – we’ve started working on it (0.25 points)
+	•	Mostly – largely or mostly complete (0.5 points)
+	•	Yes – fully true today (1 point)
+
+This requires adding two new buttons (for “Started” and “Mostly”) and removing the Unsure option. Use meaningful labels (e.g. “Started” and “Mostly”) – we can refine the wording to something like “In Progress” and “Mostly Done” if that fits better.
+
+Button Layout and State Handling: Update the JSX in domain-questions.tsx (and pulse-check.tsx if applicable) to render four buttons. For example, we might organize them in two rows of two for small screens if one row of four is too cramped. Ensure the styling remains clear. The existing code highlights the selected option by setting the button variant based on the response value ￼ ￼ ￼. We will adjust this logic:
+	•	Use handleResponseChange(question.id, <value>) with numeric values. For example:
+
+<Button 
+  variant={responses[q.id] === 0 ? "destructive" : "outline"} 
+  onClick={() => handleResponseChange(q.id, 0)}>
+  No
+</Button>
+
+(Here we assume “destructive” or “accent” variant is styled as red for No.)
+Similarly:
+
+<Button 
+  variant={responses[q.id] === 0.25 ? "secondary" : "outline"} 
+  onClick={() => handleResponseChange(q.id, 0.25)}>
+  Started
+</Button>
+<Button 
+  variant={responses[q.id] === 0.5 ? "secondary" : "outline"} 
+  onClick={() => handleResponseChange(q.id, 0.5)}>
+  Mostly
+</Button>
+<Button 
+  variant={responses[q.id] === 1 ? "default" : "outline"} 
+  onClick={() => handleResponseChange(q.id, 1)}>
+  Yes
+</Button>
+
+(The exact variant names – “default”, “secondary”, “accent/destructive” – should be chosen or added to match your design system. For example, you might use a neutral color for partial states and keep green for Yes and red for No. Ensure each button’s variant highlights the selected state appropriately.)
+
+	•	State Type: Change the responses state to Record<string, number> (with possible undefined for unanswered). The handleResponseChange should now set a numeric value. For instance, if a user clicks “Mostly”, call setResponses(prev => ({ ...prev, [id]: 0.5 })). Remove any references to boolean or null in this state. (Unanswered questions can remain simply absent from the object; you no longer need null to denote uncertainty.)
+	•	Removal of Unsure: Delete the Unsure <Button> and its tooltip entirely ￼ ￼. The “Unsure” tooltip’s explanation (“won’t affect your score, flagged as follow-up” ￼) is no longer applicable. With four fixed answers, users must choose the closest status. If a user truly doesn’t know, instruct them to choose “No” or the lowest applicable progress level rather than having a separate unsure category.
+
+Tooltips and Guidance Text: Update the tooltips for the new options to guide the user:
+	•	No: (unchanged) “This statement is not true for your organization today.”
+	•	Started: e.g. “We have initiated or made some progress on this, but it’s not fully implemented.”
+	•	Mostly: e.g. “This is almost in place – largely complete, with only minor elements missing.”
+	•	Yes: (same idea as before) “This statement is fully true across your organization today and you could point to evidence.”
+
+These tooltips help calibrate the meaning of each choice.
+
+Progress Enforcement: Continue to require all questions be answered before continuing. The logic isDomainComplete = answeredCount === totalCount ￼ still works with numeric responses (just ensure unanswered are treated as undefined). The Next/Continue button remains disabled until all three answers in a domain have one of the four values.
+
+3. Results & Visualization Updates
+
+With fractional scores, we must adjust how results are displayed so users see their partial progress:
+
+Honeycomb Radar Chart: The radar chart already supports continuous values for radius (it uses the score directly to determine the filled area) ￼. However, color assignment currently assumes integer stages: getStageColor(score) indexes into an array by stage number ￼ ￼. If score is fractional, MATURITY_STAGES[score] returns undefined (e.g. 1.5 is not a valid index) ￼. To fix this, map the fractional score to the nearest or base stage. We will use the floor of the score for color coding. For example, change getStageColor to:
+
+export function getStageColor(score: number): string {
+  const stageIndex = Math.floor(score);
+  return MATURITY_STAGES[stageIndex]?.color || '#64748b';
+}
+
+This way, a pillar with score 2.5 will be colored as “Integrated (2)” (blue, for example) rather than attempting an invalid index. Only a full 3.0 gets the Leading color (often green). The chart rings remain at 0,1,2,3 – but the filled region will extend to the fractional radius (thanks to the equal-area calculation) so progress within a stage is still visually apparent. We will no longer overlay a confidence pattern, since Unsure is gone.
+
+Remove Confidence Overlay: In HoneycombRadar, the dotted “confidence gap” overlay for unsure answers can be removed ￼ ￼. Currently it checks unsureCount > 0 to draw a patterned overlay on that pillar’s segment ￼. Since unsureCount will always be 0 now, this code won’t execute. You can safely delete or comment out the entire <g> that renders the pattern ￼ ￼ to simplify the chart. Going forward, every domain will have “High” confidence implicitly because leaders are forced to choose an actual progress level.
+
+Domain Score Display: On the results page, each domain’s card or summary should reflect partial scores:
+	•	Score out of 3: Currently, the DomainCard summary line shows “Score X/3 · Confidence: Y” ￼. Remove the confidence portion entirely. Change it to something like: “{Pillar Name/Letter} — Score {score}/3”. We will display the numeric score, including .25 or .5 increments. For example, if Clarity & Command got one “Yes” and two “Mostly”, the score would be 2.0/3. If a domain got one “Mostly” and rest “No”, it would show 0.5/3.
+Formatting: Use one decimal place for readability (e.g. 1.5/3, 0.5/3). The score will typically end in .0 or .5 (since .25 and .75 will appear as .3 or .8 if one decimal place is used – you may choose to format to two decimal places to represent 0.25 exactly if desired). The goal is for the exec to see that they have, say, “1.5/3” instead of just “1/3” – a subtle but important morale boost that indicates partial progress.
+	•	Avoid Breaking DomainCard Rendering: The DomainCard component currently expects an integer stage prop and looks up MATURITY_STAGES[stage] ￼ ￼. If we pass a fractional score, it might return undefined and the component early-returns ￼. To fix this, pass or calculate an integer stage for looking up guidance content, but still show the fractional in the score text. For example, in results.tsx when mapping pillar scores to <DomainCard>, do:
+
+<DomainCard pillar={pillarKey} stage={Math.floor(score)} … />
+
+and separately pass the raw score for display if needed. Alternatively, modify DomainCard to internally floor the stage when accessing MATURITY_STAGES (i.e. const stageIndex = Math.floor(stage); const stageInfo = MATURITY_STAGES[stageIndex];). This ensures domain guidance (recommendations, prompts, etc.) still correspond to the base maturity stage. (Partial progress doesn’t change the qualitative guidance – e.g. if score is 1.5, they’re still “Emerging” moving toward “Integrated”.)
+
+	•	Maturity Labels: We may optionally include the stage name in the UI for clarity. For instance: “Score 1.5/3 (Emerging)” or similar. Originally, the app did not explicitly print stage names in the domain chip (likely to keep it concise), but with fractional scores, clarifying the stage could help. This is not strictly required – use your judgment based on UI space. The color coding on the radar and any legend can also reinforce the stage.
+
+Overall Maturity Computation: The overall average maturity calculation in the PDF generator already uses fractional logic (avg and thresholds) ￼ ￼. This can remain as is. It will naturally produce e.g. “Emerging” if the average is 1.8, etc. No change needed there, though double-check that it’s interpreting pillarScores (now possibly fractional) correctly – it is, because it just sums and divides.
+
+4. Text and Copy Adjustments
+
+Assessment Instructions: The introduction or instructions for the Pulse Check should be updated to reflect the new answer scheme. For example, on the domain intro pages or the pulse landing, we previously had guidance: “Mark ‘Yes’ only if it is fully true today… Use ‘Unsure’ if not certain.” ￼ ￼. This must change to cover four options and remove unsure:
+	•	“How to answer” guidance can be:
+Mark Yes only if the statement is fully true today (completely implemented) and you could point to evidence if asked.
+Mark Mostly if the practice is almost fully in place – largely done but with minor gaps remaining.
+Mark Started if you have begun work on this area but it is not mostly complete yet.
+Mark No if this is not in place at all today.
+
+Place this updated copy wherever you currently explain the answering criteria (likely in the footer of the domain intro pages or the Pulse Check page header). This ensures users understand the new options.  ￼ shows where the old instructions are defined; update that array to the four lines above (removing the Unsure line).
+
+Visual Indicators: Consider if any icons or symbols should change:
+	•	The icons used in the answer buttons might be updated. Currently: No uses an X icon, Yes uses a check circle, Unsure used a question mark icon ￼ ￼ ￼. You might choose an icon for “Started” and “Mostly” (e.g., a half-check icon or a progress icon). For example, a possible scheme:
+	•	No = XCircle (red) as before,
+	•	Started = a play/forward icon or small check (to denote begun),
+	•	Mostly = CheckSquare (a boxed checkmark, indicating partial completion),
+	•	Yes = CheckCircle (solid check, indicating full completion).
+This is optional but can help visually distinguish the options. Ensure any new icons have tooltips as discussed to clarify meaning.
+
+PDF/Report Wording: If the PDF or any exported report explicitly mentions “Yes/No/Unsure” or describes the scoring, update that text as well. For example, in the executive brief or methodology description, explain that each domain is scored 0–3, with partial credit for progress (¼ or ½ point). This will align the documentation with the new functionality.
+
+5. Testing and Validation
+
+Update Unit/E2E Tests: The test suites currently assume boolean pulse responses. For instance, tests construct mockPulseResponses with true/false and expect pillarScores as integer counts ￼ ￼. These will need adjustment:
+	•	Modify any test data to use numeric values. For example, what was 'C1': true (meaning Yes) should become 'C1': 1; 'C2': false (No) becomes 'C2': 0. If needed, include some partial examples in tests to validate the new logic (e.g. 'C3': 0.5 to simulate a Mostly answer).
+	•	Update the expected outcomes. For pure true/false inputs, the pillar score sums should match the previous counts (so those tests will still pass if logic is correct). Add new cases to verify that combinations yield the correct fractional sums. For example, a test scenario with one Mostly (0.5) and two No (0) in a pillar should produce score 0.5. Ensure calculatePillarScores returns a number with the exact sum of the values.
+	•	Adjust any logic in tests that explicitly counts === true. In cortex-business-flows.test.ts and others, they manually compute expected scores by counting booleans. Change this to summing numeric values. The test can mirror the new implementation: e.g.
+
+const trueCount = questions.reduce((sum, q) => sum + (responses[q] || 0), 0);
+expect(scores[pillar]).toBe(trueCount);
+
+(Where responses may contain 0, 0.25, 0.5, 1.)
+
+Cross-Check All Touchpoints: Search the codebase for any other places assuming pulseResponses are booleans. This could include:
+	•	API request handlers or validators (which we covered via Zod schema update).
+	•	Anywhere that constructs a new Assessment (make sure it can handle pulseResponses as null or empty object until filled).
+	•	Analytics or cohort calculations – e.g. averaging pillar scores in getCohortAnalytics will now average fractional values (which is fine) ￼ ￼.
+	•	The priorityMoves logic uses pillarScores in a formula ￼ but since it already treats them as numbers, it will simply get non-integers and still compute a gapBoost (which is even more precise now). No change needed there except to confirm it behaves as expected (it does: it uses 3 - pillarScore ￼, so a pillarScore of 1.5 yields gapBoost = 0.02 * 1.5 = 0.03, etc.).
+
+Data Migration Consideration: If there are existing assessments in the database with old pulseResponses format (true/false/null), you should migrate them to the new scheme to avoid errors when loading. A simple approach is to convert booleans to numeric on the fly:
+	•	When loading an assessment, if assessment.pulseResponses exists and contains booleans, map them (true->1, false->0, null->0 or possibly skip nulls). This could be done in the front-end after fetch or in the back-end when returning data. Since the new front-end will never produce booleans, this is mainly for backward compatibility.
+	•	Alternatively, run a one-time script on the DB to transform all stored pulseResponses JSON: replace true with 1, false with 0, and remove or set unsure null to 0. Also update any stored pillarScores (which would currently be 0–3 integers) to the same values (they’d remain the same if we only had yes count; if you want, you could retroactively give partial credit for unsure = 0 anyway, so those remain unchanged). This migration ensures consistency going forward.
+
+Manual QA: After implementing, conduct a full run-through:
+	•	Create a new assessment, go through context profile as usual.
+	•	In Pulse Check, verify each domain’s questions now offer four options and that you cannot select more than one at a time (each press updates state).
+	•	Try all combinations (including only selecting “Started” or “Mostly” for everything) and complete the assessment.
+	•	Confirm that the results page shows fractional scores where appropriate and that the radar chart correctly fills to intermediate rings. For example, if you answered “Mostly” for all 18 questions, each domain score would be 1.5/3 – the chart should show each honeycomb cell halfway between the center and the 2nd ring, colored as Emerging (since floor(1.5)=1 stage). The text chips should say “Score 1.5/3” for each domain.
+	•	Ensure no “Confidence: Low/Med/High” text or dotted patterns appear anywhere (since Unsure was eliminated).
+	•	Verify the PDF export: it should still generate, and the “maturityLevel” and average score make sense given partials (e.g. if all domains are 1.5, avg=1.5 so “Emerging”). If the PDF lists domain scores or recommendations, include the partial values or at least don’t contradict them.
+
+By following this plan – updating the schema and calculation logic, adjusting the UI to four answers, and modifying all related outputs – we will transform the Pulse Check scoring into a more gradated system. Leaders taking the assessment will no longer see a wall of zeros; instead they’ll get credit for progress (0.25 or 0.5 points) while still being incentivized to reach a full 1 point per item for maximum maturity. All parts of the application (from answer selection to visualization and guidance copy) will consistently reflect the new 0/0.25/0.5/1 scoring model.
