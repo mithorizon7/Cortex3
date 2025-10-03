@@ -12,6 +12,7 @@ import { ProtectedRoute } from "@/components/auth/protected-route";
 import ProgressHeader from "@/components/progress-header";
 import OfflineBanner from "@/components/offline-banner";
 import { DOMAIN_INTROS, FOOTER_COPY } from "@/lib/domain-intros";
+import { CORTEX_PILLARS } from "@/lib/cortex";
 import { ChevronRight, BookOpen, Target, Lightbulb, CheckSquare, FileText, AlertCircle, AlertTriangle } from "lucide-react";
 
 const DOMAIN_ORDER = ['C', 'O', 'R', 'T', 'E', 'X'];
@@ -33,6 +34,7 @@ export default function DomainIntroPage() {
   });
 
   const domainData = DOMAIN_INTROS[domain as string];
+  const pillarInfo = CORTEX_PILLARS[domain as keyof typeof CORTEX_PILLARS];
   const currentIndex = DOMAIN_ORDER.indexOf(domain as string);
   const progress = ((currentIndex + 1) / DOMAIN_ORDER.length) * 100;
 
@@ -198,7 +200,10 @@ export default function DomainIntroPage() {
               {/* Header */}
               <div className="mb-8">
                 <div className="flex items-center space-x-4 mb-4">
-                  <div className="bg-primary text-primary-foreground p-4 rounded-full">
+                  <div 
+                    className="text-white p-4 rounded-full"
+                    style={{ backgroundColor: pillarInfo?.color }}
+                  >
                     <span className="text-2xl font-bold">{domainData.code}</span>
                   </div>
                   <div>
@@ -213,7 +218,7 @@ export default function DomainIntroPage() {
               <Card className="mb-6">
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2 text-lg">
-                    <Target className="h-5 w-5 text-primary" />
+                    <Target className="h-5 w-5" style={{ color: pillarInfo?.color }} />
                     <span>Why This Matters</span>
                   </CardTitle>
                 </CardHeader>
@@ -226,7 +231,7 @@ export default function DomainIntroPage() {
               <Card className="mb-6">
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2 text-lg">
-                    <Lightbulb className="h-5 w-5 text-primary" />
+                    <Lightbulb className="h-5 w-5" style={{ color: pillarInfo?.color }} />
                     <span>Principles</span>
                   </CardTitle>
                 </CardHeader>
@@ -234,8 +239,17 @@ export default function DomainIntroPage() {
                   <ul className="space-y-3">
                     {domainData.principles.map((principle, index) => (
                       <li key={index} className="flex items-start space-x-3">
-                        <div className="bg-primary/10 text-primary p-1 rounded-full mt-0.5">
-                          <div className="w-2 h-2 bg-primary rounded-full" />
+                        <div 
+                          className="p-1 rounded-full mt-0.5"
+                          style={{ 
+                            backgroundColor: pillarInfo?.colorLight,
+                            color: pillarInfo?.color 
+                          }}
+                        >
+                          <div 
+                            className="w-2 h-2 rounded-full" 
+                            style={{ backgroundColor: pillarInfo?.color }}
+                          />
                         </div>
                         <span className="text-foreground font-ui leading-relaxed">{principle}</span>
                       </li>
@@ -248,7 +262,7 @@ export default function DomainIntroPage() {
               <Card className="mb-8">
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2 text-lg">
-                    <CheckSquare className="h-5 w-5 text-primary" />
+                    <CheckSquare className="h-5 w-5" style={{ color: pillarInfo?.color }} />
                     <span>What Good Can Look Like</span>
                   </CardTitle>
                 </CardHeader>

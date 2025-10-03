@@ -1,12 +1,54 @@
 import { ContextProfile, PillarScores, Gate } from "@shared/schema";
 
 export const CORTEX_PILLARS = {
-  C: { name: "Clarity & Command", icon: "bullseye", description: "Leadership owns a value-anchored AI ambition and operating model", color: "#750014" }, // MIT Rosewood
-  O: { name: "Operations & Data", icon: "cogs", description: "Reliable, monitored AI in production with governed data", color: "#007561" }, // Pine Green
-  R: { name: "Risk, Trust & Security", icon: "shield-alt", description: "Demonstrable safety, fairness, privacy, and security", color: "#FF9F1C" }, // Orange Peel
-  T: { name: "Talent & Culture", icon: "users", description: "Skills, incentives, and job redesign for AI adoption", color: "#D4AF37" }, // Gold
-  E: { name: "Ecosystem & Infrastructure", icon: "network-wired", description: "Partners and platform capacity that scale economically", color: "#4A90E2" }, // Blue
-  X: { name: "Experimentation & Evolution", icon: "flask", description: "Safe, disciplined learning cycles with clear success/sunset criteria", color: "#9B59B6" } // Purple
+  C: { 
+    name: "Clarity & Command", 
+    icon: "bullseye", 
+    description: "Leadership owns a value-anchored AI ambition and operating model", 
+    color: "#0C63D6", // Blue - Primary Accent
+    colorLight: "#E9F3FF", // Light tint for backgrounds
+    colorDark: "#5592E2" // Dark mode accent
+  },
+  O: { 
+    name: "Operations & Data", 
+    icon: "cogs", 
+    description: "Reliable, monitored AI in production with governed data", 
+    color: "#007561", // Pine Green - Primary Accent
+    colorLight: "#E6F4F1",
+    colorDark: "#339181"
+  },
+  R: { 
+    name: "Risk, Trust & Security", 
+    icon: "shield-alt", 
+    description: "Demonstrable safety, fairness, privacy, and security", 
+    color: "#750014", // Rosewood - Primary Accent
+    colorLight: "#FDEBEC",
+    colorDark: "#9E4C5A"
+  },
+  T: { 
+    name: "Talent & Culture", 
+    icon: "users", 
+    description: "Skills, incentives, and job redesign for AI adoption", 
+    color: "#FFA72E", // Lightened Orange Peel - Primary Accent
+    colorLight: "#FFF4E5",
+    colorDark: "#FFB347"
+  },
+  E: { 
+    name: "Ecosystem & Infrastructure", 
+    icon: "network-wired", 
+    description: "Partners and platform capacity that scale economically", 
+    color: "#339181", // Teal - Primary Accent
+    colorLight: "#DDF2EF",
+    colorDark: "#55A69A"
+  },
+  X: { 
+    name: "Experimentation & Evolution", 
+    icon: "flask", 
+    description: "Safe, disciplined learning cycles with clear success/sunset criteria", 
+    color: "#69B3FF", // Light Blue - Primary Accent
+    colorLight: "#D9ECFF",
+    colorDark: "#A0CCFF"
+  }
 };
 
 export const PULSE_QUESTIONS = [

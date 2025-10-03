@@ -261,7 +261,10 @@ export default function DomainQuestionsPage() {
               {/* Domain Header */}
               <div className="mb-8 text-center">
                 <div className="flex items-center justify-center space-x-4 mb-4">
-                  <div className="bg-primary text-primary-foreground p-3 rounded-full">
+                  <div 
+                    className="text-white p-3 rounded-full"
+                    style={{ backgroundColor: currentPillar.color }}
+                  >
                     <span className="text-2xl font-bold">{currentGroup.pillar}</span>
                   </div>
                   <div className="text-left">
