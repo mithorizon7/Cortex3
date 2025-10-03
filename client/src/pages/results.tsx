@@ -44,7 +44,7 @@ import {
   Brain,
   ExternalLink
 } from "lucide-react";
-import type { Assessment, PillarScores, ConfidenceGaps, ContextProfile, ValueOverlay, ValueOverlayPillar } from "@shared/schema";
+import type { Assessment, PillarScores, ContextProfile, ValueOverlay, ValueOverlayPillar } from "@shared/schema";
 
 // Helper function to get gate thresholds for transparency
 function getGateThreshold(gateId: string, dimension: string): string | null {
@@ -274,7 +274,6 @@ export default function ResultsPage() {
   // Create default pillar scores if missing to ensure consistent UI
   const defaultPillarScores: PillarScores = { C: 0, O: 0, R: 0, T: 0, E: 0, X: 0 };
   const pillarScores = assessment.pillarScores as PillarScores || defaultPillarScores;
-  const confidenceGaps = assessment.confidenceGaps as ConfidenceGaps || { C: 0, O: 0, R: 0, T: 0, E: 0, X: 0 };
   const triggeredGates = (assessment.triggeredGates as any[]) || [];
   const contextProfile = assessment.contextProfile as ContextProfile;
   const priorityMoves = (assessment as any).priorityMoves?.moves || [];
@@ -438,7 +437,6 @@ export default function ResultsPage() {
             <CardContent className="flex justify-center p-4 sm:p-6">
               <HoneycombRadar 
                 pillarScores={pillarScores} 
-                confidenceGaps={confidenceGaps}
                 className="max-w-md mx-auto"
               />
             </CardContent>
@@ -607,7 +605,6 @@ export default function ResultsPage() {
                     pillar={key} 
                     stage={score}
                     contextProfile={contextProfile}
-                    confidenceGaps={confidenceGaps}
                     valueOverlay={pillarValueData}
                     onValueOverlayUpdate={handleValueOverlayUpdate}
                     priorityMoves={pillarMoves}
