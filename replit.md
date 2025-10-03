@@ -6,6 +6,43 @@ CORTEX is a web-based executive AI readiness assessment platform that helps lead
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+
+### October 3, 2025 - Comprehensive PDF Generation Reliability Improvements
+**Issues Addressed**: The PDF generation system had several vulnerabilities that could cause failures in production:
+1. Multi-page PDFs failed with "Invalid arguments passed to jsPDF.line" error
+2. Long text content could overflow past page footer causing jsPDF range errors
+3. Missing data validation allowed incomplete assessments to trigger cryptic errors
+4. Partial pillar data could cause averaging and rendering failures
+
+**Solutions Implemented**:
+
+1. **Fixed jsPDF Page Size Access** (pdf-generator.ts lines 239-243):
+   - Changed from incorrect destructuring to proper method calls: `.getWidth()` and `.getHeight()`
+   - Prevents NaN coordinate values that caused line drawing failures
+
+2. **Enhanced Text Rendering Pagination** (pdf-generator.ts lines 262-314):
+   - Updated `drawBody`, `drawBullets`, `drawPrompts` to accept optional `runHeader` parameter
+   - When provided, functions call `addPageIfNeeded` for each line to prevent overflow
+   - Applied runHeader parameter to all text rendering calls in Executive Brief generation
+
+3. **Comprehensive Data Validation**:
+   - In `results.tsx` (lines 165-172): Added contextProfile existence check before PDF generation
+   - In `generateExecutiveBriefPDF` (lines 875-921): Added thorough validation:
+     - Data object, assessment ID, and context profile existence
+     - Pillar scores object type validation
+     - Non-empty pillar scores validation
+     - Valid numeric scores validation (no NaN)
+     - All 6 CORTEX pillars present validation
+   - All validations provide clear, actionable error messages
+
+4. **Improved Error Handling** (pdf-generator.ts lines 169-192):
+   - Enhanced logo loading with response.ok validation and FileReader error handling
+   - Structured console warnings with error details, impact, and suggested actions
+   - Graceful degradation: PDF generates successfully even if logo loading fails
+
+**Impact**: The PDF generation system is now production-ready with comprehensive error handling, data validation, and pagination protection. Multi-page PDFs with any content length now generate reliably without crashes.
+
 ## System Architecture
 
 ### Frontend Architecture
