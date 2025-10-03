@@ -106,7 +106,7 @@ This is not bureaucracy; it is management hygiene. Clear direction + clear owner
 
 **How to implement:**
 1. **Data quality gates:** Define 5-7 key quality metrics for your critical data sources. Monitor completeness, freshness, accuracy, and consistency. Block model training when quality drops below thresholds.
-2. **Use-case screening:** Create a simple scoring matrix (value, feasibility, risk). Require business sponsors for every pilot. Kill projects that don't clear the bar within 90 days.
+2. **Use-case screening:** Create a simple scoring matrix (value, feasibility, risk). Require business sponsors for every pilot. Kill projects that do not clear the bar within 90 days.
 3. **Basic MLOps:** Start with version control for models and data. Add automated testing for model performance. Build rollback capabilities before you need them.
 4. **Performance tracking:** Monitor inference latency, throughput, and error rates in production. Set SLAs that match business needs, not technical ideals.
 5. **Cost allocation:** Track compute, storage, and API costs by use-case. Make costs visible to business owners monthly.
@@ -140,7 +140,7 @@ This is not bureaucracy; it is management hygiene. Clear direction + clear owner
 2. **Set quality thresholds:** Define minimums for completeness (e.g., <5% missing), consistency (e.g., format compliance >95%), and balance (e.g., no class <10% of total).
 3. **Automate monitoring:** Build simple checks that run before model training and in production pipelines. Alert when quality degrades.
 4. **Create feedback loops:** Capture production predictions and outcomes. Use them to identify quality issues your static checks miss.
-5. **Document lineage:** Know where data comes from, how it's transformed, and where it's used. This makes debugging 10x faster.
+5. **Document lineage:** Know where data comes from, how it is transformed, and where it is used. This makes debugging 10x faster.
 
 **Options by context:**
 • **Customer data:** Focus on PII handling and consent tracking.
@@ -149,8 +149,8 @@ This is not bureaucracy; it is management hygiene. Clear direction + clear owner
 
 **Pitfalls:**
 • Trying to fix all quality issues instead of the ones that matter
-• Manual quality checks that don't scale
-• Quality metrics that don't connect to business outcomes
+• Manual quality checks that do not scale
+• Quality metrics that do not connect to business outcomes
 
 **Quick checklist:** Profile baseline quality; set practical thresholds; automate monitoring; build feedback loops; maintain lineage records.`
   },
@@ -163,7 +163,7 @@ This is not bureaucracy; it is management hygiene. Clear direction + clear owner
     pillar: 'R',
     tags: ['risk', 'security', 'trust'],
     overview: 'Effective AI risk management balances innovation speed with thoughtful controls. Focus on incident response, bias testing, and privacy protection as your foundation.',
-    body: `**What it is:** The practices and controls that prevent AI from creating unacceptable risks to your customers, employees, and organization. This isn't about eliminating all risk—it's about understanding, monitoring, and managing risk intelligently.
+    body: `**What it is:** The practices and controls that prevent AI from creating unacceptable risks to your customers, employees, and organization. This is not about eliminating all risk—it is about understanding, monitoring, and managing risk intelligently.
 
 **Why it matters:** AI failures are highly visible and can destroy trust instantly. A customer harmed by biased decisions or a data breach involving AI systems can trigger regulatory action, lawsuits, and lasting reputation damage. Good risk management enables faster innovation by creating clear boundaries.
 
@@ -194,7 +194,7 @@ This is not bureaucracy; it is management hygiene. Clear direction + clear owner
     pillar: 'R',
     tags: ['bias', 'fairness', 'testing'],
     overview: 'Regular bias testing does not require a PhD in ethics. Start with simple disparate impact analysis and expand based on your risk profile.',
-    body: `**What it is:** Systematic testing to ensure AI systems don't create unfair outcomes for different groups. This means checking if your models perform equally well across demographics, geographies, or other relevant segments.
+    body: `**What it is:** Systematic testing to ensure AI systems do not create unfair outcomes for different groups. This means checking if your models perform equally well across demographics, geographies, or other relevant segments.
 
 **Why it matters:** Biased AI can violate regulations, harm vulnerable populations, and create legal liability. Even unintentional bias can damage your brand and limit market opportunities. Proactive testing helps you fix problems before they hurt people.
 
@@ -228,14 +228,14 @@ This is not bureaucracy; it is management hygiene. Clear direction + clear owner
     overview: 'Successful AI transformation requires both technical skills and cultural change. Focus on practical training, role evolution, and removing adoption barriers.',
     body: `**What it is:** The human side of AI transformation—building skills, changing mindsets, and redesigning work to take advantage of AI capabilities. This is about making AI tools productive for real people doing real work.
 
-**Why it matters:** Technology alone doesn't create value—people using technology effectively does. Organizations that nail the talent and culture piece see 3-5x higher ROI on their AI investments. Those that don't end up with expensive tools gathering dust.
+**Why it matters:** Technology alone does not create value—people using technology effectively does. Organizations that nail the talent and culture piece see 3-5x higher ROI on their AI investments. Those that do not end up with expensive tools gathering dust.
 
 **How to implement:**
 1. **Skills mapping:** Identify which roles will use AI and what they need to know. Create three tiers: AI builders (engineers), AI users (analysts), and AI consumers (everyone else).
 2. **Practical training:** Skip generic "AI 101" courses. Build role-specific training that shows people how AI helps them today. Include hands-on exercises with real tools and data.
-3. **Champion network:** Recruit early adopters as champions. Give them early access, extra training, and a platform to share successes. They'll pull others along.
-4. **Process redesign:** Don't just bolt AI onto existing workflows. Redesign processes to leverage AI strengths while preserving human judgment where it matters.
-5. **Adoption tracking:** Measure actual usage, not training completion. Track who's using AI tools, how often, and whether it's improving their outcomes.
+3. **Champion network:** Recruit early adopters as champions. Give them early access, extra training, and a platform to share successes. They will pull others along.
+4. **Process redesign:** Do not just bolt AI onto existing workflows. Redesign processes to leverage AI strengths while preserving human judgment where it matters.
+5. **Adoption tracking:** Measure actual usage, not training completion. Track who is using AI tools, how often, and whether it is improving their outcomes.
 
 **Options by context:**
 • **Technical teams:** Focus on MLOps, responsible AI practices, and platform skills.
@@ -262,11 +262,11 @@ This is not bureaucracy; it is management hygiene. Clear direction + clear owner
 **Why it matters:** Studies show 70% of AI projects fail to achieve their goals, mostly due to adoption challenges. People fear job loss, feel overwhelmed by new technology, or simply prefer familiar ways of working. Without deliberate change management, even the best technology fails.
 
 **How to implement:**
-1. **Address fears explicitly:** Hold town halls to discuss how AI will and won't change jobs. Be honest about impacts while emphasizing opportunities for growth.
-2. **Start with volunteers:** Don't force adoption. Let eager early adopters go first, generate success stories, and create pull from peers.
-3. **Make it stupidly easy:** Remove every friction point. Single sign-on, integrated workflows, great documentation, responsive support. If it's harder than the old way, people won't switch.
+1. **Address fears explicitly:** Hold town halls to discuss how AI will and will not change jobs. Be honest about impacts while emphasizing opportunities for growth.
+2. **Start with volunteers:** Do not force adoption. Let eager early adopters go first, generate success stories, and create pull from peers.
+3. **Make it stupidly easy:** Remove every friction point. Single sign-on, integrated workflows, great documentation, responsive support. If it is harder than the old way, people will not switch.
 4. **Celebrate small wins:** Publicize every success, no matter how minor. "Sarah saved 2 hours this week using AI for report generation" is powerful social proof.
-5. **Adjust incentives:** Reward AI adoption and knowledge sharing. If bonuses and promotions still flow to people doing things the old way, behavior won't change.
+5. **Adjust incentives:** Reward AI adoption and knowledge sharing. If bonuses and promotions still flow to people doing things the old way, behavior will not change.
 
 **Options by context:**
 • **Unionized workforce:** Engage labor representatives early and formally.
@@ -358,10 +358,10 @@ This is not bureaucracy; it is management hygiene. Clear direction + clear owner
 
 **How to implement:**
 1. **Portfolio approach:** Run multiple small bets instead of one big bet. Aim for 10-20 experiments quarterly with 90-day learning cycles.
-2. **Clear stage-gates:** Define phases (ideation → prototype → pilot → scale) with specific exit criteria. Kill projects that don't advance within their timeframe.
+2. **Clear stage-gates:** Define phases (ideation → prototype → pilot → scale) with specific exit criteria. Kill projects that do not advance within their timeframe.
 3. **Learning objectives:** Every experiment needs a hypothesis and success metrics defined upfront. "Let's try AI" is not a hypothesis.
 4. **Fast feedback loops:** Measure results weekly, pivot monthly, kill or scale quarterly. Speed of learning matters more than perfection.
-5. **Knowledge capture:** Document what worked, what didn't, and why. Share learnings broadly. Failed experiments that generate insights are valuable.
+5. **Knowledge capture:** Document what worked, what did not work, and why. Share learnings broadly. Failed experiments that generate insights are valuable.
 
 **Options by context:**
 • **Innovation leaders:** Run more aggressive experiments at the edge.
@@ -371,7 +371,7 @@ This is not bureaucracy; it is management hygiene. Clear direction + clear owner
 **Pitfalls:**
 • Innovation theater—lots of activity, no outcomes
 • Pilot purgatory—experiments that never end or scale
-• Learning hoarding—insights that don't spread
+• Learning hoarding—insights that do not spread
 
 **Quick checklist:** Build portfolio pipeline; define stage-gates; set learning objectives; accelerate feedback loops; capture and share knowledge.`
   },
@@ -402,7 +402,7 @@ This is not bureaucracy; it is management hygiene. Clear direction + clear owner
 **Pitfalls:**
 • Scope creep that turns pilots into full implementations
 • No clear owner or sponsor
-• Success criteria that can't actually be measured
+• Success criteria that cannot actually be measured
 
 **Quick checklist:** Set 90-day limit; define success metrics; minimize scope; track weekly; force binary decisions.`
   },
@@ -431,9 +431,9 @@ This is not bureaucracy; it is management hygiene. Clear direction + clear owner
 • **Financial services:** Include transaction monitoring and suspicious activity reporting.
 
 **Pitfalls:**
-• Governance theater that doesn't actually control data flow
+• Governance theater that does not actually control data flow
 • Over-classification that makes all data restricted
-• Manual processes that can't scale with AI velocity
+• Manual processes that cannot scale with AI velocity
 
 **Quick checklist:** Classify data assets; enforce purpose limitation; track lineage; automate retention; audit access quarterly.`
   },
@@ -446,7 +446,7 @@ This is not bureaucracy; it is management hygiene. Clear direction + clear owner
     overview: 'Models degrade over time as the world changes. Implement monitoring that detects drift, degradation, and anomalies before they impact users.',
     body: `**What it is:** Continuous observation of model behavior in production to detect when performance degrades, inputs drift from training distributions, or unexpected behaviors emerge.
 
-**Why it matters:** A model that was 95% accurate at launch might be 60% accurate six months later. Without monitoring, you don't know when models fail until customers complain or regulators investigate.
+**Why it matters:** A model that was 95% accurate at launch might be 60% accurate six months later. Without monitoring, you do not know when models fail until customers complain or regulators investigate.
 
 **How to implement:**
 1. **Baseline metrics:** Capture accuracy, precision, recall, and business KPIs at deployment. This is your "model birth certificate"—the standard for comparison.
@@ -510,7 +510,7 @@ This is not bureaucracy; it is management hygiene. Clear direction + clear owner
 **Why it matters:** Startups have advantages (speed, focus) and constraints (capital, talent). AI should amplify advantages while respecting constraints. The goal is finding product-market fit, not building perfect infrastructure.
 
 **How to implement:**
-1. **Buy, don't build:** Use OpenAI, Anthropic, or Cohere APIs instead of training models. Use Hugging Face models instead of creating architectures. Save engineering for your secret sauce.
+1. **Buy, do not build:** Use OpenAI, Anthropic, or Cohere APIs instead of training models. Use Hugging Face models instead of creating architectures. Save engineering for your secret sauce.
 2. **Start with prompts:** Most problems can be solved with good prompt engineering before you need fine-tuning or custom models. This is 100x faster and cheaper.
 3. **Focus on the wedge:** Use AI to nail one use-case exceptionally well rather than being mediocre at many. Depth beats breadth for creating differentiation.
 4. **Rapid experimentation:** Ship AI features behind feature flags. Test with small user cohorts. Iterate daily based on feedback. Speed of learning is your advantage.
