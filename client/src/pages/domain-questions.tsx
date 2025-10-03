@@ -169,6 +169,13 @@ export default function DomainQuestionsPage() {
   const currentPillar = currentGroup ? CORTEX_PILLARS[currentGroup.pillar as keyof typeof CORTEX_PILLARS] : null;
   const currentIndex = DOMAIN_ORDER.indexOf(domain as string);
   const progress = ((currentIndex + 1) / DOMAIN_ORDER.length) * 100;
+
+  // Redirect to not-found if domain is invalid
+  useEffect(() => {
+    if (!isLoading && (!currentGroup || !currentPillar || currentIndex === -1)) {
+      navigate('/404');
+    }
+  }, [isLoading, currentGroup, currentPillar, currentIndex, navigate]);
   
   // Get current domain answers
   const currentDomainAnswers = currentGroup?.questions.filter(q => 

@@ -38,6 +38,13 @@ export default function DomainIntroPage() {
   const currentIndex = DOMAIN_ORDER.indexOf(domain as string);
   const progress = ((currentIndex + 1) / DOMAIN_ORDER.length) * 100;
 
+  // Redirect to not-found if domain is invalid
+  useEffect(() => {
+    if (!domainData || !pillarInfo || currentIndex === -1) {
+      navigate('/404');
+    }
+  }, [domainData, pillarInfo, currentIndex, navigate]);
+
   // Helper function to evaluate complex conditions
   const evaluateCondition = (condition: string, profile: any): boolean => {
     if (!profile) return false;
