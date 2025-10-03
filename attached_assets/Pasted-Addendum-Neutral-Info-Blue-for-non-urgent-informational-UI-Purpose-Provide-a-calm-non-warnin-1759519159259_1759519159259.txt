@@ -1,0 +1,63 @@
+Addendum — Neutral “Info” Blue (for non-urgent informational UI)
+Purpose. Provide a calm, non-warning visual treatment for informational content (FYI banners, helper panels, empty states), distinct from Success/Warning/Error. Optimized for the light theme and consistent with Rich Black’s cool undertone.
+A. Tokens to add
+SCSS design tokens
+/* Info (neutral) – add to Status tokens block */
+$info-bg:        #E9F3FF;   // baby blue background (calm FYI)
+$info-border:    #BFD8FF;   // subtle border that frames the panel
+$info-accent:    #0C63D6;   // icon/heading/link color within info UI
+$info-text:      $color-black; // body copy in info UI (Rich Black)
+
+/* Optional scale (for compact chips/badges/lines) */
+$info-100:       #D9ECFF;   // slightly deeper bg for small surfaces
+$info-600:       #165DAA;   // stronger accent where extra contrast needed
+(If you expose CSS variables)
+:root{
+  --info-bg:      #E9F3FF;
+  --info-border:  #BFD8FF;
+  --info-accent:  #0C63D6;
+  --info-text:    #011627; /* Rich Black */
+  /* Optional */
+  --info-100:     #D9ECFF;
+  --info-600:     #165DAA;
+}
+B. Component patterns
+Info Banner / Alert (non-urgent)
+BG: #E9F3FF
+Border (1px): #BFD8FF
+Icon & Heading: #0C63D6
+Body Text: Rich Black #011627
+Links in body: #0C63D6 (underline on hover)
+.info-banner {
+  background: $info-bg;
+  border: 1px solid $info-border;
+  color: $info-text;
+
+  .info-icon,
+  .info-title { color: $info-accent; }
+
+  a { color: $info-accent; text-decoration: underline; }
+  a:hover { text-decoration-thickness: 2px; }
+}
+Empty State / Helper Panel
+Use $info-100 for the card background if space is tight; otherwise $info-bg.
+Keep illustrations monochrome or with Pine Green accents to avoid confusion with Warning/Success.
+Inline Form Help
+Place helper text below fields using $info-accent for the small “info” icon and $info-text for the copy.
+Do not change the field’s border color (reserve border color changes for validation states already defined).
+Tooltip (informational)
+Light tooltip: white background, border #BFD8FF, title or icon in #0C63D6.
+C. Accessibility checks
+Contrast:
+#0C63D6 on #E9F3FF ≈ 4.97:1 (meets AA for normal text).
+Rich Black #011627 on #E9F3FF ≈ 16+:1 (AAA).
+Focus: Keep global focus indication in Pine Green as specified; the info color is content styling, not focus styling.
+Icon + text: Always pair the blue with an info icon to avoid color‑only meaning.
+D. Do / Don’t (semantics)
+Do use Info blue for FYI, guidance, onboarding tips, and non-urgent status.
+Don’t use Info blue for warnings (use Orange Peel) or errors (use Rosewood).
+Don’t mix more than one semantic color inside a single banner.
+E. Where it integrates in the doc
+Add the tokens under your “Status Colors” / variables block.
+Add this section immediately after existing Success/Warning/Error guidance so designers/devs see all semantic states together. 
+CORTEX Light Theme Color Style …

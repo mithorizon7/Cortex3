@@ -8,6 +8,34 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### October 3, 2025 - Value Overlay Metric Badges: Tooltip Replaced with Clickable Dialog
+**Issue**: Value Overlay metric badges used a hover-only tooltip to display metric information, which was:
+- Confusing due to `cursor-help` and Info icon suggesting clickability but not being clickable
+- Inaccessible on touch devices (mobile/tablet)
+- Easy to miss or accidentally lose
+- Limited to brief information only
+
+**Solution**: Replaced confusing tooltip with fully accessible clickable dialog:
+- **File Modified**: `client/src/components/value-overlay.tsx`
+- Changed metric badge from Badge to Button component with Info icon
+- Implemented Dialog pattern with DialogTrigger for proper accessibility
+- Two separate controlled dialogs: metric info and metric change
+
+**Dialog Content**:
+1. **Quick Definition**: Shows what the metric measures in a highlighted section
+2. **Context Explanation**: Displays personalized "Why this metric fits your organization" if available
+3. **Full Measurement Guide**: Complete guide with Definition, Scope, How to get it, Quality note, and Cadence
+4. **Formatted Content**: Bold text (**text**) and proper paragraph spacing using DOMPurify
+
+**Accessibility Improvements**:
+- Proper button semantics for screen readers
+- Keyboard navigation support
+- Works on all devices including touch screens
+- `aria-expanded` state management via Dialog component
+- Clear visual affordance (button with icon)
+
+**Impact**: Users can now reliably access comprehensive metric information through a clickable interface that works everywhere. The dialog provides much more information than the tooltip could, including the full measurement guide. All interactive elements follow proper accessibility patterns.
+
 ### October 3, 2025 - Domain Intro Pages Restored with Session-Only Skip
 **Issue**: Domain introduction pages were being hidden by default due to persistent localStorage setting from "Skip intros next time" checkbox.
 
