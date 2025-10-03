@@ -55,29 +55,43 @@ export default function DomainQuestionsPage() {
       return response.json();
     },
     onSuccess: async (updatedAssessment) => {
-      // CRITICAL: Update local state with the merged responses from the backend
-      // The backend has accumulated all responses across domains, so we need to sync our local state
-      if (updatedAssessment?.pulseResponses) {
-        setResponses(updatedAssessment.pulseResponses);
-      }
-      
-      // Invalidate cache to ensure fresh data on next load
-      await queryClient.invalidateQueries({ queryKey: ['/api/assessments', assessmentId] });
-      
-      // Navigate to next domain or results
-      const currentIndex = DOMAIN_ORDER.indexOf(domain as string);
-      const skipIntros = sessionStorage.getItem('cortex_skip_intros') === 'true';
-      
-      if (currentIndex < DOMAIN_ORDER.length - 1) {
-        const nextDomain = DOMAIN_ORDER[currentIndex + 1];
-        if (skipIntros) {
-          navigate(`/pulse/${nextDomain}/questions/${assessmentId}`);
-        } else {
-          navigate(`/pulse/${nextDomain}/intro/${assessmentId}`);
+      try {
+        // CRITICAL: Explicitly refetch fresh assessment data to ensure all responses are synchronized
+        // This guarantees we have the complete merged dataset before navigating to next domain
+        const freshAssessment = await queryClient.fetchQuery({
+          queryKey: ['/api/assessments', assessmentId]
+        });
+        
+        // Update local state with the complete merged responses from refetched data
+        if (freshAssessment?.pulseResponses) {
+          setResponses(freshAssessment.pulseResponses);
         }
-      } else {
-        // All domains completed
-        navigate(`/results/${assessmentId}`);
+        
+        // Navigate to next domain or results ONLY after state is fully synchronized
+        const currentIndex = DOMAIN_ORDER.indexOf(domain as string);
+        const skipIntros = sessionStorage.getItem('cortex_skip_intros') === 'true';
+        
+        if (currentIndex < DOMAIN_ORDER.length - 1) {
+          const nextDomain = DOMAIN_ORDER[currentIndex + 1];
+          if (skipIntros) {
+            navigate(`/pulse/${nextDomain}/questions/${assessmentId}`);
+          } else {
+            navigate(`/pulse/${nextDomain}/intro/${assessmentId}`);
+          }
+        } else {
+          // All domains completed
+          navigate(`/results/${assessmentId}`);
+        }
+      } catch (refetchError) {
+        // Handle refetch failures gracefully - mutation succeeded but can't load fresh data
+        console.error("Failed to refetch assessment after pulse update:", refetchError);
+        toast({
+          title: "Connection Error",
+          description: "Your responses were saved, but we couldn't load the next section. Please check your connection and try again.",
+          variant: "destructive"
+        });
+        // Don't navigate - let user retry by clicking Continue again
+        // The mutation succeeded so their data is saved
       }
     },
     onError: (error) => {
