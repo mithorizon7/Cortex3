@@ -8,6 +8,23 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### October 3, 2025 - Domain Intro Pages Restored with Session-Only Skip
+**Issue**: Domain introduction pages were being hidden by default due to persistent localStorage setting from "Skip intros next time" checkbox.
+
+**Solution**: Changed skip preference from localStorage to sessionStorage:
+- **Files Modified**: `domain-intro.tsx`, `domain-questions.tsx`, `pulse-check.tsx`
+- Changed all `localStorage.getItem/setItem('cortex_skip_intros')` to `sessionStorage`
+- Skip preference now only persists for current browser session
+- Intro pages show by default for all new sessions
+
+**Behavior**:
+- Domain intro pages display by default before each pulse check section (C, O, R, T, E, X)
+- If user checks "Skip intros next time", intros are skipped only for current session
+- Closing browser or starting new session resets to showing intros
+- Provides consistent onboarding experience while allowing temporary skip for repeat visits
+
+**Impact**: Users now see domain introduction pages by default, ensuring they understand each pillar before answering questions. The skip option remains available but is session-scoped to prevent accidental permanent hiding.
+
 ### October 3, 2025 - PDF Logo Error Handling
 **Issue**: PDF generation failed with "CRC mismatch for chunk iTXt" error when embedding logo due to PNG metadata chunks that jsPDF cannot process.
 
