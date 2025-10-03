@@ -50,7 +50,7 @@ export default function DomainQuestionsPage() {
   }, [assessment]);
 
   const updatePulse = useMutation({
-    mutationFn: async (pulseResponses: Record<string, boolean | null>) => {
+    mutationFn: async (pulseResponses: Record<string, number>) => {
       const response = await apiRequest("PATCH", `/api/assessments/${assessmentId}/pulse`, { pulseResponses });
       return response.json();
     },

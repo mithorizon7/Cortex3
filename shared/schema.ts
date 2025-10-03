@@ -113,9 +113,17 @@ export const contextProfileSchema = z.object({
 export type ContextProfile = z.infer<typeof contextProfileSchema>;
 
 // Pulse Check Types - supports numeric scoring (0, 0.25, 0.5, 1) for No/Started/Mostly/Yes
+// Also accepts legacy boolean/null values for backward compatibility
 export const pulseResponsesSchema = z.record(
   z.string(), 
-  z.union([z.literal(0), z.literal(0.25), z.literal(0.5), z.literal(1)])
+  z.union([
+    z.literal(0), 
+    z.literal(0.25), 
+    z.literal(0.5), 
+    z.literal(1),
+    z.boolean(),  // Legacy support: true/false
+    z.null()      // Legacy support: unsure
+  ])
 );
 export type PulseResponses = z.infer<typeof pulseResponsesSchema>;
 
