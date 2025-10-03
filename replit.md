@@ -25,7 +25,17 @@ The system utilizes a three-stage assessment workflow:
 
 **Recent Fixes (Oct 2025):**
 - **Pulse Check Response Accumulation**: Fixed critical bug where domain responses were being overwritten instead of accumulated. Solution: After successful mutation, explicitly refetch assessment data using `queryClient.fetchQuery()`, update local state with complete merged responses, then navigate. Includes error handling for network failures during refetch.
-- **Brand Color Consistency**: Updated step badge colors on homepage from generic (blue/purple/amber) to CORTEX brand palette (MIT Rosewood #750014, Pine Green #007561, Orange Peel #FF9F1C).
+- **Official CORTEX Domain Color Scheme**: Implemented the official color palette for all six domains with vibrant, distinct colors:
+  - C (Clarity & Command): Blue #0C63D6
+  - O (Operations & Data): Pine Green #007561
+  - R (Risk/Trust/Security): Rosewood #750014
+  - T (Talent & Culture): Orange #FFA72E
+  - E (Ecosystem & Infrastructure): Teal #339181
+  - X (Experimentation & Evolution): Light Blue #69B3FF
+  - Each color includes light tints (50) for backgrounds and dark variants (500-dark) for dark mode
+  - Applied consistently across domain intro pages, questions pages, honeycomb radar visualization, and navigation badges
+  - Replaced generic primary colors with domain-specific colors for better visual identity and wayfinding
+- **Domain Navigation Safety**: Added null checks and 404 redirects for invalid domain parameters in domain intro/questions pages to prevent runtime crashes when accessing undefined pillar data.
 
 ### Security Architecture
 A comprehensive Content Security Policy (CSP) is implemented in production environments to protect against XSS attacks and control resource loading. This CSP includes directives for `default-src`, `style-src`, `script-src`, `img-src`, `connect-src`, `font-src`, `object-src`, `media-src`, and `frame-src`, with specific allowances for Firebase and Google OAuth domains. Firebase Authentication requirements are managed, including authorized domains and the use of `signInWithRedirect` in production. New external services require updating the CSP configuration in `server/middleware/security.ts`.
