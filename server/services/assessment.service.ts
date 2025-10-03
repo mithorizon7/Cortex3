@@ -139,9 +139,30 @@ export class AssessmentService {
     // Validate pulse responses (now supports numeric values: 0, 0.25, 0.5, 1)
     const validatedResponses = pulseResponsesSchema.parse(pulseResponses);
     
+    // Log raw responses for debugging
+    logger.debug('Processing pulse responses', {
+      additionalContext: {
+        assessmentId,
+        responseCount: Object.keys(validatedResponses).length,
+        responseKeys: Object.keys(validatedResponses),
+        sampleValues: Object.entries(validatedResponses).slice(0, 3).map(([k, v]) => ({ [k]: v })),
+        operation: 'pulse_response_validation'
+      }
+    });
+    
     // Calculate pillar scores (sum of numeric responses) and confidence gaps (deprecated, returns zeros)
     const pillarScores = this.calculatePillarScores(validatedResponses);
     const confidenceGaps = this.calculateConfidenceGaps(validatedResponses);
+    
+    // Log calculated scores for debugging
+    logger.debug('Calculated pillar scores', {
+      additionalContext: {
+        assessmentId,
+        pillarScores,
+        scoredPillars: Object.keys(pillarScores),
+        operation: 'pillar_score_calculation'
+      }
+    });
     
     const assessment = await storage.updateAssessment(assessmentId, {
       pulseResponses: validatedResponses,
