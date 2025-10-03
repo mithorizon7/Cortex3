@@ -13,7 +13,7 @@ import { QuestionSkeleton } from "@/components/skeleton-loader";
 import { AppHeader } from "@/components/navigation/app-header";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { PULSE_QUESTIONS, CORTEX_PILLARS } from "@/lib/cortex";
-import { apiRequest, getNetworkError } from "@/lib/queryClient";
+import { queryClient, apiRequest, getNetworkError } from "@/lib/queryClient";
 import { getEnhancedErrorMessage } from "@/lib/error-utils";
 import { useToast } from "@/hooks/use-toast";
 import { ChevronLeft, ChevronRight, CheckCircle, XCircle, HelpCircle, Clock, Target } from "lucide-react";
@@ -73,6 +73,7 @@ export default function PulseCheckPage() {
       return response.json();
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/assessments', assessmentId] });
       navigate(`/results/${assessmentId}`);
     },
     onError: (error) => {

@@ -8,6 +8,15 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### October 3, 2025 - Results Page Cache Invalidation Fix
+**Issue**: After completing the pulse check, the results page displayed all domains as "Nascent" with static placeholder data (all scores showing 0, all confidence showing "High"), regardless of the actual pulse check responses provided by the user. This made the assessment appear non-functional.
+
+**Root Cause**: The `updatePulse` mutation in `client/src/pages/pulse-check.tsx` was not invalidating the TanStack Query cache after successfully submitting pulse responses. When the user navigated to the results page, React Query served stale cached data (with default null/zero scores) instead of refetching the updated assessment containing the newly calculated pillarScores and confidenceGaps from the backend.
+
+**Solution**: Added `queryClient.invalidateQueries({ queryKey: ['/api/assessments', assessmentId] })` to the mutation's `onSuccess` handler before navigation. This forces React Query to mark the assessment data as stale, ensuring the results page refetches fresh data from the backend with the correct calculated scores.
+
+**Impact**: The results page now displays accurate pillar scores, maturity levels, and confidence indicators based on the user's pulse check responses. The honeycomb radar chart and domain breakdown cards render the actual assessment data instead of placeholder values.
+
 ### September 30, 2025 - Google OAuth Redirect Fix
 **Issue**: Users experienced an eternal "Checking authentication" spinner after completing Google OAuth sign-in via redirect. The loading indicator in the header would show "Loading..." indefinitely, preventing users from accessing the application.
 
