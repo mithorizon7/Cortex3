@@ -223,10 +223,10 @@ export class AssessmentService {
   }
   
   /**
-   * Calculate pillar scores from pulse responses (count of "Yes"/true responses)
+   * Calculate pillar scores from pulse responses (sum of numeric values: 0, 0.25, 0.5, 1)
    * @private
    */
-  private calculatePillarScores(responses: Record<string, boolean | null>): Record<string, number> {
+  private calculatePillarScores(responses: Record<string, number | boolean | null>): Record<string, number> {
     const pillarQuestions = {
       C: ['C1', 'C2', 'C3'],
       O: ['O1', 'O2', 'O3'],
@@ -239,35 +239,38 @@ export class AssessmentService {
     const scores: Record<string, number> = {};
     
     for (const [pillar, questions] of Object.entries(pillarQuestions)) {
-      const yesCount = questions.filter(q => responses[q] === true).length;
-      scores[pillar] = yesCount;
+      let total = 0;
+      for (const q of questions) {
+        const val = responses[q];
+        if (typeof val === 'number') {
+          total += val;
+        }
+        // Legacy support: treat true as 1, false/null as 0
+        else if (val === true) {
+          total += 1;
+        }
+      }
+      scores[pillar] = total;
     }
 
     return scores;
   }
 
   /**
-   * Calculate confidence gaps from pulse responses (count of "Unsure"/null responses)
+   * Calculate confidence gaps from pulse responses (deprecated - returns zeros for new 4-option system)
    * @private
+   * @deprecated No longer used with 4-option scoring system (No/Started/Mostly/Yes)
    */
-  private calculateConfidenceGaps(responses: Record<string, boolean | null>): Record<string, number> {
-    const pillarQuestions = {
-      C: ['C1', 'C2', 'C3'],
-      O: ['O1', 'O2', 'O3'],
-      R: ['R1', 'R2', 'R3'],
-      T: ['T1', 'T2', 'T3'],
-      E: ['E1', 'E2', 'E3'],
-      X: ['X1', 'X2', 'X3'],
+  private calculateConfidenceGaps(responses: Record<string, number | boolean | null>): Record<string, number> {
+    // Return all zeros since "Unsure" option has been removed
+    return {
+      C: 0,
+      O: 0,
+      R: 0,
+      T: 0,
+      E: 0,
+      X: 0,
     };
-
-    const gaps: Record<string, number> = {};
-    
-    for (const [pillar, questions] of Object.entries(pillarQuestions)) {
-      const unsureCount = questions.filter(q => responses[q] === null).length;
-      gaps[pillar] = unsureCount;
-    }
-
-    return gaps;
   }
   
   /**
