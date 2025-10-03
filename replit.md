@@ -20,8 +20,12 @@ Drizzle ORM is used as the database abstraction layer, targeting PostgreSQL (con
 ### Assessment Flow Design
 The system utilizes a three-stage assessment workflow:
 1.  **Context Profile Collection**: 12 organizational context questions.
-2.  **Pulse Check Evaluation**: 18 binary questions across 6 domains.
-3.  **Results Generation**: Context-aware guidance based on maturity scores and "gates" derived from organizational risk and operational constraints, visualized with a honeycomb radar.
+2.  **Pulse Check Evaluation**: 18 questions with 4-level partial credit scoring (No=0, Started=0.25, Mostly=0.5, Yes=1.0) across 6 domains. Response accumulation is handled via explicit query refetch after each domain submission to ensure all previous responses persist across the multi-domain flow.
+3.  **Results Generation**: Context-aware guidance based on maturity scores (0-3 fractional range per pillar) and "gates" derived from organizational risk and operational constraints, visualized with a honeycomb radar.
+
+**Recent Fixes (Oct 2025):**
+- **Pulse Check Response Accumulation**: Fixed critical bug where domain responses were being overwritten instead of accumulated. Solution: After successful mutation, explicitly refetch assessment data using `queryClient.fetchQuery()`, update local state with complete merged responses, then navigate. Includes error handling for network failures during refetch.
+- **Brand Color Consistency**: Updated step badge colors on homepage from generic (blue/purple/amber) to CORTEX brand palette (MIT Rosewood #750014, Pine Green #007561, Orange Peel #FF9F1C).
 
 ### Security Architecture
 A comprehensive Content Security Policy (CSP) is implemented in production environments to protect against XSS attacks and control resource loading. This CSP includes directives for `default-src`, `style-src`, `script-src`, `img-src`, `connect-src`, `font-src`, `object-src`, `media-src`, and `frame-src`, with specific allowances for Firebase and Google OAuth domains. Firebase Authentication requirements are managed, including authorized domains and the use of `signInWithRedirect` in production. New external services require updating the CSP configuration in `server/middleware/security.ts`.
