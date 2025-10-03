@@ -158,6 +158,16 @@ export default function ResultsPage() {
       return;
     }
     
+    // Validate that context profile exists
+    if (!assessment.contextProfile) {
+      toast({
+        title: "Missing Context Profile",
+        description: "Assessment data is incomplete. Please start a new assessment.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
       // Generate enhanced insights for executive PDF
       const enhancedInsights = generateEnhancedExecutiveInsights(

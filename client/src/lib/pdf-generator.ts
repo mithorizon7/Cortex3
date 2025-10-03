@@ -168,14 +168,24 @@ async function finalizeFooters(doc: any, labelLeft: string) {
     const logoModule = await import("@assets/Open-Learning-logo-revised copy_1759350974487.png");
     const logoUrl = logoModule.default;
     const response = await fetch(logoUrl);
+    
+    if (!response.ok) {
+      throw new Error(`Logo fetch failed: ${response.status} ${response.statusText}`);
+    }
+    
     const blob = await response.blob();
-    logoData = await new Promise<string>((resolve) => {
+    logoData = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error("FileReader failed to read logo blob"));
       reader.readAsDataURL(blob);
     });
   } catch (e) {
-    console.warn("Could not load logo for PDF footer:", e);
+    console.warn("⚠️ PDF Footer Logo Loading Failed:", {
+      error: e instanceof Error ? e.message : String(e),
+      impact: "PDF will be generated without branding logo in footer",
+      action: "Check asset path and network connectivity"
+    });
   }
   
   for (let i = 1; i <= n; i++) {
@@ -256,18 +266,21 @@ function drawSubTitle(doc: any, title: string, y: number) {
   return y + PAGE.line * 3;
 }
 
-function drawBody(doc: any, text: string, maxWidth: number, y: number) {
+function drawBody(doc: any, text: string, maxWidth: number, y: number, runHeader?: string) {
   setFont(doc, TYPO.body);
   setText(doc, PALETTE.ink);
   const lines = wrap(doc, text, maxWidth);
   for (const ln of lines) {
+    if (runHeader) {
+      ({ cursorY: y } = addPageIfNeeded(doc, PAGE.line, y, runHeader));
+    }
     doc.text(ln, PAGE.margin, y);
     y += PAGE.line;
   }
   return y;
 }
 
-function drawBullets(doc: any, items: string[], maxWidth: number, y: number) {
+function drawBullets(doc: any, items: string[], maxWidth: number, y: number, runHeader?: string) {
   setFont(doc, TYPO.body);
   setText(doc, PALETTE.ink);
   const indent = 4.5;
@@ -275,6 +288,9 @@ function drawBullets(doc: any, items: string[], maxWidth: number, y: number) {
     const bullet = "• ";
     const lines = wrap(doc, bullet + normalizeText(it), maxWidth - indent);
     for (let i = 0; i < lines.length; i++) {
+      if (runHeader) {
+        ({ cursorY: y } = addPageIfNeeded(doc, PAGE.line, y, runHeader));
+      }
       const line = i === 0 ? lines[i] : "  " + lines[i];
       doc.text(line, PAGE.margin + indent, y);
       y += PAGE.line;
@@ -284,7 +300,7 @@ function drawBullets(doc: any, items: string[], maxWidth: number, y: number) {
   return y;
 }
 
-function drawPrompts(doc: any, items: string[], maxWidth: number, y: number) {
+function drawPrompts(doc: any, items: string[], maxWidth: number, y: number, runHeader?: string) {
   setFont(doc, TYPO.body);
   setText(doc, PALETTE.inkSubtle);
   const indent = 4.5;
@@ -292,6 +308,9 @@ function drawPrompts(doc: any, items: string[], maxWidth: number, y: number) {
     const bullet = "→ ";
     const lines = wrap(doc, bullet + normalizeText(it), maxWidth - indent);
     for (let i = 0; i < lines.length; i++) {
+      if (runHeader) {
+        ({ cursorY: y } = addPageIfNeeded(doc, PAGE.line, y, runHeader));
+      }
       const line = i === 0 ? lines[i] : "  " + lines[i];
       doc.text(line, PAGE.margin + indent, y);
       y += PAGE.line;
@@ -860,8 +879,40 @@ const DOMAIN_GUIDANCE = {
 };
 
 export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults, assessmentId: string): Promise<void> {
-  if (!data?.contextProfile || !data?.pillarScores || !assessmentId) {
-    throw new Error("Missing required data for executive PDF generation");
+  // Comprehensive validation of required data
+  if (!data) {
+    throw new Error("Assessment data is missing");
+  }
+  
+  if (!assessmentId) {
+    throw new Error("Assessment ID is missing");
+  }
+  
+  if (!data.contextProfile) {
+    throw new Error("Context profile is missing. Please complete the assessment from the beginning.");
+  }
+  
+  if (!data.pillarScores || typeof data.pillarScores !== 'object') {
+    throw new Error("Pillar scores are missing. Please complete the pulse check.");
+  }
+  
+  // Validate that pillarScores has actual data
+  const scoreValues = Object.values(data.pillarScores);
+  if (scoreValues.length === 0) {
+    throw new Error("Pillar scores contain no data. Please complete the pulse check.");
+  }
+  
+  // Validate score values are numbers
+  const hasValidScores = scoreValues.every(score => typeof score === 'number' && !isNaN(score));
+  if (!hasValidScores) {
+    throw new Error("Pillar scores contain invalid data. Please restart the assessment.");
+  }
+  
+  // Validate all CORTEX pillars are present
+  const requiredPillars = ['C', 'O', 'R', 'T', 'E', 'X'];
+  const missingPillars = requiredPillars.filter(pillar => !(pillar in data.pillarScores));
+  if (missingPillars.length > 0) {
+    throw new Error(`Incomplete pillar data. Missing domains: ${missingPillars.join(', ')}. Please complete the pulse check.`);
   }
 
   // Generate insights if missing
@@ -940,7 +991,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
   if (developingDomains > 0) summaryText += `${developingDomains} ${developingDomains === 1 ? 'requires' : 'require'} focused development. `;
   if (emergingDomains > 0) summaryText += `${emergingDomains} ${emergingDomains === 1 ? 'is' : 'are'} in early stages. `;
   
-  y = drawBody(doc, summaryText, bounds(doc).w, y);
+  y = drawBody(doc, summaryText, bounds(doc).w, y, runHeader);
   y += PAGE.line * 1.5;
 
   // Domain bars
@@ -953,11 +1004,11 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     ({ cursorY: y } = addPageIfNeeded(doc, 26, y, runHeader));
     y = drawSectionTitle(doc, "CRITICAL REQUIREMENTS", y);
     setFont(doc, TYPO.body); setText(doc, PALETTE.ink);
-    y = drawBody(doc, `Your organizational context triggered ${data.triggeredGates.length} critical requirement${data.triggeredGates.length > 1 ? 's' : ''} that must be addressed before scaling AI:`, bounds(doc).w, y);
+    y = drawBody(doc, `Your organizational context triggered ${data.triggeredGates.length} critical requirement${data.triggeredGates.length > 1 ? 's' : ''} that must be addressed before scaling AI:`, bounds(doc).w, y, runHeader);
     y += PAGE.line * 0.5;
     
     const gateItems = data.triggeredGates.map((gate: any) => `${gate.title}: ${gate.reason || gate.explanation || ''}`);
-    y = drawBullets(doc, gateItems, bounds(doc).w, y);
+    y = drawBullets(doc, gateItems, bounds(doc).w, y, runHeader);
     y += PAGE.line;
   }
 
@@ -966,7 +1017,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     ({ cursorY: y } = addPageIfNeeded(doc, 28, y, runHeader));
     y = drawSectionTitle(doc, "ORGANIZATIONAL CONTEXT", y);
     setFont(doc, TYPO.body); setText(doc, PALETTE.ink);
-    y = drawBody(doc, "Your assessment captured the following organizational dimensions that shape your AI readiness requirements:", bounds(doc).w, y);
+    y = drawBody(doc, "Your assessment captured the following organizational dimensions that shape your AI readiness requirements:", bounds(doc).w, y, runHeader);
     y += PAGE.line * 0.5;
     
     const contextItems: string[] = [];
@@ -999,7 +1050,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     });
     
     if (contextItems.length > 0) {
-      y = drawBullets(doc, contextItems, bounds(doc).w, y);
+      y = drawBullets(doc, contextItems, bounds(doc).w, y, runHeader);
       y += PAGE.line;
     }
   }
@@ -1009,7 +1060,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     ({ cursorY: y } = addPageIfNeeded(doc, 28, y, runHeader));
     y = drawSectionTitle(doc, "VALUE METRICS", y);
     setFont(doc, TYPO.body); setText(doc, PALETTE.ink);
-    y = drawBody(doc, "You have configured the following business metrics to track AI impact:", bounds(doc).w, y);
+    y = drawBody(doc, "You have configured the following business metrics to track AI impact:", bounds(doc).w, y, runHeader);
     y += PAGE.line * 0.5;
     
     const vo = data.valueOverlay as any;
@@ -1036,7 +1087,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     });
     
     if (metricItems.length > 0) {
-      y = drawBullets(doc, metricItems, bounds(doc).w, y);
+      y = drawBullets(doc, metricItems, bounds(doc).w, y, runHeader);
       y += PAGE.line;
     }
   }
@@ -1063,7 +1114,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
       
       if (p.description) {
         setFont(doc, TYPO.body); setText(doc, PALETTE.ink);
-        y = drawBody(doc, normalizeText(p.description), bounds(doc).w - 6, y);
+        y = drawBody(doc, normalizeText(p.description), bounds(doc).w - 6, y, runHeader);
       }
       
       y += PAGE.line * 0.5;
@@ -1112,7 +1163,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     doc.text("Why This Matters", PAGE.margin, y);
     y += PAGE.line * 1.2;
     setFont(doc, TYPO.body);
-    y = drawBody(doc, guidance.whyMatters, bounds(doc).w, y);
+    y = drawBody(doc, guidance.whyMatters, bounds(doc).w, y, runHeader);
     y += PAGE.line * 0.8;
     
     // What good looks like
@@ -1120,7 +1171,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
     doc.text("What Good Looks Like", PAGE.margin, y);
     y += PAGE.line * 1.2;
-    y = drawBullets(doc, guidance.whatGoodLooks, bounds(doc).w, y);
+    y = drawBullets(doc, guidance.whatGoodLooks, bounds(doc).w, y, runHeader);
     y += PAGE.line * 0.5;
     
     // How to improve
@@ -1129,7 +1180,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     doc.text("How to Improve", PAGE.margin, y);
     y += PAGE.line * 1.2;
     setFont(doc, TYPO.body);
-    y = drawBody(doc, guidance.howToImprove, bounds(doc).w, y);
+    y = drawBody(doc, guidance.howToImprove, bounds(doc).w, y, runHeader);
     y += PAGE.line * 0.8;
     
     // Common pitfalls
@@ -1138,7 +1189,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
       setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
       doc.text("Common Pitfalls to Avoid", PAGE.margin, y);
       y += PAGE.line * 1.2;
-      y = drawBullets(doc, guidance.commonPitfalls, bounds(doc).w, y);
+      y = drawBullets(doc, guidance.commonPitfalls, bounds(doc).w, y, runHeader);
       y += PAGE.line * 0.5;
     }
     
@@ -1148,7 +1199,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
       setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
       doc.text("Strategic Discussion Questions", PAGE.margin, y);
       y += PAGE.line * 1.2;
-      y = drawPrompts(doc, guidance.discussionPrompts, bounds(doc).w, y);
+      y = drawPrompts(doc, guidance.discussionPrompts, bounds(doc).w, y, runHeader);
       y += PAGE.line * 0.8;
     }
   }
@@ -1163,7 +1214,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
       doc.text(normalizeText(ins.title || "Insight"), PAGE.margin, y);
       y += PAGE.line * 1.1;
       setFont(doc, TYPO.body);
-      y = drawBody(doc, normalizeText(ins.description || ins.reasoning || ""), bounds(doc).w, y);
+      y = drawBody(doc, normalizeText(ins.description || ins.reasoning || ""), bounds(doc).w, y, runHeader);
       y += PAGE.line * 0.8;
     }
   }
