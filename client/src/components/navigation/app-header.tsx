@@ -27,7 +27,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   const { userProfile } = useAuth();
   
   // Check if pulse check is completed (pillarScores indicates completion)
-  const isPulseCheckCompleted = latestAssessment && (latestAssessment as any)?.pillarScores;
+  const isPulseCheckCompleted = Boolean(latestAssessment && (latestAssessment as any)?.pillarScores);
   
   // Smart navigation: go to results if completed assessment exists, otherwise start new assessment
   const assessmentPath = latestAssessment ? `/results/${latestAssessment.id}` : '/context-profile';
@@ -87,16 +87,26 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               ) : (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      disabled
-                      className="font-ui font-medium text-muted-foreground/50 cursor-not-allowed"
-                      data-testid="nav-strategic-profile-disabled"
+                    <span 
+                      role="button"
+                      aria-disabled="true"
+                      aria-label="Strategic Profile - Complete the pulse check to view your strategic profile"
+                      tabIndex={0}
+                      className="inline-flex"
+                      data-testid="nav-strategic-profile-disabled-wrapper"
                     >
-                      <TrendingUp className="h-4 w-4 mr-2" />
-                      Strategic Profile
-                    </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        disabled
+                        className="font-ui font-medium text-muted-foreground/50 cursor-not-allowed pointer-events-none"
+                        data-testid="nav-strategic-profile-disabled"
+                        tabIndex={-1}
+                      >
+                        <TrendingUp className="h-4 w-4 mr-2" />
+                        Strategic Profile
+                      </Button>
+                    </span>
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>Complete the pulse check to view your strategic profile</p>
@@ -147,16 +157,26 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               ) : (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      disabled
-                      className="md:hidden font-ui font-medium text-muted-foreground/50 cursor-not-allowed"
-                      data-testid="nav-strategic-profile-mobile-disabled"
+                    <span 
+                      role="button"
+                      aria-disabled="true"
+                      aria-label="Strategic Profile - Complete the pulse check first"
+                      tabIndex={0}
+                      className="inline-flex md:hidden"
+                      data-testid="nav-strategic-profile-mobile-disabled-wrapper"
                     >
-                      <TrendingUp className="h-4 w-4 mr-1" />
-                      Profile
-                    </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        disabled
+                        className="font-ui font-medium text-muted-foreground/50 cursor-not-allowed pointer-events-none"
+                        data-testid="nav-strategic-profile-mobile-disabled"
+                        tabIndex={-1}
+                      >
+                        <TrendingUp className="h-4 w-4 mr-1" />
+                        Profile
+                      </Button>
+                    </span>
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>Complete the pulse check first</p>
