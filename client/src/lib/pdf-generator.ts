@@ -233,11 +233,11 @@ function bounds(doc: any) {
 }
 
 function addPageIfNeeded(doc: any, needed: number, cursorY: number, titleForRunHeader?: string) {
-  const { ph } = doc.internal.pageSize;
+  const ph = doc.internal.pageSize.getHeight();
   const maxY = ph - PAGE.footer - PAGE.margin; // usable bottom
   if (cursorY + needed <= maxY) return { cursorY, added: false };
   doc.addPage();
-  const { pw } = doc.internal.pageSize;
+  const pw = doc.internal.pageSize.getWidth();
   if (titleForRunHeader) runningHeader(doc, pw, titleForRunHeader);
   return { cursorY: PAGE.margin, added: true };
 }
