@@ -54,7 +54,10 @@ export default function DomainQuestionsPage() {
       const response = await apiRequest("PATCH", `/api/assessments/${assessmentId}/pulse`, { pulseResponses });
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      // CRITICAL: Invalidate cache to ensure next domain loads fresh data with all accumulated responses
+      await queryClient.invalidateQueries({ queryKey: ['/api/assessments', assessmentId] });
+      
       // Navigate to next domain or results
       const currentIndex = DOMAIN_ORDER.indexOf(domain as string);
       const skipIntros = sessionStorage.getItem('cortex_skip_intros') === 'true';
