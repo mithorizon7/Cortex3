@@ -8,6 +8,33 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### October 3, 2025 - Strategic Profile Navigation Button
+**Feature**: Added prominent "Strategic Profile" navigation button in the application header for quick access to assessment results.
+
+**Implementation Details**:
+1. **Button State Logic** (app-header.tsx):
+   - Checks if `latestAssessment?.pillarScores` exists to determine completion status
+   - Disabled state: Grey button with ghost variant, shows tooltip on hover/focus
+   - Enabled state: Prominent blue button (default variant) that navigates to `/results/{assessmentId}`
+
+2. **Accessibility Features**:
+   - Wrapper span with `role="button"` for semantic meaning
+   - `aria-disabled="true"` indicates disabled state to screen readers
+   - `aria-label` provides descriptive text for screen reader users
+   - `tabIndex={0}` on wrapper, `tabIndex={-1}` on inner button prevents double focus
+   - `pointer-events-none` on button allows tooltip to trigger on wrapper
+
+3. **Tooltip Functionality**:
+   - Desktop: "Complete the pulse check to view your strategic profile"
+   - Mobile: "Complete the pulse check first"
+   - Works for both hover and keyboard focus
+
+4. **Responsive Design**:
+   - Desktop: Full "Strategic Profile" text with larger icon
+   - Mobile: Shortened "Profile" text to save space
+
+**Impact**: Users can now quickly access their completed assessment results from any page without navigating through the full assessment flow. The button provides clear visual feedback about completion status and helpful guidance when disabled.
+
 ### October 3, 2025 - Comprehensive PDF Generation Reliability Improvements
 **Issues Addressed**: The PDF generation system had several vulnerabilities that could cause failures in production:
 1. Multi-page PDFs failed with "Invalid arguments passed to jsPDF.line" error
