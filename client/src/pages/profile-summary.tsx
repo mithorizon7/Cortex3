@@ -192,7 +192,7 @@ export default function ProfileSummaryPage() {
                   </div>
                   <div>
                     <p className="font-medium text-sm">Pulse Check (6-8 minutes)</p>
-                    <p className="text-xs text-muted-foreground">Answer 18 yes/no questions about your current AI capabilities</p>
+                    <p className="text-xs text-muted-foreground">Assess 18 capabilities using partial credit scoring (No/Started/Mostly/Yes)</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
