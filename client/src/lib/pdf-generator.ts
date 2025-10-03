@@ -362,7 +362,7 @@ function getMaturityLevel(score: number): string {
   return score < 1 ? 'Nascent' : score < 1.5 ? 'Emerging' : score < 2.5 ? 'Integrated' : 'Leading';
 }
 
-function getMaturityColor(score: number): string {
+function getMaturityColor(score: number): RGB {
   return score >= 2.5 ? PALETTE.success : score >= 1.5 ? PALETTE.warning : PALETTE.danger;
 }
 
