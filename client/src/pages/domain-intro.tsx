@@ -21,9 +21,9 @@ export default function DomainIntroPage() {
   const { domain, id: assessmentId } = useParams();
   const [skipIntros, setSkipIntros] = useState(false);
 
-  // Load skip preference from localStorage
+  // Load skip preference from sessionStorage (session-only)
   useEffect(() => {
-    const stored = localStorage.getItem('cortex_skip_intros');
+    const stored = sessionStorage.getItem('cortex_skip_intros');
     setSkipIntros(stored === 'true');
   }, []);
 
@@ -107,7 +107,7 @@ export default function DomainIntroPage() {
 
   const handleSkipToggle = (checked: boolean) => {
     setSkipIntros(checked);
-    localStorage.setItem('cortex_skip_intros', checked.toString());
+    sessionStorage.setItem('cortex_skip_intros', checked.toString());
   };
 
   const handleStartQuestions = () => {

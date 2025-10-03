@@ -57,7 +57,7 @@ export default function DomainQuestionsPage() {
     onSuccess: () => {
       // Navigate to next domain or results
       const currentIndex = DOMAIN_ORDER.indexOf(domain as string);
-      const skipIntros = localStorage.getItem('cortex_skip_intros') === 'true';
+      const skipIntros = sessionStorage.getItem('cortex_skip_intros') === 'true';
       
       if (currentIndex < DOMAIN_ORDER.length - 1) {
         const nextDomain = DOMAIN_ORDER[currentIndex + 1];
@@ -116,7 +116,7 @@ export default function DomainQuestionsPage() {
 
   const handlePrevious = async () => {
     const currentIndex = DOMAIN_ORDER.indexOf(domain as string);
-    const skipIntros = localStorage.getItem('cortex_skip_intros') === 'true';
+    const skipIntros = sessionStorage.getItem('cortex_skip_intros') === 'true';
     
     if (currentIndex > 0) {
       // Save current responses before navigating backward

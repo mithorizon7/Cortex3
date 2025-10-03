@@ -44,7 +44,7 @@ export default function PulseCheckPage() {
   // Redirect to domain-based flow on load
   useEffect(() => {
     if (assessment && assessmentId) {
-      const skipIntros = localStorage.getItem('cortex_skip_intros') === 'true';
+      const skipIntros = sessionStorage.getItem('cortex_skip_intros') === 'true';
       
       // Determine starting domain (first domain with incomplete responses or first domain)
       let startingDomain = 'C';
