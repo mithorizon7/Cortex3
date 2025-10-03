@@ -893,6 +893,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
   // Generate insights if missing
   let insights = data.insights;
   let priorities = data.priorities;
+  let insightGenerationFailed = false;
   if (!insights || !Array.isArray(insights) || insights.length === 0) {
     try {
       const result = await generateEnhancedExecutiveInsights(
@@ -902,7 +903,10 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
       );
       insights = result.insights || [];
       priorities = result.priorities || [];
-    } catch { 
+    } catch (error) { 
+      // Make insight generation failures visible instead of silently failing
+      console.error("Failed to generate AI insights for PDF:", error);
+      insightGenerationFailed = true;
       insights = []; 
       priorities = [];
     }
@@ -1181,7 +1185,15 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
   }
 
   // Executive Insights
-  if (Array.isArray(insights) && insights.length > 0) {
+  if (insightGenerationFailed) {
+    // Show visible notice when AI insight generation fails
+    ({ cursorY: y } = addPageIfNeeded(doc, 22, y, runHeader));
+    y = drawSectionTitle(doc, "STRATEGIC INSIGHTS", y);
+    setFont(doc, TYPO.body); setText(doc, PALETTE.inkSubtle);
+    const errorNotice = "AI-powered strategic insights could not be generated for this report. This does not affect your assessment results or domain guidance. Please contact support if this issue persists.";
+    y = drawBody(doc, errorNotice, bounds(doc).w, y, runHeader);
+    y += PAGE.line * 1.5;
+  } else if (Array.isArray(insights) && insights.length > 0) {
     ({ cursorY: y } = addPageIfNeeded(doc, 22, y, runHeader));
     y = drawSectionTitle(doc, "STRATEGIC INSIGHTS", y);
     for (const ins of insights.slice(0, 5)) {
