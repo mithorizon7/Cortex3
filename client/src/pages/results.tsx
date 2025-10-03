@@ -587,9 +587,33 @@ export default function ResultsPage() {
 
         <Collapsible open={showDetailedView} onOpenChange={setShowDetailedView}>
           <CollapsibleTrigger asChild>
-            <Button variant="outline" size="lg" className="w-full mb-6">
-              <ChevronDown className={`h-4 w-4 mr-2 transition-transform ${showDetailedView ? 'rotate-180' : ''}`} />
-              {showDetailedView ? 'Hide' : 'Show'} Detailed Domain Analysis
+            <Button 
+              variant="outline" 
+              className="w-full mb-6 h-auto p-4 border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/40"
+              data-testid="button-toggle-detailed-analysis"
+              aria-expanded={showDetailedView}
+            >
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center space-x-3">
+                  <div className="bg-primary/15 text-primary p-2 rounded-lg">
+                    <Compass className="h-5 w-5" />
+                  </div>
+                  <div className="text-left">
+                    <div className="flex items-center space-x-2">
+                      <h3 className="font-semibold text-lg font-display">
+                        {showDetailedView ? 'Hide' : 'View'} Detailed Domain Analysis
+                      </h3>
+                      <Badge variant="secondary" className="font-ui pointer-events-none">
+                        6 Domains
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground font-ui">
+                      In-depth guidance, improvement pathways, and context-specific recommendations
+                    </p>
+                  </div>
+                </div>
+                <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform flex-shrink-0 ml-4 ${showDetailedView ? 'rotate-180' : ''}`} />
+              </div>
             </Button>
           </CollapsibleTrigger>
           <CollapsibleContent>
