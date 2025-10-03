@@ -32,17 +32,59 @@ function MicroGuideDialog({ guide, children }: MicroGuideDialogProps) {
 
   // Format the body content with markdown-like formatting
   const formatBody = (text: string) => {
-    return DOMPurify.sanitize(
-      text
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\n\n/g, '</p><p>')
-        .replace(/^(.*)$/, '<p>$1</p>')
-        .replace(/• /g, '<br/>• '),
-      {
-        ALLOWED_TAGS: ['p', 'strong', 'em', 'br', 'ul', 'ol', 'li'],
-        ALLOWED_ATTR: []
-      }
-    );
+    const formatted = text
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .split('\n\n')
+      .map(para => para.trim())
+      .filter(para => para.length > 0)
+      .map(para => {
+        const lines = para.split('\n');
+        
+        // Find where lists start (numbered or bulleted)
+        const firstNumberedIndex = lines.findIndex(line => /^\d+\.\s/.test(line.trim()));
+        const firstBulletIndex = lines.findIndex(line => line.trim().startsWith('• '));
+        
+        // Handle numbered lists with optional intro text
+        if (firstNumberedIndex !== -1) {
+          const introLines = lines.slice(0, firstNumberedIndex);
+          const listLines = lines.slice(firstNumberedIndex);
+          
+          const intro = introLines.length > 0 ? `<p>${introLines.join('<br/>')}</p>` : '';
+          const items = listLines
+            .filter(line => /^\d+\.\s/.test(line.trim()))
+            .map(line => {
+              const content = line.replace(/^\d+\.\s*/, '').trim();
+              return `<li>${content}</li>`;
+            }).join('');
+          
+          return intro + `<ol>${items}</ol>`;
+        }
+        
+        // Handle bullet lists with optional intro text
+        if (firstBulletIndex !== -1) {
+          const introLines = lines.slice(0, firstBulletIndex);
+          const listLines = lines.slice(firstBulletIndex);
+          
+          const intro = introLines.length > 0 ? `<p>${introLines.join('<br/>')}</p>` : '';
+          const items = listLines
+            .filter(line => line.trim().startsWith('• '))
+            .map(line => {
+              const content = line.replace(/^•\s*/, '').trim();
+              return `<li>${content}</li>`;
+            }).join('');
+          
+          return intro + `<ul>${items}</ul>`;
+        }
+        
+        // Regular paragraph with line breaks
+        return `<p>${para.replace(/\n/g, '<br/>')}</p>`;
+      })
+      .join('');
+    
+    return DOMPurify.sanitize(formatted, {
+      ALLOWED_TAGS: ['p', 'strong', 'em', 'br', 'ul', 'ol', 'li'],
+      ALLOWED_ATTR: []
+    });
   };
 
   return (
