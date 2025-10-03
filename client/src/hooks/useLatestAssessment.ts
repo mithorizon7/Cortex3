@@ -15,13 +15,13 @@ export const useLatestAssessment = () => {
       const latestAssessmentId = localStorage.getItem(`latest-assessment-${user.uid}`);
       if (!latestAssessmentId) return null;
       
-      // Verify the assessment exists and is completed
+      // Verify the assessment exists (return it even if in progress)
       try {
         const response = await fetch(`/api/assessments/${latestAssessmentId}`);
         if (!response.ok) return null;
         
         const assessment = await response.json();
-        return assessment?.completedAt ? assessment : null;
+        return assessment;
       } catch {
         return null;
       }

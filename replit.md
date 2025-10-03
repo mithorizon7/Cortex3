@@ -17,23 +17,35 @@ Preferred communication style: Simple, everyday language.
    - Disabled state: Grey button with ghost variant, shows tooltip on hover/focus
    - Enabled state: Prominent blue button (default variant) that navigates to `/results/{assessmentId}`
 
-2. **Accessibility Features**:
+2. **Pulse Check Response Persistence**:
+   - Responses automatically saved via PATCH `/api/assessments/:id/pulse` after each domain
+   - Loaded on component mount in domain-questions.tsx (lines 45-50)
+   - Users can navigate back to see their previous answers at any time
+   - Backend calculates `pillarScores` when responses are submitted, indicating completion
+
+3. **Accessibility Features**:
    - Wrapper span with `role="button"` for semantic meaning
    - `aria-disabled="true"` indicates disabled state to screen readers
    - `aria-label` provides descriptive text for screen reader users
    - `tabIndex={0}` on wrapper, `tabIndex={-1}` on inner button prevents double focus
    - `pointer-events-none` on button allows tooltip to trigger on wrapper
 
-3. **Tooltip Functionality**:
+4. **Tooltip Functionality**:
    - Desktop: "Complete the pulse check to view your strategic profile"
    - Mobile: "Complete the pulse check first"
    - Works for both hover and keyboard focus
 
-4. **Responsive Design**:
+5. **Responsive Design**:
    - Desktop: Full "Strategic Profile" text with larger icon
    - Mobile: Shortened "Profile" text to save space
 
-**Impact**: Users can now quickly access their completed assessment results from any page without navigating through the full assessment flow. The button provides clear visual feedback about completion status and helpful guidance when disabled.
+**Bug Fixed** (useLatestAssessment.ts):
+- Hook was incorrectly filtering out in-progress assessments by checking `completedAt`
+- Fixed to return assessment regardless of completion status
+- Button now correctly shows (disabled) for in-progress assessments
+- Enables proper loading of previous responses when revisiting questions
+
+**Impact**: Users can now quickly access their completed assessment results from any page without navigating through the full assessment flow. The button provides clear visual feedback about completion status and helpful guidance when disabled. Previous answers persist automatically and can be reviewed at any time.
 
 ### October 3, 2025 - Comprehensive PDF Generation Reliability Improvements
 **Issues Addressed**: The PDF generation system had several vulnerabilities that could cause failures in production:
