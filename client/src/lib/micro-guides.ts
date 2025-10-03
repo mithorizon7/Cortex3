@@ -651,6 +651,216 @@ This is not bureaucracy; it is management hygiene. Clear direction + clear owner
 • Management cannot explain AI risks in business terms
 
 **Quick checklist:** Establish AI literacy; review competitive position; implement risk oversight; govern investments; monitor talent readiness.`
+  },
+
+  // Additional high-leverage guides
+  pillar_x_usecase_triage: {
+    id: 'pillar.x.usecase_triage',
+    title: 'Use-Case Triage & Portfolio Scoring — What to Do Before Pilots',
+    pillar: 'X',
+    category: 'pillar',
+    tags: ['portfolio', 'scoring', 'triage', 'prioritization'],
+    overview: 'Score candidate AI use cases on value, feasibility, risk, and data readiness. Output a prioritized backlog before committing resources to pilots.',
+    body: `**What it is:** A systematic approach to evaluating and prioritizing potential AI use cases before investing in pilots. This creates a scored, prioritized backlog based on value potential, technical feasibility, risk profile, and data readiness—ensuring you work on the right things first.
+
+**Why it matters:** Most organizations waste resources on AI pilots that should never have started. They choose use cases based on excitement rather than evidence, feasibility rather than value, or politics rather than portfolio strategy. Proper triage prevents expensive failures and accelerates time-to-value.
+
+**How to implement:**
+1. **Value scoring (40% weight):** Quantify potential annual value in dollars. Consider revenue impact, cost reduction, risk mitigation, and customer satisfaction. No fuzzy "strategic value"—demand numbers.
+2. **Feasibility assessment (30% weight):** Rate technical complexity, data availability, integration requirements, and skills gaps. Simple = 5, Moonshot = 1. Be brutally honest about current capabilities.
+3. **Risk evaluation (20% weight):** Assess regulatory exposure, reputation risk, operational disruption, and failure impact. Low risk = 5, Existential = 1. Include both implementation and operational risks.
+4. **Data readiness check (10% weight):** Score data quality, volume, accessibility, and governance. Ready now = 5, Major work needed = 1. Poor data kills more AI projects than any other factor.
+5. **Portfolio balancing:** Build a portfolio with 70% low-risk quick wins, 20% medium-term value drivers, and 10% transformational bets. Balance across business units and time horizons.
+
+**Scoring framework:**
+• Total score = (Value × 0.4) + (Feasibility × 0.3) + (5 - Risk × 0.2) + (Data × 0.1)
+• Scores > 4.0: Priority 1 - Start immediately
+• Scores 3.0-4.0: Priority 2 - Start within quarter
+• Scores 2.0-3.0: Priority 3 - Revisit next quarter
+• Scores < 2.0: Reject or fundamentally rethink
+
+**Options by context:**
+• **B2B companies:** Weight customer retention and upsell value higher
+• **Regulated industries:** Increase risk weighting to 30%
+• **Startups:** Focus on feasibility and speed-to-market
+
+**Pitfalls:**
+• Gaming the scoring to justify pet projects
+• Ignoring portfolio balance in favor of individual scores
+• Not revisiting scores as capabilities mature
+• Analysis paralysis—spending months scoring instead of starting
+
+**Quick checklist:** Score value quantitatively; assess feasibility honestly; evaluate risks comprehensively; check data readiness; balance portfolio strategically.`
+  },
+
+  pillar_r_security_redteaming: {
+    id: 'pillar.r.security_redteaming',
+    title: 'GenAI Security & Red-Teaming — Beyond Basic Testing',
+    pillar: 'R',
+    category: 'pillar',
+    tags: ['security', 'red-teaming', 'prompt-injection', 'jailbreaking'],
+    overview: 'Run systematic red-team exercises against GenAI systems. Test for prompt injection, data exfiltration, and jailbreaking. Document findings and track mitigations.',
+    body: `**What it is:** A structured program for adversarial testing of generative AI systems, simulating real attacks to identify vulnerabilities before malicious actors do. This includes prompt injection tests, data exfiltration attempts, jailbreaking drills, and tabletop exercises for incident response.
+
+**Why it matters:** GenAI systems have unique attack surfaces that traditional security testing misses. A single successful prompt injection can expose customer data, bypass business logic, or damage your brand. Regular red-teaming is the only way to understand your real security posture.
+
+**How to implement:**
+1. **Prompt injection testing:** Test direct injections ("ignore previous instructions"), indirect injections (malicious content in documents), and multi-step attacks. Document successful bypasses and implement input sanitization.
+2. **Data exfiltration drills:** Attempt to extract training data, system prompts, and user information through targeted queries. Test both direct requests and side-channel approaches.
+3. **Jailbreaking exercises:** Try to make the system produce harmful, biased, or inappropriate content. Use known techniques plus novel approaches. Track success rates across model versions.
+4. **Tabletop exercises:** Run quarterly scenarios: "What if our chatbot starts insulting customers?" Plan detection, response, and communication. Document playbooks for each scenario.
+5. **Finding tracking:** Log all successful attacks with reproducibility steps, impact assessment, and mitigation status. Review monthly with security and product teams.
+
+**Red-team playbook structure:**
+• **Phase 1 - Reconnaissance:** Understand system boundaries, prompts, and guardrails
+• **Phase 2 - Exploitation:** Execute targeted attacks across vulnerability categories
+• **Phase 3 - Documentation:** Record successful attacks with full reproduction steps
+• **Phase 4 - Mitigation:** Implement fixes and verify effectiveness
+• **Phase 5 - Monitoring:** Deploy detection for attack patterns
+
+**Options by context:**
+• **Customer-facing systems:** Focus on brand damage and data exposure scenarios
+• **Internal tools:** Emphasize intellectual property and process manipulation
+• **Regulated environments:** Include compliance violation scenarios
+
+**Pitfalls:**
+• Testing only known attacks instead of thinking creatively
+• Not involving actual attackers or security researchers
+• Fixing symptoms rather than root causes
+• Assuming model updates maintain security posture
+
+**Quick checklist:** Test prompt injections systematically; attempt data exfiltration; run jailbreaking drills; conduct tabletop exercises; track and mitigate all findings.`
+  },
+
+  gate_llm_privacy: {
+    id: 'gate.llm_privacy',
+    title: 'LLM Privacy Controls (PII/PHI) — Data Protection at Scale',
+    category: 'gate',
+    tags: ['privacy', 'PII', 'PHI', 'data-protection', 'compliance'],
+    overview: 'Implement comprehensive privacy controls for LLM systems handling PII/PHI. Focus on data minimization, masking, retention policies, and approved endpoints.',
+    body: `**What it is:** A comprehensive framework for protecting personally identifiable information (PII) and protected health information (PHI) in LLM-based systems through technical controls, process guardrails, and compliance mechanisms.
+
+**Why it matters:** One LLM prompt containing PII can violate GDPR, HIPAA, or CCPA, resulting in millions in fines. Beyond compliance, privacy breaches destroy customer trust instantly. LLMs present unique challenges: they remember training data, generate synthetic PII, and can inadvertently expose sensitive information.
+
+**How to implement:**
+1. **Data minimization architecture:** Process PII only when absolutely necessary. Use synthetic data for development. Implement data clean rooms for sensitive operations. Default to aggregate rather than individual data.
+2. **Masking and redaction pipeline:** Deploy real-time PII detection and masking before data reaches LLMs. Use entity recognition, pattern matching, and context-aware redaction. Maintain audit logs of all redactions.
+3. **Retention and purging policies:** Define clear retention periods for prompts, responses, and fine-tuning data. Implement automated purging with cryptographic proof of deletion. Honor right-to-be-forgotten requests.
+4. **Approved endpoint management:** Whitelist specific LLM endpoints for different data classifications. Route PII-free data to standard endpoints, PII to privacy-preserving endpoints, PHI to HIPAA-compliant infrastructure.
+5. **Differential privacy techniques:** Add calibrated noise to queries and responses. Implement k-anonymity for aggregate queries. Use secure multi-party computation for sensitive operations.
+
+**Technical implementation stack:**
+• **Detection layer:** Microsoft Presidio, Google DLP API, or AWS Macie
+• **Masking engine:** Format-preserving encryption or tokenization
+• **Audit system:** Immutable logs with tamper detection
+• **Access controls:** Attribute-based access with purpose limitation
+
+**Options by context:**
+• **Regulated healthcare:** HIPAA-compliant infrastructure with BAA agreements
+• **Financial services:** PCI DSS compliance with transaction data isolation
+• **European operations:** GDPR-compliant with data residency controls
+• **Non-regulated:** Focus on customer trust and competitive advantage
+
+**Pitfalls:**
+• Assuming LLM providers handle privacy (they do not)
+• Redacting so much that the system becomes useless
+• Not testing redaction with adversarial inputs
+• Forgetting about PII in logs and debugging tools
+
+**Quick checklist:** Minimize data collection; implement masking pipeline; enforce retention policies; manage approved endpoints; apply differential privacy techniques.`
+  },
+
+  gate_contractual_controls: {
+    id: 'gate.contractual_controls',
+    title: 'Contractual Controls for AI Vendors — Beyond Standard Terms',
+    category: 'gate',
+    tags: ['contracts', 'vendor-management', 'legal', 'procurement'],
+    overview: 'Structure AI vendor contracts to protect your interests. Cover data usage, retention, model ownership, audit rights, indemnification, and meaningful SLAs.',
+    body: `**What it is:** A comprehensive framework for negotiating and structuring contracts with AI vendors that goes beyond standard software agreements to address unique AI risks around data usage, model ownership, liability, and performance guarantees.
+
+**Why it matters:** AI vendor contracts have massive hidden risks. Your data might train their next model. Their model errors could destroy your business. Their acquisition could hand your competitive advantage to rivals. Standard contracts provide zero protection against AI-specific risks.
+
+**How to implement:**
+1. **Data usage and ownership clauses:** Explicitly prohibit using your data for model training without consent. Require data isolation from other customers. Clarify ownership of derived insights and fine-tuned models. Include data destruction requirements upon termination.
+2. **Model performance guarantees:** Define specific performance metrics (accuracy, latency, availability) with penalties for degradation. Include provisions for model drift and required notification of model updates. Specify rollback rights if performance drops.
+3. **Audit and transparency rights:** Secure rights to audit data handling, model performance, and security practices. Require disclosure of model limitations, training data sources, and known biases. Include third-party audit requirements for high-risk use cases.
+4. **Liability and indemnification:** Expand indemnification to cover AI-specific risks: biased outputs, hallucinations, IP infringement from training data. Exclude liability caps for data breaches and willful misconduct. Require adequate insurance coverage.
+5. **Exit and portability provisions:** Ensure data portability in standard formats. Require knowledge transfer for custom models. Include source code escrow for critical systems. Define clear transition assistance obligations.
+
+**Key contractual provisions checklist:**
+• **Data rights:** Your data remains yours, no training without permission
+• **Performance SLAs:** Specific metrics with meaningful penalties
+• **Change control:** Approval required for model updates affecting you
+• **Audit rights:** Annual audits plus for-cause investigations
+• **IP clarity:** Who owns fine-tuned models and generated content
+• **Liability allocation:** Vendor liable for model errors and biases
+• **Termination rights:** Exit for performance, breach, or change of control
+• **Data return:** Complete data return/destruction within 30 days
+
+**Negotiation tactics:**
+• Start with your paper, not theirs
+• Make data usage rights a deal-breaker
+• Tie payment to performance metrics
+• Require cyber insurance proof
+• Include competitor acquisition triggers
+
+**Options by context:**
+• **Mission-critical systems:** Require source code escrow and on-premise options
+• **Regulated industries:** Include regulatory compliance warranties
+• **Startups vendors:** Focus on acquisition and bankruptcy scenarios
+
+**Pitfalls:**
+• Accepting "standard" AI terms (no such thing exists)
+• Not involving legal counsel experienced in AI
+• Focusing on price over protective terms
+• Assuming cloud terms cover AI risks
+
+**Quick checklist:** Control data usage; guarantee performance; secure audit rights; allocate liability properly; ensure clean exits.`
+  },
+
+  pillar_e_usage_governance: {
+    id: 'pillar.e.usage_governance',
+    title: 'Usage Governance & Quotas for LLMs — FinOps for AI',
+    pillar: 'E',
+    category: 'pillar',
+    tags: ['finops', 'usage-governance', 'cost-control', 'quotas'],
+    overview: 'Implement organization-level controls for LLM usage. Set rate limits, budget guardrails, and cost attribution. Track cost per successful task and budget variance.',
+    body: `**What it is:** A systematic approach to managing and optimizing LLM consumption across the organization through usage policies, quota management, cost attribution, and continuous optimization—essentially FinOps for AI operations.
+
+**Why it matters:** Uncontrolled LLM usage can generate six-figure monthly bills overnight. One runaway process, infinite loop, or successful prompt injection can drain budgets instantly. Beyond cost, ungoverned usage creates shadow AI, compliance risks, and competitive intelligence leaks.
+
+**How to implement:**
+1. **Hierarchical quota system:** Set organization-level budget caps, department allocations, and user/application limits. Implement hard stops at 80% and alerts at 60%. Use rolling windows to prevent month-end surprises.
+2. **Rate limiting and throttling:** Deploy API gateway with rate limits per user, application, and endpoint. Implement exponential backoff for high-volume users. Different limits for development (low) versus production (managed).
+3. **Cost attribution and tagging:** Tag every API call with user, department, project, and purpose. Calculate fully-loaded costs including API, compute, storage, and support. Generate weekly cost reports by dimension.
+4. **Usage optimization program:** Identify and optimize expensive patterns: repetitive queries, unnecessarily long contexts, premium models for simple tasks. Implement caching for common requests. Route to appropriate models by task complexity.
+5. **Success-based metrics:** Track cost per successful outcome, not just API calls. Monitor task completion rates, retry frequencies, and user satisfaction. Calculate ROI by use case to justify continued investment.
+
+**Technical implementation:**
+• **Gateway layer:** Kong, Apigee, or AWS API Gateway for rate limiting
+• **Monitoring:** Datadog, New Relic, or custom dashboards for usage tracking
+• **Cost management:** Cloud provider cost management tools plus custom allocation
+• **Optimization:** Prompt caching, model routing, and batch processing
+
+**Key metrics to track:**
+• Cost per successful task (not per API call)
+• Budget variance by department (target: <10%)
+• Usage efficiency (successful calls / total calls)
+• Model mix optimization (% routed to cheaper models)
+• Cache hit rates for common queries
+
+**Options by context:**
+• **Large enterprises:** Department-level P&Ls with chargeback models
+• **Startups:** Strict quotas with CEO approval for overages
+• **Regulated industries:** Complete audit trails with purpose documentation
+
+**Pitfalls:**
+• Setting quotas so low that innovation stops
+• Not accounting for hidden costs (retries, storage, compute)
+• Optimizing price over value delivered
+• Creating bureaucracy that slows development
+
+**Quick checklist:** Implement hierarchical quotas; deploy rate limiting; tag for cost attribution; optimize expensive patterns; track success-based metrics.`
   }
 };
 
