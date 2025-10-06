@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Info, TrendingUp, Target, Edit3 } from 'lucide-react';
+import { Info, TrendingUp, Target, Edit3, Lightbulb } from 'lucide-react';
 
 interface ValueOverlayTutorialProps {
   open: boolean;
@@ -110,9 +110,11 @@ export function ValueOverlayTutorial({ open, onClose }: ValueOverlayTutorialProp
           </div>
 
           {/* Getting started tip */}
-          <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+          <div className="bg-primary/5 border border-primary/20 rounded-lg p-4" data-testid="tutorial-getting-started">
             <div className="flex items-start gap-3">
-              <div className="text-2xl">💡</div>
+              <div className="bg-primary/10 rounded-full p-2">
+                <Lightbulb className="h-5 w-5 text-primary" />
+              </div>
               <div>
                 <div className="font-medium mb-1">Getting Started</div>
                 <p className="text-sm text-muted-foreground">

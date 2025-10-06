@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link, useParams } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import DomainCard from "@/components/domain-card";
 import { AppHeader } from "@/components/navigation/app-header";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { ValueSnapshot } from "@/components/value-overlay";
+import { ValueOverlayTutorial } from "@/components/value-overlay-tutorial";
 import { initializeValueOverlay } from "@/lib/value-overlay";
 import { CORTEX_PILLARS, getPriorityLevel } from "@/lib/cortex";
 import { exportJSONResults, generateExecutiveBriefPDF, type EnhancedAssessmentResults } from "@/lib/pdf-generator";
@@ -79,10 +80,13 @@ function getGateThreshold(gateId: string, dimension: string): string | null {
 }
 
 
+const VALUE_OVERLAY_TUTORIAL_KEY = 'cortex_value_overlay_tutorial_seen';
+
 export default function ResultsPage() {
   const { toast } = useToast();
   const { id: assessmentId } = useParams();
   const [showDetailedView, setShowDetailedView] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
   const [valueOverlay, setValueOverlay] = useState<ValueOverlay | null>(null);
   const hasAttemptedCompletion = React.useRef(false);
   
@@ -158,6 +162,22 @@ export default function ResultsPage() {
       initializeValueOverlayFromAssessment(assessment);
     }
   }, [assessment, valueOverlay, initializeValueOverlayFromAssessment]);
+
+  // Show tutorial when detailed view is opened for the first time
+  useEffect(() => {
+    if (showDetailedView) {
+      const hasSeenTutorial = localStorage.getItem(VALUE_OVERLAY_TUTORIAL_KEY);
+      if (!hasSeenTutorial) {
+        setShowTutorial(true);
+      }
+    }
+  }, [showDetailedView]);
+
+  // Handle tutorial close
+  const handleTutorialClose = () => {
+    setShowTutorial(false);
+    localStorage.setItem(VALUE_OVERLAY_TUTORIAL_KEY, 'true');
+  };
 
   // Handle value overlay updates
   const handleValueOverlayUpdate = useCallback((pillar: string, updates: Partial<ValueOverlayPillar>) => {
@@ -722,6 +742,9 @@ export default function ResultsPage() {
           </CardContent>
         </Card>
       </main>
+      
+      {/* Value Overlay Tutorial Modal */}
+      <ValueOverlayTutorial open={showTutorial} onClose={handleTutorialClose} />
       </div>
     </ProtectedRoute>
   );
