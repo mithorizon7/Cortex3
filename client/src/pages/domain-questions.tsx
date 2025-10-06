@@ -401,12 +401,12 @@ export default function DomainQuestionsPage() {
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
-                              variant={responses[question.id] === 0.25 ? "secondary" : "outline"}
+                              variant="outline"
                               size="lg"
                               onClick={() => handleResponseChange(question.id, 0.25)}
                               className={`flex items-center justify-center space-x-2 font-ui ${
                                 responses[question.id] === 0.25 
-                                  ? 'bg-accent/30 text-accent-foreground border-accent/50 hover:bg-accent/40' 
+                                  ? '!bg-accent/30 !text-accent-foreground !border-accent/50 hover:!bg-accent/40' 
                                   : ''
                               }`}
                               data-testid={`button-started-${question.id}`}
@@ -423,12 +423,12 @@ export default function DomainQuestionsPage() {
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
-                              variant={responses[question.id] === 0.5 ? "secondary" : "outline"}
+                              variant="outline"
                               size="lg"
                               onClick={() => handleResponseChange(question.id, 0.5)}
                               className={`flex items-center justify-center space-x-2 font-ui ${
                                 responses[question.id] === 0.5 
-                                  ? 'bg-primary/30 text-primary-foreground border-primary/50 hover:bg-primary/40' 
+                                  ? '!bg-primary/30 !text-primary-foreground !border-primary/50 hover:!bg-primary/40' 
                                   : ''
                               }`}
                               data-testid={`button-mostly-${question.id}`}
@@ -467,11 +467,11 @@ export default function DomainQuestionsPage() {
                           variant={
                             responses[question.id] === 1 ? "default" : 
                             responses[question.id] === 0 ? "accent" : 
-                            "secondary"
+                            "outline"
                           }
                           className={`text-sm ${
-                            responses[question.id] === 0.25 ? 'bg-accent/30 text-accent-foreground border-accent/50' : 
-                            responses[question.id] === 0.5 ? 'bg-primary/30 text-primary-foreground border-primary/50' : 
+                            responses[question.id] === 0.25 ? '!bg-accent/30 !text-accent-foreground !border-accent/50' : 
+                            responses[question.id] === 0.5 ? '!bg-primary/30 !text-primary-foreground !border-primary/50' : 
                             ''
                           }`}
                         >
