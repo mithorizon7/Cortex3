@@ -193,8 +193,8 @@ export class AssessmentService {
   /**
    * Complete assessment and generate final results
    */
-  async completeAssessment(assessmentId: string): Promise<Assessment | null> {
-    const assessment = await this.getAssessment(assessmentId);
+  async completeAssessment(assessmentId: string, userId?: string): Promise<Assessment | null> {
+    const assessment = await this.getAssessment(assessmentId, userId);
     
     if (!assessment) {
       return null;
@@ -227,7 +227,7 @@ export class AssessmentService {
       contentTags,
       contextGuidance,
       completedAt: new Date().toISOString(),
-    });
+    }, userId);
     
     if (!completed) {
       throw new Error('Failed to save completed assessment');

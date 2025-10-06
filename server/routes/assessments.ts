@@ -338,7 +338,7 @@ router.patch('/:id/complete', requireAuthMiddleware, async (req: Request, res: R
     
     const assessment = await withDatabaseErrorHandling(
       'complete_assessment_database',
-      () => assessmentService.completeAssessment(assessmentId)
+      () => assessmentService.completeAssessment(assessmentId, req.userId)
     );
     
     if (!assessment) {
