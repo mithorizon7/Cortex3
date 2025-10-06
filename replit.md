@@ -47,6 +47,7 @@ The system utilizes a three-stage assessment workflow:
   - Domain Breakdown section: Colored dots next to each domain name and progress bars using domain-specific colors
   - Detailed Domain Analysis: Icon backgrounds use domain-specific colors instead of maturity-stage colors
   - Text colors remain standard (text-foreground) for accessibility compliance, meeting WCAG AA contrast requirements
+- **Front Page Radar Chart Colors (Oct 6)**: Updated ExecutiveCortexHero component to use domain-specific colors for the radar chart circles. Each domain letter (C, O, R, T, E, X) now displays in its official brand color, replacing the previous maturity-based color scheme (neutral→amber→emerald) with consistent domain colors for better brand recognition and user onboarding
 - **Domain Navigation Safety**: Added null checks and 404 redirects for invalid domain parameters in domain intro/questions pages to prevent runtime crashes when accessing undefined pillar data.
 
 ### Security Architecture

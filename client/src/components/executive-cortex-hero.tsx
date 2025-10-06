@@ -1,5 +1,6 @@
 import * as React from "react";
 import type { PillarScores } from "@shared/schema";
+import { CORTEX_PILLARS } from "@/lib/cortex";
 
 type Level = 0 | 1 | 2 | 3;
 type PillarKey = "C" | "O" | "R" | "T" | "E" | "X";
@@ -92,12 +93,10 @@ export function ExecutiveCortexHero({
 
   const nodePositions = angles.map((a) => pointAt(NODE_ORBIT, a));
 
-  // Maturity color ramp (neutral → amber → emerald)
-  const MATURITY_COLORS = [
-    "hsl(220, 15%, 60%)",
-    "hsl(38, 92%, 50%)",
-    "hsl(158, 64%, 52%)",
-  ];
+  // Get domain-specific color for a pillar
+  const getPillarColor = (key: PillarKey): string => {
+    return CORTEX_PILLARS[key]?.color || "hsl(220, 15%, 60%)";
+  };
 
   return (
     <div className={`relative ${className}`}>
@@ -112,8 +111,7 @@ export function ExecutiveCortexHero({
           </div>
           <div className="mt-3 flex items-center gap-2">
             {actualPillars.map((p, i) => {
-              const idx = Math.max(0, Math.min(2, p.level - 1));
-              const color = MATURITY_COLORS[idx] ?? MATURITY_COLORS[0];
+              const color = getPillarColor(p.key);
               return (
                 <span
                   key={p.key + i}
@@ -369,8 +367,7 @@ export function ExecutiveCortexHero({
             {/* Nodes for C O R T E X */}
             {actualPillars.map((p, i) => {
               const pos = nodePositions[i];
-              const idx = Math.max(0, Math.min(2, p.level - 1));
-              const color = MATURITY_COLORS[idx] ?? MATURITY_COLORS[0];
+              const color = getPillarColor(p.key);
 
               return (
                 <g key={`${p.key}-${i}`}>
