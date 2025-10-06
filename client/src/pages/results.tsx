@@ -513,15 +513,24 @@ export default function ResultsPage() {
                 return (
                   <div key={pillar} className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="font-medium font-ui">{pillarInfo.name}</span>
+                      <div className="flex items-center space-x-2">
+                        <div 
+                          className="w-3 h-3 rounded-full" 
+                          style={{ backgroundColor: pillarInfo.color }}
+                        />
+                        <span className="font-medium font-ui">{pillarInfo.name}</span>
+                      </div>
                       <Badge variant={score < 1.5 ? "destructive" : score < 2.5 ? "secondary" : "default"}>
                         {score < 1 ? 'Nascent' : score < 2 ? 'Emerging' : score < 3 ? 'Integrated' : 'Leading'}
                       </Badge>
                     </div>
                     <div className="w-full bg-muted rounded-full h-2">
                       <div 
-                        className="bg-primary h-2 rounded-full transition-all duration-500" 
-                        style={{ width: `${percentage}%` }}
+                        className="h-2 rounded-full transition-all duration-500" 
+                        style={{ 
+                          width: `${percentage}%`,
+                          backgroundColor: pillarInfo.color 
+                        }}
                       />
                     </div>
                   </div>

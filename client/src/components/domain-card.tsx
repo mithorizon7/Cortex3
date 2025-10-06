@@ -376,7 +376,7 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
         <div className="flex items-center space-x-3 mb-4">
           <div 
             className="text-white p-2 rounded-lg"
-            style={{ backgroundColor: getStageColor(stage) }}
+            style={{ backgroundColor: pillarInfo.color }}
           >
             {pillar === 'C' && <Target className="h-5 w-5" />}
             {pillar === 'O' && <Cog className="h-5 w-5" />}
@@ -386,7 +386,9 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
             {pillar === 'X' && <Lightbulb className="h-5 w-5" />}
           </div>
           <div>
-            <h3 className="font-semibold text-lg font-display">{pillarInfo.name}</h3>
+            <h3 className="font-semibold text-lg font-display text-foreground">
+              {pillarInfo.name}
+            </h3>
             <p className="text-sm text-muted-foreground font-ui">
               {pillar} — Score {stage.toFixed(2)}/3 ({stageInfo.name})
             </p>
