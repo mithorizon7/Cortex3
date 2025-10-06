@@ -43,6 +43,10 @@ The system utilizes a three-stage assessment workflow:
   - Each color includes light tints (50) for backgrounds and dark variants (500-dark) for dark mode
   - Applied consistently across domain intro pages, questions pages, honeycomb radar visualization, and navigation badges
   - Replaced generic primary colors with domain-specific colors for better visual identity and wayfinding
+- **Domain Colors in Results Page (Oct 6)**: Extended domain-specific colors to Strategic Maturity Profile sections for improved visual consistency and wayfinding. Domain colors now appear in:
+  - Domain Breakdown section: Colored dots next to each domain name and progress bars using domain-specific colors
+  - Detailed Domain Analysis: Icon backgrounds use domain-specific colors instead of maturity-stage colors
+  - Text colors remain standard (text-foreground) for accessibility compliance, meeting WCAG AA contrast requirements
 - **Domain Navigation Safety**: Added null checks and 404 redirects for invalid domain parameters in domain intro/questions pages to prevent runtime crashes when accessing undefined pillar data.
 
 ### Security Architecture
