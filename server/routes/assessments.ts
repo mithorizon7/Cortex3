@@ -197,7 +197,8 @@ router.patch('/:id/pulse', requireAuthMiddleware, async (req: Request, res: Resp
       'update_pulse_responses_database',
       () => assessmentService.updatePulseResponses(
         assessmentId,
-        req.body.pulseResponses
+        req.body.pulseResponses,
+        req.userId
       )
     );
     
@@ -272,7 +273,8 @@ router.patch('/:id', requireAuthMiddleware, async (req: Request, res: Response) 
       'update_assessment_data_database',
       () => assessmentService.updateAssessmentData(
         assessmentId,
-        req.body
+        req.body,
+        req.userId
       )
     );
     

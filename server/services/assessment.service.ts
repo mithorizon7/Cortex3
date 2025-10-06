@@ -73,7 +73,7 @@ export class AssessmentService {
   /**
    * Update assessment data (e.g., value overlay, pulse responses, pillar scores)
    */
-  async updateAssessmentData(assessmentId: string, data: any): Promise<Assessment | null> {
+  async updateAssessmentData(assessmentId: string, data: any, userId?: string): Promise<Assessment | null> {
     const updateData: any = {};
     
     // Handle value overlay updates
@@ -112,11 +112,11 @@ export class AssessmentService {
       updateData.completedAt = data.completedAt;
     }
     
-    const assessment = await storage.updateAssessment(assessmentId, updateData);
+    const assessment = await storage.updateAssessment(assessmentId, updateData, userId);
     
     if (!assessment) {
-      logger.warn('Cannot update assessment data - assessment not found', {
-        additionalContext: { assessmentId }
+      logger.warn('Cannot update assessment data - assessment not found or access denied', {
+        additionalContext: { assessmentId, hasUserFilter: !!userId }
       });
       return null;
     }
@@ -134,7 +134,8 @@ export class AssessmentService {
 
   async updatePulseResponses(
     assessmentId: string, 
-    pulseResponses: unknown
+    pulseResponses: unknown,
+    userId?: string
   ): Promise<Assessment | null> {
     // Validate pulse responses (now supports numeric values: 0, 0.25, 0.5, 1)
     const validatedResponses = pulseResponsesSchema.parse(pulseResponses);
@@ -168,11 +169,11 @@ export class AssessmentService {
       pulseResponses: validatedResponses,
       pillarScores,
       confidenceGaps,
-    });
+    }, userId);
     
     if (!assessment) {
-      logger.warn('Cannot update pulse - assessment not found', {
-        additionalContext: { assessmentId }
+      logger.warn('Cannot update pulse - assessment not found or access denied', {
+        additionalContext: { assessmentId, hasUserFilter: !!userId }
       });
       return null;
     }
