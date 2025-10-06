@@ -43,28 +43,28 @@ export const CORTEX_COLOR_PALETTE: Record<PillarKey, ColorVariants> = {
     text: "#007561",
   },
   R: {
-    base: "#750014",    // Rosewood - Risk, Trust & Security
-    light: "#FDEBEC",   // Light red background
-    dark: "#9E4C5A",    // Lighter red for dark mode
-    text: "#750014",
-  },
-  T: {
-    base: "#FFA72E",    // Orange - Talent & Culture
+    base: "#FFA72E",    // Orange - Risk, Trust & Security
     light: "#FFF4E5",   // Light orange background
     dark: "#FFB347",    // Lighter orange for dark mode
     text: "#E68A00",    // Darker orange for better contrast
   },
+  T: {
+    base: "#CCDBDC",    // Light Gray-Blue - Talent & Culture
+    light: "#F4F7F8",   // Very light gray-blue background
+    dark: "#ADBFC1",    // Slightly darker for dark mode visibility
+    text: "#95A9AB",    // Darker for better readability
+  },
   E: {
-    base: "#339181",    // Teal - Ecosystem & Infrastructure
-    light: "#DDF2EF",   // Light teal background
-    dark: "#55A69A",    // Lighter teal for dark mode
-    text: "#339181",
+    base: "#750014",    // Rosewood - Ecosystem & Infrastructure
+    light: "#FDEBEC",   // Light rose background
+    dark: "#9E4C5A",    // Lighter rosewood for dark mode
+    text: "#750014",
   },
   X: {
-    base: "#69B3FF",    // Light Blue - Experimentation & Evolution
-    light: "#D9ECFF",   // Very light blue background
-    dark: "#A0CCFF",    // Lighter blue for dark mode
-    text: "#2B8FF7",    // Darker blue for better contrast
+    base: "#5F464B",    // Dark Mauve - Experimentation & Evolution
+    light: "#F0EDED",   // Very light gray with mauve tint
+    dark: "#8A7278",    // Lighter mauve for dark mode
+    text: "#5F464B",
   },
 };
 
