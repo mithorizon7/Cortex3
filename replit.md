@@ -24,6 +24,7 @@ The system utilizes a three-stage assessment workflow:
 3.  **Results Generation**: Context-aware guidance based on maturity scores (0-3 fractional range per pillar) and "gates" derived from organizational risk and operational constraints, visualized with a honeycomb radar.
 
 **Recent Fixes (Oct 2025):**
+- **CRITICAL: Pulse Response Saving Bug (Oct 6)**: Fixed critical backend bug preventing pulse responses from being saved. The issue was a missing userId parameter in the update flow - routes received userId but didn't pass it to service layer, causing storage ownership verification to fail silently. Solution: Added userId parameter to `updatePulseResponses()` and `updateAssessmentData()` service methods, updated both PATCH routes (`/pulse` and main update) to pass `req.userId` through the entire chain (routes → service → storage). This ensures ownership verification succeeds and responses are properly persisted to the database.
 - **Pulse Check Response Accumulation**: Fixed critical bug where domain responses were being overwritten instead of accumulated. Solution: After successful mutation, explicitly refetch assessment data using `queryClient.fetchQuery()`, update local state with complete merged responses, then navigate. Includes error handling for network failures during refetch.
 - **Official CORTEX Domain Color Scheme**: Implemented the official color palette for all six domains with vibrant, distinct colors:
   - C (Clarity & Command): Blue #0C63D6
