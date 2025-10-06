@@ -63,8 +63,8 @@ export default function DomainQuestionsPage() {
         });
         
         // Update local state with the complete merged responses from refetched data
-        if (freshAssessment?.pulseResponses) {
-          setResponses(freshAssessment.pulseResponses);
+        if ((freshAssessment as any)?.pulseResponses) {
+          setResponses((freshAssessment as any).pulseResponses);
         }
         
         // Navigate to next domain or results ONLY after state is fully synchronized

@@ -19,8 +19,7 @@ import { ValueSnapshot } from "@/components/value-overlay";
 import { initializeValueOverlay } from "@/lib/value-overlay";
 import { CORTEX_PILLARS, getPriorityLevel } from "@/lib/cortex";
 import { exportJSONResults, generateExecutiveBriefPDF, type EnhancedAssessmentResults } from "@/lib/pdf-generator";
-import { getNetworkError } from "@/lib/queryClient";
-import { apiRequest } from "@/lib/queryClient";
+import { getNetworkError, queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { generateEnhancedExecutiveInsights, getBusinessImpactSummary } from "@/lib/insight-engine";
 import { 
@@ -85,6 +84,7 @@ export default function ResultsPage() {
   const { id: assessmentId } = useParams();
   const [showDetailedView, setShowDetailedView] = useState(false);
   const [valueOverlay, setValueOverlay] = useState<ValueOverlay | null>(null);
+  const hasAttemptedCompletion = React.useRef(false);
   
   const { data: assessment, isLoading } = useQuery<Assessment>({
     queryKey: ['/api/assessments', assessmentId],
@@ -95,6 +95,21 @@ export default function ResultsPage() {
     mutationFn: async () => {
       const response = await apiRequest("PATCH", `/api/assessments/${assessmentId}/complete`);
       return response.json();
+    },
+    onSuccess: (data) => {
+      // Immediately update cache with completed assessment to prevent re-triggering
+      queryClient.setQueryData(['/api/assessments', assessmentId], data);
+      // Also invalidate to ensure fresh data (backup in case setQueryData fails)
+      queryClient.invalidateQueries({ queryKey: ['/api/assessments', assessmentId] });
+    },
+    onError: (error) => {
+      // Keep flag set to prevent infinite retries - user must refresh to retry
+      // Show error feedback to user
+      toast({
+        title: "Completion Failed",
+        description: "Unable to mark assessment as complete. Please refresh the page to try again.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -116,6 +131,26 @@ export default function ResultsPage() {
       setValueOverlay(initialOverlay);
     }
   }, []);
+
+  // Auto-complete assessment if pulse check is done but assessment not marked complete
+  React.useEffect(() => {
+    if (!assessment || completeAssessment.isPending || hasAttemptedCompletion.current) return;
+    
+    // Check if assessment has pillar scores with all 6 domains
+    const pillarScores = assessment.pillarScores as PillarScores | undefined;
+    if (pillarScores) {
+      const scoredCount = Object.values(pillarScores).filter(score => score !== undefined && score !== null).length;
+      const hasAllDomains = scoredCount === 6;
+      const isNotCompleted = !assessment.completedAt;
+      
+      // If all domains are scored but assessment isn't marked complete, attempt completion once
+      // Set flag immediately to prevent retries (even on error - user must refresh to retry)
+      if (hasAllDomains && isNotCompleted) {
+        hasAttemptedCompletion.current = true;
+        completeAssessment.mutate();
+      }
+    }
+  }, [assessment, completeAssessment]);
 
   // Initialize value overlay when assessment data loads
   React.useEffect(() => {
