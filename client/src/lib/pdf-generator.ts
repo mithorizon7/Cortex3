@@ -129,7 +129,15 @@ function hexToRgb(hex: string): RGB {
 // Text normalization to prevent spaced-out glyph artifact
 function normalizeText(s: any): string {
   if (!s) return "";
-  const t = String(s)
+  
+  // Sanitize: Remove control characters but preserve printable Unicode
+  // Only strip ASCII control chars (\x00-\x1F) except tab/newline/carriage return
+  // This preserves em-dashes, smart quotes, currency symbols, accented characters
+  const sanitized = String(s)
+    .replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]/g, '') // Control chars except \t\n\r
+    .replace(/[\uFFFD\uFFFE\uFFFF]/g, ''); // Replacement/invalid chars
+  
+  const t = sanitized
     .replace(/\u00A0/g, " ")
     .replace(/[\u2000-\u200B\u202F\u205F\u2060]/g, " ")
     .replace(/[ \t]{2,}/g, " ")
@@ -342,10 +350,26 @@ function twoColumn(doc: any, y: number) {
   return { left, right, y };
 }
 
+function formatContextValue(value: number | boolean | undefined | null): string {
+  if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+  if (value == null) return '—';
+  
+  // Map numeric scale to human-readable labels
+  switch (value) {
+    case 1: return 'Low';
+    case 2: return 'Medium';
+    case 3: return 'High';
+    case 4: return 'Very High';
+    default: return String(value);
+  }
+}
+
 function formatKV(doc: any, label: string, value?: string | number | boolean) {
   let v: string;
   if (typeof value === 'boolean') {
     v = value ? 'Yes' : 'No';
+  } else if (typeof value === 'number') {
+    v = formatContextValue(value);
   } else {
     v = value != null ? String(value) : '—';
   }
@@ -457,6 +481,12 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
   // Body start
   let y = PAGE.headerBar + 10;
 
+  // Split insight text properly between Executive Summary and Strategic Context
+  const insightParts = (hasMirror ? data.mirror?.insight : data.insight)?.split('\n\n') || [];
+  const mainInsight = insightParts[0] || '';
+  // Use the second part for context, or fall back to empty for mirror data if not split
+  const strategicContext = insightParts[1] || (hasMirror ? '' : mainInsight);
+
   // Executive Summary
   y = drawSectionTitle(doc, "EXECUTIVE SUMMARY", y);
   if (data.mirror?.headline) {
@@ -465,9 +495,8 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
     y = drawBody(doc, data.mirror.headline, bounds(doc).w, y);
     y += PAGE.line * 0.5;
   }
-  const insightText = hasMirror ? data.mirror?.insight : data.insight?.split("\n\n")?.[0];
-  if (insightText) {
-    y = drawBody(doc, insightText, bounds(doc).w, y);
+  if (mainInsight) {
+    y = drawBody(doc, mainInsight, bounds(doc).w, y);
   }
   y += PAGE.line * 1;
 
@@ -480,7 +509,7 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
   // Left card: Strategic Context (always present)
   leftY = drawSubTitle(doc, "Strategic Context", leftY);
   leftY += 2;
-  const leftLines = wrap(doc, hasMirror ? (data.mirror?.insight || "") : (data.insight?.split("\n\n")?.[1] || ""), col.left.w);
+  const leftLines = wrap(doc, strategicContext, col.left.w);
   for (const ln of leftLines) {
     ({ cursorY: leftY } = addPageIfNeeded(doc, PAGE.line, leftY, runHeader));
     setFont(doc, TYPO.body); setText(doc, PALETTE.ink);
