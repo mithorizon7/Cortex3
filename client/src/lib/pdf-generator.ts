@@ -178,13 +178,29 @@ function finalizeFooters(doc: any, labelLeft: string) {
     const w = doc.internal.pageSize.getWidth();
     const h = doc.internal.pageSize.getHeight();
     
-    // Add embedded logo centered above page numbers (with error handling)
+    // Add embedded logo and MIT Open Learning branding
     try {
-      const logoWidth = 30;
-      const logoHeight = 8;
-      const logoX = (w - logoWidth) / 2;
+      const logoWidth = 32;
+      const logoHeight = 8.5;
+      const brandingText = "MIT Open Learning";
+      
+      setFont(doc, TYPO.caption);
+      setText(doc, PALETTE.inkSubtle);
+      const textWidth = doc.getTextWidth(brandingText);
+      
+      // Center the logo + text combination
+      const totalWidth = logoWidth + 3 + textWidth;
+      const startX = (w - totalWidth) / 2;
+      
+      // Logo on left
+      const logoX = startX;
       const logoY = h - 18;
       doc.addImage(EMBEDDED_LOGO, 'PNG', logoX, logoY, logoWidth, logoHeight);
+      
+      // Text on right of logo, vertically centered
+      const textX = logoX + logoWidth + 3;
+      const textY = logoY + (logoHeight / 2) + 1.5;
+      doc.text(brandingText, textX, textY);
     } catch (error) {
       // Logo failed to load - skip it and continue with PDF generation
       console.warn('Logo could not be added to PDF footer:', error);
@@ -472,11 +488,20 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
   doc.text(dateText, pw - PAGE.margin - doc.getTextWidth(dateText), 16);
   doc.text(idText,  pw - PAGE.margin - doc.getTextWidth(idText),  22);
 
-  // Status chip
-  setFill(doc, PALETTE.success);
-  doc.circle(pw - PAGE.margin - 8, 30, 2, "F");
+  // Status chip - green dot next to text
+  const statusX = pw - PAGE.margin;
+  const statusY = 31;
   setFont(doc, TYPO.small);
-  doc.text("COMPLETED", pw - PAGE.margin - 25, 31.5);
+  const statusText = "COMPLETED";
+  const statusWidth = doc.getTextWidth(statusText);
+  
+  // Draw green circle to the left of text, vertically centered
+  setFill(doc, PALETTE.success);
+  doc.circle(statusX - statusWidth - 5, statusY - 1.5, 2, "F");
+  
+  // Draw text
+  setText(doc, PALETTE.white);
+  doc.text(statusText, statusX - statusWidth, statusY);
 
   // Body start
   let y = PAGE.headerBar + 10;
@@ -977,10 +1002,20 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
   doc.text(dateText, pw - PAGE.margin - doc.getTextWidth(dateText), 16);
   doc.text(idText,  pw - PAGE.margin - doc.getTextWidth(idText),  22);
 
-  setFill(doc, PALETTE.success);
-  doc.circle(pw - PAGE.margin - 8, 30, 2, "F");
+  // Status chip - green dot next to text
+  const statusX = pw - PAGE.margin;
+  const statusY = 31;
   setFont(doc, TYPO.small);
-  doc.text("COMPLETED", pw - PAGE.margin - 25, 31.5);
+  const statusText = "COMPLETED";
+  const statusWidth = doc.getTextWidth(statusText);
+  
+  // Draw green circle to the left of text, vertically centered
+  setFill(doc, PALETTE.success);
+  doc.circle(statusX - statusWidth - 5, statusY - 1.5, 2, "F");
+  
+  // Draw text
+  setText(doc, PALETTE.white);
+  doc.text(statusText, statusX - statusWidth, statusY);
 
   let y = PAGE.headerBar + 10;
 
