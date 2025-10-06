@@ -44,20 +44,21 @@ async function throwIfResNotOk(res: Response) {
     try {
       const errorData = await res.json();
       
-      // If server returns structured error with incident ID, preserve it
+      // Always create Error with status code attached for proper error handling
+      const error = new Error(errorData.error || errorData.message || res.statusText);
+      (error as any).statusCode = res.status;
+      
+      // Preserve incident ID if server provides it
       if (errorData.incidentId) {
-        const error = new Error(errorData.error || res.statusText);
         (error as any).incidentId = errorData.incidentId;
-        (error as any).statusCode = res.status;
-        throw error;
       }
       
-      // Fallback to text response
-      throw new Error(errorData.error || errorData.message || res.statusText);
+      throw error;
     } catch (parseError) {
-      // If JSON parsing fails, we can't read the body again since it's consumed
-      // Just use status and statusText
-      throw new Error(`${res.status}: ${res.statusText}`);
+      // If JSON parsing fails, still attach status code
+      const error = new Error(`${res.status}: ${res.statusText}`);
+      (error as any).statusCode = res.status;
+      throw error;
     }
   }
 }

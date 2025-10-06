@@ -165,6 +165,20 @@ export default function DomainQuestionsPage() {
     },
     onError: (error) => {
       console.error("Pulse check error:", error);
+      
+      // Check for authentication errors first (401/403 status codes)
+      const statusCode = (error as any)?.statusCode;
+      const isAuthError = statusCode === 401 || statusCode === 403;
+      
+      if (isAuthError) {
+        toast({
+          title: "Authentication Required",
+          description: "You've been logged out. Please sign in again to save your responses.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       const errorType = getNetworkError(error);
       
       let title = "Save Failed";
