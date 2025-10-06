@@ -17,9 +17,9 @@ const firebaseConfig = {
 };
 
 // Test account credentials
-const TEST_EMAIL = 'test.user@cortexapp.dev';
-const TEST_PASSWORD = 'TestUser2024!';
-const TEST_DISPLAY_NAME = 'CORTEX Test User';
+const TEST_EMAIL = 'test@cortex.com';
+const TEST_PASSWORD = 'test123456';
+const TEST_DISPLAY_NAME = 'Test User';
 
 async function createTestAccount() {
   try {
