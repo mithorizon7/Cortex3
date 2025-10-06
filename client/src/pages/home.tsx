@@ -17,6 +17,7 @@ import { ExecutiveCortexHero } from "@/components/executive-cortex-hero";
 import { EnhancedSignInModal } from "@/components/auth/enhanced-sign-in-modal";
 import { useAuth } from "@/contexts/auth-context";
 import type { Assessment, PillarScores } from "@shared/schema";
+import { CORTEX_COLOR_PALETTE } from "@/lib/cortex-colors";
 import { 
   ArrowRight,
   CheckCircle,
@@ -364,7 +365,7 @@ export default function HomePage() {
             </div>
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {/* Level 0 - Nascent */}
+              {/* Level 0 - Nascent - Gray (not a domain color) */}
               <div className="text-center space-y-3">
                 <div 
                   className="w-16 h-16 rounded-full mx-auto flex items-center justify-center font-bold text-white text-lg shadow-lg"
@@ -378,11 +379,11 @@ export default function HomePage() {
                 </div>
               </div>
               
-              {/* Level 1 - Emerging */}
+              {/* Level 1 - Emerging - Risk domain color (R) */}
               <div className="text-center space-y-3">
                 <div 
                   className="w-16 h-16 rounded-full mx-auto flex items-center justify-center font-bold text-white text-lg shadow-lg"
-                  style={{ backgroundColor: "#750014" }}
+                  style={{ backgroundColor: CORTEX_COLOR_PALETTE.R.base }}
                 >
                   1
                 </div>
@@ -392,11 +393,11 @@ export default function HomePage() {
                 </div>
               </div>
               
-              {/* Level 2 - Integrating */}
+              {/* Level 2 - Integrating - Operations domain color (O) */}
               <div className="text-center space-y-3">
                 <div 
                   className="w-16 h-16 rounded-full mx-auto flex items-center justify-center font-bold text-white text-lg shadow-lg"
-                  style={{ backgroundColor: "#007561" }}
+                  style={{ backgroundColor: CORTEX_COLOR_PALETTE.O.base }}
                 >
                   2
                 </div>
@@ -406,14 +407,14 @@ export default function HomePage() {
                 </div>
               </div>
               
-              {/* Level 3 - Strategic */}
+              {/* Level 3 - Strategic - Talent domain color (T) */}
               <div className="text-center space-y-3">
                 <div className="relative">
                   <div 
                     className="w-16 h-16 rounded-full mx-auto flex items-center justify-center font-bold text-white text-lg shadow-xl relative overflow-hidden"
                     style={{ 
-                      backgroundColor: "#FF9F1C",
-                      boxShadow: "0 8px 25px -5px rgba(255, 159, 28, 0.4), 0 4px 12px -2px rgba(255, 159, 28, 0.2)"
+                      backgroundColor: CORTEX_COLOR_PALETTE.T.base,
+                      boxShadow: `0 8px 25px -5px ${CORTEX_COLOR_PALETTE.T.base}66, 0 4px 12px -2px ${CORTEX_COLOR_PALETTE.T.base}33`
                     }}
                   >
                     <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/20 to-transparent"></div>
@@ -422,7 +423,7 @@ export default function HomePage() {
                   <div 
                     className="absolute inset-0 w-16 h-16 rounded-full mx-auto animate-pulse"
                     style={{
-                      boxShadow: "0 0 20px rgba(255, 159, 28, 0.3)",
+                      boxShadow: `0 0 20px ${CORTEX_COLOR_PALETTE.T.base}4D`,
                       animationDuration: "3s"
                     }}
                   ></div>

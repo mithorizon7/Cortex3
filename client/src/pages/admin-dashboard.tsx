@@ -19,6 +19,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { apiRequest, queryClient } from '@/lib/queryClient';
+import { CORTEX_COLOR_PALETTE } from '@/lib/cortex-colors';
 
 // Types for user profile and cohort data
 interface UserProfile {
@@ -839,7 +840,7 @@ function AnalyticsOverview() {
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip formatter={(value: any, name: string) => [`${value}%`, 'Completion Rate']} />
-                <Bar dataKey="completionRate" fill="#007561" />
+                <Bar dataKey="completionRate" fill={CORTEX_COLOR_PALETTE.O.base} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -858,7 +859,7 @@ function AnalyticsOverview() {
                 <XAxis dataKey="pillar" />
                 <YAxis domain={[0, 3]} />
                 <Tooltip formatter={(value: any) => [value?.toFixed(2), 'Average Score']} />
-                <Bar dataKey="avg" fill="#007561" />
+                <Bar dataKey="avg" fill={CORTEX_COLOR_PALETTE.O.base} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>

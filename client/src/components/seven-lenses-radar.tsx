@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Info } from "lucide-react";
 import type { ExtendedOptionCard } from "@shared/schema";
 import { LENS_LABELS } from "@shared/options-studio-data";
+import { CORTEX_COLOR_PALETTE } from "@/lib/cortex-colors";
 
 interface SevenLensesRadarProps {
   selectedOptions: ExtendedOptionCard[];
@@ -20,16 +21,16 @@ interface SevenLensesRadarProps {
   className?: string;
 }
 
-// Color palette for different options in the radar chart - CORTEX palette
+// Color palette for different options - uses centralized CORTEX domain colors
 const CHART_COLORS = [
-  '#007561', // Pine Green (chart-1)
-  '#FF9F1C', // Orange Peel (chart-2)
-  '#750014', // MIT Rosewood (chart-3)
-  '#011627', // Rich Black (chart-4)
-  '#8B959E', // Silver Gray (muted)
-  '#007561', // Pine Green (repeats for more options)
-  '#FF9F1C', // Orange Peel
-  '#750014', // MIT Rosewood
+  CORTEX_COLOR_PALETTE.O.base,  // Operations - Pine Green
+  CORTEX_COLOR_PALETTE.T.base,  // Talent - Orange
+  CORTEX_COLOR_PALETTE.R.base,  // Risk - Rosewood
+  '#011627',                     // Rich Black (neutral, not a domain color)
+  '#8B959E',                     // Silver Gray (neutral, not a domain color)
+  CORTEX_COLOR_PALETTE.E.base,  // Ecosystem - Teal
+  CORTEX_COLOR_PALETTE.C.base,  // Clarity - Blue
+  CORTEX_COLOR_PALETTE.X.base,  // Experimentation - Light Blue
 ];
 
 interface RadarDataPoint {

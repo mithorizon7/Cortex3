@@ -22,6 +22,7 @@ import { apiRequest, getNetworkError } from "@/lib/queryClient";
 import { getEnhancedErrorMessage } from "@/lib/error-utils";
 import { useToast } from "@/hooks/use-toast";
 import { ChevronLeft, ChevronRight, Target } from "lucide-react";
+import { CORTEX_COLOR_PALETTE } from "@/lib/cortex-colors";
 
 export default function ContextProfilePage() {
   const [, navigate] = useLocation();
@@ -238,7 +239,7 @@ export default function ContextProfilePage() {
                                   <div key={idx} className="flex items-center space-x-2">
                                     <span 
                                       className="px-2 py-1 rounded font-medium font-mono text-white"
-                                      style={{ backgroundColor: '#339181' }}
+                                      style={{ backgroundColor: CORTEX_COLOR_PALETTE.E.base }}
                                     >
                                       {idx}
                                     </span>
@@ -282,16 +283,19 @@ export default function ContextProfilePage() {
                                   <div 
                                     className={`inline-flex items-center space-x-3 p-5 sm:p-4 rounded-lg border-2 transition-all duration-300 ${
                                       touchedFields.has(item.key) 
-                                        ? 'border-[#0C63D6]/30' 
+                                        ? '' 
                                         : 'bg-muted border-transparent'
                                     }`}
-                                    style={touchedFields.has(item.key) ? { backgroundColor: '#E9F3FF' } : {}}
+                                    style={touchedFields.has(item.key) ? { 
+                                      backgroundColor: CORTEX_COLOR_PALETTE.C.light, 
+                                      borderColor: `${CORTEX_COLOR_PALETTE.C.base}4D` 
+                                    } : {}}
                                   >
                                     <span 
                                       className={`text-xl sm:text-lg font-bold transition-colors duration-300 ${
                                         touchedFields.has(item.key) ? '' : 'text-muted-foreground'
                                       }`}
-                                      style={touchedFields.has(item.key) ? { color: '#0C63D6' } : {}}
+                                      style={touchedFields.has(item.key) ? { color: CORTEX_COLOR_PALETTE.C.base } : {}}
                                     >
                                       {field.value}/4
                                     </span>
@@ -308,13 +312,16 @@ export default function ContextProfilePage() {
                                 {item.anchors && (
                                   <div 
                                     className={`p-4 rounded-lg border transition-opacity duration-300 ${
-                                      touchedFields.has(item.key) ? 'opacity-100 border-[#339181]/20' : 'opacity-70 border-border'
+                                      touchedFields.has(item.key) ? 'opacity-100' : 'opacity-70 border-border'
                                     }`}
-                                    style={touchedFields.has(item.key) ? { backgroundColor: '#DDF2EF' } : { backgroundColor: 'hsl(var(--muted))' }}
+                                    style={touchedFields.has(item.key) ? { 
+                                      backgroundColor: CORTEX_COLOR_PALETTE.E.light,
+                                      borderColor: `${CORTEX_COLOR_PALETTE.E.base}33`
+                                    } : { backgroundColor: 'hsl(var(--muted))' }}
                                   >
                                     <p 
                                       className="text-sm font-medium mb-2 font-ui"
-                                      style={touchedFields.has(item.key) ? { color: '#339181' } : {}}
+                                      style={touchedFields.has(item.key) ? { color: CORTEX_COLOR_PALETTE.E.base } : {}}
                                     >
                                       What this level means:
                                     </p>
