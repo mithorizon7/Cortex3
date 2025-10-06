@@ -1,14 +1,17 @@
 /**
- * CORTEX Domain Color System
+ * CORTEX Domain Color System - SINGLE SOURCE OF TRUTH
  * 
- * Single source of truth for all CORTEX domain colors.
- * Change colors here and they propagate everywhere instantly.
+ * ⚠️ IMPORTANT: This is the ONLY place to change domain colors.
+ * All 6 CORTEX domain colors are defined here and automatically
+ * propagate to ALL components across the entire application.
+ * 
+ * To change colors: Simply update the hex values in CORTEX_COLOR_PALETTE below.
  * 
  * Features:
- * - TypeScript type safety
- * - CSS custom properties for styling
- * - Light/dark mode variants
- * - Tint/shade support for backgrounds and borders
+ * - TypeScript type safety for all color operations
+ * - Light/dark mode variants (auto-adjusted for each theme)
+ * - Helper functions for inline styles and components
+ * - No duplicate color definitions anywhere else in the codebase
  */
 
 export type PillarKey = "C" | "O" | "R" | "T" | "E" | "X";
@@ -83,85 +86,18 @@ export function getPillarColorVariant(
 }
 
 /**
- * Get the CSS custom property name for a domain color
- * Use this when you want to reference colors in CSS/styles
+ * Example: How to use these colors in your components
+ * 
+ * // Method 1: Direct access from CORTEX_COLOR_PALETTE
+ * import { CORTEX_COLOR_PALETTE } from '@/lib/cortex-colors';
+ * <div style={{ backgroundColor: CORTEX_COLOR_PALETTE.C.base }}>...</div>
+ * 
+ * // Method 2: Using helper function
+ * import { getPillarColor } from '@/lib/cortex';
+ * <div style={{ color: getPillarColor('C') }}>...</div>
+ * 
+ * // Method 3: Access from CORTEX_PILLARS (most common pattern)
+ * import { CORTEX_PILLARS } from '@/lib/cortex';
+ * <div style={{ color: CORTEX_PILLARS.C.color }}>...</div>
+ * <div style={{ backgroundColor: CORTEX_PILLARS.C.colorLight }}>...</div>
  */
-export function getPillarColorVar(
-  key: PillarKey,
-  variant: keyof ColorVariants = "base"
-): string {
-  return `var(--cortex-${key.toLowerCase()}-${variant})`;
-}
-
-/**
- * Generate inline styles for a domain color
- * Useful for dynamic styling in components
- */
-export function getPillarColorStyles(
-  key: PillarKey,
-  options: {
-    backgroundColor?: boolean;
-    color?: boolean;
-    borderColor?: boolean;
-    variant?: keyof ColorVariants;
-  } = {}
-): React.CSSProperties {
-  const {
-    backgroundColor = false,
-    color = false,
-    borderColor = false,
-    variant = "base",
-  } = options;
-
-  const colorValue = getPillarColorVariant(key, variant);
-  const styles: React.CSSProperties = {};
-
-  if (backgroundColor) styles.backgroundColor = colorValue;
-  if (color) styles.color = colorValue;
-  if (borderColor) styles.borderColor = colorValue;
-
-  return styles;
-}
-
-/**
- * CSS Custom Property Names
- * These are registered in cortex-colors.css
- */
-export const CORTEX_CSS_VARS = {
-  C: {
-    base: "--cortex-c-base",
-    light: "--cortex-c-light",
-    dark: "--cortex-c-dark",
-    text: "--cortex-c-text",
-  },
-  O: {
-    base: "--cortex-o-base",
-    light: "--cortex-o-light",
-    dark: "--cortex-o-dark",
-    text: "--cortex-o-text",
-  },
-  R: {
-    base: "--cortex-r-base",
-    light: "--cortex-r-light",
-    dark: "--cortex-r-dark",
-    text: "--cortex-r-text",
-  },
-  T: {
-    base: "--cortex-t-base",
-    light: "--cortex-t-light",
-    dark: "--cortex-t-dark",
-    text: "--cortex-t-text",
-  },
-  E: {
-    base: "--cortex-e-base",
-    light: "--cortex-e-light",
-    dark: "--cortex-e-dark",
-    text: "--cortex-e-text",
-  },
-  X: {
-    base: "--cortex-x-base",
-    light: "--cortex-x-light",
-    dark: "--cortex-x-dark",
-    text: "--cortex-x-text",
-  },
-} as const;

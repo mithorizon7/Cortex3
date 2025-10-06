@@ -5,8 +5,6 @@ import { CORTEX_COLOR_PALETTE } from "./cortex-colors";
 export { 
   getPillarColor,
   getPillarColorVariant,
-  getPillarColorVar,
-  getPillarColorStyles,
   CORTEX_COLOR_PALETTE,
   type PillarKey,
   type ColorVariants
