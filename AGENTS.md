@@ -35,6 +35,11 @@ CORTEX is a web-based executive AI readiness assessment platform that helps lead
 - **TypeScript/JavaScript:** Follow existing ESLint configuration
 - **React:** Functional components with hooks, no class components
 - **CSS:** Tailwind CSS utility-first approach with shadcn/ui components
+- **Visual Design:** Follow the CORTEX Color Style Guide (see `docs/STYLE_GUIDE.md`)
+  - Comprehensive color palette and usage guidelines
+  - 60-30-10 color distribution (neutral base, secondary accents, primary brand)
+  - Accessibility and semantic color requirements
+  - Quick reference available in `docs/STYLE_GUIDE_QUICK_REFERENCE.md`
 
 ### Naming Conventions
 - **Files:** kebab-case (e.g., `context-profile.tsx`, `assessment-service.ts`)
