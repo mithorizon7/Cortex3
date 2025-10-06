@@ -1,0 +1,71 @@
+/**
+ * CORTEX Domain Color CSS Custom Properties
+ * 
+ * These CSS variables are automatically available throughout the app.
+ * To change domain colors, update client/src/lib/cortex-colors.ts
+ * 
+ * Usage in components:
+ * - background-color: var(--cortex-c-base);
+ * - color: var(--cortex-c-text);
+ * - background-color: var(--cortex-c-light);
+ */
+
+:root {
+  /* C - Clarity & Command (Blue) */
+  --cortex-c-base: #0C63D6;
+  --cortex-c-light: #E9F3FF;
+  --cortex-c-dark: #5592E2;
+  --cortex-c-text: #0C63D6;
+  
+  /* O - Operations & Data (Pine Green) */
+  --cortex-o-base: #007561;
+  --cortex-o-light: #E6F4F1;
+  --cortex-o-dark: #339181;
+  --cortex-o-text: #007561;
+  
+  /* R - Risk, Trust & Security (Rosewood) */
+  --cortex-r-base: #750014;
+  --cortex-r-light: #FDEBEC;
+  --cortex-r-dark: #9E4C5A;
+  --cortex-r-text: #750014;
+  
+  /* T - Talent & Culture (Orange) */
+  --cortex-t-base: #FFA72E;
+  --cortex-t-light: #FFF4E5;
+  --cortex-t-dark: #FFB347;
+  --cortex-t-text: #E68A00;
+  
+  /* E - Ecosystem & Infrastructure (Teal) */
+  --cortex-e-base: #339181;
+  --cortex-e-light: #DDF2EF;
+  --cortex-e-dark: #55A69A;
+  --cortex-e-text: #339181;
+  
+  /* X - Experimentation & Evolution (Light Blue) */
+  --cortex-x-base: #69B3FF;
+  --cortex-x-light: #D9ECFF;
+  --cortex-x-dark: #A0CCFF;
+  --cortex-x-text: #2B8FF7;
+}
+
+/* Dark Mode Overrides */
+.dark {
+  /* Use the dark variants in dark mode */
+  --cortex-c-base: #5592E2;
+  --cortex-c-light: #1a2942;
+  
+  --cortex-o-base: #339181;
+  --cortex-o-light: #1a2e2a;
+  
+  --cortex-r-base: #9E4C5A;
+  --cortex-r-light: #2e1a1e;
+  
+  --cortex-t-base: #FFB347;
+  --cortex-t-light: #332819;
+  
+  --cortex-e-base: #55A69A;
+  --cortex-e-light: #1a2e2a;
+  
+  --cortex-x-base: #A0CCFF;
+  --cortex-x-light: #1a2842;
+}

@@ -1,53 +1,65 @@
 import { ContextProfile, PillarScores, Gate } from "@shared/schema";
+import { CORTEX_COLOR_PALETTE } from "./cortex-colors";
+
+// Re-export color utilities for easy access across the app
+export { 
+  getPillarColor,
+  getPillarColorVariant,
+  getPillarColorVar,
+  getPillarColorStyles,
+  CORTEX_COLOR_PALETTE,
+  type PillarKey,
+  type ColorVariants
+} from "./cortex-colors";
 
 export const CORTEX_PILLARS = {
   C: { 
     name: "Clarity & Command", 
     icon: "bullseye", 
     description: "Leadership owns a value-anchored AI ambition and operating model", 
-    color: "#0C63D6", // Blue - Primary Accent
-    colorLight: "#E9F3FF", // Light tint for backgrounds
-    colorDark: "#5592E2" // Dark mode accent
+    color: CORTEX_COLOR_PALETTE.C.base,
+    colorLight: CORTEX_COLOR_PALETTE.C.light,
+    colorDark: CORTEX_COLOR_PALETTE.C.dark
   },
   O: { 
     name: "Operations & Data", 
     icon: "cogs", 
     description: "Reliable, monitored AI in production with governed data", 
-    color: "#007561", // Pine Green - Primary Accent
-    colorLight: "#E6F4F1",
-    colorDark: "#339181"
+    color: CORTEX_COLOR_PALETTE.O.base,
+    colorLight: CORTEX_COLOR_PALETTE.O.light,
+    colorDark: CORTEX_COLOR_PALETTE.O.dark
   },
   R: { 
     name: "Risk, Trust & Security", 
     icon: "shield-alt", 
     description: "Demonstrable safety, fairness, privacy, and security", 
-    color: "#750014", // Rosewood - Primary Accent
-    colorLight: "#FDEBEC",
-    colorDark: "#9E4C5A"
+    color: CORTEX_COLOR_PALETTE.R.base,
+    colorLight: CORTEX_COLOR_PALETTE.R.light,
+    colorDark: CORTEX_COLOR_PALETTE.R.dark
   },
   T: { 
     name: "Talent & Culture", 
     icon: "users", 
     description: "Skills, incentives, and job redesign for AI adoption", 
-    color: "#FFA72E", // Lightened Orange Peel - Primary Accent
-    colorLight: "#FFF4E5",
-    colorDark: "#FFB347"
+    color: CORTEX_COLOR_PALETTE.T.base,
+    colorLight: CORTEX_COLOR_PALETTE.T.light,
+    colorDark: CORTEX_COLOR_PALETTE.T.dark
   },
   E: { 
     name: "Ecosystem & Infrastructure", 
     icon: "network-wired", 
     description: "Partners and platform capacity that scale economically", 
-    color: "#339181", // Teal - Primary Accent
-    colorLight: "#DDF2EF",
-    colorDark: "#55A69A"
+    color: CORTEX_COLOR_PALETTE.E.base,
+    colorLight: CORTEX_COLOR_PALETTE.E.light,
+    colorDark: CORTEX_COLOR_PALETTE.E.dark
   },
   X: { 
     name: "Experimentation & Evolution", 
     icon: "flask", 
     description: "Safe, disciplined learning cycles with clear success/sunset criteria", 
-    color: "#69B3FF", // Light Blue - Primary Accent
-    colorLight: "#D9ECFF",
-    colorDark: "#A0CCFF"
+    color: CORTEX_COLOR_PALETTE.X.base,
+    colorLight: CORTEX_COLOR_PALETTE.X.light,
+    colorDark: CORTEX_COLOR_PALETTE.X.dark
   }
 };
 
@@ -250,9 +262,7 @@ export function getStageColor(stage: number): string {
   return MATURITY_STAGES[stageIndex]?.color || '#8B959E'; // CORTEX Silver Gray fallback
 }
 
-export function getPillarColor(pillar: string): string {
-  return CORTEX_PILLARS[pillar as keyof typeof CORTEX_PILLARS]?.color || '#8B959E';
-}
+// Note: getPillarColor is now imported and re-exported from cortex-colors.ts at the top of this file
 
 export function getPriorityLevel(pillarScores: PillarScores, contextProfile: ContextProfile): { pillar: string; priority: number }[] {
   // Guard against null/undefined pillarScores
