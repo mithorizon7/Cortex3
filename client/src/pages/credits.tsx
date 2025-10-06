@@ -7,7 +7,7 @@ export default function Credits() {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-12 max-w-4xl">
         <div className="mb-8">
-          <Link href="/">
+          <Link to="/">
             <a className="text-primary hover:underline text-sm" data-testid="link-back-home">
               ← Back to Home
             </a>

@@ -20,6 +20,7 @@ import OptionsStudio from "@/pages/options-studio";
 import Dashboard from "@/pages/dashboard";
 import AdminDashboard from "@/pages/admin-dashboard";
 import UserManagement from "@/pages/user-management";
+import Credits from "@/pages/credits";
 
 function Router() {
   return (
@@ -116,6 +117,7 @@ function Router() {
           </ProtectedRoute>
         )}
       </Route>
+      <Route path="/credits" component={Credits} />
       <Route component={NotFound} />
     </Switch>
   );

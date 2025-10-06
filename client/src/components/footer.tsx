@@ -12,13 +12,22 @@ export function Footer() {
             className="h-8 w-auto"
             data-testid="footer-logo"
           />
-          <Link 
-            to="/decide"
-            className="text-xs text-accent hover:text-accent/80 transition-colors underline"
-            data-testid="footer-options-studio-link"
-          >
-            Options Studio
-          </Link>
+          <div className="flex gap-4 text-xs">
+            <Link 
+              to="/decide"
+              className="text-accent hover:text-accent/80 transition-colors underline"
+              data-testid="footer-options-studio-link"
+            >
+              Options Studio
+            </Link>
+            <Link 
+              to="/credits"
+              className="text-accent hover:text-accent/80 transition-colors underline"
+              data-testid="footer-credits-link"
+            >
+              Credits
+            </Link>
+          </div>
         </div>
       </div>
     </footer>
