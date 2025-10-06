@@ -92,8 +92,29 @@ export default function HoneycombRadar({ pillarScores, className }: HoneycombRad
                 const score = pillarScores[pillar as keyof PillarScores];
                 // Don't render if score is undefined or null (not answered yet)
                 if (score === undefined || score === null) return null;
-                // Don't render score of 0 (no visual area to show)
-                if (score === 0) return null;
+                
+                const pillarColor = getPillarColor(pillar);
+                
+                // For score of 0, render a small dot at center to show domain was assessed
+                if (score === 0) {
+                  const angle = (index * Math.PI) / 3 - Math.PI / 2;
+                  const dotRadius = 8; // Small dot at center
+                  const dotX = centerX + dotRadius * Math.cos(angle);
+                  const dotY = centerY + dotRadius * Math.sin(angle);
+                  
+                  return (
+                    <circle
+                      key={`zero-${pillar}`}
+                      cx={dotX}
+                      cy={dotY}
+                      r="4"
+                      fill={pillarColor}
+                      fillOpacity="0.5"
+                      stroke={pillarColor}
+                      strokeWidth="1"
+                    />
+                  );
+                }
                 
                 const radius = calculateRingRadius(score, maxRadius);
                 const angle = (index * Math.PI) / 3 - Math.PI / 2;
@@ -103,8 +124,6 @@ export default function HoneycombRadar({ pillarScores, className }: HoneycombRad
                 const y1 = centerY + radius * Math.sin(angle);
                 const x2 = centerX + radius * Math.cos(nextAngle);
                 const y2 = centerY + radius * Math.sin(nextAngle);
-                
-                const pillarColor = getPillarColor(pillar);
                 
                 return (
                   <path 
@@ -148,7 +167,7 @@ export default function HoneycombRadar({ pillarScores, className }: HoneycombRad
             </svg>
             
             {/* Legend - Domain Colors */}
-            <div className="flex justify-center mt-4">
+            <div className="flex flex-col items-center mt-4 space-y-2">
               <div className="flex flex-wrap gap-4 text-sm justify-center">
                 {pillarOrder.map((pillar) => {
                   const pillarInfo = CORTEX_PILLARS[pillar as keyof typeof CORTEX_PILLARS];
@@ -163,6 +182,9 @@ export default function HoneycombRadar({ pillarScores, className }: HoneycombRad
                   );
                 })}
               </div>
+              <p className="text-xs text-muted-foreground/70 italic">
+                Small dots near center indicate zero scores (domain assessed with no capabilities in place)
+              </p>
             </div>
           </div>
         </>

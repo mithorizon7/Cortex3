@@ -479,10 +479,11 @@ export const DOMAIN_INTROS: Record<string, DomainIntroContent> = {
 };
 
 export const FOOTER_COPY = {
-  title: 'How to answer the next three items',
+  title: 'How to answer the questions',
   instructions: [
     'Mark Yes only if it is fully true today and you could point to evidence.',
-    'Mark No if it is not in place.',
-    'Mark Unsure if you don\'t know. (This won\'t affect the score; we\'ll flag it as a follow-up.)'
+    'Mark Mostly if it\'s almost complete (80%+ in place).',
+    'Mark Started if work has begun but not complete.',
+    'Mark No if it is not in place or barely started.'
   ]
 };

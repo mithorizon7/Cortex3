@@ -1,0 +1,60 @@
+Issues Causing “Incomplete” Final Report and How to Fix Them
+After reviewing the code, I identified several problems in the Pulse Check flow (both frontend and backend) that likely explain why the final report page shows the assessment as incomplete. Below is a prioritized list of fixes:
+1. Ensure Assessment is Marked Complete After Final Domain
+Issue: The assessment isn’t getting marked as complete when all questions are finished. The current logic relies on a React effect in the Results page to auto-trigger completion, but this can fail if data isn’t fully updated or the request fails silently
+GitHub
+GitHub
+. As a result, completedAt remains null and the final report treats the assessment as incomplete.
+Fix: Trigger the completion API as soon as the last domain is submitted, rather than waiting for the Results page. For example, in DomainQuestionsPage, after the last domain’s responses are saved (in the updatePulse mutation success), call the PATCH /api/assessments/:id/complete endpoint before navigating to results. This guarantees the backend generates pillarScores for all 6 domains and sets completedAt immediately. You can reuse the completeAssessment mutation logic from the Results page or call the service directly. By doing this, the Results page will load an already-completed assessment (with completedAt set and all final data generated)
+GitHub
+GitHub
+. In short, don’t rely on the Results page effect to finish the assessment – complete it at the end of the Pulse Check flow.
+2. Remove or Update the Legacy pulse-check.tsx Page
+Issue: There are two parallel implementations of the Pulse Check UI – pulse-check.tsx and domain-questions.tsx – which can cause inconsistent behavior. The old PulseCheckPage uses three options (Yes/No/Unsure with boolean/null values) while the new domain-based flow in DomainQuestionsPage uses four options (No/Started/Mostly/Yes with numeric values) for partial credit
+GitHub
+GitHub
+. This duplication is risky: a user who somehow uses the old page could end up with an incomplete or mis-scored assessment.
+Fix: Deprecate the old combined PulseCheckPage to avoid confusion. If the new domain-by-domain flow is the intended experience, consider removing client/src/pages/pulse-check.tsx entirely or redirecting it to the new flow. At minimum, update it to support the four answer options for consistency. For instance, it currently mentions “Mostly” and “Started” in the instructions
+GitHub
+, but the UI still only has Yes/Unsure/No buttons (no Started/Mostly)
+GitHub
+ – a clear mismatch. Unifying to a single flow (the new domain-questions with partial credit) will prevent incomplete data scenarios and ensure all users follow the same completion logic.
+3. Align UI Text and Logic with Partial-Credit Scoring
+Issue: Some frontend text and logic still reflect the old scoring system. For example, the “Unsure” option is presented in the old UI with a tooltip saying it won’t affect the score
+GitHub
+, but in the new system “Unsure” should be removed entirely. These remnants could confuse users or even affect scoring if not handled (e.g. if a user selects Unsure in the old flow, it’s treated as null = 0 points, which is effectively “No” now, but the app thinks it’s a special case).
+Fix: Update all user-facing text and controls to match the 0–1 partial credit scheme. Specifically:
+Remove the “Unsure” option from any UI that still has it (the new domain-based page already did this, but ensure no leftover references in tooltips or state).
+Update instructions/tooltips to reflect four choices. For instance, clarify that No = 0, Started = 0.25, Mostly = 0.5, Yes = 1 and that there’s no neutral “unsure” choice now. In the code, we see the new tooltips correctly defined in DomainQuestionsPage
+GitHub
+GitHub
+ – make sure similar language is used everywhere.
+Double-check form logic to handle numeric values. The backend schema and calculation are updated (supporting 0, 0.25, 0.5, 1)
+GitHub
+GitHub
+, but ensure any older boolean checks are removed. For example, the badge display in DomainQuestionsPage maps numeric responses to labels
+GitHub
+GitHub
+ – this is good. Just be sure nothing else (like report generation or validation) is assuming boolean true/false.
+By cleaning up these inconsistencies, you prevent confusion and ensure the Pulse Check answers are interpreted correctly in the final report.
+4. Visualize Zero Scores Clearly in the Radar Chart
+Issue: In the honeycomb radar chart, domains with a score of 0 are not rendered at all – the chart code skips drawing a segment if the score is 0 or undefined
+GitHub
+. This means if a pillar scored 0 (e.g. user answered “No” to all questions in that domain), the honeycomb will have a missing wedge that looks the same as an unanswered domain. Users might think it’s an error or that the domain was not assessed, even though a 0 is a valid score.
+Fix: Modify the radar visualization to distinguish a zero score from an unanswered domain. Options include:
+Draw a minimal segment or outline for zero-valued domains (so at least the spoke lines and label appear, giving a visual indication of the domain). For example, you could render a small dot or a very light filled area at the center for score 0 instead of returning null
+GitHub
+.
+Add a chart legend or tooltip clarifying that a missing segment indicates a score of 0. Currently, the legend only shows domain colors
+GitHub
+, so adding a note like “No filled area = score of 0” would help.
+This change will improve the final report’s clarity – stakeholders will see that a domain was assessed and scored zero, rather than suspecting the data is missing.
+5. Improve Saving of Final Responses to Avoid Incomplete Data
+Issue: It’s possible for a user to answer questions but not have them saved, leading to incomplete results. For instance, if the user closes the browser or navigates away right after answering the last question (without clicking “Get My Results”), the last domain’s responses might never hit the backend. In that case, the database’s pillarScores would be missing that domain, and the final report shows as incomplete (since one domain wasn’t recorded). The code partially addresses this – e.g., it saves responses when navigating backwards
+GitHub
+ – but there’s no guard if the user simply leaves the flow.
+Fix: Add a safeguard to capture or warn about unsaved responses on the final step. Some approaches:
+Auto-save on unmount: In the Pulse Check questions page, use an effect cleanup or window.beforeunload event to detect if the component is unmounting with unanswered changes, and call the save API automatically. This way, even if the user doesn’t explicitly click the final continue, the answers aren’t lost.
+Confirmation prompt: Alternatively, prompt the user if they attempt to leave the page with any domain incomplete. For example, if totalAnswered < 18, show a confirmation “Your answers aren’t saved. Are you sure you want to exit?” Canceling would give them a chance to finish and save properly.
+By ensuring all answers are saved (especially the last domain), you’ll avoid the situation where the assessment is technically “finished” by the user but the backend sees it as incomplete. Once this and the completion trigger are fixed, the final report generation will have all the data it needs.
+By addressing these five areas – completion logic, legacy code cleanup, UI consistency, data visualization, and save safeguards – you will resolve the “assessment is incomplete” error and improve the overall reliability of the Pulse Check assessment and report generation. Each fix reinforces the others, so implementing them in the order above will first tackle the immediate blocker (marking the assessment complete) and then refine the user experience and data integrity issues that could lead to future problems.

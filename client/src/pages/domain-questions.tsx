@@ -36,6 +36,7 @@ export default function DomainQuestionsPage() {
   const { domain, id: assessmentId } = useParams();
   
   const [responses, setResponses] = useState<Record<string, number>>({});
+  const [savedResponses, setSavedResponses] = useState<Record<string, number>>({});
   
   const { data: assessment, isLoading } = useQuery({
     queryKey: ['/api/assessments', assessmentId],
@@ -45,9 +46,66 @@ export default function DomainQuestionsPage() {
   // Load existing responses
   useEffect(() => {
     if (assessment && (assessment as any)?.pulseResponses) {
-      setResponses((assessment as any).pulseResponses);
+      const existingResponses = (assessment as any).pulseResponses;
+      setResponses(existingResponses);
+      setSavedResponses(existingResponses);
     }
   }, [assessment]);
+
+  // Check if there are unsaved changes
+  const hasUnsavedChanges = () => {
+    const currentKeys = Object.keys(responses);
+    const savedKeys = Object.keys(savedResponses);
+    
+    // Check if number of responses changed
+    if (currentKeys.length !== savedKeys.length) return true;
+    
+    // Check if any response value changed
+    return currentKeys.some(key => responses[key] !== savedResponses[key]);
+  };
+
+  // Auto-save on unmount if there are unsaved changes
+  useEffect(() => {
+    return () => {
+      // Only save if there are actual unsaved changes
+      if (hasUnsavedChanges() && assessmentId) {
+        // Use navigator.sendBeacon for reliable background save on unmount
+        const blob = new Blob(
+          [JSON.stringify({ pulseResponses: responses })],
+          { type: 'application/json' }
+        );
+        navigator.sendBeacon(`/api/assessments/${assessmentId}/pulse`, blob);
+      }
+    };
+  }, [responses, savedResponses, assessmentId]);
+
+  // Warn user before closing/navigating with unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges()) {
+        e.preventDefault();
+        e.returnValue = ''; // Required for Chrome
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [responses, savedResponses]);
+
+  const completeAssessment = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("PATCH", `/api/assessments/${assessmentId}/complete`);
+      return response.json();
+    },
+    onError: (error) => {
+      console.error("Assessment completion error:", error);
+      toast({
+        title: "Completion Failed",
+        description: "Unable to finalize your assessment. Please try again or contact support.",
+        variant: "destructive",
+      });
+    },
+  });
 
   const updatePulse = useMutation({
     mutationFn: async (pulseResponses: Record<string, number>) => {
@@ -64,7 +122,9 @@ export default function DomainQuestionsPage() {
         
         // Update local state with the complete merged responses from refetched data
         if ((freshAssessment as any)?.pulseResponses) {
-          setResponses((freshAssessment as any).pulseResponses);
+          const freshResponses = (freshAssessment as any).pulseResponses;
+          setResponses(freshResponses);
+          setSavedResponses(freshResponses); // Update saved state to prevent false unsaved warnings
         }
         
         // Navigate to next domain or results ONLY after state is fully synchronized
@@ -79,8 +139,17 @@ export default function DomainQuestionsPage() {
             navigate(`/pulse/${nextDomain}/intro/${assessmentId}`);
           }
         } else {
-          // All domains completed
-          navigate(`/results/${assessmentId}`);
+          // All domains completed - trigger completion before navigating to results
+          try {
+            await completeAssessment.mutateAsync();
+            // Invalidate cache to get fresh completed assessment
+            await queryClient.invalidateQueries({ queryKey: ['/api/assessments', assessmentId] });
+            navigate(`/results/${assessmentId}`);
+          } catch (completionError) {
+            console.error("Failed to complete assessment:", completionError);
+            // Still navigate to results - the results page has auto-complete fallback
+            navigate(`/results/${assessmentId}`);
+          }
         }
       } catch (refetchError) {
         // Handle refetch failures gracefully - mutation succeeded but can't load fresh data

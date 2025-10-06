@@ -1,22 +1,14 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useLocation, useParams } from "wouter";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import ProgressHeader from "@/components/progress-header";
-import OfflineBanner from "@/components/offline-banner";
-import { ErrorFallback } from "@/components/error-boundary";
-import { QuestionSkeleton } from "@/components/skeleton-loader";
-import { AppHeader } from "@/components/navigation/app-header";
+import { useQuery } from "@tanstack/react-query";
 import { ProtectedRoute } from "@/components/auth/protected-route";
-import { PULSE_QUESTIONS, CORTEX_PILLARS } from "@/lib/cortex";
-import { queryClient, apiRequest, getNetworkError } from "@/lib/queryClient";
-import { getEnhancedErrorMessage } from "@/lib/error-utils";
-import { useToast } from "@/hooks/use-toast";
-import { ChevronLeft, ChevronRight, CheckCircle, XCircle, HelpCircle, Clock, Target } from "lucide-react";
+import { AppHeader } from "@/components/navigation/app-header";
+import ProgressHeader from "@/components/progress-header";
+import { QuestionSkeleton } from "@/components/skeleton-loader";
+import { PULSE_QUESTIONS } from "@/lib/cortex";
+import { Target, Clock } from "lucide-react";
+
+const DOMAIN_ORDER = ['C', 'O', 'R', 'T', 'E', 'X'];
 
 // Group questions by pillar for domain-based flow
 const DOMAIN_GROUPS = [
@@ -28,13 +20,19 @@ const DOMAIN_GROUPS = [
   { pillar: 'X', questions: PULSE_QUESTIONS.filter(q => q.pillar === 'X') }
 ];
 
-export default function PulseCheckPage() {
+/**
+ * Legacy Pulse Check Redirect Page
+ * 
+ * This page exists solely to redirect users from the old /pulse/:id route
+ * to the new domain-based flow (/pulse/:domain/intro/:id or /pulse/:domain/questions/:id).
+ * 
+ * It intelligently determines the starting domain based on:
+ * - Previously answered questions (continues where user left off)
+ * - User's skip intros preference
+ */
+export default function PulseCheckRedirect() {
   const [, navigate] = useLocation();
-  const { toast } = useToast();
   const { id: assessmentId } = useParams();
-  
-  const [responses, setResponses] = useState<Record<string, boolean | null>>({});
-  const [currentDomain, setCurrentDomain] = useState(0);
   
   const { data: assessment, isLoading } = useQuery({
     queryKey: ['/api/assessments', assessmentId],
@@ -67,412 +65,29 @@ export default function PulseCheckPage() {
     }
   }, [assessment, assessmentId, navigate]);
 
-  const updatePulse = useMutation({
-    mutationFn: async (pulseResponses: Record<string, boolean | null>) => {
-      const response = await apiRequest("PATCH", `/api/assessments/${assessmentId}/pulse`, { pulseResponses });
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/assessments', assessmentId] });
-      navigate(`/results/${assessmentId}`);
-    },
-    onError: (error) => {
-      console.error("Pulse check error:", error);
-      const errorType = getNetworkError(error);
-      
-      let title = "Save Failed";
-      let description = "Unable to save your responses. Please try again.";
-      
-      switch (errorType) {
-        case 'offline':
-          title = "No Internet Connection";
-          description = "Please check your connection and try again when you're back online.";
-          break;
-        case 'network':
-          title = "Connection Problem";
-          description = "Unable to reach our servers. Please check your connection and try again.";
-          break;
-        case 'server':
-          title = "Server Issue";
-          description = "Our servers are experiencing issues. Please try again in a moment.";
-          break;
-      }
-      
-      // Enhance error message with incident ID if available
-      const enhancedError = getEnhancedErrorMessage(error, title, description);
-      
-      toast({
-        title: enhancedError.title,
-        description: enhancedError.description,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleResponseChange = (questionId: string, value: boolean | null) => {
-    setResponses(prev => ({
-      ...prev,
-      [questionId]: value
-    }));
-  };
-
-  const handleNext = () => {
-    if (currentDomain < DOMAIN_GROUPS.length - 1) {
-      setCurrentDomain(prev => prev + 1);
-    }
-  };
-
-  const handlePrevious = () => {
-    if (currentDomain > 0) {
-      setCurrentDomain(prev => prev - 1);
-    }
-  };
-
-  const handleComplete = () => {
-    // Send raw responses (true/false/null) to backend for proper scoring calculation
-    // Backend will calculate pillar scores (count of true) and confidence gaps (count of null)
-    updatePulse.mutate(responses);
-  };
-
-  const currentGroup = DOMAIN_GROUPS[currentDomain];
-  const currentPillar = CORTEX_PILLARS[currentGroup.pillar as keyof typeof CORTEX_PILLARS];
-  const progress = ((currentDomain + 1) / DOMAIN_GROUPS.length) * 100;
-  const totalAnswered = Object.keys(responses).length;
-  const isLastDomain = currentDomain === DOMAIN_GROUPS.length - 1;
-  
-  // Get current domain answers
-  const currentDomainAnswers = currentGroup.questions.filter(q => 
-    responses[q.id] !== undefined
-  ).length;
-  const currentDomainTotal = currentGroup.questions.length;
-
-  if (isLoading) {
-    return (
-      <ProtectedRoute requireAuth>
-        <div className="min-h-screen bg-background">
-          <AppHeader />
-          <ProgressHeader currentStep={3} />
-          <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="text-center mb-8">
-              <div className="flex items-center justify-center space-x-2 mb-4">
-                <Target className="h-6 w-6 text-primary" />
-                <h1 className="text-3xl font-display font-bold text-foreground">Pulse Check</h1>
-                <Clock className="h-5 w-5 text-muted-foreground" />
-              </div>
-              <p className="text-lg text-muted-foreground mb-4 font-ui">
-                Loading your assessment...
-              </p>
-            </div>
-            <div className="space-y-8">
-              <QuestionSkeleton />
-              <QuestionSkeleton />
-              <QuestionSkeleton />
-            </div>
-          </main>
-        </div>
-      </ProtectedRoute>
-    );
-  }
-
-  if (!assessment) {
-    return (
-      <ProtectedRoute requireAuth>
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <Card className="w-full max-w-md mx-4">
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <h1 className="text-2xl font-bold text-foreground mb-2">Assessment Not Found</h1>
-                <p className="text-muted-foreground mb-4">
-                  The assessment you're looking for doesn't exist or has been removed.
-                </p>
-                <Button onClick={() => navigate("/")} data-testid="button-start-new">
-                  Start New Assessment
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </ProtectedRoute>
-    );
-  }
-
+  // Show loading state while redirecting
   return (
     <ProtectedRoute requireAuth>
       <div className="min-h-screen bg-background">
         <AppHeader />
-        <OfflineBanner 
-          onRetry={() => window.location.reload()} 
-          showRetryButton={true}
-        />
         <ProgressHeader currentStep={3} />
-      
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <Target className="h-6 w-6 text-primary" />
-            <h1 className="text-3xl font-display font-bold text-foreground">Pulse Check — 18 Questions, 6 Domains</h1>
-            <Clock className="h-5 w-5 text-muted-foreground" />
-          </div>
-          <div className="mb-4 space-y-3">
-            <p className="text-lg text-muted-foreground font-ui">
-              Mark <strong>"Yes"</strong> only if the statement is fully true today (completely implemented) and you could point to evidence if asked. Use <strong>"Mostly"</strong> if almost complete, <strong>"Started"</strong> if work has begun, or <strong>"No"</strong> if not in place. Your domain score is 0–3 based on partial credit.
-            </p>
-            
-            <div className="bg-primary/5 rounded-lg p-4 border border-primary/15">
-              <p className="text-base text-foreground mb-3 font-ui">
-                The six domains form the <strong className="text-primary text-lg tracking-wider">CORTEX</strong> framework:
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm font-ui">
-                <div><strong className="text-primary">C</strong> - Clarity & Command</div>
-                <div><strong className="text-primary">O</strong> - Operations & Data</div>
-                <div><strong className="text-primary">R</strong> - Risk/Trust/Security</div>
-                <div><strong className="text-primary">T</strong> - Talent & Culture</div>
-                <div><strong className="text-primary">E</strong> - Ecosystem & Infrastructure</div>
-                <div><strong className="text-primary">X</strong> - Experimentation & Evolution</div>
-              </div>
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center space-x-2 mb-4">
+              <Target className="h-6 w-6 text-primary" />
+              <h1 className="text-3xl font-display font-bold text-foreground">Preparing Pulse Check...</h1>
+              <Clock className="h-5 w-5 text-muted-foreground" />
             </div>
-          </div>
-          <div className="max-w-xl mx-auto mb-6 p-4 bg-primary/5 rounded-lg border border-primary/15">
-            <h3 className="font-semibold text-primary mb-2 font-ui">A Note on Honesty</h3>
-            <p className="text-sm text-foreground/80 font-ui">
-              Treat this as a mirror, not a performance review. The most useful results come from candid answers.
+            <p className="text-lg text-muted-foreground mb-4 font-ui">
+              {isLoading ? "Loading your assessment..." : "Redirecting to domain flow..."}
             </p>
           </div>
-          <div className="space-y-3">
-            <Progress value={progress} className="w-full max-w-md mx-auto" />
-            <p className="text-sm text-muted-foreground font-ui">
-              Domain {currentDomain + 1} of {DOMAIN_GROUPS.length} • {totalAnswered}/18 total answered
-            </p>
+          <div className="space-y-8">
+            <QuestionSkeleton />
+            <QuestionSkeleton />
+            <QuestionSkeleton />
           </div>
-        </div>
-
-        {/* Current Domain */}
-        <Card className="mb-6 sm:mb-8">
-          <CardContent className="p-6 sm:p-8">
-            {/* Domain Header */}
-            <div className="mb-8 text-center">
-              <div className="flex items-center justify-center space-x-4 mb-4">
-                <div className="bg-primary text-primary-foreground p-3 rounded-full">
-                  <span className="text-2xl font-bold">{currentGroup.pillar}</span>
-                </div>
-                <div className="text-left">
-                  <h2 className="text-xl sm:text-2xl font-display font-bold text-foreground">
-                    <span className="sm:hidden">{currentPillar.name.split(' ')[0]}</span>
-                    <span className="hidden sm:inline">{currentPillar.name}</span>
-                  </h2>
-                  <p className="text-sm sm:text-base text-muted-foreground font-ui">{currentPillar.description}</p>
-                </div>
-              </div>
-              <Badge variant="secondary" className="text-sm">
-                {currentDomainAnswers}/{currentDomainTotal} questions answered
-              </Badge>
-            </div>
-
-            {/* Domain Questions */}
-            <div className="space-y-8">
-              {currentGroup.questions.map((question) => (
-                <div key={question.id} className="border border-border rounded-lg p-6 sm:p-6 bg-card">
-                  <h3 className="text-lg sm:text-lg font-ui font-semibold mb-6" data-testid={`question-${question.id}`}>
-                    {question.id}. {question.text}
-                  </h3>
-                  
-                  <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-4 sm:space-x-4">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant={responses[question.id] === false ? "accent" : "outline"}
-                            size="lg"
-                            onClick={() => handleResponseChange(question.id, false)}
-                            className="flex items-center justify-center space-x-2 min-w-[120px] sm:min-w-[100px] font-ui"
-                            data-testid={`button-no-${question.id}`}
-                          >
-                            <XCircle className="h-5 w-5" />
-                            <span>No</span>
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>This statement is not true for your organization today</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                    
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant={responses[question.id] === null ? "secondary" : "outline"}
-                            size="lg"
-                            onClick={() => handleResponseChange(question.id, null)}
-                            className="flex items-center justify-center space-x-2 min-w-[120px] sm:min-w-[100px] font-ui"
-                            data-testid={`button-unsure-${question.id}`}
-                          >
-                            <HelpCircle className="h-5 w-5" />
-                            <span>Unsure</span>
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Unsure means you're not confident either way. We'll flag it as a follow-up and it won't affect your score.</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                    
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant={responses[question.id] === true ? "default" : "outline"}
-                            size="lg"
-                            onClick={() => handleResponseChange(question.id, true)}
-                            className="flex items-center justify-center space-x-2 min-w-[120px] sm:min-w-[100px] font-ui"
-                            data-testid={`button-yes-${question.id}`}
-                          >
-                            <CheckCircle className="h-5 w-5" />
-                            <span>Yes</span>
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>This statement is true across your organization today and you could point to evidence</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                  
-                  {responses[question.id] !== undefined && (
-                    <div className="text-center mt-4">
-                      <Badge 
-                        variant={responses[question.id] === true ? "default" : responses[question.id] === false ? "accent" : "secondary"}
-                        className="text-sm"
-                      >
-                        {responses[question.id] === true ? 'Yes' : responses[question.id] === false ? 'No' : 'Unsure'}
-                      </Badge>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Navigation */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
-          <div className="flex justify-between sm:justify-start items-center">
-            <Button 
-              variant="outline" 
-              onClick={handlePrevious}
-              disabled={currentDomain === 0}
-              className="flex items-center space-x-2 font-ui"
-              data-testid="button-previous"
-            >
-              <ChevronLeft className="h-4 w-4" />
-              <span className="hidden sm:inline">Previous Domain</span>
-              <span className="sm:hidden">Previous</span>
-            </Button>
-            
-            <div className="text-center sm:hidden">
-              <p className="text-xs text-muted-foreground font-ui">
-                {currentDomainAnswers}/{currentDomainTotal} • {totalAnswered}/18 total
-              </p>
-            </div>
-            
-            {isLastDomain ? (
-              <Button 
-                onClick={handleComplete}
-                disabled={totalAnswered < 18 || updatePulse.isPending}
-                size="lg"
-                className="flex items-center space-x-2 sm:hidden font-ui"
-                data-testid="button-complete-mobile"
-              >
-                <span>{updatePulse.isPending ? "Generating..." : "Get Results"}</span>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            ) : (
-              <Button 
-                onClick={handleNext}
-                size="lg"
-                className="flex items-center space-x-2 sm:hidden font-ui"
-                data-testid="button-next-mobile"
-              >
-                <span>Next</span>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-          
-          <div className="text-center hidden sm:block">
-            <p className="text-sm text-muted-foreground">
-              {currentDomainAnswers}/{currentDomainTotal} domain questions • {totalAnswered}/18 total
-            </p>
-          </div>
-          
-          <div className="hidden sm:block">
-            {isLastDomain ? (
-              <Button 
-                onClick={handleComplete}
-                disabled={totalAnswered < 18 || updatePulse.isPending}
-                size="lg"
-                className="flex items-center space-x-2"
-                data-testid="button-complete"
-              >
-                <span>{updatePulse.isPending ? "Generating Results..." : "Get My Results"}</span>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            ) : (
-              <Button 
-                onClick={handleNext}
-                size="lg"
-                className="flex items-center space-x-2"
-                data-testid="button-next"
-              >
-                <span>Next Domain</span>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {/* Domain Overview */}
-        <div className="mt-8 flex justify-center">
-          <div className="flex space-x-1 sm:space-x-2">
-            {DOMAIN_GROUPS.map((group, index) => {
-              const pillar = CORTEX_PILLARS[group.pillar as keyof typeof CORTEX_PILLARS];
-              const domainAnswered = group.questions.filter(q => responses[q.id] !== undefined).length;
-              const isCompleted = domainAnswered === group.questions.length;
-              const isCurrent = index === currentDomain;
-              
-              return (
-                <div 
-                  key={group.pillar}
-                  className={`flex flex-col items-center p-2 sm:p-3 rounded-lg border-2 transition-all ${
-                    isCurrent 
-                      ? 'border-primary bg-primary/10' 
-                      : isCompleted 
-                      ? 'border-green-500 bg-green-50 dark:bg-green-950' 
-                      : 'border-border bg-muted/30'
-                  }`}
-                >
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                    isCurrent 
-                      ? 'bg-primary text-primary-foreground'
-                      : isCompleted
-                      ? 'bg-green-500 text-white'
-                      : 'bg-muted text-muted-foreground'
-                  }`}>
-                    {group.pillar}
-                  </div>
-                  <div className="text-xs text-center mt-1 max-w-[80px]">
-                    {pillar.name.split(' ')[0]}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {domainAnswered}/3
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </main>
+        </main>
       </div>
     </ProtectedRoute>
   );
