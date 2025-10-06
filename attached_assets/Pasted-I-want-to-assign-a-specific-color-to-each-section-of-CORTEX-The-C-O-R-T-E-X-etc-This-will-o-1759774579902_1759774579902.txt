@@ -1,0 +1,62 @@
+I want to assign a specific color to each section of CORTEX (The C, O, R, T, E, X, etc). This will only be used in places that are specific to one area of CORTEX, for instance, the 6 buttons around the radar/hex chart, each should be the color of that part of cortex. And the headings at the top of each page related to that specific Area (CORTEX), should match the corresponding colors of that area. Use your best judgement to make it look good, but here is the color code. Don't change things that aren't related to one of the 6 sepcific setions of CORTEX. 
+
+Here’s the copy-paste friendly CORTEX domain color map (no tables), including light and dark tokens.
+CORTEX Domain → Color Map (hex)
+C — Clarity & Command
+Primary Accent (500): #0C63D6
+Light Tint (50–100): #E9F3FF
+Dark Accent (500-dark): #5592E2
+O — Operations & Data
+Primary Accent (500): #007561
+Light Tint (50–100): #E6F4F1
+Dark Accent (500-dark): #339181
+R — Risk / Trust / Security
+Primary Accent (500): #750014
+Light Tint (50–100): #FDEBEC
+Dark Accent (500-dark): #9E4C5A
+T — Talent & Culture
+Primary Accent (500): #FFA72E (lightened Orange Peel)
+Light Tint (50–100): #FFF4E5
+Dark Accent (500-dark): #FFB347
+E — Ecosystem & Infrastructure
+Primary Accent (500): #339181 (teal derived from Pine Green family)
+Light Tint (50–100): #DDF2EF
+Dark Accent (500-dark): #55A69A
+X — Experimentation & Evolution
+Primary Accent (500): #69B3FF
+Light Tint (50–100): #D9ECFF
+Dark Accent (500-dark): #A0CCFF
+SCSS Tokens (drop-in)
+/* C — Clarity & Command */
+$domain-c-500:      #0C63D6;
+$domain-c-50:       #E9F3FF;
+$domain-c-500-dark: #5592E2;
+
+/* O — Operations & Data */
+$domain-o-500:      #007561;
+$domain-o-50:       #E6F4F1;
+$domain-o-500-dark: #339181;
+
+/* R — Risk / Trust / Security */
+$domain-r-500:      #750014;
+$domain-r-50:       #FDEBEC;
+$domain-r-500-dark: #9E4C5A;
+
+/* T — Talent & Culture */
+$domain-t-500:      #FFA72E;
+$domain-t-50:       #FFF4E5;
+$domain-t-500-dark: #FFB347;
+
+/* E — Ecosystem & Infrastructure */
+$domain-e-500:      #339181;
+$domain-e-50:       #DDF2EF;
+$domain-e-500-dark: #55A69A;
+
+/* X — Experimentation & Evolution */
+$domain-x-500:      #69B3FF;
+$domain-x-50:       #D9ECFF;
+$domain-x-500-dark: #A0CCFF;
+Quick usage rules
+Use 50 tints for backgrounds/badges; use 500 for strokes, icons, and chart series.
+In Dark Mode, swap to the 500-dark accents; backgrounds remain dark neutrals.
+Keep semantic colors as defined (Success = Pine Green, Warning = Orange Peel, Error = Rosewood, Info = Baby Blue/Cornflower). Do not use domain colors for status banners.
