@@ -65,7 +65,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           {showNav && (
             <nav className="hidden md:flex items-center space-x-1">
               <Link href="/">
-                <Button variant="ghost" size="sm" className="font-ui font-medium text-accent hover:text-accent/80 transition-colors" data-testid="nav-home-desktop">
+                <Button variant="ghost" size="sm" className="font-ui font-medium transition-colors" style={{ color: '#011627' }} data-testid="nav-home-desktop">
                   <Home className="h-4 w-4 mr-2" />
                   Home
                 </Button>
@@ -115,7 +115,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               )}
               
               <Link href={assessmentPath}>
-                <Button variant="ghost" size="sm" className="font-ui font-medium text-accent hover:text-accent/80 transition-colors" data-testid="nav-assessment">
+                <Button variant="ghost" size="sm" className="font-ui font-medium transition-colors" style={{ color: '#011627' }} data-testid="nav-assessment">
                   <BarChart3 className="h-4 w-4 mr-2" />
                   {latestAssessment ? 'My Results' : 'Assessment'}
                 </Button>
@@ -123,13 +123,13 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               {(userProfile?.role === 'admin' || userProfile?.role === 'super_admin') && (
                 <>
                   <Link href="/admin-dashboard">
-                    <Button variant="ghost" size="sm" className="font-ui font-medium text-accent hover:text-accent/80 transition-colors" data-testid="nav-admin-dashboard">
+                    <Button variant="ghost" size="sm" className="font-ui font-medium transition-colors" style={{ color: '#011627' }} data-testid="nav-admin-dashboard">
                       <LayoutDashboard className="h-4 w-4 mr-2" />
                       Admin Dashboard
                     </Button>
                   </Link>
                   <Link href="/user-management">
-                    <Button variant="ghost" size="sm" className="font-ui font-medium text-accent hover:text-accent/80 transition-colors" data-testid="nav-user-management">
+                    <Button variant="ghost" size="sm" className="font-ui font-medium transition-colors" style={{ color: '#011627' }} data-testid="nav-user-management">
                       <Users className="h-4 w-4 mr-2" />
                       User Management
                     </Button>
@@ -203,7 +203,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                   variant="ghost" 
                   size="sm" 
                   onClick={onHelpClick}
-                  className="hidden md:flex text-accent hover:text-accent/80 transition-colors"
+                  className="hidden md:flex transition-colors"
+                  style={{ color: '#011627' }}
                   aria-haspopup="dialog"
                   data-testid="button-help-header"
                 >
@@ -215,7 +216,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                   variant="ghost" 
                   size="icon" 
                   onClick={onHelpClick}
-                  className="md:hidden text-accent hover:text-accent/80"
+                  className="md:hidden transition-colors"
+                  style={{ color: '#011627' }}
                   aria-haspopup="dialog"
                   aria-label="Help and methodology"
                   data-testid="button-help-icon-header"
