@@ -35,15 +35,15 @@ import {
 } from "lucide-react";
 
 const METHODOLOGY_CONTENT = {
-  title: "The Design Thinking Behind CORTEX",
+  title: "About CORTEX",
   sections: [
+    {
+      title: "What CORTEX Is and Why It Exists",
+      content: "CORTEX™ is an executive AI readiness assessment designed to help leadership teams evaluate their organization's preparedness for AI adoption. Rather than producing a simple report card, CORTEX generates actionable insights tailored to your specific operating context. It exists to bridge the gap between AI strategy discussions and concrete next steps, giving executives a shared language for assessing capability gaps and prioritizing investments across six critical domains."
+    },
     {
       title: "Why We Separate Context from Capability",
       content: "Your organization's AI readiness has two distinct dimensions: what you're capable of doing (pulse check) and the environment you operate in (context profile). By assessing these separately, we ensure your maturity scores reflect genuine organizational capability while your context shapes the specific guidance and safeguards you receive."
-    },
-    {
-      title: "The Intentionality of Binary Questions", 
-      content: "Each pulse check item is a simple yes/no decision about observable practices. This design eliminates scoring ambiguity and focuses leadership discussions on concrete next steps rather than debating gradations. Three binary choices per domain create a clear 0-3 scale that's immediately actionable."
     },
     {
       title: "How Context and Capability Work Together",
@@ -338,7 +338,7 @@ export default function HomePage() {
                 data-testid="button-view-methodology"
               >
                 <BookOpen className="h-3 w-3" />
-                Why it's designed this way
+                About CORTEX
               </Button>
             </div>
           </div>
