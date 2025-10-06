@@ -371,15 +371,15 @@ export default function DomainQuestionsPage() {
               </div>
 
               {/* Domain Questions */}
-              <div className="space-y-8">
-                {currentGroup.questions.map((question) => (
-                  <div key={question.id} className="border border-border rounded-lg p-6 sm:p-6 bg-card">
-                    <h3 className="text-lg sm:text-lg font-ui font-semibold mb-6" data-testid={`question-${question.id}`}>
-                      {question.id}. {question.text}
-                    </h3>
-                    
-                    <div className="grid grid-cols-2 sm:flex sm:flex-row sm:justify-center gap-3 sm:gap-4">
-                      <TooltipProvider>
+              <TooltipProvider>
+                <div className="space-y-8">
+                  {currentGroup.questions.map((question) => (
+                    <div key={question.id} className="border border-border rounded-lg p-6 sm:p-6 bg-card">
+                      <h3 className="text-lg sm:text-lg font-ui font-semibold mb-6" data-testid={`question-${question.id}`}>
+                        {question.id}. {question.text}
+                      </h3>
+                      
+                      <div className="grid grid-cols-2 sm:flex sm:flex-row sm:justify-center gap-3 sm:gap-4">
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
@@ -397,9 +397,7 @@ export default function DomainQuestionsPage() {
                             <p>This is not in place today</p>
                           </TooltipContent>
                         </Tooltip>
-                      </TooltipProvider>
-                      
-                      <TooltipProvider>
+                        
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
@@ -417,9 +415,7 @@ export default function DomainQuestionsPage() {
                             <p>Work has begun and first concrete steps exist, but not yet largely implemented</p>
                           </TooltipContent>
                         </Tooltip>
-                      </TooltipProvider>
-                      
-                      <TooltipProvider>
+                        
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
@@ -437,9 +433,7 @@ export default function DomainQuestionsPage() {
                             <p>This is largely implemented and working in practice; only minor gaps remain</p>
                           </TooltipContent>
                         </Tooltip>
-                      </TooltipProvider>
-                      
-                      <TooltipProvider>
+                        
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
@@ -457,8 +451,7 @@ export default function DomainQuestionsPage() {
                             <p>Fully true today across the organization, with evidence we could cite</p>
                           </TooltipContent>
                         </Tooltip>
-                      </TooltipProvider>
-                    </div>
+                      </div>
                     
                     {responses[question.id] !== undefined && (
                       <div className="text-center mt-4">
@@ -477,9 +470,10 @@ export default function DomainQuestionsPage() {
                         </Badge>
                       </div>
                     )}
-                  </div>
-                ))}
-              </div>
+                    </div>
+                  ))}
+                </div>
+              </TooltipProvider>
             </CardContent>
           </Card>
 
