@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { useLocation } from 'wouter';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { AppHeader } from '@/components/navigation/app-header';
 import { Button } from '@/components/ui/button';
@@ -55,6 +56,7 @@ type CreateCohortData = z.infer<typeof createCohortSchema>;
 
 export default function AdminDashboard() {
   const { toast } = useToast();
+  const [, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState('cohorts');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editingCohort, setEditingCohort] = useState<Cohort | null>(null);
@@ -363,6 +365,7 @@ export default function AdminDashboard() {
                                     variant="outline" 
                                     size="sm" 
                                     className="flex-1"
+                                    onClick={() => navigate('/user-management')}
                                     data-testid={`button-view-users-${cohort.id}`}
                                   >
                                     View Users
