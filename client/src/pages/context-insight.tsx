@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Loader2, Brain, FileText, CheckCircle, AlertTriangle, Copy, ArrowRight, ChevronRight } from "lucide-react";
+import { AlertCircle, Loader2, FileText, CheckCircle, AlertTriangle, Copy, ArrowRight, ChevronRight } from "lucide-react";
 import { generateSituationAssessmentBrief, type SituationAssessmentData } from "@/lib/pdf-generator";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { LoadingTips } from "@/components/situation-assessment/LoadingTips";
