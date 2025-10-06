@@ -21,6 +21,117 @@ interface GuideStep {
 
 type GuideWithSteps = import("@/lib/micro-guides").MicroGuide & { steps?: GuideStep[] };
 
+// Priority Move Item Component
+interface PriorityMoveItemProps {
+  move: any;
+}
+
+function PriorityMoveItem({ move }: PriorityMoveItemProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  return (
+    <Collapsible
+      open={isExpanded}
+      onOpenChange={setIsExpanded}
+    >
+      <div className="bg-primary/5 rounded-lg border border-primary/10">
+        <CollapsibleTrigger asChild>
+          <Button
+            variant="ghost"
+            className="w-full p-3 h-auto hover-elevate active-elevate-2 justify-start"
+            data-testid={`button-expand-move-${move.id}`}
+          >
+            <div className="flex items-start justify-between w-full">
+              <div className="flex items-center space-x-2">
+                <Badge variant="outline" className="text-xs">
+                  #{move.rank}
+                </Badge>
+                <span className="font-medium text-sm font-ui">{move.title}</span>
+              </div>
+              <ChevronDown 
+                className={`h-3 w-3 text-muted-foreground flex-shrink-0 mt-1 transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
+              />
+            </div>
+          </Button>
+        </CollapsibleTrigger>
+        
+        {/* Always visible summary */}
+        {move.explain && !isExpanded && (
+          <div className="px-3 pb-3 text-xs text-muted-foreground">
+            <div className="grid grid-cols-2 gap-2">
+              <div>Gap Impact: <span className="font-medium">+{(move.explain.gapBoost * 100).toFixed(0)}%</span></div>
+              <div>Context Fit: <span className="font-medium">+{(move.explain.profileBoost * 100).toFixed(0)}%</span></div>
+            </div>
+            {move.explain.triggeringDimensions && move.explain.triggeringDimensions.length > 0 && (
+              <p className="text-xs mt-1 text-primary/70">
+                <strong>Why prioritized:</strong> {move.explain.triggeringDimensions.join(', ').replace(/_/g, ' ')}
+              </p>
+            )}
+          </div>
+        )}
+        
+        {/* Expanded content */}
+        <CollapsibleContent className="px-3 pb-3">
+          <div className="space-y-3 pt-2 border-t border-primary/10">
+            {/* Description */}
+            {move.description && (
+              <div>
+                <h5 className="text-xs font-semibold mb-1 text-foreground">What This Means</h5>
+                <p className="text-xs text-muted-foreground leading-relaxed">{move.description}</p>
+              </div>
+            )}
+            
+            {/* Why It Matters */}
+            {move.whyItMatters && (
+              <div>
+                <h5 className="text-xs font-semibold mb-1 text-foreground">Why It Matters</h5>
+                <p className="text-xs text-muted-foreground leading-relaxed">{move.whyItMatters}</p>
+              </div>
+            )}
+            
+            {/* Metrics */}
+            {move.explain && (
+              <div>
+                <h5 className="text-xs font-semibold mb-1 text-foreground">Priority Score</h5>
+                <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                  <div>Gap Impact: <span className="font-medium text-foreground">+{(move.explain.gapBoost * 100).toFixed(0)}%</span></div>
+                  <div>Context Fit: <span className="font-medium text-foreground">+{(move.explain.profileBoost * 100).toFixed(0)}%</span></div>
+                </div>
+              </div>
+            )}
+            
+            {/* Playbook Resources */}
+            {move.playbook && move.playbook.length > 0 && (
+              <div>
+                <h5 className="text-xs font-semibold mb-2 text-foreground flex items-center gap-1">
+                  <BookOpen className="h-3 w-3" />
+                  Playbook Resources
+                </h5>
+                <div className="flex flex-wrap gap-2">
+                  {move.playbook.map((resource: any, idx: number) => (
+                    <Badge 
+                      key={idx}
+                      variant="outline"
+                      className="text-xs cursor-pointer hover-elevate"
+                      data-testid={`badge-resource-${move.id}-${idx}`}
+                    >
+                      {resource.type === 'template' && <CheckSquare className="h-3 w-3 mr-1" />}
+                      {resource.type === 'guide' && <BookOpen className="h-3 w-3 mr-1" />}
+                      {resource.type === 'checklist' && <CheckSquare className="h-3 w-3 mr-1" />}
+                      {resource.type === 'framework' && <Target className="h-3 w-3 mr-1" />}
+                      {resource.label}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
+  );
+}
+
 // MicroGuide Dialog Component
 interface MicroGuideDialogProps {
   guide: MicroGuide | GuideWithSteps;
@@ -511,31 +622,7 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
               </h4>
               <div className="space-y-2">
                 {priorityMoves.slice(0, 2).map((move) => (
-                  <div key={move.id} className="bg-primary/5 p-3 rounded-lg border border-primary/10">
-                    <div className="flex items-start justify-between mb-1">
-                      <div className="flex items-center space-x-2">
-                        <Badge variant="outline" className="text-xs">
-                          #{move.rank}
-                        </Badge>
-                        <span className="font-medium text-sm font-ui">{move.title}</span>
-                      </div>
-                      <ArrowRight className="h-3 w-3 text-muted-foreground flex-shrink-0 mt-1" />
-                    </div>
-                    
-                    {move.explain && (
-                      <div className="text-xs text-muted-foreground mt-2">
-                        <div className="grid grid-cols-2 gap-2 text-xs">
-                          <div>Gap Impact: <span className="font-medium">+{(move.explain.gapBoost * 100).toFixed(0)}%</span></div>
-                          <div>Context Fit: <span className="font-medium">+{(move.explain.profileBoost * 100).toFixed(0)}%</span></div>
-                        </div>
-                        {move.explain.triggeringDimensions && move.explain.triggeringDimensions.length > 0 && (
-                          <p className="text-xs mt-1 text-primary/70">
-                            <strong>Why prioritized:</strong> {move.explain.triggeringDimensions.join(', ').replace(/_/g, ' ')}
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                  <PriorityMoveItem key={move.id} move={move} />
                 ))}
               </div>
             </div>

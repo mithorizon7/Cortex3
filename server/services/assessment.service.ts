@@ -542,7 +542,7 @@ export class AssessmentService {
       return boost;
     };
     
-    // Sample moves library with base scores and tags
+    // Sample moves library with base scores, tags, descriptions, and playbooks
     const movesLibrary = [
       // Risk & Trust moves
       {
@@ -550,14 +550,24 @@ export class AssessmentService {
         pillar: 'R',
         title: 'Publish AI incident response runbook',
         baseScore: 0.70,
-        tags: ['regulatory', 'brand_risk']
+        tags: ['regulatory', 'brand_risk'],
+        description: 'Create a documented process for handling AI system failures, model drift, or unexpected outputs that could impact users or brand reputation.',
+        playbook: [
+          { type: 'template', label: 'Incident Response Template', url: '#' },
+          { type: 'guide', label: 'Tabletop Exercise Guide', url: '#' }
+        ]
       },
       {
         id: 'privacy_controls',
         pillar: 'R',
         title: 'Implement privacy and data governance controls',
         baseScore: 0.65,
-        tags: ['data_governance', 'regulatory']
+        tags: ['data_governance', 'regulatory'],
+        description: 'Establish policies and technical controls for handling sensitive data in AI systems, including data minimization, consent management, and audit trails.',
+        playbook: [
+          { type: 'checklist', label: 'Privacy Assessment Checklist', url: '#' },
+          { type: 'template', label: 'Data Governance Policy', url: '#' }
+        ]
       },
       
       // Operations moves
@@ -566,14 +576,24 @@ export class AssessmentService {
         pillar: 'O',
         title: 'Deploy AI monitoring and observability dashboard',
         baseScore: 0.60,
-        tags: ['scale', 'edge']
+        tags: ['scale', 'edge'],
+        description: 'Set up real-time monitoring for model performance, latency, accuracy drift, and resource utilization across your AI systems.',
+        playbook: [
+          { type: 'guide', label: 'Metrics Selection Guide', url: '#' },
+          { type: 'template', label: 'Dashboard Template', url: '#' }
+        ]
       },
       {
         id: 'human_oversight',
         pillar: 'O', 
         title: 'Establish human oversight protocols',
         baseScore: 0.68,
-        tags: ['safety', 'regulatory']
+        tags: ['safety', 'regulatory'],
+        description: 'Define when and how humans review AI decisions, especially for high-stakes applications or regulated environments.',
+        playbook: [
+          { type: 'framework', label: 'Human-in-Loop Framework', url: '#' },
+          { type: 'guide', label: 'Escalation Procedures', url: '#' }
+        ]
       },
       
       // Clarity & Command moves
@@ -582,7 +602,12 @@ export class AssessmentService {
         pillar: 'C',
         title: 'Establish AI governance framework',
         baseScore: 0.72,
-        tags: ['regulatory', 'readiness_building']
+        tags: ['regulatory', 'readiness_building'],
+        description: 'Create clear decision rights, approval processes, and accountability structures for AI initiatives across the organization.',
+        playbook: [
+          { type: 'template', label: 'Governance Charter', url: '#' },
+          { type: 'guide', label: 'Stakeholder Mapping', url: '#' }
+        ]
       },
       
       // Talent & Culture moves
@@ -591,7 +616,12 @@ export class AssessmentService {
         pillar: 'T',
         title: 'Launch AI skills development program',
         baseScore: 0.63,
-        tags: ['readiness_building']
+        tags: ['readiness_building'],
+        description: 'Build internal AI literacy and capabilities through structured training, hands-on projects, and knowledge sharing.',
+        playbook: [
+          { type: 'guide', label: 'Skills Assessment Tool', url: '#' },
+          { type: 'template', label: 'Training Curriculum', url: '#' }
+        ]
       },
       
       // Ecosystem & Infrastructure moves
@@ -600,14 +630,24 @@ export class AssessmentService {
         pillar: 'E',
         title: 'Deploy MLOps platform and tooling',
         baseScore: 0.66,
-        tags: ['scale', 'readiness_building', 'cost_control']
+        tags: ['scale', 'readiness_building', 'cost_control'],
+        description: 'Implement infrastructure for versioning models, automating deployments, and managing the ML lifecycle at scale.',
+        playbook: [
+          { type: 'guide', label: 'Tool Selection Guide', url: '#' },
+          { type: 'checklist', label: 'Platform Readiness', url: '#' }
+        ]
       },
       {
         id: 'edge_deployment',
         pillar: 'E',
         title: 'Implement edge AI deployment capabilities',
         baseScore: 0.64,
-        tags: ['edge', 'agility']
+        tags: ['edge', 'agility'],
+        description: 'Enable AI models to run on edge devices for lower latency, offline operation, or data residency requirements.',
+        playbook: [
+          { type: 'guide', label: 'Edge Architecture Patterns', url: '#' },
+          { type: 'template', label: 'Deployment Checklist', url: '#' }
+        ]
       },
       
       // Experimentation moves
@@ -616,9 +656,56 @@ export class AssessmentService {
         pillar: 'X',
         title: 'Set up rapid AI prototyping environment',
         baseScore: 0.61,
-        tags: ['agility', 'data_advantage']
+        tags: ['agility', 'data_advantage'],
+        description: 'Create a sandbox environment where teams can quickly test AI concepts with production-like data and infrastructure.',
+        playbook: [
+          { type: 'template', label: 'Sandbox Setup Guide', url: '#' },
+          { type: 'guide', label: 'Experiment Tracking', url: '#' }
+        ]
       }
     ];
+    
+    // Helper to generate contextual "why it matters" explanations
+    const getWhyItMatters = (tags: string[], profileBoost: number): string => {
+      const reasons: string[] = [];
+      
+      if (tags.includes('regulatory') && p.regulatory_intensity >= 3) {
+        reasons.push('your high regulatory requirements');
+      }
+      if (tags.includes('safety') && p.safety_criticality >= 3) {
+        reasons.push('your safety-critical applications');
+      }
+      if (tags.includes('brand_risk') && p.brand_exposure >= 3) {
+        reasons.push('your high brand exposure');
+      }
+      if (tags.includes('data_governance') && p.data_sensitivity >= 3) {
+        reasons.push('your sensitive data requirements');
+      }
+      if (tags.includes('edge') && (p.edge_operations || p.latency_edge >= 3)) {
+        reasons.push('your edge/latency needs');
+      }
+      if (tags.includes('scale') && p.scale_throughput >= 3) {
+        reasons.push('your high-scale environment');
+      }
+      if (tags.includes('data_advantage') && p.data_advantage >= 3) {
+        reasons.push('your strong data assets');
+      }
+      if (tags.includes('readiness_building') && p.build_readiness <= 1) {
+        reasons.push('your current readiness gaps');
+      }
+      if (tags.includes('cost_control') && p.finops_priority >= 3) {
+        reasons.push('your cost management priorities');
+      }
+      if (tags.includes('agility') && p.competitive_speed >= 3) {
+        reasons.push('your need for competitive speed');
+      }
+      
+      if (reasons.length === 0) {
+        return 'This foundational capability will strengthen your AI readiness across multiple domains.';
+      }
+      
+      return `Prioritized based on ${reasons.join(', ')}.`;
+    };
     
     // Calculate priority for each move
     const prioritizedMoves = movesLibrary.map(move => {
@@ -628,7 +715,11 @@ export class AssessmentService {
       const priority = move.baseScore + gapBoost + profileBoost;
       
       return {
-        ...move,
+        id: move.id,
+        pillar: move.pillar,
+        title: move.title,
+        description: move.description,
+        playbook: move.playbook,
         priority,
         rank: 0, // Will be set after sorting
         explain: {
@@ -637,7 +728,7 @@ export class AssessmentService {
           pillarScore,
           triggeringDimensions: move.tags.filter(tag => getProfileBoosts([tag]) > 0)
         },
-        whyItMatters: `Priority boost of +${profileBoost.toFixed(2)} due to your organization's context`
+        whyItMatters: getWhyItMatters(move.tags, profileBoost)
       };
     });
     
