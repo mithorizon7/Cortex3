@@ -247,10 +247,10 @@ function drawSectionTitle(doc: any, title: string, y: number) {
   return y + PAGE.line * 4;
 }
 
-function drawSubTitle(doc: any, title: string, y: number) {
+function drawSubTitle(doc: any, title: string, x: number, y: number) {
   setFont(doc, TYPO.h2);
   setText(doc, PALETTE.ink);
-  doc.text(title, PAGE.margin, y);
+  doc.text(title, x, y);
   return y + PAGE.line * 3;
 }
 
@@ -268,7 +268,7 @@ function drawBody(doc: any, text: string, maxWidth: number, y: number, runHeader
   return y;
 }
 
-function drawBullets(doc: any, items: string[], maxWidth: number, y: number, runHeader?: string) {
+function drawBullets(doc: any, items: string[], maxWidth: number, x: number, y: number, runHeader?: string) {
   setFont(doc, TYPO.body);
   setText(doc, PALETTE.ink);
   const indent = 4.5;
@@ -280,7 +280,7 @@ function drawBullets(doc: any, items: string[], maxWidth: number, y: number, run
         ({ cursorY: y } = addPageIfNeeded(doc, PAGE.line, y, runHeader));
       }
       const line = i === 0 ? lines[i] : "  " + lines[i];
-      doc.text(line, PAGE.margin + indent, y);
+      doc.text(line, x + indent, y);
       y += PAGE.line;
     }
     y += 1.5;
@@ -507,7 +507,7 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
   let rightY = col.y;
 
   // Left card: Strategic Context (always present)
-  leftY = drawSubTitle(doc, "Strategic Context", leftY);
+  leftY = drawSubTitle(doc, "Strategic Context", col.left.x, leftY);
   leftY += 2;
   const leftLines = wrap(doc, strategicContext, col.left.w);
   for (const ln of leftLines) {
@@ -518,7 +518,7 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
   }
 
   // Right column: Organizational Context as compact cards
-  rightY = drawSubTitle(doc, "Organizational Context", rightY);
+  rightY = drawSubTitle(doc, "Organizational Context", col.right.x, rightY);
   rightY += 2;
 
   const cp = data.contextProfile;
@@ -581,13 +581,13 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
     setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
     doc.text("Priority Actions", grid.left.x, ay);
     ay += PAGE.line * 1.6;
-    ay = drawBullets(doc, actions, grid.left.w, ay);
+    ay = drawBullets(doc, actions, grid.left.w, grid.left.x, ay);
   }
   if (watchouts.length) {
     setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
     doc.text("Watch-outs", grid.right.x, wy);
     wy += PAGE.line * 1.6;
-    wy = drawBullets(doc, watchouts, grid.right.w, wy);
+    wy = drawBullets(doc, watchouts, grid.right.w, grid.right.x, wy);
   }
   y = Math.max(ay, wy) + PAGE.line;
 
@@ -671,7 +671,7 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
   const goals = sessionData.goals ?? [];
   if (goals.length) {
     y = drawSectionTitle(doc, "GOALS", y);
-    y = drawBullets(doc, goals, bounds(doc).w, y);
+    y = drawBullets(doc, goals, bounds(doc).w, PAGE.margin, y);
     y += PAGE.line * 0.5;
   }
 
@@ -701,7 +701,7 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
   if (Array.isArray(sessionData.emphasizedLenses) && sessionData.emphasizedLenses.length) {
     ({ cursorY: y } = addPageIfNeeded(doc, 18, y, "CORTEX — Options Studio"));
     y = drawSectionTitle(doc, "WHAT WE EMPHASIZED", y);
-    y = drawBullets(doc, sessionData.emphasizedLenses, bounds(doc).w, y);
+    y = drawBullets(doc, sessionData.emphasizedLenses, bounds(doc).w, PAGE.margin, y);
     y += PAGE.line * 0.5;
   }
 
@@ -1026,7 +1026,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     y += PAGE.line * 0.5;
     
     const gateItems = data.triggeredGates.map((gate: any) => `${gate.title}: ${gate.reason || gate.explanation || ''}`);
-    y = drawBullets(doc, gateItems, bounds(doc).w, y, runHeader);
+    y = drawBullets(doc, gateItems, bounds(doc).w, PAGE.margin, y, runHeader);
     y += PAGE.line;
   }
 
@@ -1068,7 +1068,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     });
     
     if (contextItems.length > 0) {
-      y = drawBullets(doc, contextItems, bounds(doc).w, y, runHeader);
+      y = drawBullets(doc, contextItems, bounds(doc).w, PAGE.margin, y, runHeader);
       y += PAGE.line;
     }
   }
@@ -1105,7 +1105,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     });
     
     if (metricItems.length > 0) {
-      y = drawBullets(doc, metricItems, bounds(doc).w, y, runHeader);
+      y = drawBullets(doc, metricItems, bounds(doc).w, PAGE.margin, y, runHeader);
       y += PAGE.line;
     }
   }
@@ -1189,7 +1189,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
     doc.text("What Good Looks Like", PAGE.margin, y);
     y += PAGE.line * 1.2;
-    y = drawBullets(doc, guidance.whatGoodLooks, bounds(doc).w, y, runHeader);
+    y = drawBullets(doc, guidance.whatGoodLooks, bounds(doc).w, PAGE.margin, y, runHeader);
     y += PAGE.line * 0.5;
     
     // How to improve
@@ -1207,7 +1207,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
       setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
       doc.text("Common Pitfalls to Avoid", PAGE.margin, y);
       y += PAGE.line * 1.2;
-      y = drawBullets(doc, guidance.commonPitfalls, bounds(doc).w, y, runHeader);
+      y = drawBullets(doc, guidance.commonPitfalls, bounds(doc).w, PAGE.margin, y, runHeader);
       y += PAGE.line * 0.5;
     }
     
