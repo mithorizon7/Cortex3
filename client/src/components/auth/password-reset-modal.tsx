@@ -72,7 +72,7 @@ export const PasswordResetModal: React.FC<PasswordResetModalProps> = ({
         <DialogContent className="sm:max-w-[400px]" data-testid="password-reset-success-modal">
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold text-center flex items-center justify-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-500" />
+              <CheckCircle className="h-5 w-5 text-[hsl(var(--success))]" />
               Email Sent Successfully
             </DialogTitle>
             <DialogDescription className="text-center text-muted-foreground">
@@ -88,9 +88,9 @@ export const PasswordResetModal: React.FC<PasswordResetModalProps> = ({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Alert className="bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800">
-                <Mail className="h-4 w-4 text-green-600" />
-                <AlertDescription className="text-sm text-green-800 dark:text-green-200">
+              <Alert className="bg-[hsl(var(--success-lighter))] dark:bg-[hsl(var(--success-light))] border-[hsl(var(--success-border))] dark:border-[hsl(var(--success-border))]">
+                <Mail className="h-4 w-4 text-[hsl(var(--success-text))]" />
+                <AlertDescription className="text-sm text-[hsl(var(--success-text))] dark:text-[hsl(var(--success-text))]">
                   <strong>Next steps:</strong>
                   <ol className="list-decimal list-inside mt-2 space-y-1">
                     <li>Check your email inbox (and spam folder)</li>

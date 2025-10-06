@@ -116,7 +116,7 @@ export default function ProfileSummaryPage() {
         {/* Header Section */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center space-x-2 mb-4">
-            <CheckCircle className="h-6 w-6 text-green-600" />
+            <CheckCircle className="h-6 w-6 text-[hsl(var(--success-text))]" />
             <h1 className="text-3xl font-bold text-foreground">Context Profile Complete</h1>
           </div>
           <p className="text-lg text-muted-foreground mb-4">
@@ -180,7 +180,7 @@ export default function ProfileSummaryPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <CheckCircle className="h-5 w-5 text-green-500" />
+                <CheckCircle className="h-5 w-5 text-[hsl(var(--success))]" />
                 <span>What Happens Next</span>
               </CardTitle>
             </CardHeader>

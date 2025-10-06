@@ -130,9 +130,9 @@ export const AuthDiagnostic = () => {
 
   const getStatusIcon = (status: boolean) => {
     return status ? (
-      <CheckCircle className="h-4 w-4 text-green-500" />
+      <CheckCircle className="h-4 w-4 text-[hsl(var(--success))]" />
     ) : (
-      <XCircle className="h-4 w-4 text-red-500" />
+      <XCircle className="h-4 w-4 text-[hsl(var(--destructive))]" />
     );
   };
 
@@ -260,9 +260,9 @@ export const AuthDiagnostic = () => {
                     <div className="flex items-center justify-between">
                       <span>Popup Blocked:</span>
                       {diagnosticResults.browserInfo.popupBlocked ? (
-                        <XCircle className="h-4 w-4 text-red-500" />
+                        <XCircle className="h-4 w-4 text-[hsl(var(--destructive))]" />
                       ) : (
-                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        <CheckCircle className="h-4 w-4 text-[hsl(var(--success))]" />
                       )}
                     </div>
                   </CardContent>
@@ -306,7 +306,7 @@ export const AuthDiagnostic = () => {
                 </CardContent>
               </Card>
 
-              <Card className="border-red-200 bg-red-50 dark:bg-red-950 dark:border-red-800">
+              <Card className="border-[hsl(var(--destructive-border))] bg-[hsl(var(--destructive-lighter))] dark:bg-[hsl(var(--destructive-light))] dark:border-[hsl(var(--destructive-border))]">
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
                     🧪 Network Trace Test

@@ -93,8 +93,8 @@ function renderSituationAssessment2(mirror: SituationAssessment) {
           {sanitized.actions?.length ? (
             <div data-testid="situation-actions" className="space-y-3">
               <div className="flex items-center gap-2 text-base font-semibold text-foreground">
-                <div className="p-1.5 rounded-md bg-green-50 dark:bg-green-950/20">
-                  <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-500" />
+                <div className="p-1.5 rounded-md bg-[hsl(var(--success-lighter))] dark:bg-[hsl(var(--success-light))]">
+                  <CheckCircle className="h-4 w-4 text-[hsl(var(--success-text))] dark:text-[hsl(var(--success))]" />
                 </div>
                 <span>Leadership Actions</span>
               </div>
@@ -102,11 +102,11 @@ function renderSituationAssessment2(mirror: SituationAssessment) {
                 {sanitized.actions.map((action, index) => (
                   <Card 
                     key={index}
-                    className="border-l-4 border-l-green-500 hover-elevate transition-all duration-200"
+                    className="border-l-4 border-l-[hsl(var(--success))] hover-elevate transition-all duration-200"
                     data-testid={`action-chip-${index}`}
                   >
                     <CardContent className="p-3 flex items-start gap-3">
-                      <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-500 mt-0.5 flex-shrink-0" />
+                      <CheckCircle className="h-4 w-4 text-[hsl(var(--success-text))] dark:text-[hsl(var(--success))] mt-0.5 flex-shrink-0" />
                       <span className="text-sm leading-relaxed text-foreground">
                         {action}
                       </span>
@@ -245,8 +245,8 @@ function renderSituationAssessmentWithDiagnostics(mirrorWithDiagnostics: Situati
           {sanitized.actions?.length ? (
             <div data-testid="situation-actions" className="space-y-3">
               <div className="flex items-center gap-2 text-base font-semibold text-foreground">
-                <div className="p-1.5 rounded-md bg-green-50 dark:bg-green-950/20">
-                  <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-500" />
+                <div className="p-1.5 rounded-md bg-[hsl(var(--success-lighter))] dark:bg-[hsl(var(--success-light))]">
+                  <CheckCircle className="h-4 w-4 text-[hsl(var(--success-text))] dark:text-[hsl(var(--success))]" />
                 </div>
                 <span>Leadership Actions</span>
               </div>
@@ -254,11 +254,11 @@ function renderSituationAssessmentWithDiagnostics(mirrorWithDiagnostics: Situati
                 {sanitized.actions.map((action, index) => (
                   <Card 
                     key={index}
-                    className="border-l-4 border-l-green-500 hover-elevate transition-all duration-200"
+                    className="border-l-4 border-l-[hsl(var(--success))] hover-elevate transition-all duration-200"
                     data-testid={`action-chip-${index}`}
                   >
                     <CardContent className="p-3 flex items-start gap-3">
-                      <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-500 mt-0.5 flex-shrink-0" />
+                      <CheckCircle className="h-4 w-4 text-[hsl(var(--success-text))] dark:text-[hsl(var(--success))] mt-0.5 flex-shrink-0" />
                       <span className="text-sm leading-relaxed text-foreground">
                         {action}
                       </span>

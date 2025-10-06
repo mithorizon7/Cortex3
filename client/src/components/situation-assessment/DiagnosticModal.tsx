@@ -31,7 +31,7 @@ export function DiagnosticModal({ debug, onRetry }: DiagnosticModalProps) {
     switch (debug.source) {
       case 'ai':
         return (
-          <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
+          <Badge variant="default" className="bg-[hsl(var(--success-lighter))] text-[hsl(var(--success-text))] border-[hsl(var(--success-border))]">
             <CheckCircle className="w-3 h-3 mr-1" />
             AI Generated
           </Badge>
@@ -55,9 +55,9 @@ export function DiagnosticModal({ debug, onRetry }: DiagnosticModalProps) {
 
   const getAttemptIcon = (attempt: GenerationAttempt) => {
     if (attempt.success) {
-      return <CheckCircle className="w-4 h-4 text-green-500" />;
+      return <CheckCircle className="w-4 h-4 text-[hsl(var(--success))]" />;
     } else {
-      return <XCircle className="w-4 h-4 text-red-500" />;
+      return <XCircle className="w-4 h-4 text-[hsl(var(--destructive))]" />;
     }
   };
 

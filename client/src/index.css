@@ -61,11 +61,19 @@
   --muted-foreground: 208.42 8.92% 58.24%;  /* Silver Gray #8B959E */
 
   /* Semantic */
-  --destructive: 350 100% 22.94%; /* Rosewood #750014 (matches primary) */
+  --destructive: 350 100% 22.94%; /* Rosewood #750014 */
   --destructive-foreground: 0 0% 100%;
+  --destructive-light: 350 100% 97%; /* Very light rosewood tint */
+  --destructive-lighter: 350 100% 98.5%; /* Ultra light rosewood tint */
+  --destructive-text: 350 85% 35%; /* Darker rosewood for text on light bg */
+  --destructive-border: 350 60% 85%; /* Light rosewood for borders */
 
   --success: 170 100% 23%; /* Pine Green #007561 */
   --success-foreground: 0 0% 100%;
+  --success-light: 170 60% 96%; /* Very light pine green tint */
+  --success-lighter: 170 50% 98%; /* Ultra light pine green tint */
+  --success-text: 170 100% 28%; /* Slightly lighter pine for text on light bg */
+  --success-border: 170 40% 80%; /* Light pine green for borders */
 
   --warning: 35 100% 55%; /* Orange Peel #FF9F1C */
   --warning-foreground: 0 0% 100%;
@@ -180,9 +188,17 @@
   /* Semantic */
   --destructive: 350 85% 46%; /* Rosewood lightened for dark mode */
   --destructive-foreground: 0 0% 100%;
+  --destructive-light: 350 60% 15%; /* Dark rosewood tint for dark mode */
+  --destructive-lighter: 350 50% 12%; /* Darker rosewood tint for dark mode */
+  --destructive-text: 350 80% 65%; /* Lighter rosewood for text on dark bg */
+  --destructive-border: 350 40% 30%; /* Medium rosewood for borders on dark */
 
   --success: 170 70% 45%; /* Pine Green lightened for dark mode */
   --success-foreground: 0 0% 100%;
+  --success-light: 170 50% 15%; /* Dark pine green tint for dark mode */
+  --success-lighter: 170 40% 12%; /* Darker pine green tint for dark mode */
+  --success-text: 170 70% 65%; /* Lighter pine for text on dark bg */
+  --success-border: 170 35% 30%; /* Medium pine green for borders on dark */
 
   --warning: 35 95% 60%; /* Orange Peel lightened for dark mode */
   --warning-foreground: 220 15% 10%;
