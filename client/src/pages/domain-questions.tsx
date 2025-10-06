@@ -404,7 +404,11 @@ export default function DomainQuestionsPage() {
                               variant={responses[question.id] === 0.25 ? "secondary" : "outline"}
                               size="lg"
                               onClick={() => handleResponseChange(question.id, 0.25)}
-                              className="flex items-center justify-center space-x-2 font-ui"
+                              className={`flex items-center justify-center space-x-2 font-ui ${
+                                responses[question.id] === 0.25 
+                                  ? 'bg-accent/30 text-accent-foreground border-accent/50 hover:bg-accent/40' 
+                                  : ''
+                              }`}
                               data-testid={`button-started-${question.id}`}
                             >
                               <PlayCircle className="h-5 w-5" />
@@ -422,7 +426,11 @@ export default function DomainQuestionsPage() {
                               variant={responses[question.id] === 0.5 ? "secondary" : "outline"}
                               size="lg"
                               onClick={() => handleResponseChange(question.id, 0.5)}
-                              className="flex items-center justify-center space-x-2 font-ui"
+                              className={`flex items-center justify-center space-x-2 font-ui ${
+                                responses[question.id] === 0.5 
+                                  ? 'bg-primary/30 text-primary-foreground border-primary/50 hover:bg-primary/40' 
+                                  : ''
+                              }`}
                               data-testid={`button-mostly-${question.id}`}
                             >
                               <Circle className="h-5 w-5" />
@@ -461,7 +469,11 @@ export default function DomainQuestionsPage() {
                             responses[question.id] === 0 ? "accent" : 
                             "secondary"
                           }
-                          className="text-sm"
+                          className={`text-sm ${
+                            responses[question.id] === 0.25 ? 'bg-accent/30 text-accent-foreground border-accent/50' : 
+                            responses[question.id] === 0.5 ? 'bg-primary/30 text-primary-foreground border-primary/50' : 
+                            ''
+                          }`}
                         >
                           {responses[question.id] === 1 ? 'Yes' : 
                            responses[question.id] === 0.5 ? 'Mostly' : 
