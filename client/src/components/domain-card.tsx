@@ -21,9 +21,33 @@ interface GuideStep {
 
 type GuideWithSteps = import("@/lib/micro-guides").MicroGuide & { steps?: GuideStep[] };
 
+// Priority Move types
+interface PlaybookResource {
+  type: string;
+  label: string;
+  url: string;
+}
+
+interface PriorityMove {
+  id: string;
+  pillar: string;
+  title: string;
+  description?: string;
+  playbook?: PlaybookResource[];
+  rank: number;
+  priority: number;
+  explain?: {
+    gapBoost: number;
+    profileBoost: number;
+    pillarScore: number;
+    triggeringDimensions?: string[];
+  };
+  whyItMatters?: string;
+}
+
 // Priority Move Item Component
 interface PriorityMoveItemProps {
-  move: any;
+  move: PriorityMove;
 }
 
 function PriorityMoveItem({ move }: PriorityMoveItemProps) {
@@ -108,19 +132,27 @@ function PriorityMoveItem({ move }: PriorityMoveItemProps) {
                   Playbook Resources
                 </h5>
                 <div className="flex flex-wrap gap-2">
-                  {move.playbook.map((resource: any, idx: number) => (
-                    <Badge 
+                  {move.playbook.map((resource, idx) => (
+                    <a
                       key={idx}
-                      variant="outline"
-                      className="text-xs cursor-pointer hover-elevate"
-                      data-testid={`badge-resource-${move.id}-${idx}`}
+                      href={resource.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="no-underline"
+                      data-testid={`link-resource-${move.id}-${idx}`}
                     >
-                      {resource.type === 'template' && <CheckSquare className="h-3 w-3 mr-1" />}
-                      {resource.type === 'guide' && <BookOpen className="h-3 w-3 mr-1" />}
-                      {resource.type === 'checklist' && <CheckSquare className="h-3 w-3 mr-1" />}
-                      {resource.type === 'framework' && <Target className="h-3 w-3 mr-1" />}
-                      {resource.label}
-                    </Badge>
+                      <Badge 
+                        variant="outline"
+                        className="text-xs cursor-pointer hover-elevate"
+                        data-testid={`badge-resource-${move.id}-${idx}`}
+                      >
+                        {resource.type === 'template' && <CheckSquare className="h-3 w-3 mr-1" />}
+                        {resource.type === 'guide' && <BookOpen className="h-3 w-3 mr-1" />}
+                        {resource.type === 'checklist' && <CheckSquare className="h-3 w-3 mr-1" />}
+                        {resource.type === 'framework' && <Target className="h-3 w-3 mr-1" />}
+                        {resource.label}
+                      </Badge>
+                    </a>
                   ))}
                 </div>
               </div>
