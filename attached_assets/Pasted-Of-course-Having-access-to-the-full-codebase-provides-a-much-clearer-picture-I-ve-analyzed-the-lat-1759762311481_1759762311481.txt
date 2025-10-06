@@ -1,0 +1,155 @@
+Of course. Having access to the full codebase provides a much clearer picture. I've analyzed the latest version of `pdf-generator.ts` and the surrounding project files.
+
+Overall, the code is well-structured and robust. The core logic for generating PDFs is sound. My previous recommendations are still valid, and I have some new ones based on a deeper analysis of the code.
+
+Here is a new, comprehensive set of recommendations to make your PDF generator truly "great" by enhancing its resilience, clarity, and maintainability.
+
+-----
+
+### Recommendations for `pdf-generator.ts`
+
+Here are four key recommendations, ordered by importance, to make your PDF generator more robust and the output more professional.
+
+#### 1\. (High) Implement Robust Data Validation and Fallbacks
+
+  * **Problem:** The generator's primary weakness is its assumption that the incoming `data` object will always have perfectly formed content. If a key is missing (e.g., `data.mirror` is undefined), the generator will throw an error. The garbled text issue we discussed is a symptom of this larger problem: the generator is too trusting of its input.
+
+  * **Why it's important:** A production system should never fail due to predictable data shape issues. The PDF generator should be a resilient "renderer" that can handle missing or malformed data gracefully without crashing.
+
+  * **How to fix:**
+
+    1.  **Validate the entire data object upfront** using a schema validation library like `zod`. This is the most robust solution.
+    2.  **Add safe fallbacks for every single data point you access.** Instead of `data.mirror.headline`, use `data?.mirror?.headline || "Executive Summary"` or similar defaults.
+
+  * **Code Example (Implement inside `generateSituationAssessmentBrief`):**
+
+    ```typescript
+    // At the beginning of the function
+    if (!data?.contextProfile || !data?.assessmentId) {
+      throw new Error("Missing required data for PDF generation");
+    }
+
+    // --- NEW: USE SAFE DEFAULTS ---
+    const mirror = data.mirror || {}; // Use an empty object as a fallback
+    const insightParts = (mirror.insight || "").split('\n\n');
+    const headline = mirror.headline || "Edge AI Advantage: Compliance-First Innovation";
+    const mainInsight = insightParts[0] || "No insight text provided.";
+    const strategicContext = insightParts[1] || ""; // Can be empty if not provided
+    const actions = mirror.actions || [];
+    const watchouts = mirror.watchouts || [];
+    const scenarios = mirror.scenarios || {};
+    const disclaimer = mirror.disclaimer || "This strategic advisory is based solely on the provided organizational context profile and does not constitute financial, legal, or technical advice.";
+
+    // Now, use these safe variables throughout the rest of the function.
+    // For example:
+    y = drawBody(doc, headline, bounds(doc).w, y);
+    // ...
+    y = drawBody(doc, mainInsight, bounds(doc).w, y);
+    // ...
+    const leftLines = wrap(doc, strategicContext, col.left.w);
+    // ...
+    if (actions.length > 0) {
+      // ...
+    }
+    ```
+
+#### 2\. (High) Add Human-Readable Labels for Context Scores
+
+  * [cite\_start]**Problem:** The "Organizational Context" section of the PDF displays numerical scores (e.g., "Regulatory Intensity: 3") that are meaningless to an executive without a legend. [cite: 32, 33, 34, 35, 37, 38, 39, 41, 42, 43]
+
+  * **Why it's important:** The PDF's primary audience is executives. Data must be immediately understandable. "High" is clear; "3" is not.
+
+  * **How to fix:** Use the existing `formatScaleValue` function from `@shared/scale-utils` to translate these numbers into meaningful labels. This will provide consistency with other parts of your application.
+
+  * **Code Example (Update the `buckets` in `generateSituationAssessmentBrief`):**
+
+    ```typescript
+    // Right column: Organizational Context as compact cards
+    // ...
+    const cp = data.contextProfile;
+    const buckets: { title: string; items: (string[])[] }[] = [
+      {
+        title: "Risk & Compliance",
+        items: [
+          // --- UPDATED LOGIC ---
+          formatKV(doc, "Regulatory Intensity", formatScaleValue('regulatory_intensity', cp?.regulatory_intensity)),
+          formatKV(doc, "Data Sensitivity", formatScaleValue('data_sensitivity', cp?.data_sensitivity)),
+          formatKV(doc, "Safety Criticality", formatScaleValue('safety_criticality', cp?.safety_criticality)),
+          formatKV(doc, "Brand Exposure", formatScaleValue('brand_exposure', cp?.brand_exposure))
+        ]
+      },
+      // ... Do the same for the other buckets (Operations, Strategic Assets, etc.) ...
+    ];
+    ```
+
+#### 3\. (Medium) Sanitize Text to Prevent Garbled Output
+
+  * [cite\_start]**Problem:** As we saw with the "Priority Actions", corrupted text in the database can lead to unreadable PDF output. [cite: 49]
+
+  * **Why it's important:** Even if the data source is fixed, it's good practice to build a defensive generator that won't produce garbled output if bad data slips through again.
+
+  * **How to fix:** Enhance the `normalizeText` function to strip out non-printable characters that often cause these kinds of artifacts. This acts as a final line of defense.
+
+  * **Code Example (Update the `normalizeText` function):**
+
+    ```typescript
+    function normalizeText(s: any): string {
+      if (!s) return "";
+      
+      const t = String(s)
+        // --- NEW: ADD THIS LINE TO REMOVE CONTROL CHARACTERS ---
+        .replace(/[\u0000-\u001F\u007F-\u009F]/g, "") // Removes most non-printable characters
+        .replace(/\u00A0/g, " ")
+        .replace(/[\u2000-\u200B\u202F\u205F\u2060]/g, " ")
+        .replace(/[ \t]{2,}/g, " ")
+        .replace(/\s+\n/g, "\n")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim();
+
+      if (/^(?:\S\s){8,}\S$/.test(t)) {
+        return t.replace(/\s+/g, "");
+      }
+      return t;
+    }
+    ```
+
+#### 4\. (Low) Refactor Color and Font Settings for Maintainability
+
+  * **Problem:** The code repeatedly calls functions like `setFont(doc, TYPO.h1)` and `setText(doc, PALETTE.ink)`. This makes the code verbose and harder to update if you want to change a style.
+
+  * **Why it's important:** Consolidating styling logic makes the code cleaner and easier to maintain. If you decide to change the color of all body text, you'd only have to change it in one place.
+
+  * **How to fix:** Create higher-level drawing functions that encapsulate styling.
+
+  * **Code Example (New helper function and its usage):**
+
+    ```typescript
+    // --- NEW HELPER FUNCTION ---
+    function drawStyledText(doc: any, text: string, x: number, y: number, style: keyof typeof TYPO, color: RGB, options: { maxWidth?: number; align?: 'left' | 'right' } = {}) {
+      setFont(doc, TYPO[style]);
+      setText(doc, color);
+      
+      if (options.maxWidth) {
+        const lines = wrap(doc, text, options.maxWidth);
+        doc.text(lines, x, y, { align: options.align || 'left' });
+        return y + lines.length * PAGE.line;
+      } else {
+        doc.text(text, x, y, { align: options.align || 'left' });
+        return y + PAGE.line;
+      }
+    }
+
+    // --- EXAMPLE OF HOW TO USE IT (replacing old code) ---
+    // Old way:
+    // setFont(doc, TYPO.h1);
+    // setText(doc, PALETTE.accent);
+    // doc.text(title, PAGE.margin, y);
+    // return y + PAGE.line * 4;
+
+    // New, cleaner way:
+    // In drawSectionTitle function
+    function drawSectionTitle(doc: any, title: string, y: number) {
+      drawStyledText(doc, title, PAGE.margin, y, 'h1', PALETTE.accent);
+      return y + PAGE.line * 4;
+    }
+    ```
