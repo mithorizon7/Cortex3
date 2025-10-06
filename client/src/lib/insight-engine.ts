@@ -332,7 +332,7 @@ export function generateEnhancedExecutiveInsights(
   
   // Priority 3: Domain-specific insights based on weakest areas and context
   const weakest = weakestDomains[0];
-  if (weakest.score <= 1.0) {
+  if (weakest && weakest.score <= 1.0) {
     // Special handling for critical weak areas
     if (weakest.pillar === 'O' && maturity.avgScore > 1.5) {
       insights.push({
