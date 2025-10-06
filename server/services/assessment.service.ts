@@ -140,20 +140,37 @@ export class AssessmentService {
     // Validate pulse responses (now supports numeric values: 0, 0.25, 0.5, 1)
     const validatedResponses = pulseResponsesSchema.parse(pulseResponses);
     
+    // Get existing assessment to merge responses
+    const existingAssessment = await storage.getAssessment(assessmentId, userId);
+    if (!existingAssessment) {
+      logger.warn('Cannot update pulse - assessment not found or access denied', {
+        additionalContext: { assessmentId, hasUserFilter: !!userId }
+      });
+      return null;
+    }
+    
+    // Merge new responses with existing ones (accumulative)
+    const mergedResponses = {
+      ...(existingAssessment.pulseResponses || {}),
+      ...validatedResponses
+    };
+    
     // Log raw responses for debugging
     logger.debug('Processing pulse responses', {
       additionalContext: {
         assessmentId,
-        responseCount: Object.keys(validatedResponses).length,
-        responseKeys: Object.keys(validatedResponses),
+        newResponseCount: Object.keys(validatedResponses).length,
+        newResponseKeys: Object.keys(validatedResponses),
+        existingResponseCount: Object.keys(existingAssessment.pulseResponses || {}).length,
+        totalResponseCount: Object.keys(mergedResponses).length,
         sampleValues: Object.entries(validatedResponses).slice(0, 3).map(([k, v]) => ({ [k]: v })),
         operation: 'pulse_response_validation'
       }
     });
     
     // Calculate pillar scores (sum of numeric responses) and confidence gaps (deprecated, returns zeros)
-    const pillarScores = this.calculatePillarScores(validatedResponses);
-    const confidenceGaps = this.calculateConfidenceGaps(validatedResponses);
+    const pillarScores = this.calculatePillarScores(mergedResponses);
+    const confidenceGaps = this.calculateConfidenceGaps(mergedResponses);
     
     // Log calculated scores for debugging
     logger.debug('Calculated pillar scores', {
@@ -166,7 +183,7 @@ export class AssessmentService {
     });
     
     const assessment = await storage.updateAssessment(assessmentId, {
-      pulseResponses: validatedResponses,
+      pulseResponses: mergedResponses,
       pillarScores,
       confidenceGaps,
     }, userId);
