@@ -14,6 +14,8 @@ import { ProtectedRoute } from "@/components/auth/protected-route";
 import { LoadingTips } from "@/components/situation-assessment/LoadingTips";
 import { SituationReflection } from "@/components/situation-assessment/SituationReflection";
 import { violatesPolicy, sanitizeInsight } from "@/components/situation-assessment/sanitizeInsight";
+import thinkingAnimated from "@assets/power_1759776833700.gif";
+import thinkingStatic from "@assets/power_1759776833700.png";
 
 
 function EducationalLoader() {
@@ -248,7 +250,11 @@ function ContextInsightPageContent() {
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-3 text-2xl">
                 <div className="p-2 rounded-lg bg-primary/10">
-                  <Brain className="h-6 w-6 text-primary" />
+                  <img 
+                    src={isLoading ? thinkingAnimated : thinkingStatic} 
+                    alt="AI thinking indicator" 
+                    className="h-6 w-6"
+                  />
                 </div>
                 <span>Your Strategic Context</span>
               </CardTitle>
