@@ -266,19 +266,19 @@ export default function DomainIntroPage() {
               </Card>
 
               {/* What Good Looks Like */}
-              <Card className="mb-8">
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2 text-lg">
-                    <CheckSquare className="h-5 w-5" style={{ color: pillarInfo?.color }} />
+              <Card className="mb-8 border-accent/30">
+                <CardHeader className="bg-accent/5">
+                  <CardTitle className="flex items-center space-x-2 text-lg text-accent">
+                    <CheckSquare className="h-5 w-5" />
                     <span>What Good Can Look Like</span>
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-6">
                   <div className="space-y-3">
                     {domainData.signals.map((signal, index) => (
-                      <div key={index} className="flex items-start space-x-3 p-3 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
-                        <div className="text-green-600 dark:text-green-400 mt-0.5">
-                          <CheckSquare className="h-4 w-4" />
+                      <div key={index} className="flex items-start space-x-3 p-4 bg-accent/5 rounded-md border border-accent/20 hover-elevate transition-colors">
+                        <div className="text-accent mt-0.5 flex-shrink-0">
+                          <CheckSquare className="h-5 w-5" />
                         </div>
                         <span className="text-foreground font-ui leading-relaxed">{signal}</span>
                       </div>
@@ -289,18 +289,18 @@ export default function DomainIntroPage() {
 
               {/* Critical Context Notes */}
               {criticalNotes.length > 0 && (
-                <Card className="mb-6 border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/20">
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2 text-lg text-red-800 dark:text-red-200">
+                <Card className="mb-6 border-destructive/30 bg-destructive/5">
+                  <CardHeader className="bg-destructive/10">
+                    <CardTitle className="flex items-center space-x-2 text-lg text-destructive">
                       <AlertTriangle className="h-5 w-5" />
                       <span>Critical Context for Your Organization</span>
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="pt-6">
                     <div className="space-y-3">
                       {criticalNotes.map((note, index) => (
-                        <div key={index} className="border-l-4 border-red-500 pl-4 py-2">
-                          <p className="text-red-800 dark:text-red-200 font-ui leading-relaxed">
+                        <div key={index} className="border-l-4 border-destructive pl-4 py-3 bg-destructive/5 rounded-r-md">
+                          <p className="text-foreground font-ui leading-relaxed">
                             {note.note}
                           </p>
                         </div>
@@ -312,19 +312,21 @@ export default function DomainIntroPage() {
 
               {/* Awareness Context Notes */}
               {awarenessNotes.length > 0 && (
-                <Card className="mb-8 border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20">
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2 text-lg text-amber-800 dark:text-amber-200">
+                <Card className="mb-8 border-warning/30 bg-warning/5">
+                  <CardHeader className="bg-warning/10">
+                    <CardTitle className="flex items-center space-x-2 text-lg text-warning-foreground">
                       <AlertCircle className="h-5 w-5" />
                       <span>Context Guidance for Your Organization</span>
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
+                  <CardContent className="pt-6">
+                    <div className="space-y-3">
                       {awarenessNotes.map((note, index) => (
-                        <p key={index} className="text-amber-800 dark:text-amber-200 font-ui leading-relaxed">
-                          {note.note}
-                        </p>
+                        <div key={index} className="border-l-4 border-warning pl-4 py-3 bg-warning/5 rounded-r-md">
+                          <p className="text-foreground font-ui leading-relaxed">
+                            {note.note}
+                          </p>
+                        </div>
                       ))}
                     </div>
                   </CardContent>
@@ -332,16 +334,19 @@ export default function DomainIntroPage() {
               )}
 
               {/* How to Answer */}
-              <Card className="mb-8 border-primary/20 bg-primary/5">
-                <CardHeader>
-                  <CardTitle className="text-lg text-primary">{FOOTER_COPY.title}</CardTitle>
+              <Card className="mb-8 border-muted bg-muted/30">
+                <CardHeader className="bg-muted/50">
+                  <CardTitle className="text-lg text-foreground flex items-center space-x-2">
+                    <BookOpen className="h-5 w-5 text-muted-foreground" />
+                    <span>{FOOTER_COPY.title}</span>
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2">
+                <CardContent className="pt-6">
+                  <ul className="space-y-3">
                     {FOOTER_COPY.instructions.map((instruction, index) => (
-                      <li key={index} className="flex items-start space-x-2">
-                        <span className="text-primary font-bold mt-1">•</span>
-                        <span className="text-foreground font-ui">{instruction}</span>
+                      <li key={index} className="flex items-start space-x-3">
+                        <span className="text-muted-foreground font-bold mt-0.5 text-lg">•</span>
+                        <span className="text-foreground font-ui leading-relaxed">{instruction}</span>
                       </li>
                     ))}
                   </ul>
