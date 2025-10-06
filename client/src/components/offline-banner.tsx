@@ -40,7 +40,7 @@ export default function OfflineBanner({ onRetry, showRetryButton = false }: Offl
     <Alert 
       className={`fixed top-4 left-4 right-4 z-50 ${
         online 
-          ? 'border-[hsl(var(--success-border))] bg-[hsl(var(--success-lighter))] dark:bg-[hsl(var(--success-light))] text-[hsl(var(--success-text))] dark:text-[hsl(var(--success-text))]' 
+          ? 'border-green-200 bg-green-50 dark:bg-green-950 text-green-800 dark:text-green-200' 
           : 'border-amber-200 bg-amber-50 dark:bg-amber-950 text-amber-800 dark:text-amber-200'
       }`}
       data-testid="offline-banner"
@@ -78,7 +78,7 @@ export default function OfflineBanner({ onRetry, showRetryButton = false }: Offl
           variant="ghost"
           onClick={() => setShowBanner(false)}
           className={online 
-            ? "text-[hsl(var(--success-text))] dark:text-[hsl(var(--success-text))] hover:bg-[hsl(var(--success-light))] dark:hover:bg-[hsl(var(--success-lighter))]"
+            ? "text-green-800 dark:text-green-200 hover:bg-green-100 dark:hover:bg-green-900"
             : "text-amber-800 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900"
           }
           data-testid="button-dismiss-banner"

@@ -215,7 +215,7 @@ function ContextInsightPageContent() {
           <ChevronRight className="h-4 w-4" />
           <span>Pulse Check</span>
         </div>
-        <Badge variant="secondary" className="bg-[hsl(var(--success-lighter))] text-[hsl(var(--success-text))] border-[hsl(var(--success-border))] dark:bg-[hsl(var(--success-light))] dark:text-[hsl(var(--success-text))] dark:border-[hsl(var(--success-border))]">
+        <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-950/20 dark:text-green-400 dark:border-green-800">
           <CheckCircle className="h-3 w-3 mr-1" />
           Stage 2 of 3
         </Badge>
@@ -233,7 +233,7 @@ function ContextInsightPageContent() {
             </p>
           </div>
           {data && (
-            <Badge variant="outline" className="bg-[hsl(var(--success-lighter))] border-[hsl(var(--success-border))] text-[hsl(var(--success-text))] dark:bg-[hsl(var(--success-light))] dark:border-[hsl(var(--success-border))] dark:text-[hsl(var(--success-text))] flex-shrink-0">
+            <Badge variant="outline" className="bg-green-50 border-green-200 text-green-700 dark:bg-green-950/20 dark:border-green-800 dark:text-green-400 flex-shrink-0">
               <CheckCircle className="h-3 w-3 mr-1" />
               Complete
             </Badge>

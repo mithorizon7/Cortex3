@@ -442,8 +442,8 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
             </h4>
             <div className="space-y-2">
               {(guidance.what_good_looks_like || guidance.whatGoodLooks || []).map((item: string, index: number) => (
-                <div key={index} className="flex items-start space-x-2 p-2 bg-[hsl(var(--success-lighter))] dark:bg-[hsl(var(--success-light))] rounded-md border border-[hsl(var(--success-border))] dark:border-[hsl(var(--success-border))]">
-                  <div className="text-[hsl(var(--success-text))] dark:text-[hsl(var(--success-text))] mt-0.5 flex-shrink-0">
+                <div key={index} className="flex items-start space-x-2 p-2 bg-green-50 dark:bg-green-950/20 rounded-md border border-green-200 dark:border-green-800">
+                  <div className="text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0">
                     <CheckSquare className="h-3.5 w-3.5" />
                   </div>
                   <span className="text-sm text-foreground font-ui leading-relaxed">{item}</span>

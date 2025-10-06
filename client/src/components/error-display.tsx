@@ -58,18 +58,18 @@ export function ErrorDisplay({
   };
 
   return (
-    <Alert className="border-[hsl(var(--destructive-border))] bg-[hsl(var(--destructive-lighter))] dark:border-[hsl(var(--destructive-border))] dark:bg-[hsl(var(--destructive-light))]" data-testid="error-display">
-      <AlertCircle className="h-4 w-4 text-[hsl(var(--destructive-text))] dark:text-[hsl(var(--destructive-text))]" />
-      <AlertTitle className="text-[hsl(var(--destructive-text))] dark:text-[hsl(var(--destructive-text))]">
+    <Alert className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950" data-testid="error-display">
+      <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+      <AlertTitle className="text-red-800 dark:text-red-200">
         {title}
       </AlertTitle>
-      <AlertDescription className="text-[hsl(var(--destructive-text))] dark:text-[hsl(var(--destructive-text))]">
+      <AlertDescription className="text-red-700 dark:text-red-300">
         <div className="space-y-3">
           <p>{getMessage()}</p>
           
           {showIncidentId && incidentId && (
-            <div className="text-sm text-[hsl(var(--destructive-text))] dark:text-[hsl(var(--destructive-text))]">
-              <p>Incident ID: <code className="bg-[hsl(var(--destructive-light))] dark:bg-[hsl(var(--destructive-lighter))] px-1 rounded text-xs">{incidentId}</code></p>
+            <div className="text-sm text-red-600 dark:text-red-400">
+              <p>Incident ID: <code className="bg-red-100 dark:bg-red-900 px-1 rounded text-xs">{incidentId}</code></p>
               <p className="text-xs mt-1">Please provide this ID if you contact support.</p>
             </div>
           )}
@@ -79,7 +79,7 @@ export function ErrorDisplay({
               onClick={onRetry}
               variant="outline"
               size="sm"
-              className="mt-2 border-[hsl(var(--destructive-border))] text-[hsl(var(--destructive-text))] hover:bg-[hsl(var(--destructive-light))] dark:border-[hsl(var(--destructive-border))] dark:text-[hsl(var(--destructive-text))] dark:hover:bg-[hsl(var(--destructive-lighter))]"
+              className="mt-2 border-red-300 text-red-700 hover:bg-red-100 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-900"
               data-testid="button-retry"
             >
               <RefreshCw className="mr-2 h-3 w-3" />

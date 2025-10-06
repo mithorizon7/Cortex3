@@ -448,7 +448,7 @@ export default function PulseCheckPage() {
                     isCurrent 
                       ? 'border-primary bg-primary/10' 
                       : isCompleted 
-                      ? 'border-[hsl(var(--success))] bg-[hsl(var(--success-lighter))] dark:bg-[hsl(var(--success-light))]' 
+                      ? 'border-green-500 bg-green-50 dark:bg-green-950' 
                       : 'border-border bg-muted/30'
                   }`}
                 >
@@ -456,7 +456,7 @@ export default function PulseCheckPage() {
                     isCurrent 
                       ? 'bg-primary text-primary-foreground'
                       : isCompleted
-                      ? 'bg-[hsl(var(--success))] text-[hsl(var(--success-foreground))]'
+                      ? 'bg-green-500 text-white'
                       : 'bg-muted text-muted-foreground'
                   }`}>
                     {group.pillar}
