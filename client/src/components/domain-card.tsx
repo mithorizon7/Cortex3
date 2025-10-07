@@ -235,16 +235,16 @@ function MicroGuideDialog({ guide, children }: MicroGuideDialogProps) {
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] sm:max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <BookOpen className="w-5 h-5" />
-            {guide.title}
+          <DialogTitle className="flex items-center gap-2 text-base sm:text-lg pr-8">
+            <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+            <span className="truncate">{guide.title}</span>
           </DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {/* Category and Tags */}
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
             <Badge variant="secondary" className="text-xs">
               {guide.category}
             </Badge>
@@ -261,15 +261,15 @@ function MicroGuideDialog({ guide, children }: MicroGuideDialogProps) {
           </div>
 
           {/* Overview */}
-          <div className="bg-muted p-4 rounded-lg">
-            <div className="font-medium text-sm mb-2">Overview</div>
-            <div className="text-sm text-muted-foreground">{guide.overview}</div>
+          <div className="bg-muted p-3 sm:p-4 rounded-lg">
+            <div className="font-medium text-xs sm:text-sm mb-1.5 sm:mb-2">Overview</div>
+            <div className="text-xs sm:text-sm text-muted-foreground">{guide.overview}</div>
           </div>
           
           {/* Full Body Content */}
           <div className="prose prose-sm max-w-none">
             <div 
-              className="text-sm leading-relaxed"
+              className="text-xs sm:text-sm leading-relaxed"
               dangerouslySetInnerHTML={{ 
                 __html: formatBody(guide.body)
               }} 
@@ -278,16 +278,16 @@ function MicroGuideDialog({ guide, children }: MicroGuideDialogProps) {
 
           {/* Steps if available */}
           {'steps' in guide && guide.steps && guide.steps.length > 0 && (
-            <div className="border-t pt-4">
-              <div className="font-medium text-sm mb-3">Implementation Steps</div>
-              <div className="space-y-2">
+            <div className="border-t pt-3 sm:pt-4">
+              <div className="font-medium text-xs sm:text-sm mb-2 sm:mb-3">Implementation Steps</div>
+              <div className="space-y-1.5 sm:space-y-2">
                 {guide.steps.map((step: GuideStep) => (
-                  <div key={step.order} className="flex items-start space-x-3">
-                    <div className="bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
+                  <div key={step.order} className="flex items-start gap-2 sm:gap-3">
+                    <div className="bg-primary text-primary-foreground rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
                       {step.order}
                     </div>
-                    <div className="flex-1">
-                      <div className="font-medium text-sm">{step.title}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-xs sm:text-sm">{step.title}</div>
                       {step.timeframe && (
                         <div className="text-xs text-muted-foreground mt-0.5">{step.timeframe}</div>
                       )}
@@ -504,35 +504,36 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
 
   return (
     <Card className="relative">
-      <CardContent className="p-6">
+      <CardContent className="p-3 sm:p-4 lg:p-6">
         {priority && priority <= 3 && (
-          <div className="absolute top-4 right-4">
+          <div className="absolute top-2 right-2 sm:top-4 sm:right-4">
             <Badge 
               variant={priority === 1 ? "destructive" : "secondary"}
               data-testid={`priority-badge-${pillar}`}
+              className="text-xs"
             >
               Priority #{priority}
             </Badge>
           </div>
         )}
         
-        <div className="flex items-center space-x-3 mb-4">
+        <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
           <div 
-            className="text-white p-2 rounded-lg"
+            className="text-white p-1.5 sm:p-2 rounded-lg flex-shrink-0"
             style={{ backgroundColor: pillarInfo.color }}
           >
-            {pillar === 'C' && <Target className="h-5 w-5" />}
-            {pillar === 'O' && <Cog className="h-5 w-5" />}
-            {pillar === 'R' && <Shield className="h-5 w-5" />}
-            {pillar === 'T' && <Users className="h-5 w-5" />}
-            {pillar === 'E' && <Network className="h-5 w-5" />}
-            {pillar === 'X' && <Lightbulb className="h-5 w-5" />}
+            {pillar === 'C' && <Target className="h-4 w-4 sm:h-5 sm:w-5" />}
+            {pillar === 'O' && <Cog className="h-4 w-4 sm:h-5 sm:w-5" />}
+            {pillar === 'R' && <Shield className="h-4 w-4 sm:h-5 sm:w-5" />}
+            {pillar === 'T' && <Users className="h-4 w-4 sm:h-5 sm:w-5" />}
+            {pillar === 'E' && <Network className="h-4 w-4 sm:h-5 sm:w-5" />}
+            {pillar === 'X' && <Lightbulb className="h-4 w-4 sm:h-5 sm:w-5" />}
           </div>
-          <div>
-            <h3 className="font-semibold text-lg font-display text-foreground">
+          <div className="min-w-0">
+            <h3 className="font-semibold text-base sm:text-lg font-display text-foreground truncate">
               {pillarInfo.name}
             </h3>
-            <p className="text-sm text-muted-foreground font-ui">
+            <p className="text-xs sm:text-sm text-muted-foreground font-ui">
               {pillar} — Score {stage.toFixed(2)}/3 ({stageInfo.name})
             </p>
           </div>
@@ -540,9 +541,9 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
         
         {/* Value Overlay Section */}
         {selectedMetric && (
-          <div className="border-t pt-4 mb-4">
-            <h4 className="font-medium mb-2 text-primary flex items-center space-x-2 font-display">
-              <TrendingUp className="h-4 w-4" />
+          <div className="border-t pt-3 sm:pt-4 mb-3 sm:mb-4">
+            <h4 className="font-medium mb-2 text-primary flex items-center gap-2 font-display text-sm sm:text-base">
+              <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
               <span>Value Overlay</span>
             </h4>
             
@@ -572,51 +573,51 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
           </div>
         )}
         
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           <div>
-            <h4 className="font-medium mb-2 text-primary font-display">Why This Matters</h4>
-            <p className="text-sm text-muted-foreground font-ui">
+            <h4 className="font-medium mb-1.5 sm:mb-2 text-primary font-display text-sm sm:text-base">Why This Matters</h4>
+            <p className="text-xs sm:text-sm text-muted-foreground font-ui leading-relaxed">
               {guidance.why_it_matters || guidance.whyMatters}
             </p>
           </div>
           
           <div>
-            <h4 className="font-medium mb-3 text-primary font-display flex items-center space-x-2">
-              <CheckSquare className="h-4 w-4" />
+            <h4 className="font-medium mb-2 sm:mb-3 text-primary font-display flex items-center gap-2 text-sm sm:text-base">
+              <CheckSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
               <span>What Good Can Look Like</span>
             </h4>
-            <div className="space-y-2">
+            <div className="space-y-1.5 sm:space-y-2">
               {(guidance.what_good_looks_like || guidance.whatGoodLooks || []).map((item: string, index: number) => (
-                <div key={index} className="flex items-start space-x-2 p-2 bg-green-50 dark:bg-green-950/20 rounded-md border border-green-200 dark:border-green-800">
+                <div key={index} className="flex items-start gap-1.5 sm:gap-2 p-1.5 sm:p-2 bg-green-50 dark:bg-green-950/20 rounded-md border border-green-200 dark:border-green-800">
                   <div className="text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0">
-                    <CheckSquare className="h-3.5 w-3.5" />
+                    <CheckSquare className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                   </div>
-                  <span className="text-sm text-foreground font-ui leading-relaxed">{item}</span>
+                  <span className="text-xs sm:text-sm text-foreground font-ui leading-relaxed">{item}</span>
                 </div>
               ))}
             </div>
           </div>
           
           <div>
-            <h4 className="font-medium mb-2 text-primary font-display">How to Improve</h4>
-            <ul className="text-sm text-muted-foreground space-y-1 font-ui">
+            <h4 className="font-medium mb-1.5 sm:mb-2 text-primary font-display text-sm sm:text-base">How to Improve</h4>
+            <ul className="text-xs sm:text-sm text-muted-foreground space-y-0.5 sm:space-y-1 font-ui">
               {(guidance.how_to_improve || guidance.howToImprove || []).map((item: string, index: number) => (
-                <li key={index}>• <strong>{item.split(' ')[0]} {item.split(' ')[1]}</strong> {item.split(' ').slice(2).join(' ')}</li>
+                <li key={index} className="leading-relaxed">• <strong>{item.split(' ')[0]} {item.split(' ')[1]}</strong> {item.split(' ').slice(2).join(' ')}</li>
               ))}
             </ul>
             
             {/* Context-specific priority note */}
             {guidance.priority_note && (
-              <p className="text-xs text-primary mt-2 bg-primary/5 p-2 rounded font-ui border border-primary/15">
-                <Star className="h-4 w-4 mr-1" />
-                <strong>Context Priority:</strong> {guidance.priority_note}
+              <p className="text-xs text-primary mt-2 bg-primary/5 p-2 rounded font-ui border border-primary/15 flex items-start gap-1">
+                <Star className="h-3 w-3 sm:h-4 sm:w-4 mt-0.5 flex-shrink-0" />
+                <span><strong>Context Priority:</strong> {guidance.priority_note}</span>
               </p>
             )}
             
             {contextReason && (
-              <p className="text-xs text-orange-600 dark:text-orange-400 mt-2 bg-orange-50 dark:bg-orange-950/30 p-2 rounded font-ui border border-orange-200 dark:border-orange-800">
-                <Info className="h-4 w-4 mr-1" />
-                <strong>Because:</strong> {contextReason}
+              <p className="text-xs text-orange-600 dark:text-orange-400 mt-2 bg-orange-50 dark:bg-orange-950/30 p-2 rounded font-ui border border-orange-200 dark:border-orange-800 flex items-start gap-1">
+                <Info className="h-3 w-3 sm:h-4 sm:w-4 mt-0.5 flex-shrink-0" />
+                <span><strong>Because:</strong> {contextReason}</span>
               </p>
             )}
           </div>
@@ -624,10 +625,10 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
           {/* Common Pitfalls */}
           {(guidance.common_pitfalls || guidance.commonPitfalls) && (
             <div>
-              <h4 className="font-medium mb-2 text-primary font-display">Common Pitfalls</h4>
-              <ul className="text-sm text-muted-foreground space-y-1 font-ui">
+              <h4 className="font-medium mb-1.5 sm:mb-2 text-primary font-display text-sm sm:text-base">Common Pitfalls</h4>
+              <ul className="text-xs sm:text-sm text-muted-foreground space-y-0.5 sm:space-y-1 font-ui">
                 {(guidance.common_pitfalls || guidance.commonPitfalls || []).map((item: string, index: number) => (
-                  <li key={index}>• {item}</li>
+                  <li key={index} className="leading-relaxed">• {item}</li>
                 ))}
               </ul>
             </div>
@@ -636,10 +637,10 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
           {/* Discussion Prompts */}
           {(guidance.discussion_prompts || guidance.discussionPrompts) && (
             <div>
-              <h4 className="font-medium mb-2 text-primary font-display">Discussion Prompts</h4>
-              <ul className="text-sm text-muted-foreground space-y-1 font-ui">
+              <h4 className="font-medium mb-1.5 sm:mb-2 text-primary font-display text-sm sm:text-base">Discussion Prompts</h4>
+              <ul className="text-xs sm:text-sm text-muted-foreground space-y-0.5 sm:space-y-1 font-ui">
                 {(guidance.discussion_prompts || guidance.discussionPrompts || []).map((item: string, index: number) => (
-                  <li key={index}>• {item}</li>
+                  <li key={index} className="leading-relaxed">• {item}</li>
                 ))}
               </ul>
             </div>
@@ -648,11 +649,11 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
           {/* Priority Moves */}
           {priorityMoves && priorityMoves.length > 0 && (
             <div>
-              <h4 className="font-medium mb-2 text-primary flex items-center space-x-2 font-display">
-                <TrendingUp className="h-4 w-4" />
+              <h4 className="font-medium mb-2 text-primary flex items-center gap-2 font-display text-sm sm:text-base">
+                <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
                 <span>Top Priority Moves</span>
               </h4>
-              <div className="space-y-2">
+              <div className="space-y-1.5 sm:space-y-2">
                 {priorityMoves.slice(0, 2).map((move) => (
                   <PriorityMoveItem key={move.id} move={move} />
                 ))}
@@ -664,38 +665,38 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
           {relevantGuides.length > 0 && (
             <Collapsible open={showGuides} onOpenChange={setShowGuides}>
               <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" className="w-full justify-between p-2 h-auto">
-                  <div className="flex items-center space-x-2">
-                    <BookOpen className="h-4 w-4" />
-                    <span className="text-sm font-medium">Implementation Guides ({relevantGuides.length})</span>
+                <Button variant="ghost" size="sm" className="w-full justify-between p-2 h-auto text-sm">
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+                    <span className="text-xs sm:text-sm font-medium">Implementation Guides ({relevantGuides.length})</span>
                   </div>
-                  <ChevronDown className={`h-3 w-3 transition-transform ${showGuides ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`h-3 w-3 transition-transform flex-shrink-0 ${showGuides ? 'rotate-180' : ''}`} />
                 </Button>
               </CollapsibleTrigger>
-              <CollapsibleContent className="space-y-3 mt-2">
+              <CollapsibleContent className="space-y-2 sm:space-y-3 mt-2">
                 {relevantGuides.map((guide) => (
-                  <div key={guide.id} className="bg-muted/30 p-3 rounded-lg border border-muted/50">
-                    <div className="flex items-start justify-between mb-2">
-                      <h5 className="font-medium text-sm">{guide.title}</h5>
+                  <div key={guide.id} className="bg-muted/30 p-2 sm:p-3 rounded-lg border border-muted/50">
+                    <div className="flex items-start justify-between gap-2 mb-1.5 sm:mb-2">
+                      <h5 className="font-medium text-xs sm:text-sm">{guide.title}</h5>
                       <MicroGuideDialog guide={guide}>
                         <Button 
                           variant="outline" 
                           size="sm"
-                          className="text-xs h-6 px-2"
+                          className="text-xs h-6 px-2 flex-shrink-0"
                           data-testid={`button-guide-${guide.id}`}
                         >
                           {guide.steps?.length ? `${guide.steps.length} steps` : 'Guide'}
                         </Button>
                       </MicroGuideDialog>
                     </div>
-                    <p className="text-xs text-muted-foreground mb-2">{guide.overview}</p>
+                    <p className="text-xs text-muted-foreground mb-1.5 sm:mb-2">{guide.overview}</p>
                     
                     {guide.steps?.slice(0, 2).map((step: GuideStep) => (
-                      <div key={step.order} className="flex items-start space-x-2 text-xs mb-1">
+                      <div key={step.order} className="flex items-start gap-1.5 sm:gap-2 text-xs mb-1">
                         <div className="bg-primary text-primary-foreground rounded-full w-4 h-4 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
                           {step.order}
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           <span className="font-medium">{step.title}</span>
                           <span className="text-muted-foreground ml-1">({step.timeframe})</span>
                         </div>

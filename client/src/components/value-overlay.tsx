@@ -47,49 +47,49 @@ export function ValueMetricChip({ pillar, metric, contextProfile, onChangeMetric
   };
 
   return (
-    <div className="flex items-center gap-2 mb-4">
+    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mb-3 sm:mb-4">
       {/* Metric Info Dialog */}
       <Dialog open={isInfoOpen} onOpenChange={setIsInfoOpen}>
         <DialogTrigger asChild>
           <Button 
             variant="secondary" 
-            className="text-sm px-3 py-1 h-auto"
+            className="text-xs sm:text-sm px-2 sm:px-3 py-1 h-auto w-full sm:w-auto"
             data-testid={`button-metric-info-${pillar.toLowerCase()}`}
           >
-            <Info className="w-3 h-3 mr-1" />
-            {metric.name}
+            <Info className="w-3 h-3 mr-1 flex-shrink-0" />
+            <span className="truncate">{metric.name}</span>
           </Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Info className="w-5 h-5" />
-              {metric.name}
+            <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Info className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+              <span className="truncate">{metric.name}</span>
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {/* Quick Definition */}
-            <div className="bg-muted p-4 rounded-lg">
-              <div className="font-medium text-sm mb-2">What this measures</div>
-              <div className="text-sm text-muted-foreground">{metric.definition}</div>
+            <div className="bg-muted p-3 sm:p-4 rounded-lg">
+              <div className="font-medium text-xs sm:text-sm mb-1.5 sm:mb-2">What this measures</div>
+              <div className="text-xs sm:text-sm text-muted-foreground">{metric.definition}</div>
             </div>
 
             {/* Context Explanation if available */}
             {contextExplanation && (
-              <div className="bg-blue-50 dark:bg-blue-950/30 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
-                <div className="font-medium text-sm mb-2 text-blue-900 dark:text-blue-100">
+              <div className="bg-blue-50 dark:bg-blue-950/30 p-3 sm:p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div className="font-medium text-xs sm:text-sm mb-1.5 sm:mb-2 text-blue-900 dark:text-blue-100">
                   💡 Why this metric fits your organization
                 </div>
-                <div className="text-sm text-blue-700 dark:text-blue-300">{contextExplanation}</div>
+                <div className="text-xs sm:text-sm text-blue-700 dark:text-blue-300">{contextExplanation}</div>
               </div>
             )}
 
             {/* Full Measurement Guide */}
             {metricGuide && (
               <div className="prose prose-sm max-w-none">
-                <div className="font-medium text-sm mb-3">How to measure it</div>
+                <div className="font-medium text-xs sm:text-sm mb-2 sm:mb-3">How to measure it</div>
                 <div 
-                  className="text-sm leading-relaxed"
+                  className="text-xs sm:text-sm leading-relaxed"
                   dangerouslySetInnerHTML={{ 
                     __html: formatMetricGuide(metricGuide.content)
                   }} 
@@ -103,30 +103,30 @@ export function ValueMetricChip({ pillar, metric, contextProfile, onChangeMetric
       {/* Change Metric Dialog */}
       <Dialog open={isChangeOpen} onOpenChange={setIsChangeOpen}>
         <DialogTrigger asChild>
-          <Button variant="ghost" size="sm" className="text-xs px-2 h-6" data-testid={`button-change-metric-${pillar.toLowerCase()}`}>
+          <Button variant="ghost" size="sm" className="text-xs px-2 h-6 w-full sm:w-auto" data-testid={`button-change-metric-${pillar.toLowerCase()}`}>
             <Edit3 className="w-3 h-3 mr-1" />
             Change
           </Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="w-[95vw] sm:max-w-md max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Choose metric for {pillar} pillar</DialogTitle>
+            <DialogTitle className="text-base sm:text-lg">Choose metric for {pillar} pillar</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3">
-            <div className="p-3 bg-muted rounded-lg">
-              <div className="font-medium text-sm mb-1">Current: {metric.name}</div>
+          <div className="space-y-2 sm:space-y-3">
+            <div className="p-2 sm:p-3 bg-muted rounded-lg">
+              <div className="font-medium text-xs sm:text-sm mb-1">Current: {metric.name}</div>
               <div className="text-xs text-muted-foreground">{metric.definition}</div>
             </div>
             
             {alternateMetrics.length > 0 && (
               <>
-                <div className="text-sm font-medium">Alternatives:</div>
+                <div className="text-xs sm:text-sm font-medium">Alternatives:</div>
                 <div className="space-y-2">
                   {alternateMetrics.map((altMetric) => (
-                    <div key={altMetric.id} className="border rounded-lg p-3 hover:bg-muted/50 transition-colors">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-sm mb-1">{altMetric.name}</div>
+                    <div key={altMetric.id} className="border rounded-lg p-2 sm:p-3 hover:bg-muted/50 transition-colors">
+                      <div className="flex flex-col sm:flex-row items-start gap-2 sm:justify-between">
+                        <div className="flex-1 min-w-0 w-full sm:w-auto">
+                          <div className="font-medium text-xs sm:text-sm mb-1">{altMetric.name}</div>
                           <div className="text-xs text-muted-foreground">{altMetric.definition}</div>
                         </div>
                         <Button 
@@ -134,6 +134,7 @@ export function ValueMetricChip({ pillar, metric, contextProfile, onChangeMetric
                           variant="outline" 
                           onClick={() => handleMetricChange(altMetric.id)}
                           data-testid={`button-select-metric-${altMetric.id}`}
+                          className="w-full sm:w-auto text-xs flex-shrink-0"
                         >
                           Select
                         </Button>
@@ -258,18 +259,18 @@ export function HowToMeasureDialog({ metric, children }: HowToMeasureDialogProps
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <HelpCircle className="w-5 h-5" />
-            How to measure: {metric.name}
+          <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+            <span className="truncate">How to measure: {metric.name}</span>
           </DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
-          <div className="bg-muted p-4 rounded-lg">
-            <div className="font-medium text-sm mb-2">Quick summary</div>
-            <div className="text-sm">{metric.definition}</div>
-            <div className="text-xs text-muted-foreground mt-2">
+        <div className="space-y-3 sm:space-y-4">
+          <div className="bg-muted p-3 sm:p-4 rounded-lg">
+            <div className="font-medium text-xs sm:text-sm mb-1.5 sm:mb-2">Quick summary</div>
+            <div className="text-xs sm:text-sm">{metric.definition}</div>
+            <div className="text-xs text-muted-foreground mt-1.5 sm:mt-2">
               Unit: {metric.unit} • Pillar: {metric.pillar}
             </div>
           </div>
@@ -277,7 +278,7 @@ export function HowToMeasureDialog({ metric, children }: HowToMeasureDialogProps
           {metricGuide ? (
             <div className="prose prose-sm max-w-none">
               <div 
-                className="text-sm leading-relaxed"
+                className="text-xs sm:text-sm leading-relaxed"
                 dangerouslySetInnerHTML={{ 
                   __html: DOMPurify.sanitize(
                     metricGuide.content
@@ -293,7 +294,7 @@ export function HowToMeasureDialog({ metric, children }: HowToMeasureDialogProps
               />
             </div>
           ) : (
-            <div className="text-sm text-muted-foreground">
+            <div className="text-xs sm:text-sm text-muted-foreground">
               <p>Detailed measurement guide for this metric is being prepared.</p>
             </div>
           )}

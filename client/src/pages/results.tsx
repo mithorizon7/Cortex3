@@ -405,20 +405,20 @@ export default function ResultsPage() {
         )}
 
         {/* Executive Header */}
-        <div className="text-center mb-8 sm:mb-12">
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <Target className="h-6 sm:h-8 w-6 sm:w-8 text-primary" />
-            <h1 className="text-2xl sm:text-4xl font-display font-bold text-foreground">Your Strategic Maturity Profile</h1>
+        <div className="text-center mb-6 sm:mb-8 lg:mb-12">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 mb-4">
+            <Target className="h-6 sm:h-7 lg:h-8 w-6 sm:w-7 lg:w-8 text-primary flex-shrink-0" />
+            <h1 className="text-xl sm:text-3xl lg:text-4xl font-display font-bold text-foreground leading-tight">Your Strategic Maturity Profile</h1>
           </div>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mb-6">
-            <Badge variant="outline" className="text-sm sm:text-lg px-3 sm:px-4 py-1 sm:py-2">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 lg:gap-4 mb-4 sm:mb-6">
+            <Badge variant="outline" className="text-xs sm:text-sm lg:text-lg px-2 sm:px-3 lg:px-4 py-1 sm:py-1.5 lg:py-2 whitespace-nowrap">
               Overall Maturity: {maturityLevel}
             </Badge>
-            <Badge variant="secondary" className="text-sm sm:text-lg px-3 sm:px-4 py-1 sm:py-2">
+            <Badge variant="secondary" className="text-xs sm:text-sm lg:text-lg px-2 sm:px-3 lg:px-4 py-1 sm:py-1.5 lg:py-2 whitespace-nowrap">
               {triggeredGates.length} Critical Requirements
             </Badge>
           </div>
-          <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto font-ui">
+          <p className="text-sm sm:text-base lg:text-lg text-muted-foreground max-w-2xl mx-auto font-ui px-2 sm:px-4">
             Below is your CORTEX profile: six domains, each scored 0–3. The <strong>honeycomb</strong> shows where you are strong and where you have room to build. Scores reflect today's practices, not potential.
           </p>
         </div>
@@ -430,32 +430,32 @@ export default function ResultsPage() {
         />
 
         {/* Executive Summary */}
-        <Card className="mb-8 border-2 border-primary/20">
-          <CardHeader className="bg-primary/5 p-4 sm:p-6">
-            <CardTitle className="flex items-center space-x-2">
-              <Zap className="h-5 sm:h-6 w-5 sm:w-6 text-primary" />
-              <span className="text-xl sm:text-2xl font-display">Executive Summary</span>
+        <Card className="mb-6 sm:mb-8 border-2 border-primary/20">
+          <CardHeader className="bg-primary/5 p-3 sm:p-4 lg:p-6">
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="h-4 sm:h-5 lg:h-6 w-4 sm:w-5 lg:w-6 text-primary flex-shrink-0" />
+              <span className="text-lg sm:text-xl lg:text-2xl font-display">Executive Summary</span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-4 sm:p-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+          <CardContent className="p-3 sm:p-6 lg:p-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
               {/* Key Insights */}
               <div>
-                <h3 className="text-xl font-display font-semibold mb-6 flex items-center space-x-2">
-                  <Lightbulb className="h-5 w-5 text-info" />
+                <h3 className="text-base sm:text-lg lg:text-xl font-display font-semibold mb-4 sm:mb-6 flex items-center gap-2">
+                  <Lightbulb className="h-4 sm:h-5 w-4 sm:w-5 text-info flex-shrink-0" />
                   <span>Key Insights</span>
                 </h3>
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {insights.map((insight, index) => (
-                    <div key={index} className="border-l-4 border-primary pl-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-semibold text-lg font-ui">{insight.title}</h4>
-                        <Badge variant={insight.urgency === 'high' ? 'destructive' : insight.urgency === 'medium' ? 'secondary' : 'outline'} className="text-xs">
+                    <div key={index} className="border-l-4 border-primary pl-3 sm:pl-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2 mb-2">
+                        <h4 className="font-semibold text-sm sm:text-base lg:text-lg font-ui">{insight.title}</h4>
+                        <Badge variant={insight.urgency === 'high' ? 'destructive' : insight.urgency === 'medium' ? 'secondary' : 'outline'} className="text-xs self-start sm:self-auto whitespace-nowrap">
                           {insight.urgency} priority
                         </Badge>
                       </div>
-                      <p className="text-muted-foreground mb-2 font-ui">{insight.description} <span className="italic text-sm">{insight.reasoning}</span></p>
-                      <p className="text-sm font-medium text-primary mb-2 font-ui">{insight.action}</p>
+                      <p className="text-sm sm:text-base text-muted-foreground mb-2 font-ui">{insight.description} <span className="italic text-xs sm:text-sm">{insight.reasoning}</span></p>
+                      <p className="text-xs sm:text-sm font-medium text-primary mb-2 font-ui">{insight.action}</p>
                       <p className="text-xs text-muted-foreground bg-muted/30 p-2 rounded font-ui">
                         <strong>Business Impact:</strong> {insight.businessImpact}
                       </p>
@@ -466,33 +466,33 @@ export default function ResultsPage() {
 
               {/* Next 90 Days */}
               <div>
-                <h3 className="text-xl font-display font-semibold mb-6 flex items-center space-x-2">
-                  <Clock className="h-5 w-5 text-info" />
+                <h3 className="text-base sm:text-lg lg:text-xl font-display font-semibold mb-4 sm:mb-6 flex items-center gap-2">
+                  <Clock className="h-4 sm:h-5 w-4 sm:w-5 text-info flex-shrink-0" />
                   <span>Your Next 90 Days</span>
                 </h3>
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {priorities.map((priority, index) => (
-                    <div key={index} className="flex items-start space-x-3 p-4 sm:p-4 bg-muted/50 rounded-lg">
-                      <div className="bg-primary text-primary-foreground rounded-full w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center font-bold text-base sm:text-sm">
+                    <div key={index} className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 bg-muted/50 rounded-lg">
+                      <div className="bg-primary text-primary-foreground rounded-full w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center font-bold text-sm flex-shrink-0">
                         {index + 1}
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="font-medium font-ui">{priority.title}</p>
-                          <Badge variant={priority.urgency === 'high' ? 'destructive' : priority.urgency === 'medium' ? 'secondary' : 'outline'} className="text-xs">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2 mb-1 sm:mb-2">
+                          <p className="font-medium text-sm sm:text-base font-ui">{priority.title}</p>
+                          <Badge variant={priority.urgency === 'high' ? 'destructive' : priority.urgency === 'medium' ? 'secondary' : 'outline'} className="text-xs self-start sm:self-auto whitespace-nowrap">
                             {priority.timeframe}
                           </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground font-ui">{priority.description}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground font-ui">{priority.description}</p>
                         <p className="text-xs text-muted-foreground mt-1 font-ui">{priority.reasoning}</p>
                       </div>
                     </div>
                   ))}
                 </div>
                 
-                <div className="mt-6 pt-6 border-t border-border">
-                  <Button size="lg" className="w-full" onClick={handleExportPDF}>
-                    <ArrowRight className="h-5 w-5 mr-2" />
+                <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-border">
+                  <Button size="lg" className="w-full text-sm sm:text-base" onClick={handleExportPDF}>
+                    <ArrowRight className="h-4 sm:h-5 w-4 sm:w-5 mr-2" />
                     Generate Executive Brief
                   </Button>
                 </div>
@@ -503,27 +503,27 @@ export default function ResultsPage() {
 
 
         {/* Visual Scorecard */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 mb-6 sm:mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-6 sm:mb-8">
           <Card>
-            <CardHeader className="p-4 sm:p-6">
-              <CardTitle className="flex items-center space-x-2">
-                <TrendingUp className="h-5 w-5" />
-                <span className="font-display text-lg sm:text-xl">CORTEX Maturity Radar</span>
+            <CardHeader className="p-3 sm:p-4 lg:p-6">
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-4 sm:h-5 w-4 sm:w-5 flex-shrink-0" />
+                <span className="font-display text-base sm:text-lg lg:text-xl">CORTEX Maturity Radar</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex justify-center p-4 sm:p-6">
+            <CardContent className="flex justify-center p-3 sm:p-4 lg:p-6">
               <HoneycombRadar 
                 pillarScores={pillarScores} 
-                className="max-w-md mx-auto"
+                className="max-w-[280px] sm:max-w-sm md:max-w-md mx-auto w-full"
               />
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle className="font-display">Domain Breakdown</CardTitle>
+            <CardHeader className="p-3 sm:p-4 lg:p-6">
+              <CardTitle className="font-display text-base sm:text-lg lg:text-xl">Domain Breakdown</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3 sm:space-y-4 p-3 sm:p-4 lg:p-6">
               {Object.entries(pillarScores).map(([pillar, score]) => {
                 const pillarInfo = CORTEX_PILLARS[pillar.toUpperCase() as keyof typeof CORTEX_PILLARS];
                 if (!pillarInfo) return null;
@@ -531,22 +531,22 @@ export default function ResultsPage() {
                 const percentage = (score / 3) * 100;
                 
                 return (
-                  <div key={pillar} className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center space-x-2">
+                  <div key={pillar} className="space-y-1.5 sm:space-y-2">
+                    <div className="flex justify-between items-center gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
                         <div 
-                          className="w-3 h-3 rounded-full" 
+                          className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full flex-shrink-0" 
                           style={{ backgroundColor: pillarInfo.color }}
                         />
-                        <span className="font-medium font-ui">{pillarInfo.name}</span>
+                        <span className="font-medium text-sm sm:text-base font-ui truncate">{pillarInfo.name}</span>
                       </div>
-                      <Badge variant={score < 1.5 ? "destructive" : score < 2.5 ? "secondary" : "default"}>
+                      <Badge variant={score < 1.5 ? "destructive" : score < 2.5 ? "secondary" : "default"} className="text-xs whitespace-nowrap flex-shrink-0">
                         {score < 1 ? 'Nascent' : score < 2 ? 'Emerging' : score < 3 ? 'Integrated' : 'Leading'}
                       </Badge>
                     </div>
-                    <div className="w-full bg-muted rounded-full h-2">
+                    <div className="w-full bg-muted rounded-full h-1.5 sm:h-2">
                       <div 
-                        className="h-2 rounded-full transition-all duration-500" 
+                        className="h-1.5 sm:h-2 rounded-full transition-all duration-500" 
                         style={{ 
                           width: `${percentage}%`,
                           backgroundColor: pillarInfo.color 
@@ -562,47 +562,47 @@ export default function ResultsPage() {
 
         {/* Critical Requirements */}
         {triggeredGates.length > 0 && (
-          <Card className="mb-8 border-warning/50">
-            <CardHeader className="bg-warning/10">
-              <CardTitle className="flex items-center space-x-2 text-warning-foreground font-display">
-                <Shield className="h-6 w-6" />
+          <Card className="mb-6 sm:mb-8 border-warning/50">
+            <CardHeader className="bg-warning/10 p-3 sm:p-4 lg:p-6">
+              <CardTitle className="flex items-center gap-2 text-warning-foreground font-display text-base sm:text-lg lg:text-xl">
+                <Shield className="h-5 sm:h-6 w-5 sm:w-6 flex-shrink-0" />
                 <span>Critical Requirements for Your Context</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
-              <p className="text-muted-foreground mb-6 font-ui">
+            <CardContent className="p-3 sm:p-4 lg:p-6">
+              <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-6 font-ui">
                 Because of your context, some safeguards are <strong>non-negotiable before scale</strong>. These aren't bureaucratic hurdles; they prevent avoidable harm and build trust. Expand each callout to learn what it is, why it applies, and simple ways to satisfy it.
               </p>
               
               <Collapsible>
                 <CollapsibleTrigger asChild>
-                  <Button variant="outline" className="mb-4">
+                  <Button variant="outline" className="mb-3 sm:mb-4 w-full sm:w-auto text-sm sm:text-base">
                     <ChevronDown className="h-4 w-4 mr-2" />
                     View Requirements Details
                   </Button>
                 </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-4">
+                <CollapsibleContent className="space-y-3 sm:space-y-4">
                   {triggeredGates.map((gate: any) => (
                     <Card key={gate.id} className="border-l-4 border-l-warning">
-                      <CardContent className="p-6">
-                        <div className="flex items-start space-x-4">
-                          <div className="bg-warning text-warning-foreground p-2 rounded-full flex-shrink-0">
-                            <AlertTriangle className="w-5 h-5" />
+                      <CardContent className="p-3 sm:p-4 lg:p-6">
+                        <div className="flex items-start gap-3 sm:gap-4">
+                          <div className="bg-warning text-warning-foreground p-1.5 sm:p-2 rounded-full flex-shrink-0">
+                            <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5" />
                           </div>
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-lg mb-1 font-ui">{gate.title}</h3>
-                            <p className="text-sm text-muted-foreground mb-4 font-ui">{gate.reason}</p>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-base sm:text-lg mb-1 font-ui">{gate.title}</h3>
+                            <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4 font-ui">{gate.reason}</p>
                             
                             {gate.explain && (
-                              <div className="bg-warning/10 p-3 rounded text-xs mb-4">
-                                <div className="space-y-2">
+                              <div className="bg-warning/10 p-2 sm:p-3 rounded text-xs mb-3 sm:mb-4">
+                                <div className="space-y-1.5 sm:space-y-2">
                                   <div><strong>Why this gate was triggered:</strong></div>
                                   {Object.entries(gate.explain).map(([key, value]) => {
                                     const threshold = getGateThreshold(gate.id, key);
                                     return (
-                                      <div key={key} className="flex justify-between items-center">
-                                        <span>{key.replace(/_/g, ' ')}: </span>
-                                        <span className="font-medium">
+                                      <div key={key} className="flex justify-between items-center gap-2">
+                                        <span className="text-xs">{key.replace(/_/g, ' ')}: </span>
+                                        <span className="font-medium text-xs whitespace-nowrap">
                                           {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value)}
                                           {typeof value === 'number' && '/4'}
                                           {threshold && ` (requires ${threshold})`}
@@ -616,10 +616,10 @@ export default function ResultsPage() {
                             
                             {gate.actions && gate.actions.length > 0 && (
                               <div>
-                                <h4 className="font-medium mb-2 text-sm font-ui">Recommended Actions:</h4>
-                                <ul className="text-sm space-y-1 text-muted-foreground font-ui">
+                                <h4 className="font-medium mb-2 text-xs sm:text-sm font-ui">Recommended Actions:</h4>
+                                <ul className="text-xs sm:text-sm space-y-1 text-muted-foreground font-ui">
                                   {gate.actions.map((action: string, index: number) => (
-                                    <li key={index} className="flex items-start space-x-2">
+                                    <li key={index} className="flex items-start gap-2">
                                       <ChevronRight className="h-3 w-3 mt-0.5 text-warning flex-shrink-0" />
                                       <span>{action}</span>
                                     </li>
@@ -640,32 +640,32 @@ export default function ResultsPage() {
 
         {/* Detailed Analysis */}
         {/* How to Read the Guidance */}
-        <Card className="mb-8 bg-primary/5 border-primary/15">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2 text-primary font-display">
-              <BookOpen className="h-5 w-5" />
+        <Card className="mb-6 sm:mb-8 bg-primary/5 border-primary/15">
+          <CardHeader className="p-3 sm:p-4 lg:p-6">
+            <CardTitle className="flex items-center gap-2 text-primary font-display text-base sm:text-lg lg:text-xl">
+              <BookOpen className="h-4 sm:h-5 w-4 sm:w-5 flex-shrink-0" />
               <span>How to Read the Guidance</span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-6">
-            <p className="text-foreground/90 mb-4 font-ui">
+          <CardContent className="p-3 sm:p-4 lg:p-6">
+            <p className="text-foreground/90 mb-3 sm:mb-4 text-sm sm:text-base font-ui">
               For each domain you'll see:
             </p>
-            <ul className="text-foreground/90 space-y-2 font-ui">
-              <li className="flex items-start space-x-2">
-                <span className="font-semibold min-w-fit">• Why this matters</span>
-                <span className="text-sm">— business impact in plain language</span>
+            <ul className="text-foreground/90 space-y-1.5 sm:space-y-2 font-ui">
+              <li className="flex items-start gap-2">
+                <span className="font-semibold min-w-fit text-sm sm:text-base">• Why this matters</span>
+                <span className="text-xs sm:text-sm">— business impact in plain language</span>
               </li>
-              <li className="flex items-start space-x-2">
-                <span className="font-semibold min-w-fit">• What good looks like</span>
-                <span className="text-sm">— observable practices</span>
+              <li className="flex items-start gap-2">
+                <span className="font-semibold min-w-fit text-sm sm:text-base">• What good looks like</span>
+                <span className="text-xs sm:text-sm">— observable practices</span>
               </li>
-              <li className="flex items-start space-x-2">
-                <span className="font-semibold min-w-fit">• How it typically improves</span>
-                <span className="text-sm">— common pathways, options, and trade-offs</span>
+              <li className="flex items-start gap-2">
+                <span className="font-semibold min-w-fit text-sm sm:text-base">• How it typically improves</span>
+                <span className="text-xs sm:text-sm">— common pathways, options, and trade-offs</span>
               </li>
             </ul>
-            <p className="text-foreground/80 mt-4 text-sm italic font-ui">
+            <p className="text-foreground/80 mt-3 sm:mt-4 text-xs sm:text-sm italic font-ui">
               Use these as teaching notes and talking points. They are <strong>not mandates</strong>.
             </p>
           </CardContent>
@@ -675,35 +675,35 @@ export default function ResultsPage() {
           <CollapsibleTrigger asChild>
             <Button 
               variant="outline" 
-              className="w-full mb-6 h-auto p-4 border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/40"
+              className="w-full mb-4 sm:mb-6 h-auto p-3 sm:p-4 border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/40"
               data-testid="button-toggle-detailed-analysis"
               aria-expanded={showDetailedView}
             >
-              <div className="flex items-center justify-between w-full">
-                <div className="flex items-center space-x-3">
-                  <div className="bg-primary/15 text-primary p-2 rounded-lg">
-                    <Compass className="h-5 w-5" />
+              <div className="flex items-center justify-between w-full gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                  <div className="bg-primary/15 text-primary p-1.5 sm:p-2 rounded-lg flex-shrink-0">
+                    <Compass className="h-4 sm:h-5 w-4 sm:w-5" />
                   </div>
-                  <div className="text-left">
-                    <div className="flex items-center space-x-2">
-                      <h3 className="font-semibold text-lg font-display">
+                  <div className="text-left min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                      <h3 className="font-semibold text-sm sm:text-base lg:text-lg font-display">
                         {showDetailedView ? 'Hide' : 'View'} Detailed Domain Analysis
                       </h3>
-                      <Badge variant="secondary" className="font-ui pointer-events-none">
+                      <Badge variant="secondary" className="font-ui pointer-events-none text-xs self-start sm:self-auto">
                         6 Domains
                       </Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground font-ui">
+                    <p className="text-xs sm:text-sm text-muted-foreground font-ui">
                       In-depth guidance, improvement pathways, and context-specific recommendations
                     </p>
                   </div>
                 </div>
-                <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform flex-shrink-0 ml-4 ${showDetailedView ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`h-4 sm:h-5 w-4 sm:w-5 text-muted-foreground transition-transform flex-shrink-0 ${showDetailedView ? 'rotate-180' : ''}`} />
               </div>
             </Button>
           </CollapsibleTrigger>
           <CollapsibleContent>
-            <div className="grid lg:grid-cols-2 gap-6 mb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
               {Object.entries(CORTEX_PILLARS).map(([key, pillar]) => {
                 const pillarKey = key.toLowerCase();
                 const score = pillarScores[pillarKey as keyof PillarScores] || 0;
@@ -727,19 +727,19 @@ export default function ResultsPage() {
         </Collapsible>
 
         {/* Navigation Actions */}
-        <Card className="mb-6" data-testid="navigation-actions">
-          <CardContent className="p-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="space-y-1">
-                <h3 className="text-base font-semibold text-foreground">Review or Update</h3>
-                <p className="text-sm text-muted-foreground">
+        <Card className="mb-4 sm:mb-6" data-testid="navigation-actions">
+          <CardContent className="p-3 sm:p-4 lg:p-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+              <div className="space-y-0.5 sm:space-y-1">
+                <h3 className="text-sm sm:text-base font-semibold text-foreground">Review or Update</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   Make changes to your pulse check responses or recalculate results
                 </p>
               </div>
-              <div className="flex items-center gap-3">
-                <Link to={`/pulse/${assessmentId}`} data-testid="link-edit-pulse-answers">
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <ArrowRight className="h-4 w-4 rotate-180" />
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                <Link to={`/pulse/${assessmentId}`} data-testid="link-edit-pulse-answers" className="w-full sm:w-auto">
+                  <Button variant="outline" size="sm" className="gap-2 w-full sm:w-auto text-sm">
+                    <ArrowRight className="h-3.5 sm:h-4 w-3.5 sm:w-4 rotate-180" />
                     Edit Answers
                   </Button>
                 </Link>
@@ -751,9 +751,9 @@ export default function ResultsPage() {
                     queryClient.invalidateQueries({ queryKey: ['/api/assessments', assessmentId] });
                   }}
                   data-testid="button-recalculate-strategic"
-                  className="gap-2"
+                  className="gap-2 w-full sm:w-auto text-sm"
                 >
-                  <TrendingUp className="h-4 w-4" />
+                  <TrendingUp className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
                   Recalculate
                 </Button>
               </div>
@@ -763,16 +763,14 @@ export default function ResultsPage() {
 
         {/* Actions */}
         <Card>
-          <CardContent className="p-6">
-            <div className="flex justify-center sm:justify-end">
-              <div className="flex space-x-3">
-                <Button variant="outline" onClick={handleExportJSON}>
-                  Export Data
-                </Button>
-                <Button onClick={handleExportPDF}>
-                  Executive Brief PDF
-                </Button>
-              </div>
+          <CardContent className="p-3 sm:p-4 lg:p-6">
+            <div className="flex flex-col sm:flex-row justify-stretch sm:justify-end gap-2 sm:gap-3">
+              <Button variant="outline" onClick={handleExportJSON} className="w-full sm:w-auto text-sm">
+                Export Data
+              </Button>
+              <Button onClick={handleExportPDF} className="w-full sm:w-auto text-sm">
+                Executive Brief PDF
+              </Button>
             </div>
           </CardContent>
         </Card>
