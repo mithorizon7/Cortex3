@@ -1142,7 +1142,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
 
   let y = PAGE.headerBar + 10;
 
-  // Executive Summary
+  // Your Strategic Maturity Profile
   const pillarKeys = Object.keys(data.pillarScores);
   // Calculate average only from answered domains (filter undefined/null)
   const scoredValues = Object.values(data.pillarScores).filter((score): score is number => score !== undefined && score !== null);
@@ -1150,7 +1150,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     (scoredValues.length > 0 ? scoredValues.reduce((sum: number, score: number) => sum + score, 0) / scoredValues.length : 0);
   const maturityLevel = getMaturityLevel(avg);
 
-  y = drawSectionTitle(doc, "EXECUTIVE SUMMARY", y);
+  y = drawSectionTitle(doc, "YOUR STRATEGIC MATURITY PROFILE", y);
   setFont(doc, TYPO.h2); setText(doc, PALETTE.ink);
   doc.text(`Overall AI Readiness: ${maturityLevel} (${avg.toFixed(1)}/3)`, PAGE.margin, y);
   y += PAGE.line * 1.5;
