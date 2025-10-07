@@ -423,12 +423,6 @@ export default function ResultsPage() {
           </p>
         </div>
 
-        {/* Value Snapshot */}
-        <ValueSnapshot 
-          valueOverlay={valueOverlay}
-          totalPillars={Object.keys(CORTEX_PILLARS).length}
-        />
-
         {/* Executive Summary */}
         <Card className="mb-6 sm:mb-8 border-2 border-primary/20">
           <CardHeader className="bg-primary/5 p-3 sm:p-4 lg:p-6">
@@ -576,6 +570,93 @@ export default function ResultsPage() {
           </Card>
         </div>
 
+        {/* Detailed Analysis */}
+        {/* How to Read the Guidance */}
+        <Card className="mb-6 sm:mb-8 bg-primary/5 border-primary/15">
+          <CardHeader className="p-3 sm:p-4 lg:p-6">
+            <CardTitle className="flex items-center gap-2 text-primary font-display text-base sm:text-lg lg:text-xl">
+              <BookOpen className="h-4 sm:h-5 w-4 sm:w-5 flex-shrink-0" />
+              <span>How to Read the Guidance</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-3 sm:p-4 lg:p-6">
+            <p className="text-foreground/90 mb-3 sm:mb-4 text-sm sm:text-base font-ui">
+              For each domain you'll see:
+            </p>
+            <ul className="text-foreground/90 space-y-1.5 sm:space-y-2 font-ui">
+              <li className="flex items-start gap-2">
+                <span className="font-semibold min-w-fit text-sm sm:text-base">• Why this matters</span>
+                <span className="text-xs sm:text-sm">— business impact in plain language</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="font-semibold min-w-fit text-sm sm:text-base">• What good looks like</span>
+                <span className="text-xs sm:text-sm">— observable practices</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="font-semibold min-w-fit text-sm sm:text-base">• How it typically improves</span>
+                <span className="text-xs sm:text-sm">— common pathways, options, and trade-offs</span>
+              </li>
+            </ul>
+            <p className="text-foreground/80 mt-3 sm:mt-4 text-xs sm:text-sm italic font-ui">
+              Use these as teaching notes and talking points. They are <strong>not mandates</strong>.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Collapsible open={showDetailedView} onOpenChange={setShowDetailedView}>
+          <CollapsibleTrigger asChild>
+            <Button 
+              variant="outline" 
+              className="w-full mb-4 sm:mb-6 h-auto p-3 sm:p-4 lg:p-5 border-2 border-primary/50 bg-primary/10 shadow-md transition-all"
+              data-testid="button-toggle-detailed-analysis"
+              aria-expanded={showDetailedView}
+            >
+              <div className="flex items-center justify-between w-full gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                  <div className="bg-primary text-primary-foreground p-2 sm:p-2.5 rounded-lg flex-shrink-0 shadow-sm">
+                    <Compass className="h-5 sm:h-6 w-5 sm:w-6" />
+                  </div>
+                  <div className="text-left min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                      <h3 className="font-semibold text-base sm:text-lg lg:text-xl font-display text-foreground">
+                        {showDetailedView ? 'Hide' : 'View'} Detailed Domain Analysis
+                      </h3>
+                      <Badge variant="default" className="font-ui pointer-events-none text-xs self-start sm:self-auto">
+                        6 Domains
+                      </Badge>
+                    </div>
+                    <p className="text-xs sm:text-sm text-foreground/70 font-ui">
+                      In-depth guidance, improvement pathways, and context-specific recommendations
+                    </p>
+                  </div>
+                </div>
+                <ChevronDown className={`h-5 sm:h-6 w-5 sm:w-6 text-foreground/60 transition-transform flex-shrink-0 ${showDetailedView ? 'rotate-180' : ''}`} />
+              </div>
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+              {Object.entries(CORTEX_PILLARS).map(([key, pillar]) => {
+                const score = pillarScores[key as keyof PillarScores] || 0;
+                const pillarMoves = priorityMoves.filter((move: any) => move.pillar === key);
+                const pillarValueData = valueOverlay?.[key as keyof ValueOverlay];
+                return (
+                  <DomainCard 
+                    key={key} 
+                    pillar={key} 
+                    stage={score}
+                    contextProfile={contextProfile}
+                    valueOverlay={pillarValueData}
+                    onValueOverlayUpdate={handleValueOverlayUpdate}
+                    priorityMoves={pillarMoves}
+                    contextGuidance={contextGuidance}
+                  />
+                );
+              })}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+
         {/* Critical Requirements */}
         {triggeredGates.length > 0 && (
           <Card className="mb-6 sm:mb-8 border-warning/50">
@@ -667,93 +748,6 @@ export default function ResultsPage() {
             </CardContent>
           </Card>
         )}
-
-        {/* Detailed Analysis */}
-        {/* How to Read the Guidance */}
-        <Card className="mb-6 sm:mb-8 bg-primary/5 border-primary/15">
-          <CardHeader className="p-3 sm:p-4 lg:p-6">
-            <CardTitle className="flex items-center gap-2 text-primary font-display text-base sm:text-lg lg:text-xl">
-              <BookOpen className="h-4 sm:h-5 w-4 sm:w-5 flex-shrink-0" />
-              <span>How to Read the Guidance</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-3 sm:p-4 lg:p-6">
-            <p className="text-foreground/90 mb-3 sm:mb-4 text-sm sm:text-base font-ui">
-              For each domain you'll see:
-            </p>
-            <ul className="text-foreground/90 space-y-1.5 sm:space-y-2 font-ui">
-              <li className="flex items-start gap-2">
-                <span className="font-semibold min-w-fit text-sm sm:text-base">• Why this matters</span>
-                <span className="text-xs sm:text-sm">— business impact in plain language</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="font-semibold min-w-fit text-sm sm:text-base">• What good looks like</span>
-                <span className="text-xs sm:text-sm">— observable practices</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="font-semibold min-w-fit text-sm sm:text-base">• How it typically improves</span>
-                <span className="text-xs sm:text-sm">— common pathways, options, and trade-offs</span>
-              </li>
-            </ul>
-            <p className="text-foreground/80 mt-3 sm:mt-4 text-xs sm:text-sm italic font-ui">
-              Use these as teaching notes and talking points. They are <strong>not mandates</strong>.
-            </p>
-          </CardContent>
-        </Card>
-
-        <Collapsible open={showDetailedView} onOpenChange={setShowDetailedView}>
-          <CollapsibleTrigger asChild>
-            <Button 
-              variant="outline" 
-              className="w-full mb-4 sm:mb-6 h-auto p-3 sm:p-4 lg:p-5 border-2 border-primary/50 bg-primary/10 shadow-md transition-all"
-              data-testid="button-toggle-detailed-analysis"
-              aria-expanded={showDetailedView}
-            >
-              <div className="flex items-center justify-between w-full gap-3">
-                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                  <div className="bg-primary text-primary-foreground p-2 sm:p-2.5 rounded-lg flex-shrink-0 shadow-sm">
-                    <Compass className="h-5 sm:h-6 w-5 sm:w-6" />
-                  </div>
-                  <div className="text-left min-w-0">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                      <h3 className="font-semibold text-base sm:text-lg lg:text-xl font-display text-foreground">
-                        {showDetailedView ? 'Hide' : 'View'} Detailed Domain Analysis
-                      </h3>
-                      <Badge variant="default" className="font-ui pointer-events-none text-xs self-start sm:self-auto">
-                        6 Domains
-                      </Badge>
-                    </div>
-                    <p className="text-xs sm:text-sm text-foreground/70 font-ui">
-                      In-depth guidance, improvement pathways, and context-specific recommendations
-                    </p>
-                  </div>
-                </div>
-                <ChevronDown className={`h-5 sm:h-6 w-5 sm:w-6 text-foreground/60 transition-transform flex-shrink-0 ${showDetailedView ? 'rotate-180' : ''}`} />
-              </div>
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
-              {Object.entries(CORTEX_PILLARS).map(([key, pillar]) => {
-                const score = pillarScores[key as keyof PillarScores] || 0;
-                const pillarMoves = priorityMoves.filter((move: any) => move.pillar === key);
-                const pillarValueData = valueOverlay?.[key as keyof ValueOverlay];
-                return (
-                  <DomainCard 
-                    key={key} 
-                    pillar={key} 
-                    stage={score}
-                    contextProfile={contextProfile}
-                    valueOverlay={pillarValueData}
-                    onValueOverlayUpdate={handleValueOverlayUpdate}
-                    priorityMoves={pillarMoves}
-                    contextGuidance={contextGuidance}
-                  />
-                );
-              })}
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
 
         {/* Navigation Actions */}
         <Card className="mb-4 sm:mb-6" data-testid="navigation-actions">
