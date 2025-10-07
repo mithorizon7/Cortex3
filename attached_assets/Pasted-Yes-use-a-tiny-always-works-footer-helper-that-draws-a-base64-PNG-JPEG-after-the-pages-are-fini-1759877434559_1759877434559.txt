@@ -1,0 +1,117 @@
+Yes—use a tiny, **always-works** footer helper that draws a base64 PNG/JPEG after the pages are finished. The two most common reasons logos “break” jsPDF files are: (1) feeding the wrong data type/format (e.g., ArrayBuffer or SVG) to `addImage`, and (2) drawing during content flow (state/position surprises). The pattern below avoids both.
+
+### Drop-in: robust footer logo (PNG/JPEG, all environments)
+
+```ts
+// 1) Put a small sRGB 8-bit PNG or JPEG in your repo.
+//    Either import a base64 string at build time (Vite/Webpack) or inline it.
+import companyLogoBase64 from "./assets/company-logo.png?base64"; 
+// If you can’t import base64: load the file and convert to base64 string yourself.
+
+type JsPDF = import("jspdf").jsPDF;
+
+function addFooterLogoToAllPages(
+  doc: JsPDF,
+  base64: string,            // must be a base64 *string*, not ArrayBuffer
+  opts: {
+    widthMm?: number;        // target width on page (keeps aspect)
+    marginMm?: number;       // bottom & side margin
+    format?: "PNG" | "JPEG"; // must match the actual image
+    align?: "left" | "center" | "right";
+    compression?: "FAST" | "MEDIUM" | "SLOW";
+  } = {}
+) {
+  const widthMm = opts.widthMm ?? 22;
+  const marginMm = opts.marginMm ?? 12;
+  const format = opts.format ?? "PNG";
+  const align = opts.align ?? "center";
+  const compression = opts.compression ?? "FAST";
+
+  // Ensure Data URL prefix (jsPDF accepts pure base64 too, but this is safest).
+  const dataUrl = base64.startsWith("data:")
+    ? base64
+    : `data:image/${format.toLowerCase()};base64,${base64}`;
+
+  const pages = doc.getNumberOfPages();
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+
+  // Read intrinsic px size to preserve aspect ratio
+  const ip = doc.getImageProperties(dataUrl); // { width, height, ... }
+  const scale = widthMm / ip.width;
+  const drawW = widthMm;
+  const drawH = ip.height * scale;
+
+  // Horizontal position
+  const x =
+    align === "left"   ? marginMm :
+    align === "right"  ? pageW - marginMm - drawW :
+                         (pageW - drawW) / 2;
+
+  // Vertical position (above bottom margin)
+  const y = pageH - marginMm - drawH;
+
+  for (let i = 1; i <= pages; i++) {
+    doc.setPage(i);
+    try {
+      doc.addImage(dataUrl, format, x, y, drawW, drawH, undefined, compression);
+    } catch (e) {
+      // Failsafe: don’t break the PDF—fall back to text mark.
+      doc.setFont("Inter", "bold");
+      doc.setFontSize(8);
+      doc.text("« Company »", x, y + 3);
+    }
+  }
+}
+```
+
+### How to use it
+
+```ts
+// After you finish drawing ALL page content (headings, paragraphs, charts, etc.):
+addFooterLogoToAllPages(doc, companyLogoBase64, {
+  widthMm: 24, marginMm: 12, format: "PNG", align: "center", compression: "FAST"
+});
+```
+
+---
+
+## Why the old attempts “broke” the PDF (and how this avoids it)
+
+* **Wrong type/format**: `addImage` needs **base64 string** or a **data URL** plus the **correct format token** (`"PNG"` or `"JPEG"`). Passing an ArrayBuffer, SVG, CMYK JPEG, or mismatched format throws or corrupts output.
+  ➜ The helper normalizes to a data URL and makes the format explicit.
+
+* **Draw timing**: adding images *mid-flow* occasionally collides with your layout cursor or page breaks.
+  ➜ The helper draws the logo **after** every page is complete, so it never interferes with wrapping.
+
+* **Giant images**: 4000-px logos can explode file size/memory.
+  ➜ Use a small sRGB logo (e.g., 600–1200 px wide). `compression: "FAST"` is fine for UI logos.
+
+* **SVG logos**: jsPDF can’t natively `addImage` SVG reliably across environments.
+  ➜ Prefer **PNG/JPEG**. If you must keep SVG, rasterize at build time or use `svg2pdf.js` in the browser.
+
+* **Node/SSR**: No DOM `Image` object.
+  ➜ Base64 data URL works everywhere (browser, Node, workers).
+
+* **Color space**: CMYK JPEGs can fail—export **sRGB**.
+
+---
+
+## Quick sanity checks
+
+1. Open **File → Properties → Fonts** and verify your text fonts (e.g., Inter) still show as **Embedded Subset**—the logo won’t affect that.
+2. Copy/paste a paragraph—no stray control glyphs (your earlier PDF still had them around “one-page”, “show and tell”). 
+3. Confirm the logo sits exactly `marginMm` above the bottom on all pages and scales proportionally.
+
+---
+
+## If you prefer a tiny footer “bar” with logo + text
+
+Wrap `addFooterLogoToAllPages` in a `drawFooter(doc, pageNo, pageCount)` that also draws a faint rule and page number—call it in the same loop right after `addImage`.
+
+---
+
+**Confidence:**
+
+* **High** that this base64-footer pattern will work without breaking layout or fonts in your generator.
+* **Medium-high** that past failures were format/type/timing issues; if a specific bundler still inlines the image incorrectly, switching to an explicit base64 import or inlining the base64 string will resolve it.
