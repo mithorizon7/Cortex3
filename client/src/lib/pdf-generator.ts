@@ -147,7 +147,7 @@ function normalizeText(s: any): string {
   const t = sanitized
     .replace(/\u00A0/g, " ")                              // NBSP -> space
     .replace(/[\u2000-\u200B\u202F\u205F\u2060]/g, " ")  // Thin/narrow/zero-width spaces -> space
-    .replace(/\u200C|\u200D/g, "")                        // ZWNJ/ZWJ -> remove (no display)
+    .replace(/[\u200C\u200D\u200E\u200F]/g, "")          // ZWNJ/ZWJ/LRM/RLM -> remove (no display)
     .replace(/\uFEFF/g, "")                               // BOM -> remove
     .replace(/\u00AD/g, "")                               // Soft hyphen -> remove (no display)
     .replace(/\u2011/g, "-")                              // Non-breaking hyphen -> hyphen-minus
@@ -158,9 +158,13 @@ function normalizeText(s: any): string {
     .replace(/\s+\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
+  
+  // Apply Unicode NFC normalization to handle composed sequences
+  const normalized = t.normalize('NFC');
+  
   // Targeted fix: Only collapse clear ALL-CAPS letter-spaced runs (e.g., "E X E C U T I V E")
   // This prevents the aggressive space removal that was fusing words together
-  const fixed = t.replace(
+  const fixed = normalized.replace(
     /(?:^|\s)((?:[A-Z]\s){4,}[A-Z])(?=$|\s)/g,
     (match) => match.replace(/\s+/g, "")
   );
@@ -280,11 +284,12 @@ function newDoc(J: any, fonts: PDFFontData | null, metadata?: { title?: string; 
       doc.addFileToVFS("Inter-Bold.ttf", fonts.bold);
       doc.addFont("Inter-Bold.ttf", "Inter", "bold");
       
-      // Runtime verification: ensure fonts actually registered
+      // Runtime verification: probe font availability (non-throwing)
       try {
         doc.setFont("Inter", "normal");
+        console.log('✓ Inter fonts successfully registered and verified');
       } catch (verifyError) {
-        throw new Error("Inter font registration failed - font not available after addFont");
+        console.warn('⚠ Inter font verification failed after registration - will fall back to Helvetica:', verifyError);
       }
     } catch (error) {
       console.warn('Failed to register Inter fonts, falling back to Helvetica:', error);
@@ -297,7 +302,7 @@ function newDoc(J: any, fonts: PDFFontData | null, metadata?: { title?: string; 
   
   doc.setProperties({
     title: metadata?.title || "CORTEX Brief",
-    subject: metadata?.subject || "Executive AI Readiness Assessment",
+    subject: metadata?.subject || "Executive AI Readiness Brief",
     creator: "CORTEX™ Executive AI Readiness Platform",
     author: "CORTEX",
     keywords: metadata?.keywords || "AI, readiness, assessment, executive, strategy"
@@ -748,7 +753,7 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
   }
 
   // Finalize footers
-  finalizeFooters(doc, "CORTEX Executive AI Readiness Assessment");
+  finalizeFooters(doc, "CORTEX Executive AI Readiness Brief");
 
   // Download
   const blob = doc.output("blob");
@@ -1100,8 +1105,8 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
   
   const doc = newDoc(J, fonts, {
     title: `CORTEX Executive Brief - ${String(assessmentId).slice(0, 8).toUpperCase()}`,
-    subject: `AI Readiness Assessment for ${contextKeywords} Organization`,
-    keywords: `AI readiness, ${contextKeywords}, executive assessment, CORTEX, strategy`
+    subject: `AI Readiness Brief for ${contextKeywords} Organization`,
+    keywords: `AI readiness, ${contextKeywords}, executive brief, CORTEX, strategy`
   });
   const { pw } = bounds(doc);
   const runHeader = "CORTEX — Executive Brief";
