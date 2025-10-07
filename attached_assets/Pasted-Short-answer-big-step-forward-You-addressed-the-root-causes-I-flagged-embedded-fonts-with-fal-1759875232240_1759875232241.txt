@@ -1,0 +1,137 @@
+Short answer: **big step forward**. You addressed the root causes I flagged—embedded fonts (with fallback), safer normalization, vector bullets, ASCII prompt markers, consistent line‑height, and better page‑break behavior. What’s left are **two real issues** and a few polish items.
+
+Below I call out what’s ✅ fixed, what’s ⚠️ still off (with evidence), and **exact changes** to land a clean, production‑quality PDF.
+
+---
+
+## What’s improved ✅
+
+* **Embedded Unicode fonts (with graceful fallback)**: `newDoc()` registers Inter Regular/Bold via `addFileToVFS`/`addFont`, and you only fall back to Helvetica on error. That’s the right pattern. 
+* **Font usage everywhere**: your `setFont()` helper tries Inter first and falls back to Helvetica, so measurements/wraps use the same face that renders. 
+* **Vector bullets + reliable prompts**: list bullets are now drawn as filled circles (never a glyph problem on any viewer), and prompts use ASCII `> `. That eliminates the shaky `•`/`→` glyph path. 
+* **Normalization is much safer**: you removed the “delete all spaces” branch and replaced it with a targeted ALL‑CAPS letter‑spaced fix, while also normalizing NBSP/ZW spaces and a few hyphen variants. 
+* **Baseline/line height**: `doc.setLineHeightFactor(1.15)` is in, which keeps multi‑line text consistent across viewers. 
+* **Footer resilience**: you guard `addImage` and center the logo+text block—good defensive code. 
+
+---
+
+## What still looks wrong ⚠️ (and why)
+
+1. **Residual “funny characters” in extraction (looks like ``)**
+   In the PDF you shared, text such as *“A one page AI ambition”* and *“show and tell”* still contains those control‑like artifacts in the extracted text. That is classic leakage from **soft hyphen / non‑breaking hyphen / zero‑width joiners** that weren’t normalized before writing, *or* a **fallback to base‑14 (Helvetica)** where ToUnicode isn’t present. Evidence is on pp. 2–5 of the PDF text layer you provided. 
+
+   * Your new `normalizeText()` **does** handle NBSP (U+00A0), zero‑width range U+2000–U+200B, U+202F, U+205F, U+2060, and U+2011 (NB hyphen)… **but it misses**:
+     **U+00AD (soft hyphen), U+200C (ZWNJ), U+200D (ZWJ), U+FEFF (BOM)**—these are frequent culprits. 
+   * If Inter fails to load in your runtime, you’ll drop back to Helvetica (WinAnsi, no ToUnicode), and the extraction can again show ‑like artifacts even when you normalized some inputs. Your code already has the fallback; now ensure the **fonts actually load in prod**. 
+
+2. **Prompt bullets appear as `!’` in the PDF you showed**
+   In your current PDF, the “Strategic Discussion Questions” lines start with `!’` instead of `> `, which indicates the PDF you exported wasn’t built with the new `drawPrompts()` (or fonts fell back and the glyph mapping got odd). Your new code uses ASCII `> `, which should extract cleanly once fonts embed correctly.  
+
+*(Minor)* The title on page 1 in your new code says **“EXECUTIVE AI READINESS ASSESSMENT”**; the sample PDF shows **“EXECUTIVE AI READINESS BRIEF”**. Align the string with your preferred label.  
+
+---
+
+## Precise fixes to land
+
+### 1) Ensure Inter really embeds in all environments (stop the silent fallback)
+
+* You already load fonts via `loadInterFonts()` and pass them into `newDoc(J, fonts)`. Keep that, but **verify the payload type**: `addFileToVFS` expects a **base64 string**, not an ArrayBuffer/Uint8Array. If `loadInterFonts()` returns binary, **convert to base64** before `addFileToVFS`. Your `newDoc()` assumes strings:
+
+  ```ts
+  doc.addFileToVFS("Inter-Regular.ttf", fonts.regular);
+  doc.addFont("Inter-Regular.ttf", "Inter", "normal");
+  ```
+
+  …so make sure `fonts.regular`/`fonts.bold` are base64 strings at the callsite.  
+
+* **Bundle-proof loader** (examples—not prescriptive to your stack):
+
+  * Vite/Webpack: import as `?base64` or use a small build step that emits base64 strings.
+  * Node/Electron: `fs.readFileSync(...).toString('base64')`.
+
+* Add a **unit test or runtime assert**: after registering, do
+
+  ```ts
+  try { doc.setFont("Inter", "normal"); } 
+  catch { throw new Error("Inter not registered—font load failed"); }
+  ```
+
+  That way you catch a packaging issue early rather than silently shipping WinAnsi.
+
+### 2) Finish normalization (kills the  artifacts at source)
+
+Extend `normalizeText()` to cover the missing code points:
+
+```ts
+const t = sanitized
+  .replace(/\u00A0/g, " ")                // NBSP -> space
+  .replace(/[\u2000-\u200B\u202F\u205F\u2060]/g, " ") // thin/narrow/ZW spaces -> space
+  .replace(/\u200C|\u200D/g, "")          // ZWNJ/ZWJ -> remove
+  .replace(/\uFEFF/g, "")                 // BOM -> remove
+  .replace(/\u00AD/g, "")                 // soft hyphen -> remove (don’t display)
+  .replace(/\u2011/g, "-")                // NB hyphen -> hyphen-minus
+  .replace(/\u2212/g, "-")                // math minus -> hyphen-minus
+  // keep en/em dashes if Inter is embedded; otherwise, normalize:
+  // .replace(/\u2013/g, "-").replace(/\u2014/g, "-")
+  .replace(/[ \t]{2,}/g, " ")
+  .replace(/\s+\n/g, "\n")
+  .replace(/\n{3,}/g, "\n\n")
+  .trim();
+```
+
+You already have most of these; the **new lines** are `\u200C`, `\u200D`, `\uFEFF`, `\u00AD`, and (optionally) keeping –/— if fonts load correctly. 
+
+**Why this matters:** The `` you see in extracted text (e.g., *“one page”*, *“show and tell”*) is consistent with soft hyphen or ZWJ/ZWNJ leakage through WinAnsi encoding during extraction. Normalizing those out removes the artifacts at source, and embedding Inter ensures the remaining punctuation has a Unicode map. 
+
+### 3) Keep the new prompt/bullet behavior (and verify the output PDF was built from this branch)
+
+Your new `drawPrompts()` uses ASCII `> ` and your list bullets are vector dots. That should fix the strange prompt markers once Inter embeds. Double‑check your build artifact—the sample PDF still shows `!’`, which doesn’t match the new function.  
+
+### 4) (Optional) Preserve proper dashes for nicer typography
+
+Right now you normalize en/em dashes to `-`. With Inter available, you can keep them:
+
+* **If Inter loaded:** remove the `.replace(/\u2013|\u2014/g, "-")` lines so `–`/`—` render correctly.
+* **If you must support Helvetica fallback:** keep the normalization to `-` (which you have now). 
+
+### 5) Title copy consistency
+
+If “BRIEF” is your intended label, change
+
+```ts
+doc.text("EXECUTIVE AI READINESS ASSESSMENT", PAGE.margin, 26);
+```
+
+to
+
+```ts
+doc.text("EXECUTIVE AI READINESS BRIEF", PAGE.margin, 26);
+```
+
+(the current PDF shows “BRIEF”).  
+
+---
+
+## Quick validation checklist (do these once you apply the patches)
+
+1. **Copy/paste test** from the PDF for these strings (no weird characters should appear):
+
+   * “one‑page”, “show and tell”, “human‑in‑the‑loop”, “use‑cases”. The previous PDF shows control‑like characters in those locations. 
+2. **Prompt list** should start with `> ` (not `!’`). 
+3. **Acrobat/Preview selection** should select words cleanly (no mid‑word breaks around hyphens).
+4. **Fonts**: open the PDF’s Properties → Fonts and confirm embedded Inter (not just “Helvetica (Type 1)”).
+
+---
+
+## Bottom line
+
+* You’ve knocked out ~90% of the original issues with the font embed path, vector bullets, and safer wrapping.
+* The remaining artifacts are **almost certainly “soft hyphen / ZW joiner” remnants and/or a runtime font‑embed miss**. Add the four normalization lines above and make sure `loadInterFonts()` feeds **base64 TTFs** to `addFileToVFS`. That will eliminate the lingering spacing/character weirdness in the text layer and keep the visual layout stable.   
+
+---
+
+**Confidence**
+
+* **High**: The remaining artifacts are due to missing normalization for U+00AD/U+200C/U+200D/U+FEFF and/or Inter not embedding (evidence: `` shows up exactly in the places those characters tend to leak in extracted text). 
+* **High**: Your new code paths for font registration, vector bullets, ASCII prompts, and line‑height are correct and will stabilize layout across viewers once the font is confirmed embedded.  
+* **Medium**: I can’t see your `pdf-fonts` implementation, so I’m inferring the base64 detail; verify that part to avoid the Helvetica fallback. 

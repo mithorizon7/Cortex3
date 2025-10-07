@@ -146,7 +146,10 @@ function normalizeText(s: any): string {
   
   const t = sanitized
     .replace(/\u00A0/g, " ")                              // NBSP -> space
-    .replace(/[\u2000-\u200B\u202F\u205F\u2060]/g, " ")  // Thin/narrow/zero-width -> space
+    .replace(/[\u2000-\u200B\u202F\u205F\u2060]/g, " ")  // Thin/narrow/zero-width spaces -> space
+    .replace(/\u200C|\u200D/g, "")                        // ZWNJ/ZWJ -> remove (no display)
+    .replace(/\uFEFF/g, "")                               // BOM -> remove
+    .replace(/\u00AD/g, "")                               // Soft hyphen -> remove (no display)
     .replace(/\u2011/g, "-")                              // Non-breaking hyphen -> hyphen-minus
     .replace(/\u2212/g, "-")                              // Math minus -> hyphen-minus
     .replace(/\u2013/g, "-")                              // En dash -> hyphen-minus
@@ -276,6 +279,13 @@ function newDoc(J: any, fonts: PDFFontData | null, metadata?: { title?: string; 
       doc.addFont("Inter-Regular.ttf", "Inter", "normal");
       doc.addFileToVFS("Inter-Bold.ttf", fonts.bold);
       doc.addFont("Inter-Bold.ttf", "Inter", "bold");
+      
+      // Runtime verification: ensure fonts actually registered
+      try {
+        doc.setFont("Inter", "normal");
+      } catch (verifyError) {
+        throw new Error("Inter font registration failed - font not available after addFont");
+      }
     } catch (error) {
       console.warn('Failed to register Inter fonts, falling back to Helvetica:', error);
       // Fonts will fall back to Helvetica in setFont if Inter is unavailable
@@ -570,7 +580,7 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
   setFont(doc, TYPO.hero);
   doc.text("CORTEX™", PAGE.margin, 18);
   setFont(doc, TYPO.body);
-  doc.text("EXECUTIVE AI READINESS ASSESSMENT", PAGE.margin, 26);
+  doc.text("EXECUTIVE AI READINESS BRIEF", PAGE.margin, 26);
 
   // Right meta
   const dateText = `Generated: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`;
