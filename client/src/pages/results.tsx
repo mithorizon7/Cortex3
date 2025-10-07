@@ -705,8 +705,7 @@ export default function ResultsPage() {
           <CollapsibleContent>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
               {Object.entries(CORTEX_PILLARS).map(([key, pillar]) => {
-                const pillarKey = key.toLowerCase();
-                const score = pillarScores[pillarKey as keyof PillarScores] || 0;
+                const score = pillarScores[key as keyof PillarScores] || 0;
                 const pillarMoves = priorityMoves.filter((move: any) => move.pillar === key);
                 const pillarValueData = valueOverlay?.[key as keyof ValueOverlay];
                 return (
