@@ -35,7 +35,7 @@ interface BootstrapInvite {
 // Form validation schemas
 const createBootstrapInviteSchema = z.object({
   role: z.enum(['super_admin', 'admin'], { required_error: 'Role is required' }),
-  allowedUses: z.number().min(1, 'Must allow at least 1 use').max(100, 'Cannot exceed 100 uses'),
+  allowedUses: z.coerce.number().min(1, 'Must allow at least 1 use').max(100, 'Cannot exceed 100 uses'),
   expiresAt: z.string().min(1, 'Expiration date is required'),
   description: z.string().optional()
 });
