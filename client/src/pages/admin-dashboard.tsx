@@ -681,12 +681,34 @@ export default function AdminDashboard() {
   );
 }
 
+// Analytics data types
+interface CohortAnalytics {
+  cohortId: string;
+  cohortName: string;
+  cohortCode: string;
+  cohortStatus: string;
+  allowedSlots: number;
+  totalMembers: number;
+  totalAssessments: number;
+  completedAssessments: number;
+  completionRate: number;
+  averagePillarScores: {
+    C?: number;
+    O?: number;
+    R?: number;
+    T?: number;
+    E?: number;
+    X?: number;
+  };
+  lastActivity?: string;
+}
+
 // Analytics Overview Component
 function AnalyticsOverview() {
   const { toast } = useToast();
 
   // Fetch analytics data
-  const { data: analyticsData, isLoading: analyticsLoading, error: analyticsError } = useQuery({
+  const { data: analyticsData, isLoading: analyticsLoading, error: analyticsError } = useQuery<CohortAnalytics[]>({
     queryKey: ['/api/cohorts/analytics/overview'],
     enabled: true
   });
