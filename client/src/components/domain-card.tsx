@@ -548,7 +548,7 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
         {/* Value Overlay Section */}
         {selectedMetric && (
           <div className="border-t pt-3 sm:pt-4 mb-3 sm:mb-4">
-            <h4 className="font-medium mb-2 flex items-center gap-2 font-display text-sm sm:text-base" style={{ color: pillarInfo.color }}>
+            <h4 className="font-medium mb-2 flex items-center gap-2 font-display text-sm sm:text-base text-foreground">
               <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
               <span>Value Overlay</span>
             </h4>
@@ -581,14 +581,14 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
         
         <div className="space-y-3 sm:space-y-4">
           <div>
-            <h4 className="font-medium mb-1.5 sm:mb-2 font-display text-sm sm:text-base" style={{ color: pillarInfo.color }}>Why This Matters</h4>
+            <h4 className="font-medium mb-1.5 sm:mb-2 font-display text-sm sm:text-base text-foreground">Why This Matters</h4>
             <p className="text-xs sm:text-sm text-muted-foreground font-ui leading-relaxed">
               {guidance.why_it_matters || guidance.whyMatters}
             </p>
           </div>
           
           <div>
-            <h4 className="font-medium mb-2 sm:mb-3 font-display flex items-center gap-2 text-sm sm:text-base" style={{ color: pillarInfo.color }}>
+            <h4 className="font-medium mb-2 sm:mb-3 font-display flex items-center gap-2 text-sm sm:text-base text-foreground">
               <CheckSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
               <span>What Good Can Look Like</span>
             </h4>
@@ -605,7 +605,7 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
           </div>
           
           <div>
-            <h4 className="font-medium mb-1.5 sm:mb-2 font-display text-sm sm:text-base" style={{ color: pillarInfo.color }}>How to Improve</h4>
+            <h4 className="font-medium mb-1.5 sm:mb-2 font-display text-sm sm:text-base text-foreground">How to Improve</h4>
             <ul className="text-xs sm:text-sm text-muted-foreground space-y-0.5 sm:space-y-1 font-ui">
               {(guidance.how_to_improve || guidance.howToImprove || []).map((item: string, index: number) => (
                 <li key={index} className="leading-relaxed">• <strong>{item.split(' ')[0]} {item.split(' ')[1]}</strong> {item.split(' ').slice(2).join(' ')}</li>
@@ -631,7 +631,7 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
           {/* Common Pitfalls */}
           {(guidance.common_pitfalls || guidance.commonPitfalls) && (
             <div>
-              <h4 className="font-medium mb-1.5 sm:mb-2 font-display text-sm sm:text-base" style={{ color: pillarInfo.color }}>Common Pitfalls</h4>
+              <h4 className="font-medium mb-1.5 sm:mb-2 font-display text-sm sm:text-base text-foreground">Common Pitfalls</h4>
               <ul className="text-xs sm:text-sm text-muted-foreground space-y-0.5 sm:space-y-1 font-ui">
                 {(guidance.common_pitfalls || guidance.commonPitfalls || []).map((item: string, index: number) => (
                   <li key={index} className="leading-relaxed">• {item}</li>
@@ -643,7 +643,7 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
           {/* Discussion Prompts */}
           {(guidance.discussion_prompts || guidance.discussionPrompts) && (
             <div>
-              <h4 className="font-medium mb-1.5 sm:mb-2 font-display text-sm sm:text-base" style={{ color: pillarInfo.color }}>Discussion Prompts</h4>
+              <h4 className="font-medium mb-1.5 sm:mb-2 font-display text-sm sm:text-base text-foreground">Discussion Prompts</h4>
               <ul className="text-xs sm:text-sm text-muted-foreground space-y-0.5 sm:space-y-1 font-ui">
                 {(guidance.discussion_prompts || guidance.discussionPrompts || []).map((item: string, index: number) => (
                   <li key={index} className="leading-relaxed">• {item}</li>
@@ -655,7 +655,7 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
           {/* Priority Moves */}
           {priorityMoves && priorityMoves.length > 0 && (
             <div>
-              <h4 className="font-medium mb-2 flex items-center gap-2 font-display text-sm sm:text-base" style={{ color: pillarInfo.color }}>
+              <h4 className="font-medium mb-2 flex items-center gap-2 font-display text-sm sm:text-base text-foreground">
                 <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
                 <span>Top Priority Moves</span>
               </h4>
@@ -672,7 +672,7 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
             <Collapsible open={showGuides} onOpenChange={setShowGuides}>
               <CollapsibleTrigger asChild>
                 <Button variant="ghost" size="sm" className="w-full justify-between p-2 h-auto text-sm">
-                  <div className="flex items-center gap-2" style={{ color: pillarInfo.color }}>
+                  <div className="flex items-center gap-2 text-foreground">
                     <BookOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
                     <span className="text-xs sm:text-sm font-medium">Implementation Guides ({relevantGuides.length})</span>
                   </div>
@@ -683,7 +683,7 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
                 {relevantGuides.map((guide) => (
                   <div key={guide.id} className="bg-muted/30 p-2 sm:p-3 rounded-lg border border-muted/50">
                     <div className="flex items-start justify-between gap-2 mb-1.5 sm:mb-2">
-                      <h5 className="font-medium text-xs sm:text-sm" style={{ color: pillarInfo.color }}>{guide.title}</h5>
+                      <h5 className="font-medium text-xs sm:text-sm text-foreground">{guide.title}</h5>
                       <MicroGuideDialog guide={guide}>
                         <Button 
                           variant="outline" 
