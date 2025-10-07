@@ -617,13 +617,13 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
   // Use the second part for context, or fall back to empty for mirror data if not split
   const strategicContext = insightParts[1] || (hasMirror ? '' : mainInsight);
 
-  // Executive Summary
-  y = drawSectionTitle(doc, "EXECUTIVE SUMMARY", y);
+  // Your Strategic Context
+  y = drawSectionTitle(doc, "YOUR STRATEGIC CONTEXT", y);
   if (data.mirror?.headline) {
-    setFont(doc, TYPO.h2);
+    setFont(doc, TYPO.hero);
     setText(doc, PALETTE.ink);
     y = drawBody(doc, data.mirror.headline, bounds(doc).w, y);
-    y += PAGE.line * 0.5;
+    y += PAGE.line * 1;
   }
   if (mainInsight) {
     y = drawBody(doc, mainInsight, bounds(doc).w, y);
@@ -743,12 +743,12 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
     }
   }
 
-  // Disclaimer
+  // Disclaimer (no title, smaller italic-style text at bottom)
   const disclaimerText = hasMirror ? data.mirror?.disclaimer : data.disclaimer;
   if (disclaimerText) {
-    ({ cursorY: y } = addPageIfNeeded(doc, 22, y, runHeader));
-    y = drawSectionTitle(doc, "DISCLAIMER", y);
-    setFont(doc, TYPO.small); setText(doc, PALETTE.inkSubtle);
+    ({ cursorY: y } = addPageIfNeeded(doc, 18, y, runHeader));
+    y += PAGE.line * 0.5; // Small spacer before disclaimer
+    setFont(doc, TYPO.caption); setText(doc, PALETTE.inkSubtle);
     y = drawBody(doc, disclaimerText, bounds(doc).w, y);
   }
 
