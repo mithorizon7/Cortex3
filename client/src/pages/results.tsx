@@ -442,52 +442,68 @@ export default function ResultsPage() {
               {/* Key Insights */}
               <div>
                 <h3 className="text-base sm:text-lg lg:text-xl font-display font-semibold mb-4 sm:mb-6 flex items-center gap-2">
-                  <Lightbulb className="h-4 sm:h-5 w-4 sm:w-5 text-info flex-shrink-0" />
+                  <Lightbulb className="h-4 sm:h-5 w-4 sm:w-5" style={{ color: 'hsl(211, 91%, 44%)' }} />
                   <span>Key Insights</span>
                 </h3>
                 <div className="space-y-3 sm:space-y-4">
-                  {insights.map((insight, index) => (
-                    <div key={index} className="border-l-4 border-primary pl-3 sm:pl-4">
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2 mb-2">
-                        <h4 className="font-semibold text-sm sm:text-base lg:text-lg font-ui">{insight.title}</h4>
-                        <Badge variant={insight.urgency === 'high' ? 'destructive' : insight.urgency === 'medium' ? 'secondary' : 'outline'} className="text-xs self-start sm:self-auto whitespace-nowrap">
-                          {insight.urgency} priority
-                        </Badge>
+                  {insights.map((insight, index) => {
+                    const borderColors = {
+                      high: 'hsl(350, 100%, 22.94%)',
+                      medium: 'hsl(35, 100%, 55%)',
+                      low: 'hsl(170, 100%, 23%)'
+                    };
+                    const actionColors = {
+                      high: 'hsl(350, 100%, 22.94%)',
+                      medium: 'hsl(35, 100%, 55%)',
+                      low: 'hsl(170, 100%, 23%)'
+                    };
+                    return (
+                      <div key={index} className="border-l-4 pl-3 sm:pl-4" style={{ borderColor: borderColors[insight.urgency as keyof typeof borderColors] || borderColors.low }}>
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2 mb-2">
+                          <h4 className="font-semibold text-sm sm:text-base lg:text-lg font-ui">{insight.title}</h4>
+                          <Badge variant={insight.urgency === 'high' ? 'destructive' : insight.urgency === 'medium' ? 'secondary' : 'outline'} className="text-xs self-start sm:self-auto whitespace-nowrap">
+                            {insight.urgency} priority
+                          </Badge>
+                        </div>
+                        <p className="text-sm sm:text-base text-muted-foreground mb-2 font-ui">{insight.description} <span className="italic text-xs sm:text-sm">{insight.reasoning}</span></p>
+                        <p className="text-xs sm:text-sm font-medium mb-2 font-ui" style={{ color: actionColors[insight.urgency as keyof typeof actionColors] || actionColors.low }}>{insight.action}</p>
+                        <p className="text-xs text-muted-foreground bg-muted/30 p-2 rounded font-ui">
+                          <strong>Business Impact:</strong> {insight.businessImpact}
+                        </p>
                       </div>
-                      <p className="text-sm sm:text-base text-muted-foreground mb-2 font-ui">{insight.description} <span className="italic text-xs sm:text-sm">{insight.reasoning}</span></p>
-                      <p className="text-xs sm:text-sm font-medium text-primary mb-2 font-ui">{insight.action}</p>
-                      <p className="text-xs text-muted-foreground bg-muted/30 p-2 rounded font-ui">
-                        <strong>Business Impact:</strong> {insight.businessImpact}
-                      </p>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
               {/* Next 90 Days */}
               <div>
                 <h3 className="text-base sm:text-lg lg:text-xl font-display font-semibold mb-4 sm:mb-6 flex items-center gap-2">
-                  <Clock className="h-4 sm:h-5 w-4 sm:w-5 text-info flex-shrink-0" />
+                  <Clock className="h-4 sm:h-5 w-4 sm:w-5" style={{ color: 'hsl(170, 100%, 23%)' }} />
                   <span>Your Next 90 Days</span>
                 </h3>
                 <div className="space-y-3 sm:space-y-4">
-                  {priorities.map((priority, index) => (
-                    <div key={index} className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 bg-muted/50 rounded-lg">
-                      <div className="bg-primary text-primary-foreground rounded-full w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center font-bold text-sm flex-shrink-0">
-                        {index + 1}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2 mb-1 sm:mb-2">
-                          <p className="font-medium text-sm sm:text-base font-ui">{priority.title}</p>
-                          <Badge variant={priority.urgency === 'high' ? 'destructive' : priority.urgency === 'medium' ? 'secondary' : 'outline'} className="text-xs self-start sm:self-auto whitespace-nowrap">
-                            {priority.timeframe}
-                          </Badge>
+                  {priorities.map((priority, index) => {
+                    const numberBgColors = ['hsl(350, 100%, 22.94%)', 'hsl(35, 100%, 55%)', 'hsl(170, 100%, 23%)'];
+                    const bgColor = numberBgColors[index % numberBgColors.length];
+                    return (
+                      <div key={index} className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 bg-muted/50 rounded-lg">
+                        <div className="text-white rounded-full w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center font-bold text-sm flex-shrink-0" style={{ backgroundColor: bgColor }}>
+                          {index + 1}
                         </div>
-                        <p className="text-xs sm:text-sm text-muted-foreground font-ui">{priority.description}</p>
-                        <p className="text-xs text-muted-foreground mt-1 font-ui">{priority.reasoning}</p>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2 mb-1 sm:mb-2">
+                            <p className="font-medium text-sm sm:text-base font-ui">{priority.title}</p>
+                            <Badge variant={priority.urgency === 'high' ? 'destructive' : priority.urgency === 'medium' ? 'secondary' : 'outline'} className="text-xs self-start sm:self-auto whitespace-nowrap">
+                              {priority.timeframe}
+                            </Badge>
+                          </div>
+                          <p className="text-xs sm:text-sm text-muted-foreground font-ui">{priority.description}</p>
+                          <p className="text-xs text-muted-foreground mt-1 font-ui">{priority.reasoning}</p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
                 
                 <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-border">
