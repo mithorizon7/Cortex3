@@ -671,12 +671,12 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
           {relevantGuides.length > 0 && (
             <Collapsible open={showGuides} onOpenChange={setShowGuides}>
               <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" className="w-full justify-between p-2 h-auto text-sm">
-                  <div className="flex items-center gap-2 text-foreground">
-                    <BookOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
-                    <span className="text-xs sm:text-sm font-medium">Implementation Guides ({relevantGuides.length})</span>
+                <Button variant="outline" size="sm" className="w-full justify-between p-3 h-auto text-sm border-2 border-primary/40 bg-primary/8 shadow-sm">
+                  <div className="flex items-center gap-2 text-primary">
+                    <BookOpen className="h-4 w-4 flex-shrink-0" />
+                    <span className="text-sm font-semibold">Implementation Guides ({relevantGuides.length})</span>
                   </div>
-                  <ChevronDown className={`h-3 w-3 transition-transform flex-shrink-0 ${showGuides ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`h-4 w-4 text-primary transition-transform flex-shrink-0 ${showGuides ? 'rotate-180' : ''}`} />
                 </Button>
               </CollapsibleTrigger>
               <CollapsibleContent className="space-y-2 sm:space-y-3 mt-2">

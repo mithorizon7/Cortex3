@@ -675,30 +675,30 @@ export default function ResultsPage() {
           <CollapsibleTrigger asChild>
             <Button 
               variant="outline" 
-              className="w-full mb-4 sm:mb-6 h-auto p-3 sm:p-4 border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/40"
+              className="w-full mb-4 sm:mb-6 h-auto p-3 sm:p-4 lg:p-5 border-2 border-primary/50 bg-primary/10 shadow-md transition-all"
               data-testid="button-toggle-detailed-analysis"
               aria-expanded={showDetailedView}
             >
               <div className="flex items-center justify-between w-full gap-3">
                 <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                  <div className="bg-primary/15 text-primary p-1.5 sm:p-2 rounded-lg flex-shrink-0">
-                    <Compass className="h-4 sm:h-5 w-4 sm:w-5" />
+                  <div className="bg-primary text-primary-foreground p-2 sm:p-2.5 rounded-lg flex-shrink-0 shadow-sm">
+                    <Compass className="h-5 sm:h-6 w-5 sm:w-6" />
                   </div>
                   <div className="text-left min-w-0">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                      <h3 className="font-semibold text-sm sm:text-base lg:text-lg font-display">
+                      <h3 className="font-semibold text-base sm:text-lg lg:text-xl font-display text-foreground">
                         {showDetailedView ? 'Hide' : 'View'} Detailed Domain Analysis
                       </h3>
-                      <Badge variant="secondary" className="font-ui pointer-events-none text-xs self-start sm:self-auto">
+                      <Badge variant="default" className="font-ui pointer-events-none text-xs self-start sm:self-auto">
                         6 Domains
                       </Badge>
                     </div>
-                    <p className="text-xs sm:text-sm text-muted-foreground font-ui">
+                    <p className="text-xs sm:text-sm text-foreground/70 font-ui">
                       In-depth guidance, improvement pathways, and context-specific recommendations
                     </p>
                   </div>
                 </div>
-                <ChevronDown className={`h-4 sm:h-5 w-4 sm:w-5 text-muted-foreground transition-transform flex-shrink-0 ${showDetailedView ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`h-5 sm:h-6 w-5 sm:w-6 text-foreground/60 transition-transform flex-shrink-0 ${showDetailedView ? 'rotate-180' : ''}`} />
               </div>
             </Button>
           </CollapsibleTrigger>
