@@ -1,0 +1,229 @@
+Below is a precise diagnosis of what’s going wrong in your PDF and the concrete code changes to fix it. I reviewed both the generated PDF and the TypeScript generator you provided.
+
+---
+
+## What’s actually wrong (root causes)
+
+1. **You’re using PDF “Base-14” fonts (Helvetica, etc.) with WinAnsi encoding and *no ToUnicode map*.**
+   The PDF is produced with Type 1 base fonts (`/Helvetica`, `/Helvetica-Bold`, etc.) under `/WinAnsiEncoding` and no `/ToUnicode`. That’s why punctuation and symbols (™, •, →, non‑breaking hyphen) come out as strange characters when copied/extracted and can look uneven in some viewers. In your PDF text extraction you see things like `CORTEXŽ`, the bullet as `Ł`, and control-like symbols between words; these are all classic symptoms of using Base‑14 without Unicode. 
+
+2. **Some content still contains “special” Unicode spacing/hyphen characters.**
+   Non‑breaking hyphen (U+2011), thin spaces, etc., are present in the input (“one‑page”, “show‑and‑tell”, etc.). With WinAnsi fonts these map poorly; in extraction they show as control glyphs (``) and can render with odd spacing.
+
+3. **A defensive normalization hack is too aggressive and can nuke legitimate spaces.**
+   In `normalizeText(...)` you have this block:
+
+   ```ts
+   // Collapse “char space char space …” patterns
+   if (/^(?:\S\s){8,}\S$/.test(t)) {
+     return t.replace(/\s+/g, "");
+   }
+   ```
+
+   When a line inadvertently matches that pattern (e.g., letter‑spaced headings or runs with punctuation/numbers), it removes *all* spaces, which manifests as “odd letter spacing” (letters crammed together) in some sections.
+
+4. **Bullets and arrows are rendered as text glyphs (‘•’, ‘→’) in a font that doesn’t reliably support them.**
+   With Base‑14 + WinAnsi, these often fall back to Symbol/ZapfDingbats codes without a proper Unicode map. That causes mis‑measurement in wrapping and occasional visual spacing hiccups at the start of list lines (and ugly copy/paste).
+
+---
+
+## The fixes (what to change, exactly)
+
+### A) Embed a proper Unicode TTF font and use it everywhere
+
+**Why**: Embedding a modern TTF gives you full glyph coverage, accurate text width metrics, clean copy/paste, and consistent spacing. It also implicitly provides a ToUnicode map for accessibility and selection.
+
+**What to do** (example with Inter; Noto Sans/Roboto also fine):
+
+1. Add the fonts (TTF files) to your project, e.g., `fonts/Inter-Regular.ttf` and `fonts/Inter-Bold.ttf`.
+
+2. Register them right after you create the document, and switch your helper to use the new family.
+
+```ts
+// 1) Imports at top of file (adjust the import style to your bundler):
+import InterRegular from "./fonts/Inter-Regular.ttf";
+import InterBold from "./fonts/Inter-Bold.ttf";
+
+// 2) Register after doc creation (inside newDoc or wherever you construct doc):
+function registerFonts(doc: any) {
+  doc.addFileToVFS("Inter-Regular.ttf", InterRegular as any);
+  doc.addFont("Inter-Regular.ttf", "Inter", "normal");
+  doc.addFileToVFS("Inter-Bold.ttf", InterBold as any);
+  doc.addFont("Inter-Bold.ttf", "Inter", "bold");
+}
+
+// Wherever you call new J("p", "mm", "a4"):
+const doc = new J("p", "mm", "a4");
+registerFonts(doc);
+
+// 3) Update your setFont helper:
+function setFont(doc: any, t: { size: number; weight: "bold" | "normal" }) {
+  doc.setFont("Inter", t.weight);     // was "helvetica"
+  doc.setFontSize(t.size);
+}
+```
+
+> Result: Clean rendering of ™, •, →, en/em dashes, non‑breaking hyphen, etc., accurate wrapping, and normal-looking letter spacing. (If you prefer Roboto/Noto, use those TTFs instead.)
+
+---
+
+### B) Stop removing all spaces for “spaced-out glyph” lines; replace with a targeted fix
+
+**Why**: The current regex removes *all* spaces for any line that looks like alternating `\S\s` for ≥8 pairs. That’s overly broad and causes words to fuse.
+
+**Replace this** in `normalizeText`:
+
+```ts
+// Collapse “char space char space …” patterns
+if (/^(?:\S\s){8,}\S$/.test(t)) {
+  return t.replace(/\s+/g, "");
+}
+```
+
+**With a safer, local transform** (collapse only clear letter‑spaced runs, not the whole line):
+
+```ts
+// Collapse obvious ALL‑CAPS letter‑spaced runs like "E X E C U T I V E"
+t = t.replace(
+  /(?:^|\s)((?:[A-Z]\s){4,}[A-Z])(?=$|\s)/g,       // >=5 letters with spaces
+  (m) => m.replace(/\s+/g, "")
+);
+
+// Optionally also handle mixed‑case runs, but keep this strict to avoid false positives:
+// t = t.replace(/(?:^|\s)((?:[A-Za-z]\s){6,}[A-Za-z])(?=$|\s)/g, (m) => m.replace(/\s+/g, ""));
+```
+
+> Or simplest: **delete** the collapsing logic entirely. Once you embed a Unicode TTF and stop feeding letter‑spaced input, you likely don’t need this at all.
+
+---
+
+### C) Normalize “problem” Unicode separators and hyphens in the text layer
+
+**Why**: Even with a good font, you want consistent input. Non‑breaking hyphen and thin spaces frequently sneak in from authoring tools.
+
+**Augment your existing sanitizer** (keep your current control‑char stripping and space unification) by adding:
+
+```ts
+const t = sanitized
+  .replace(/\u00A0/g, " ")              // NBSP -> space (you already do this)
+  .replace(/[\u2000-\u200B\u202F\u205F\u2060]/g, " ") // thin/narrow/zero-width -> space
+  .replace(/\u2011/g, "-")              // non‑breaking hyphen -> hyphen‑minus
+  .replace(/\u2212/g, "-")              // math minus -> hyphen‑minus
+  // optionally normalize long dashes if you want consistency:
+  // .replace(/\u2013/g, "–").replace(/\u2014/g, "—")
+  .replace(/[ \t]{2,}/g, " ")
+  .replace(/\s+\n/g, "\n")
+  .replace(/\n{3,}/g, "\n\n")
+  .trim();
+```
+
+> This removes the `` artifacts you’re seeing in extracted text and stops odd spacing around soft hyphens. 
+
+---
+
+### D) Make bullets and prompt markers robust
+
+**Why**: Rendering • and → as text works *only* if the font truly supports them. Using a vector dot for bullets is bullet‑proof; sticking with glyphs is fine once you embed Inter/Roboto/Noto.
+
+**Option 1 (preferred with embedded fonts):** keep glyphs and they’ll render correctly:
+
+```ts
+// drawBullets
+const bullet = "• ";
+// drawPrompts
+const bullet = "→ ";
+```
+
+**Option 2 (works even with Base‑14):** draw bullets as vectors and prefix prompt items with ASCII:
+
+```ts
+function drawBulletDot(doc: any, x: number, y: number, r = 0.9) {
+  setFill(doc, PALETTE.ink);
+  doc.circle(x, y - 2.6, r, "F");
+}
+
+function drawBullets(doc: any, items: string[], maxWidth: number, x: number, y: number, runHeader?: string) {
+  setFont(doc, TYPO.body);
+  const indent = 5.5;                   // give room for the dot
+  for (const it of items || []) {
+    const lines = wrap(doc, normalizeText(it), maxWidth - indent);
+    drawBulletDot(doc, x + 2.2, y);     // bullet
+    for (let i = 0; i < lines.length; i++) {
+      if (runHeader) ({ cursorY: y } = addPageIfNeeded(doc, PAGE.line, y, runHeader));
+      const line = i === 0 ? lines[i] : "  " + lines[i];
+      doc.text(line, x + indent, y);
+      y += PAGE.line;
+    }
+    y += 1.5;
+  }
+  return y;
+}
+
+// For prompts, use ASCII '>' if you don't embed fonts
+const bullet = "> ";
+```
+
+---
+
+### E) Keep wrapping accurate by measuring with the *same* embedded font
+
+You’re already using `splitTextToSize`. Once you embed a TTF and switch `setFont` to that family before measuring, width calculations will match what’s rendered, avoiding any start‑of‑line “drift” after bullets/arrows.
+
+No code change beyond **A** is needed; just ensure the font is set before any `getTextWidth` / `splitTextToSize` calls (you already do this via `setFont`).
+
+---
+
+### F) Small hygiene improvements (optional but recommended)
+
+* **Call `doc.setLineHeightFactor(1.15)` once after creating the doc.**
+  You use your own baseline grid (`PAGE.line = 4.2` mm), which is fine, but this keeps text operators consistent if any multi-line `doc.text` slips in later.
+
+* **Set document metadata fully (you already set title/subject).**
+  Add producer and language if you wish (where supported by jsPDF):
+  `doc.setProperties({ creator: "…", author: "…", keywords: "…" });`
+
+* **QA guardrails in the build**
+  Add a pre-flight that rejects content containing `\u2011` (non‑breaking hyphen) and zero‑width spaces so they don’t sneak back in.
+
+---
+
+## Why this fixes the visible issues you called out
+
+* The “weird spacing between letters” is a combined effect of (a) glyphs not present in the Base‑14 font set (so the PDF substitutes odd encodings and widths) and (b) the over‑aggressive space‑collapsing branch that occasionally deletes legitimate spaces. Embedding a Unicode TTF eliminates substitution/width anomalies; removing/restricting the collapsing logic ensures you never fuse whole words by accident. 
+
+---
+
+## Minimal patch summary (copy/paste checklist)
+
+1. **Embed fonts & switch helper**
+
+   * Add TTFs, call `registerFonts(doc)` after `new J("p","mm","a4")`.
+   * Change `setFont` to use `"Inter"` (or chosen family).
+
+2. **Fix `normalizeText`**
+
+   * **Remove** the “collapse all spaces” block, or replace with the targeted version shown.
+   * Add normalizations for `\u2011` (NB hyphen) and special spaces.
+
+3. **Harden bullets/prompts**
+
+   * If embedding fonts: keep `"• "` and `"→ "`; otherwise, draw vector dot and use ASCII `"> "` for prompts.
+
+4. **(Optional) `setLineHeightFactor(1.15)` once after doc creation.**
+
+---
+
+## Quick regression checklist
+
+* Visual: bullets align and look identical across viewers (Chromium/Acrobat/Preview).
+* Copy/paste: ™, •, →, — copy correctly; no `Ž`, `Ł`, or control blocks appear. 
+* Screen reader: reads bullets and punctuation in the right order.
+* No lines show fused words or “extra‑wide” letters.
+
+---
+
+### Confidence
+
+* **High** that embedding a Unicode TTF and normalizing hyphen/space characters will eliminate the spacing/glyph anomalies and the copy/paste artifacts (root cause is clearly visible in the PDF’s font tables and the extracted text). 
+* **Medium** that your current “letter‑spaced run” collapsing logic is contributing to the odd spacing you observed; removing or narrowing it is still the right move given its risk profile.
+* **High** that drawing bullets as vectors (or keeping glyphs with a proper font) will stabilize list layout.
