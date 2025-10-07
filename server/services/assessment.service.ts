@@ -389,11 +389,11 @@ export class AssessmentService {
       gates.push({
         id: 'require_hitl',
         pillar: 'O',
-        title: 'Human-in-the-Loop required for high-impact decisions',
-        reason: 'High safety/regulation',
+        title: 'Human Review Required',
+        reason: 'Your AI can\'t fly solo when mistakes could hurt people or break regulations. Keep a human in charge of high-stakes decisions—it protects your customers and your reputation. Start with manual approval for critical actions, then gradually automate the safe stuff.',
         explain,
         status: 'unmet',
-        actions: ['Implement human oversight for critical AI decisions', 'Establish approval workflows']
+        actions: ['Set up human approval for risky AI decisions', 'Define which decisions need oversight', 'Create escalation rules']
       });
     }
 
@@ -402,11 +402,11 @@ export class AssessmentService {
       gates.push({
         id: 'assurance_cadence',
         pillar: 'R',
-        title: 'Regular AI assurance and review cadence required',
-        reason: 'High regulatory intensity',
+        title: 'Regular AI Check-ups Needed',
+        reason: 'Regulators are watching your industry closely. Monthly checks catch AI bias and drift before they become headlines. Annual audits prove you\'re doing things right. Think of it like financial auditing—boring but essential for trust.',
         explain: { regulatory_intensity: p.regulatory_intensity },
         status: 'unmet',
-        actions: ['Monthly fairness/privacy/drift reviews', 'Annual internal/external audits']
+        actions: ['Schedule monthly AI performance reviews', 'Plan annual compliance audits', 'Document all review findings']
       });
     }
 
@@ -415,11 +415,11 @@ export class AssessmentService {
       gates.push({
         id: 'data_residency',
         pillar: 'R',
-        title: 'Data residency and retention controls required',
-        reason: 'High data sensitivity',
+        title: 'Lock Down Sensitive Data',
+        reason: 'You handle sensitive data that can\'t leave your control. Keep it in your region, delete it quickly, and never let AI models memorize it. This isn\'t paranoia—it\'s what keeps you out of breach notifications and regulatory fines.',
         explain: { data_sensitivity: p.data_sensitivity },
         status: 'unmet',
-        actions: ['Implement regional data processing', 'Set retention caps (e.g., 30 days)']
+        actions: ['Keep data in your region only', 'Auto-delete after 30 days', 'Block data from leaving your systems']
       });
     }
 
@@ -428,11 +428,11 @@ export class AssessmentService {
       gates.push({
         id: 'latency_fallback',
         pillar: 'O',
-        title: 'Latency SLO and failover required',
-        reason: 'High latency/edge requirements',
+        title: 'Speed Matters—Build Backup Plans',
+        reason: 'Your users won\'t wait. When AI is slow or offline, you need instant fallbacks. Set a 200ms speed limit and have simpler backup models ready. Better to give a good-enough answer fast than a perfect answer never.',
         explain: { latency_edge: p.latency_edge },
         status: 'unmet',
-        actions: ['Implement p95 SLO (≤200ms)', 'Test failover scenarios']
+        actions: ['Set 200ms response time target', 'Build faster backup models', 'Test what happens when AI fails']
       });
     }
 
@@ -441,11 +441,11 @@ export class AssessmentService {
       gates.push({
         id: 'scale_hardening',
         pillar: 'O',
-        title: 'Scale hardening and load testing required',
-        reason: 'High scale/throughput requirements',
+        title: 'Prepare for the Flood',
+        reason: 'You\'re expecting massive traffic. AI at scale breaks differently—costs explode, systems crash, users revolt. Test with 10x your expected load, set spending limits, and have multiple providers ready. Success shouldn\'t kill your business.',
         explain: { scale_throughput: p.scale_throughput },
         status: 'unmet',
-        actions: ['Conduct load tests', 'Plan rate limiting', 'Prepare dual-region readiness']
+        actions: ['Stress test with 10x expected traffic', 'Set cost limits and rate caps', 'Line up backup AI providers']
       });
     }
 
@@ -454,11 +454,11 @@ export class AssessmentService {
       gates.push({
         id: 'build_readiness',
         pillar: 'T',
-        title: 'Build readiness upgrade required before heavy development',
-        reason: 'Low build readiness',
+        title: 'Buy First, Build Later',
+        reason: 'You\'re not ready to build custom AI yet—and that\'s okay. Start with off-the-shelf AI tools to learn what works. Building too early wastes money and talent. Get some wins with existing solutions first, then consider custom work.',
         explain: { build_readiness: p.build_readiness },
         status: 'unmet',
-        actions: ['Establish MLOps capabilities', 'Implement governance framework']
+        actions: ['Start with vendor AI solutions', 'Build internal AI expertise gradually', 'Focus on using AI, not building it']
       });
     }
 
@@ -467,11 +467,11 @@ export class AssessmentService {
       gates.push({
         id: 'procurement_compliance',
         pillar: 'C',
-        title: 'Procurement compliance procedures required',
-        reason: 'Procurement constraints active',
+        title: 'Navigate Procurement Rules',
+        reason: 'Your procurement process has rules—follow them or face delays. AI purchases trigger new questions about fairness, transparency, and vendor lock-in. Start the paperwork early and involve procurement from day one. Budget 3-6 extra months.',
         explain: { procurement_constraints: p.procurement_constraints },
         status: 'unmet',
-        actions: ['Use public procurement templates', 'Adjust timeline estimates']
+        actions: ['Start procurement process early', 'Document AI fairness requirements', 'Add 3-6 months to timeline']
       });
     }
 
@@ -480,11 +480,11 @@ export class AssessmentService {
       gates.push({
         id: 'edge_ops',
         pillar: 'E',
-        title: 'Edge operations security patterns required',
-        reason: 'Edge operations environment',
+        title: 'AI at the Edge Needs Special Care',
+        reason: 'Your AI runs in factories, vehicles, or remote sites. It must work offline, survive harsh conditions, and update without breaking operations. Design for intermittent connectivity and train field teams before deployment—downtime here means real-world problems.',
         explain: { edge_operations: p.edge_operations },
         status: 'unmet',
-        actions: ['Implement OT security patterns', 'Plan offline modes', 'Design field ops change management']
+        actions: ['Design AI to work offline', 'Plan safe remote updates', 'Train field teams on AI tools']
       });
     }
 

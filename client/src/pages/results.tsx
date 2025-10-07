@@ -668,7 +668,7 @@ export default function ResultsPage() {
             </CardHeader>
             <CardContent className="p-3 sm:p-4 lg:p-6">
               <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-6 font-ui">
-                Because of your context, some safeguards are <strong>non-negotiable before scale</strong>. These aren't bureaucratic hurdles; they prevent avoidable harm and build trust. Expand each callout to learn what it is, why it applies, and simple ways to satisfy it.
+                Based on your organization's context, these are <strong>must-haves before scaling AI</strong>. Each one protects your business from a specific risk.
               </p>
               
               <Collapsible>
@@ -681,44 +681,45 @@ export default function ResultsPage() {
                 <CollapsibleContent className="space-y-3 sm:space-y-4">
                   {triggeredGates.map((gate: any) => (
                     <Card key={gate.id} className="border-l-4 border-l-warning">
-                      <CardContent className="p-3 sm:p-4 lg:p-6">
-                        <div className="flex items-start gap-3 sm:gap-4">
-                          <div className="bg-warning text-warning-foreground p-1.5 sm:p-2 rounded-full flex-shrink-0">
-                            <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <CardContent className="p-3 sm:p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="bg-warning/20 text-warning p-1.5 rounded-full flex-shrink-0 mt-0.5">
+                            <AlertTriangle className="w-4 h-4" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-2">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mb-2">
+                              <h3 className="font-semibold text-base sm:text-lg font-ui">{gate.title}</h3>
                               {gate.pillar && CORTEX_PILLARS[gate.pillar as keyof typeof CORTEX_PILLARS] && (
                                 <Badge 
                                   variant="outline" 
-                                  className="text-xs font-medium"
+                                  className="text-xs font-medium self-start sm:self-auto"
                                   style={{ 
                                     borderColor: CORTEX_PILLARS[gate.pillar as keyof typeof CORTEX_PILLARS].color,
                                     color: CORTEX_PILLARS[gate.pillar as keyof typeof CORTEX_PILLARS].color
                                   }}
                                 >
-                                  {gate.pillar} - {CORTEX_PILLARS[gate.pillar as keyof typeof CORTEX_PILLARS].name}
+                                  {gate.pillar}
                                 </Badge>
                               )}
                             </div>
-                            <h3 className="font-semibold text-base sm:text-lg mb-1 font-ui">{gate.title}</h3>
-                            <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4 font-ui">{gate.reason}</p>
+                            <p className="text-sm text-muted-foreground mb-3 font-ui leading-relaxed">{gate.reason}</p>
                             
                             {gate.explain && (
-                              <div className="bg-warning/10 p-2 sm:p-3 rounded text-xs mb-3 sm:mb-4">
-                                <div className="space-y-1.5 sm:space-y-2">
-                                  <div><strong>Why this gate was triggered:</strong></div>
+                              <div className="bg-muted/50 px-3 py-2 rounded-md text-xs mb-3">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="text-muted-foreground">Triggered by:</span>
                                   {Object.entries(gate.explain).map(([key, value]) => {
                                     const threshold = getGateThreshold(gate.id, key);
+                                    const displayValue = typeof value === 'boolean' 
+                                      ? (value ? 'Yes' : 'No') 
+                                      : typeof value === 'number' 
+                                        ? `${value}/4` 
+                                        : String(value);
+                                    const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                                     return (
-                                      <div key={key} className="flex justify-between items-center gap-2">
-                                        <span className="text-xs">{key.replace(/_/g, ' ')}: </span>
-                                        <span className="font-medium text-xs whitespace-nowrap">
-                                          {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value)}
-                                          {typeof value === 'number' && '/4'}
-                                          {threshold && ` (requires ${threshold})`}
-                                        </span>
-                                      </div>
+                                      <Badge key={key} variant="secondary" className="text-xs">
+                                        {label}: {displayValue}
+                                      </Badge>
                                     );
                                   })}
                                 </div>
@@ -726,16 +727,16 @@ export default function ResultsPage() {
                             )}
                             
                             {gate.actions && gate.actions.length > 0 && (
-                              <div>
-                                <h4 className="font-medium mb-2 text-xs sm:text-sm font-ui">Recommended Actions:</h4>
-                                <ul className="text-xs sm:text-sm space-y-1 text-muted-foreground font-ui">
+                              <div className="space-y-2">
+                                <p className="font-medium text-xs text-muted-foreground uppercase tracking-wide">Quick Actions:</p>
+                                <div className="grid gap-1.5">
                                   {gate.actions.map((action: string, index: number) => (
-                                    <li key={index} className="flex items-start gap-2">
-                                      <ChevronRight className="h-3 w-3 mt-0.5 text-warning flex-shrink-0" />
-                                      <span>{action}</span>
-                                    </li>
+                                    <div key={index} className="flex items-start gap-2">
+                                      <CheckCircle className="h-3.5 w-3.5 mt-0.5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                                      <span className="text-xs sm:text-sm text-muted-foreground">{action}</span>
+                                    </div>
                                   ))}
-                                </ul>
+                                </div>
                               </div>
                             )}
                           </div>
