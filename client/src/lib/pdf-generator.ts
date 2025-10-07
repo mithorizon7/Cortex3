@@ -303,16 +303,24 @@ function drawBody(doc: any, text: string, maxWidth: number, y: number, runHeader
   return y;
 }
 
+// Draw bullet as vector dot for consistent rendering across all PDF viewers
+function drawBulletDot(doc: any, x: number, y: number, radius = 0.9) {
+  setFill(doc, PALETTE.ink);
+  doc.circle(x, y - 2.6, radius, "F");  // "F" = filled circle
+}
+
 function drawBullets(doc: any, items: string[], maxWidth: number, x: number, y: number, runHeader?: string) {
   setFont(doc, TYPO.body);
   setText(doc, PALETTE.ink);
-  const indent = 4.5;
+  const indent = 5.5;  // Space for vector bullet
   for (const it of (items || [])) {
-    const bullet = "• ";
-    const lines = wrap(doc, bullet + normalizeText(it), maxWidth - indent);
+    const lines = wrap(doc, normalizeText(it), maxWidth - indent);
+    // Draw vector bullet dot
+    drawBulletDot(doc, x + 2.2, y);
     for (let i = 0; i < lines.length; i++) {
       if (runHeader) {
         ({ cursorY: y } = addPageIfNeeded(doc, PAGE.line, y, runHeader));
+        if (i === 0) drawBulletDot(doc, x + 2.2, y); // Redraw bullet if new page
       }
       const line = i === 0 ? lines[i] : "  " + lines[i];
       doc.text(line, x + indent, y);
@@ -326,10 +334,11 @@ function drawBullets(doc: any, items: string[], maxWidth: number, x: number, y: 
 function drawPrompts(doc: any, items: string[], maxWidth: number, y: number, runHeader?: string) {
   setFont(doc, TYPO.body);
   setText(doc, PALETTE.inkSubtle);
-  const indent = 4.5;
+  const indent = 5;
   for (const it of (items || [])) {
-    const bullet = "→ ";
-    const lines = wrap(doc, bullet + normalizeText(it), maxWidth - indent);
+    // Use ASCII ">" for prompts (reliable across all fonts)
+    const prompt = "> ";
+    const lines = wrap(doc, prompt + normalizeText(it), maxWidth - indent);
     for (let i = 0; i < lines.length; i++) {
       if (runHeader) {
         ({ cursorY: y } = addPageIfNeeded(doc, PAGE.line, y, runHeader));
@@ -501,8 +510,8 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
     throw new Error("Missing context insight data for PDF generation");
   }
 
-  const J = await ensureJsPDF();
-  const doc = newDoc(J);
+  const [J, fonts] = await Promise.all([ensureJsPDF(), loadInterFonts()]);
+  const doc = newDoc(J, fonts);
   const { pw } = bounds(doc);
 
   // Page 1 Header Bar
@@ -697,8 +706,8 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
     throw new Error("Missing required data for PDF generation");
   }
 
-  const J = await ensureJsPDF();
-  const doc = newDoc(J);
+  const [J, fonts] = await Promise.all([ensureJsPDF(), loadInterFonts()]);
+  const doc = newDoc(J, fonts);
   const { pw } = bounds(doc);
 
   // Page 1 header band
@@ -1005,14 +1014,14 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     }
   }
 
-  const J = await ensureJsPDF();
+  const [J, fonts] = await Promise.all([ensureJsPDF(), loadInterFonts()]);
   const contextTypes = [];
   if (data.contextProfile?.regulatory_intensity && data.contextProfile.regulatory_intensity >= 3) contextTypes.push('Regulated');
   if (data.contextProfile?.safety_criticality && data.contextProfile.safety_criticality >= 3) contextTypes.push('Safety-Critical');
   if (data.contextProfile?.data_sensitivity && data.contextProfile.data_sensitivity >= 3) contextTypes.push('Data-Sensitive');
   const contextKeywords = contextTypes.length > 0 ? contextTypes.join(', ') : 'Enterprise';
   
-  const doc = newDoc(J, {
+  const doc = newDoc(J, fonts, {
     title: `CORTEX Executive Brief - ${String(assessmentId).slice(0, 8).toUpperCase()}`,
     subject: `AI Readiness Assessment for ${contextKeywords} Organization`,
     keywords: `AI readiness, ${contextKeywords}, executive assessment, CORTEX, strategy`
