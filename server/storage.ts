@@ -373,6 +373,37 @@ export class DatabaseStorage implements IStorage {
       'updateUser',
       async () => {
         const db = await getDb();
+        
+        // If cohortId is being updated, we need to handle usedSlots
+        if ('cohortId' in updates) {
+          // Get the current user to check their current cohort
+          const [currentUser] = await db
+            .select()
+            .from(users)
+            .where(eq(users.userId, userId));
+          
+          if (currentUser) {
+            const oldCohortId = currentUser.cohortId;
+            const newCohortId = updates.cohortId;
+            
+            // Decrement old cohort's usedSlots if user was in a cohort
+            if (oldCohortId) {
+              await db
+                .update(cohorts)
+                .set({ usedSlots: sql`${cohorts.usedSlots} - 1` })
+                .where(eq(cohorts.id, oldCohortId));
+            }
+            
+            // Increment new cohort's usedSlots if user is joining a cohort
+            if (newCohortId) {
+              await db
+                .update(cohorts)
+                .set({ usedSlots: sql`${cohorts.usedSlots} + 1` })
+                .where(eq(cohorts.id, newCohortId));
+            }
+          }
+        }
+        
         const [updated] = await db
           .update(users)
           .set(updates)
@@ -404,21 +435,42 @@ export class DatabaseStorage implements IStorage {
       async () => {
         const db = await getDb();
         
+        // Get the user to check if they're in a cohort
+        const [userToDelete] = await db
+          .select()
+          .from(users)
+          .where(eq(users.userId, userId));
+        
+        if (!userToDelete) {
+          logger.warn('Cannot delete user - not found', {
+            additionalContext: { userId }
+          });
+          return false;
+        }
+        
         // First, delete all assessments for this user
         await db.delete(assessments).where(eq(assessments.userId, userId));
+        
+        // Decrement cohort's usedSlots if user was in a cohort
+        if (userToDelete.cohortId) {
+          await db
+            .update(cohorts)
+            .set({ usedSlots: sql`${cohorts.usedSlots} - 1` })
+            .where(eq(cohorts.id, userToDelete.cohortId));
+        }
         
         // Then delete the user
         const result = await db.delete(users).where(eq(users.userId, userId)).returning();
         
         if (result.length > 0) {
           logger.info('User and their assessments deleted successfully', {
-            additionalContext: { userId }
+            additionalContext: { 
+              userId,
+              wasCohortMember: !!userToDelete.cohortId
+            }
           });
           return true;
         } else {
-          logger.warn('Cannot delete user - not found', {
-            additionalContext: { userId }
-          });
           return false;
         }
       },
