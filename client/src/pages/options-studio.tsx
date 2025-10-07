@@ -558,7 +558,7 @@ function OptionsStudioContent() {
               For personalized guidance based on your context, consider completing the full CORTEX assessment first.
             </p>
             <div className="mt-3">
-              <Link href="/" className="text-blue-700 dark:text-blue-300 hover:text-blue-900 dark:hover:text-blue-100 text-sm underline">
+              <Link to="/" className="text-blue-700 dark:text-blue-300 hover:text-blue-900 dark:hover:text-blue-100 text-sm underline">
                 Take the Assessment for Personalized Guidance
               </Link>
             </div>
@@ -598,7 +598,7 @@ function OptionsStudioContent() {
       {/* Back to Results Navigation - only show when coming from assessment */}
       {assessmentId && (
         <div className="mb-6">
-          <Link href={`/results/${assessmentId}`}>
+          <Link to={`/results/${assessmentId}`}>
             <Button variant="outline" size="sm" className="mb-4" data-testid="button-back-to-results">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to My Results
@@ -1355,7 +1355,7 @@ function StandaloneOptionsStudioContent() {
                   operating context, risk profile, and organizational readiness.
                 </p>
                 <div className="mt-3">
-                  <Link href="/" className="text-blue-700 dark:text-blue-300 hover:text-blue-900 dark:hover:text-blue-100 text-sm underline">
+                  <Link to="/" className="text-blue-700 dark:text-blue-300 hover:text-blue-900 dark:hover:text-blue-100 text-sm underline">
                     Take CORTEX Assessment
                   </Link>
                 </div>

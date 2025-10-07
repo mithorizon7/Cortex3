@@ -35,7 +35,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 sm:h-14 max-w-screen-2xl items-center px-4 sm:px-6">
         <div className="mr-4 hidden md:flex">
-          <Link href="/">
+          <Link to="/">
             <Button variant="ghost" className="mr-6 flex items-center space-x-2" data-testid="nav-home">
               <Brain className="h-6 w-6 text-primary" />
               <div className="hidden sm:flex flex-col">
@@ -54,7 +54,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         
         <div className="flex flex-1 items-center justify-between space-x-3 sm:space-x-2 md:justify-end">
           <div className="w-full flex-1 md:w-auto md:flex-none">
-            <Link href="/">
+            <Link to="/">
               <Button variant="ghost" className="inline-flex items-center space-x-2 md:hidden" data-testid="nav-home-mobile">
                 <Brain className="h-5 w-5 text-primary" />
                 <span className="font-headline font-semibold tracking-tight text-foreground">CORTEX™</span>
@@ -64,7 +64,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           
           {showNav && (
             <nav className="hidden md:flex items-center space-x-1">
-              <Link href="/">
+              <Link to="/">
                 <Button variant="ghost" size="sm" className="font-ui font-medium transition-colors" style={{ color: '#011627' }} data-testid="nav-home-desktop">
                   <Home className="h-4 w-4 mr-2" />
                   Home
@@ -73,7 +73,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               
               {/* Prominent Strategic Profile Button */}
               {isPulseCheckCompleted ? (
-                <Link href={`/results/${latestAssessment.id}`}>
+                <Link to={`/results/${latestAssessment.id}`}>
                   <Button 
                     variant="default" 
                     size="sm" 
@@ -114,7 +114,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 </Tooltip>
               )}
               
-              <Link href={assessmentPath}>
+              <Link to={assessmentPath}>
                 <Button variant="ghost" size="sm" className="font-ui font-medium transition-colors" style={{ color: '#011627' }} data-testid="nav-assessment">
                   <BarChart3 className="h-4 w-4 mr-2" />
                   {latestAssessment ? 'My Results' : 'Assessment'}
@@ -122,13 +122,13 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               </Link>
               {(userProfile?.role === 'admin' || userProfile?.role === 'super_admin') && (
                 <>
-                  <Link href="/admin-dashboard">
+                  <Link to="/admin-dashboard">
                     <Button variant="ghost" size="sm" className="font-ui font-medium transition-colors" style={{ color: '#011627' }} data-testid="nav-admin-dashboard">
                       <LayoutDashboard className="h-4 w-4 mr-2" />
                       Admin Dashboard
                     </Button>
                   </Link>
-                  <Link href="/user-management">
+                  <Link to="/user-management">
                     <Button variant="ghost" size="sm" className="font-ui font-medium transition-colors" style={{ color: '#011627' }} data-testid="nav-user-management">
                       <Users className="h-4 w-4 mr-2" />
                       User Management
@@ -143,7 +143,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             {/* Mobile Strategic Profile Button */}
             {showNav && (
               isPulseCheckCompleted ? (
-                <Link href={`/results/${latestAssessment.id}`}>
+                <Link to={`/results/${latestAssessment.id}`}>
                   <Button 
                     variant="default" 
                     size="sm" 

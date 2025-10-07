@@ -129,7 +129,7 @@ export const AuthButton: React.FC<AuthButtonProps> = ({
           {isAdmin && (
             <>
               <DropdownMenuItem asChild data-testid="admin-dashboard-menu-item">
-                <Link href="/admin">
+                <Link to="/admin">
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Admin Dashboard</span>
                 </Link>

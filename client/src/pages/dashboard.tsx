@@ -58,7 +58,7 @@ function AssessmentCard({ assessment }: { assessment: Assessment }) {
         )}
         
         {isCompleted ? (
-          <Link href={`/results/${assessment.id}`}>
+          <Link to={`/results/${assessment.id}`}>
             <Button className="w-full" data-testid={`button-view-results-${assessment.id}`}>
               <Eye className="h-4 w-4 mr-2" />
               View Results
@@ -69,7 +69,7 @@ function AssessmentCard({ assessment }: { assessment: Assessment }) {
             <p className="text-sm text-muted-foreground">
               Continue where you left off
             </p>
-            <Link href={`/pulse/${assessment.id}`}>
+            <Link to={`/pulse/${assessment.id}`}>
               <Button variant="outline" className="w-full" data-testid={`button-continue-${assessment.id}`}>
                 <TrendingUp className="h-4 w-4 mr-2" />
                 Continue Assessment
@@ -114,7 +114,7 @@ export default function Dashboard() {
                   Track your organization's AI readiness journey over time
                 </p>
               </div>
-              <Link href="/">
+              <Link to="/">
                 <Button size="lg" data-testid="button-new-assessment">
                   <Plus className="h-5 w-5 mr-2" />
                   New Assessment
@@ -182,7 +182,7 @@ export default function Dashboard() {
                     <p className="text-muted-foreground mb-6">
                       Start your first CORTEX assessment to evaluate your organization's AI readiness
                     </p>
-                    <Link href="/">
+                    <Link to="/">
                       <Button size="lg" data-testid="button-start-first-assessment">
                         <Plus className="h-5 w-5 mr-2" />
                         Start Your First Assessment
