@@ -39,23 +39,23 @@ const METHODOLOGY_CONTENT = {
   sections: [
     {
       title: "What CORTEX Is and Why It Exists",
-      content: "CORTEX™ is an executive AI readiness assessment designed to help leadership teams evaluate their organization's preparedness for AI adoption. Rather than producing a simple report card, CORTEX generates actionable insights tailored to your specific operating context. It exists to bridge the gap between AI strategy discussions and concrete next steps, giving executives a shared language for assessing capability gaps and prioritizing investments across six critical domains."
+      content: "CORTEX™ is an executive AI readiness assessment designed to help leadership teams evaluate their organization's preparedness for AI adoption. CORTEX is designed to generate actionable insights tailored to your specific operating context instead of just a scorecard. It exists to bridge the gap between AI strategy discussions and concrete next steps, giving executives a shared language for assessing capability gaps and prioritizing investments across six critical domains."
     },
     {
       title: "Why We Separate Context from Capability",
-      content: "Your organization's AI readiness has two distinct dimensions: what you're capable of doing (pulse check) and the environment you operate in (context profile). By assessing these separately, we ensure your maturity scores reflect genuine organizational capability while your context shapes the specific guidance and safeguards you receive."
+      content: "Your organization's AI readiness has two distinct dimensions: what you're capable of doing (pulse check) and the environment you operate in (context profile). By assessing these separately we ensure your're able to evaluate genuine organizational capability and make sure your context informs the specific guidance and safeguards you receive."
     },
     {
       title: "How Context and Capability Work Together",
-      content: "Your context profile never changes your scores—it contextualizes them. A financial services firm and a media company might both score 2 in Risk/Trust, but their action plans will differ based on regulatory requirements, data sensitivity, and customer expectations captured in their profiles."
+      content: "Your context profile doesn't change your maturity scores, it contextualizes them. A financial services firm and a media company might both score 2 in Risk/Trust, but their action plans will differ based on regulatory requirements, data sensitivity, and customer expectations captured in their profiles."
     },
     {
       title: "The Research Basis for Six Domains",
-      content: "These domains emerged from studying successful AI transformations across industries. They represent the minimum viable set of organizational capabilities where weakness in any single domain can undermine the entire AI strategy. Each connects directly to executive decision-making rather than technical implementation."
+      content: "These domains emerged from studying successful AI transformations across industries. They represent the minimum viable set of organizational capabilities where weakness in any single domain can undermine your AI strategy. They are designed to connected directly to executive decision-making rather than a pure technical implementation."
     },
     {
       title: "Why This Approach Drives Action",
-      content: "Traditional assessments often produce scores without clear next steps. By combining capability measurement with contextual interpretation, CORTEX generates specific, prioritized recommendations that respect both where you are and where you operate. The result is a discussion tool, not a report card."
+      content: "Traditional assessments often produce scores without clear next steps. By combining capability measurement with contextual interpretation, CORTEX generates specific, prioritized recommendations that respect both where you are and where you operate. Even the questions in the pulse check are designed to help you see opportunities to improve your AI strategy. The result is a jumping off point, not a report card."
     }
   ]
 };
