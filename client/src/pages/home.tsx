@@ -12,6 +12,7 @@ import {
   SheetTitle, 
   SheetTrigger 
 } from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { AppHeader } from "@/components/navigation/app-header";
 import { ExecutiveCortexHero } from "@/components/executive-cortex-hero";
 import { EnhancedSignInModal } from "@/components/auth/enhanced-sign-in-modal";
@@ -192,14 +193,16 @@ export default function HomePage() {
               Understanding the CORTEX methodology and what to expect from your assessment.
             </SheetDescription>
           </SheetHeader>
-          <div className="mt-6 space-y-6">
-            {METHODOLOGY_CONTENT.sections.map((section, index) => (
-              <div key={index}>
-                <h4 className="font-semibold text-sm mb-2">{section.title}</h4>
-                <p className="text-sm text-muted-foreground leading-relaxed">{section.content}</p>
-              </div>
-            ))}
-          </div>
+          <ScrollArea className="h-[calc(100vh-12rem)] mt-6 pr-4">
+            <div className="space-y-6">
+              {METHODOLOGY_CONTENT.sections.map((section, index) => (
+                <div key={index}>
+                  <h4 className="font-semibold text-sm mb-2">{section.title}</h4>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{section.content}</p>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
         </SheetContent>
       </Sheet>
 
