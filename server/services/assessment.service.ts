@@ -382,15 +382,16 @@ export class AssessmentService {
 
     // G1 - Human-in-the-Loop (HITL) required
     if ((p.regulatory_intensity >= 3) || (p.safety_criticality >= 3)) {
+      const explain: any = {};
+      if (p.regulatory_intensity >= 3) explain.regulatory_intensity = p.regulatory_intensity;
+      if (p.safety_criticality >= 3) explain.safety_criticality = p.safety_criticality;
+      
       gates.push({
         id: 'require_hitl',
         pillar: 'O',
         title: 'Human-in-the-Loop required for high-impact decisions',
         reason: 'High safety/regulation',
-        explain: { 
-          regulatory_intensity: p.regulatory_intensity, 
-          safety_criticality: p.safety_criticality 
-        },
+        explain,
         status: 'unmet',
         actions: ['Implement human oversight for critical AI decisions', 'Establish approval workflows']
       });
