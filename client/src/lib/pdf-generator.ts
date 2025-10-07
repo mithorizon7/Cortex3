@@ -27,41 +27,52 @@ const FOOTER_LOGO_BASE64 = "iVBORw0KGgoAAAANSUhEUgAAA1oAAACiCAYAAABYi7x3AAAACXBI
  */
 function addFooterLogoToAllPages(
   doc: any,
+  base64: string,
   opts: {
     widthMm?: number;
     marginMm?: number;
+    format?: "PNG" | "JPEG";
     align?: "left" | "center" | "right";
+    compression?: "FAST" | "MEDIUM" | "SLOW";
   } = {}
 ) {
   const widthMm = opts.widthMm ?? 22;
   const marginMm = opts.marginMm ?? 12;
+  const format = opts.format ?? "PNG";
   const align = opts.align ?? "center";
+  const compression = opts.compression ?? "FAST";
 
-  const dataUrl = `data:image/png;base64,${FOOTER_LOGO_BASE64}`;
+  // Ensure Data URL prefix (jsPDF accepts pure base64 too, but this is safest)
+  const dataUrl = base64.startsWith("data:")
+    ? base64
+    : `data:image/${format.toLowerCase()};base64,${base64}`;
   
   const pages = doc.getNumberOfPages();
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
 
   try {
+    // Read intrinsic px size to preserve aspect ratio
     const ip = doc.getImageProperties(dataUrl);
     const scale = widthMm / ip.width;
     const drawW = widthMm;
     const drawH = ip.height * scale;
 
+    // Horizontal position
     const x =
       align === "left"   ? marginMm :
       align === "right"  ? pageW - marginMm - drawW :
                            (pageW - drawW) / 2;
 
+    // Vertical position (above bottom margin)
     const y = pageH - marginMm - drawH;
 
     for (let i = 1; i <= pages; i++) {
       doc.setPage(i);
       try {
-        doc.addImage(dataUrl, "PNG", x, y, drawW, drawH, undefined, "FAST");
+        doc.addImage(dataUrl, format, x, y, drawW, drawH, undefined, compression);
       } catch (e) {
-        // Failsafe: text fallback
+        // Failsafe: don't break the PDF—fall back to text mark
         doc.setFont("Inter", "bold");
         doc.setFontSize(8);
         doc.text("Open Learning", x, y + 3);
@@ -811,7 +822,7 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
 
   // Download
   // Add footer logo to all pages
-  addFooterLogoToAllPages(doc, { widthMm: 22, marginMm: 12, align: "center" });
+  addFooterLogoToAllPages(doc, FOOTER_LOGO_BASE64, { widthMm: 22, marginMm: 12, format: "PNG", align: "center", compression: "FAST" });
 
   const blob = doc.output("blob");
   if (!(blob instanceof Blob)) throw new Error("Failed to generate PDF blob");
@@ -952,7 +963,7 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
   finalizeFooters(doc, "CORTEX Options Studio");
 
   // Add footer logo to all pages
-  addFooterLogoToAllPages(doc, { widthMm: 22, marginMm: 12, align: "center" });
+  addFooterLogoToAllPages(doc, FOOTER_LOGO_BASE64, { widthMm: 22, marginMm: 12, format: "PNG", align: "center", compression: "FAST" });
 
   const blob = doc.output("blob");
   if (!(blob instanceof Blob)) throw new Error("Failed to generate PDF blob");
@@ -1466,7 +1477,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
   finalizeFooters(doc, "CORTEX Executive Brief");
 
   // Add footer logo to all pages
-  addFooterLogoToAllPages(doc, { widthMm: 22, marginMm: 12, align: "center" });
+  addFooterLogoToAllPages(doc, FOOTER_LOGO_BASE64, { widthMm: 22, marginMm: 12, format: "PNG", align: "center", compression: "FAST" });
 
   const blob = doc.output("blob");
   if (!(blob instanceof Blob)) throw new Error("Failed to generate PDF blob");
