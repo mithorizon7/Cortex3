@@ -117,35 +117,6 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
     setShowPasswordReset(false);
   };
 
-  const handleTestAccountLogin = async () => {
-    try {
-      setEmailLoading(true);
-      clearError();
-      
-      // Test account credentials
-      const testEmail = 'test@cortex.com';
-      const testPassword = 'test123456';
-      
-      await signInWithEmail(testEmail, testPassword);
-      
-      toast({
-        title: 'Test Account Login',
-        description: 'Logged in with test account successfully.',
-      });
-      
-      onOpenChange(false);
-    } catch (error: any) {
-      console.error('Test account login error:', error);
-      
-      toast({
-        title: 'Test Account Error',
-        description: 'Test account login failed. The test account may not exist yet.',
-        variant: 'destructive',
-      });
-    } finally {
-      setEmailLoading(false);
-    }
-  };
 
   return (
     <>
@@ -289,28 +260,6 @@ export const EnhancedSignInModal: React.FC<EnhancedSignInModalProps> = ({
                       ? 'Sign in to Existing Account' 
                       : 'Create New Account'
                     }
-                  </Button>
-                </div>
-
-                <div className="pt-4 border-t">
-                  <p className="text-center text-sm text-muted-foreground mb-2">
-                    Developer Testing
-                  </p>
-                  <Button 
-                    type="button"
-                    variant="secondary" 
-                    size="default"
-                    onClick={handleTestAccountLogin}
-                    disabled={emailLoading}
-                    className="w-full"
-                    data-testid="test-account-login"
-                  >
-                    {emailLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : (
-                      <LogIn className="h-4 w-4 mr-2" />
-                    )}
-                    Quick Test Login
                   </Button>
                 </div>
                 
