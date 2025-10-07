@@ -118,7 +118,12 @@ function setFill(doc: any, c: RGB) { doc.setFillColor(c[0], c[1], c[2]); }
 function setStroke(doc: any, c: RGB) { doc.setDrawColor(c[0], c[1], c[2]); }
 function setText(doc: any, c: RGB) { doc.setTextColor(c[0], c[1], c[2]); }
 function setFont(doc: any, t: { size: number; weight: "bold" | "normal" }) {
-  doc.setFont("Inter", t.weight);
+  // Try Inter first, fall back to Helvetica if unavailable
+  try {
+    doc.setFont("Inter", t.weight);
+  } catch {
+    doc.setFont("helvetica", t.weight);
+  }
   doc.setFontSize(t.size);
 }
 
@@ -160,11 +165,37 @@ function normalizeText(s: any): string {
   return fixed;
 }
 
-// Reliable wrap with sanity checks
+// Reliable wrap with sanity checks and long token protection
 function wrap(doc: any, text: string, width: number): string[] {
   const clean = normalizeText(text);
   if (!clean) return [];
-  const lines = doc.splitTextToSize(clean, width);
+  
+  // Safety: Break extremely long unbreakable tokens to prevent margin overflow
+  // Find tokens longer than 80% of available width and insert soft hyphens
+  const maxTokenLength = width * 0.8;
+  const safeText = clean.split(/\s+/).map(token => {
+    if (doc.getTextWidth(token) > maxTokenLength) {
+      // Break long token into chunks with hyphens
+      const chars = Array.from(token);
+      const chunks: string[] = [];
+      let chunk = '';
+      
+      for (const char of chars) {
+        const testChunk = chunk + char;
+        if (doc.getTextWidth(testChunk + '-') > maxTokenLength && chunk.length > 0) {
+          chunks.push(chunk + '-');
+          chunk = char;
+        } else {
+          chunk = testChunk;
+        }
+      }
+      if (chunk) chunks.push(chunk);
+      return chunks.join(' ');
+    }
+    return token;
+  }).join(' ');
+  
+  const lines = doc.splitTextToSize(safeText, width);
   return Array.isArray(lines) ? lines.map((x: any) => String(x)) : [String(lines)];
 }
 
@@ -201,10 +232,12 @@ function finalizeFooters(doc: any, labelLeft: string) {
       const totalWidth = logoWidth + 3 + textWidth;
       const startX = (w - totalWidth) / 2;
       
-      // Logo on left
+      // Logo on left (verify image plugin is available)
       const logoX = startX;
       const logoY = h - 18;
-      doc.addImage(EMBEDDED_LOGO, 'PNG', logoX, logoY, logoWidth, logoHeight);
+      if (typeof doc.addImage === 'function') {
+        doc.addImage(EMBEDDED_LOGO, 'PNG', logoX, logoY, logoWidth, logoHeight);
+      }
       
       // Text on right of logo, vertically centered
       const textX = logoX + logoWidth + 3;
@@ -233,14 +266,21 @@ function ensureJsPDF() {
   });
 }
 
-function newDoc(J: any, fonts: PDFFontData, metadata?: { title?: string; subject?: string; keywords?: string }) {
+function newDoc(J: any, fonts: PDFFontData | null, metadata?: { title?: string; subject?: string; keywords?: string }) {
   const doc = new J("p", "mm", "a4");
   
-  // Register Inter fonts for proper Unicode support
-  doc.addFileToVFS("Inter-Regular.ttf", fonts.regular);
-  doc.addFont("Inter-Regular.ttf", "Inter", "normal");
-  doc.addFileToVFS("Inter-Bold.ttf", fonts.bold);
-  doc.addFont("Inter-Bold.ttf", "Inter", "bold");
+  // Register Inter fonts for proper Unicode support (with fallback to Helvetica)
+  if (fonts) {
+    try {
+      doc.addFileToVFS("Inter-Regular.ttf", fonts.regular);
+      doc.addFont("Inter-Regular.ttf", "Inter", "normal");
+      doc.addFileToVFS("Inter-Bold.ttf", fonts.bold);
+      doc.addFont("Inter-Bold.ttf", "Inter", "bold");
+    } catch (error) {
+      console.warn('Failed to register Inter fonts, falling back to Helvetica:', error);
+      // Fonts will fall back to Helvetica in setFont if Inter is unavailable
+    }
+  }
   
   // Set line height factor for consistent typography
   doc.setLineHeightFactor(1.15);
@@ -510,7 +550,16 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
     throw new Error("Missing context insight data for PDF generation");
   }
 
-  const [J, fonts] = await Promise.all([ensureJsPDF(), loadInterFonts()]);
+  // Load jsPDF and fonts (with graceful fallback if fonts fail)
+  const J = await ensureJsPDF();
+  let fonts: PDFFontData | null = null;
+  try {
+    fonts = await loadInterFonts();
+  } catch (error) {
+    console.warn('PDF fonts unavailable, using fallback:', error);
+    // Continue with null fonts - will fall back to Helvetica
+  }
+  
   const doc = newDoc(J, fonts);
   const { pw } = bounds(doc);
 
@@ -706,7 +755,16 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
     throw new Error("Missing required data for PDF generation");
   }
 
-  const [J, fonts] = await Promise.all([ensureJsPDF(), loadInterFonts()]);
+  // Load jsPDF and fonts (with graceful fallback if fonts fail)
+  const J = await ensureJsPDF();
+  let fonts: PDFFontData | null = null;
+  try {
+    fonts = await loadInterFonts();
+  } catch (error) {
+    console.warn('PDF fonts unavailable, using fallback:', error);
+    // Continue with null fonts - will fall back to Helvetica
+  }
+  
   const doc = newDoc(J, fonts);
   const { pw } = bounds(doc);
 
@@ -1014,7 +1072,16 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     }
   }
 
-  const [J, fonts] = await Promise.all([ensureJsPDF(), loadInterFonts()]);
+  // Load jsPDF and fonts (with graceful fallback if fonts fail)
+  const J = await ensureJsPDF();
+  let fonts: PDFFontData | null = null;
+  try {
+    fonts = await loadInterFonts();
+  } catch (error) {
+    console.warn('PDF fonts unavailable, using fallback:', error);
+    // Continue with null fonts - will fall back to Helvetica
+  }
+  
   const contextTypes = [];
   if (data.contextProfile?.regulatory_intensity && data.contextProfile.regulatory_intensity >= 3) contextTypes.push('Regulated');
   if (data.contextProfile?.safety_criticality && data.contextProfile.safety_criticality >= 3) contextTypes.push('Safety-Critical');

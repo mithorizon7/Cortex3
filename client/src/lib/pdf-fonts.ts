@@ -15,27 +15,65 @@ export const INTER_FONTS = {
   boldUrl: InterBoldTTF
 };
 
-// Function to fetch and convert fonts to base64 for jsPDF
+// Memoized font cache to avoid re-loading on every PDF generation
+let fontCache: PDFFontData | null = null;
+let fontLoadPromise: Promise<PDFFontData> | null = null;
+
+// Function to fetch and convert fonts to base64 for jsPDF with memoization and error handling
 export async function loadInterFonts(): Promise<PDFFontData> {
-  const [regularResponse, boldResponse] = await Promise.all([
-    fetch(InterRegularTTF),
-    fetch(InterBoldTTF)
-  ]);
+  // Return cached fonts if already loaded
+  if (fontCache) {
+    return fontCache;
+  }
 
-  const [regularBlob, boldBlob] = await Promise.all([
-    regularResponse.blob(),
-    boldResponse.blob()
-  ]);
+  // Return in-flight promise if already loading
+  if (fontLoadPromise) {
+    return fontLoadPromise;
+  }
 
-  const [regularBase64, boldBase64] = await Promise.all([
-    blobToBase64(regularBlob),
-    blobToBase64(boldBlob)
-  ]);
+  // Start new load with timeout protection
+  fontLoadPromise = (async () => {
+    try {
+      const timeoutMs = 10000; // 10 second timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-  return {
-    regular: regularBase64,
-    bold: boldBase64
-  };
+      const [regularResponse, boldResponse] = await Promise.all([
+        fetch(InterRegularTTF, { signal: controller.signal }),
+        fetch(InterBoldTTF, { signal: controller.signal })
+      ]);
+
+      clearTimeout(timeoutId);
+
+      if (!regularResponse.ok || !boldResponse.ok) {
+        throw new Error('Font fetch failed: HTTP error');
+      }
+
+      const [regularBlob, boldBlob] = await Promise.all([
+        regularResponse.blob(),
+        boldResponse.blob()
+      ]);
+
+      const [regularBase64, boldBase64] = await Promise.all([
+        blobToBase64(regularBlob),
+        blobToBase64(boldBlob)
+      ]);
+
+      const fonts = {
+        regular: regularBase64,
+        bold: boldBase64
+      };
+
+      // Cache successful load
+      fontCache = fonts;
+      return fonts;
+    } catch (error) {
+      fontLoadPromise = null; // Clear failed promise so retry is possible
+      throw new Error(`Failed to load PDF fonts: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  })();
+
+  return fontLoadPromise;
 }
 
 function blobToBase64(blob: Blob): Promise<string> {
