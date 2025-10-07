@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -60,6 +61,7 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('cohorts');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editingCohort, setEditingCohort] = useState<Cohort | null>(null);
+  const [deletingCohort, setDeletingCohort] = useState<Cohort | null>(null);
 
   // Create cohort form
   const createForm = useForm<CreateCohortData>({
@@ -172,9 +174,10 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleDeleteCohort = (cohortId: string) => {
-    if (confirm('Are you sure you want to delete this cohort? This action cannot be undone.')) {
-      deleteCohortMutation.mutate(cohortId);
+  const handleDeleteCohort = () => {
+    if (deletingCohort) {
+      deleteCohortMutation.mutate(deletingCohort.id);
+      setDeletingCohort(null);
     }
   };
 
@@ -294,20 +297,20 @@ export default function AdminDashboard() {
           {/* Admin Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList className={`grid w-full ${isSuperAdmin ? 'grid-cols-4 lg:w-[500px]' : 'grid-cols-3 lg:w-[400px]'}`}>
-              <TabsTrigger value="cohorts" className="flex items-center space-x-2">
+              <TabsTrigger value="cohorts" className="flex items-center space-x-2" data-testid="tab-cohorts">
                 <Users className="h-4 w-4" />
                 <span>Cohorts</span>
               </TabsTrigger>
-              <TabsTrigger value="analytics" className="flex items-center space-x-2">
+              <TabsTrigger value="analytics" className="flex items-center space-x-2" data-testid="tab-analytics">
                 <BarChart3 className="h-4 w-4" />
                 <span>Analytics</span>
               </TabsTrigger>
-              <TabsTrigger value="settings" className="flex items-center space-x-2">
+              <TabsTrigger value="settings" className="flex items-center space-x-2" data-testid="tab-settings">
                 <Settings className="h-4 w-4" />
                 <span>Settings</span>
               </TabsTrigger>
               {isAdmin && (
-                <TabsTrigger value="bootstrap-invites" className="flex items-center space-x-2">
+                <TabsTrigger value="bootstrap-invites" className="flex items-center space-x-2" data-testid="tab-bootstrap-invites">
                   <Key className="h-4 w-4" />
                   <span>Bootstrap</span>
                 </TabsTrigger>
@@ -402,7 +405,7 @@ export default function AdminDashboard() {
                                           Edit Details
                                         </DropdownMenuItem>
                                         <DropdownMenuItem 
-                                          onClick={() => handleDeleteCohort(cohort.id)}
+                                          onClick={() => setDeletingCohort(cohort)}
                                           className="text-destructive"
                                           data-testid={`menu-delete-cohort-${cohort.id}`}
                                           disabled={deleteCohortMutation.isPending}
@@ -676,6 +679,31 @@ export default function AdminDashboard() {
             </Form>
           </DialogContent>
         </Dialog>
+
+        {/* Delete Cohort Confirmation Dialog */}
+        <AlertDialog open={!!deletingCohort} onOpenChange={(open) => !open && setDeletingCohort(null)}>
+          <AlertDialogContent data-testid="dialog-delete-cohort">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Cohort</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete <strong>{deletingCohort?.name}</strong>? This action cannot be undone and will affect all members of this cohort.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel data-testid="button-cancel-delete-cohort">
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteCohort}
+                disabled={deleteCohortMutation.isPending}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                data-testid="button-confirm-delete-cohort"
+              >
+                {deleteCohortMutation.isPending ? 'Deleting...' : 'Delete Cohort'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </ProtectedRoute>
   );
