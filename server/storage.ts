@@ -1418,6 +1418,34 @@ export class MemStorage implements IStorage {
           return null;
         }
         
+        // If cohortId is being updated, we need to handle usedSlots
+        if ('cohortId' in updates) {
+          const oldCohortId = existing.cohortId;
+          const newCohortId = updates.cohortId;
+          
+          // Decrement old cohort's usedSlots if user was in a cohort
+          if (oldCohortId) {
+            const oldCohort = this.cohorts.get(oldCohortId);
+            if (oldCohort) {
+              this.cohorts.set(oldCohortId, {
+                ...oldCohort,
+                usedSlots: oldCohort.usedSlots - 1
+              });
+            }
+          }
+          
+          // Increment new cohort's usedSlots if user is joining a cohort
+          if (newCohortId) {
+            const newCohort = this.cohorts.get(newCohortId);
+            if (newCohort) {
+              this.cohorts.set(newCohortId, {
+                ...newCohort,
+                usedSlots: newCohort.usedSlots + 1
+              });
+            }
+          }
+        }
+        
         const updated: User = { ...existing, ...updates };
         this.users.set(userId, updated);
         
@@ -1438,10 +1466,31 @@ export class MemStorage implements IStorage {
     return withErrorHandling(
       'deleteUser',
       async () => {
+        // Get the user to check if they're in a cohort
+        const userToDelete = this.users.get(userId);
+        
+        if (!userToDelete) {
+          logger.warn('Cannot delete user - not found', {
+            additionalContext: { userId }
+          });
+          return false;
+        }
+        
         // First, delete all assessments for this user
         const userAssessments = Array.from(this.assessments.values()).filter(a => a.userId === userId);
         for (const assessment of userAssessments) {
           this.assessments.delete(assessment.id);
+        }
+        
+        // Decrement cohort's usedSlots if user was in a cohort
+        if (userToDelete.cohortId) {
+          const cohort = this.cohorts.get(userToDelete.cohortId);
+          if (cohort) {
+            this.cohorts.set(userToDelete.cohortId, {
+              ...cohort,
+              usedSlots: cohort.usedSlots - 1
+            });
+          }
         }
         
         // Then delete the user
@@ -1449,13 +1498,14 @@ export class MemStorage implements IStorage {
         
         if (deleted) {
           logger.info('User and their assessments deleted successfully', {
-            additionalContext: { userId, assessmentCount: userAssessments.length }
+            additionalContext: { 
+              userId,
+              assessmentCount: userAssessments.length,
+              wasCohortMember: !!userToDelete.cohortId
+            }
           });
           return true;
         } else {
-          logger.warn('Cannot delete user - not found', {
-            additionalContext: { userId }
-          });
           return false;
         }
       },
