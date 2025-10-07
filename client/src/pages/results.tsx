@@ -15,7 +15,6 @@ import HoneycombRadar from "@/components/honeycomb-radar";
 import DomainCard from "@/components/domain-card";
 import { AppHeader } from "@/components/navigation/app-header";
 import { ProtectedRoute } from "@/components/auth/protected-route";
-import { ValueSnapshot } from "@/components/value-overlay";
 import { ValueOverlayTutorial } from "@/components/value-overlay-tutorial";
 import { initializeValueOverlay } from "@/lib/value-overlay";
 import { CORTEX_PILLARS, getPriorityLevel } from "@/lib/cortex";
@@ -570,7 +569,6 @@ export default function ResultsPage() {
           </Card>
         </div>
 
-        {/* Detailed Analysis */}
         {/* How to Read the Guidance */}
         <Card className="mb-6 sm:mb-8 bg-primary/5 border-primary/15">
           <CardHeader className="p-3 sm:p-4 lg:p-6">
@@ -603,6 +601,7 @@ export default function ResultsPage() {
           </CardContent>
         </Card>
 
+        {/* Detailed Domain Analysis */}
         <Collapsible open={showDetailedView} onOpenChange={setShowDetailedView}>
           <CollapsibleTrigger asChild>
             <Button 
