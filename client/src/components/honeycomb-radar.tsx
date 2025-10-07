@@ -93,7 +93,7 @@ export default function HoneycombRadar({ pillarScores, className }: HoneycombRad
                 // Don't render if score is undefined or null (not answered yet)
                 if (score === undefined || score === null) return null;
                 
-                const pillarColor = getPillarColor(pillar);
+                const pillarColor = getPillarColor(pillar as any);
                 
                 // For score of 0, render a small dot at center to show domain was assessed
                 if (score === 0) {
