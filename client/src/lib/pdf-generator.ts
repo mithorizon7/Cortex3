@@ -139,21 +139,24 @@ function normalizeText(s: any): string {
     .replace(/[\uFFFD\uFFFE\uFFFF]/g, ''); // Replacement/invalid chars
   
   const t = sanitized
-    .replace(/\u00A0/g, " ")
-    .replace(/[\u2000-\u200B\u202F\u205F\u2060]/g, " ")
-    .replace(/\u2011/g, "-")
-    .replace(/\u2212/g, "-")
-    .replace(/\u2013/g, "-")
-    .replace(/\u2014/g, "-")
+    .replace(/\u00A0/g, " ")                              // NBSP -> space
+    .replace(/[\u2000-\u200B\u202F\u205F\u2060]/g, " ")  // Thin/narrow/zero-width -> space
+    .replace(/\u2011/g, "-")                              // Non-breaking hyphen -> hyphen-minus
+    .replace(/\u2212/g, "-")                              // Math minus -> hyphen-minus
+    .replace(/\u2013/g, "-")                              // En dash -> hyphen-minus
+    .replace(/\u2014/g, "-")                              // Em dash -> hyphen-minus
     .replace(/[ \t]{2,}/g, " ")
     .replace(/\s+\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
-  // Collapse “char space char space …” patterns
-  if (/^(?:\S\s){8,}\S$/.test(t)) {
-    return t.replace(/\s+/g, "");
-  }
-  return t;
+  // Targeted fix: Only collapse clear ALL-CAPS letter-spaced runs (e.g., "E X E C U T I V E")
+  // This prevents the aggressive space removal that was fusing words together
+  const fixed = t.replace(
+    /(?:^|\s)((?:[A-Z]\s){4,}[A-Z])(?=$|\s)/g,
+    (match) => match.replace(/\s+/g, "")
+  );
+  
+  return fixed;
 }
 
 // Reliable wrap with sanity checks
