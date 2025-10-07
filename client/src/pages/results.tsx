@@ -570,36 +570,37 @@ export default function ResultsPage() {
         </div>
 
         {/* How to Read the Guidance */}
-        <Card className="mb-6 sm:mb-8 bg-primary/5 border-primary/15">
-          <CardHeader className="p-3 sm:p-4 lg:p-6">
-            <CardTitle className="flex items-center gap-2 text-primary font-display text-base sm:text-lg lg:text-xl">
-              <BookOpen className="h-4 sm:h-5 w-4 sm:w-5 flex-shrink-0" />
-              <span>How to Read the Guidance</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-3 sm:p-4 lg:p-6">
-            <p className="text-foreground/90 mb-3 sm:mb-4 text-sm sm:text-base font-ui">
+        <div className="mb-4 sm:mb-5 px-2 sm:px-4">
+          <div className="max-w-3xl">
+            <h3 className="text-sm sm:text-base font-semibold text-foreground/80 mb-2 sm:mb-3 flex items-center gap-2">
+              <BookOpen className="h-4 w-4 text-muted-foreground" />
+              <span>How to Read the Guidance Below</span>
+            </h3>
+            <p className="text-xs sm:text-sm text-muted-foreground mb-2 sm:mb-3 font-ui">
+              The Detailed Domain Analysis provides in-depth guidance for each of the six CORTEX domains. These recommendations are tailored to your context and current maturity level.
+            </p>
+            <p className="text-xs sm:text-sm text-muted-foreground mb-2 font-ui">
               For each domain you'll see:
             </p>
-            <ul className="text-foreground/90 space-y-1.5 sm:space-y-2 font-ui">
+            <ul className="text-xs sm:text-sm text-muted-foreground space-y-1 mb-2 sm:mb-3 font-ui ml-4">
               <li className="flex items-start gap-2">
-                <span className="font-semibold min-w-fit text-sm sm:text-base">• Why this matters</span>
-                <span className="text-xs sm:text-sm">— business impact in plain language</span>
+                <span className="font-medium">• Why this matters</span>
+                <span className="text-muted-foreground/80">— business impact in plain language</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="font-semibold min-w-fit text-sm sm:text-base">• What good looks like</span>
-                <span className="text-xs sm:text-sm">— observable practices</span>
+                <span className="font-medium">• What good looks like</span>
+                <span className="text-muted-foreground/80">— observable practices</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="font-semibold min-w-fit text-sm sm:text-base">• How it typically improves</span>
-                <span className="text-xs sm:text-sm">— common pathways, options, and trade-offs</span>
+                <span className="font-medium">• How it typically improves</span>
+                <span className="text-muted-foreground/80">— common pathways, options, and trade-offs</span>
               </li>
             </ul>
-            <p className="text-foreground/80 mt-3 sm:mt-4 text-xs sm:text-sm italic font-ui">
-              Use these as teaching notes and talking points. They are <strong>not mandates</strong>.
+            <p className="text-xs text-muted-foreground/70 italic font-ui">
+              Use these as suggestions and starting points. They are <strong>not mandates</strong>.
             </p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Detailed Domain Analysis */}
         <Collapsible open={showDetailedView} onOpenChange={setShowDetailedView}>
