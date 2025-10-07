@@ -29,8 +29,25 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   // Check if pulse check is completed (pillarScores indicates completion)
   const isPulseCheckCompleted = Boolean(latestAssessment && (latestAssessment as any)?.pillarScores);
   
-  // Smart navigation: go to results if completed assessment exists, otherwise start new assessment
-  const assessmentPath = latestAssessment ? `/results/${latestAssessment.id}` : '/context-profile';
+  // Smart navigation based on assessment state
+  const getAssessmentPath = () => {
+    if (!latestAssessment) return '/context-profile'; // No assessment - start new
+    if (isPulseCheckCompleted) return `/results/${latestAssessment.id}`; // Completed - view results
+    
+    // Incomplete assessment - continue where left off
+    const hasContextProfile = Boolean((latestAssessment as any)?.contextProfile);
+    if (!hasContextProfile) return `/context-profile`;
+    
+    // Has context profile, need to continue pulse check
+    return `/pulse/${latestAssessment.id}`;
+  };
+  
+  const assessmentPath = getAssessmentPath();
+  const assessmentButtonText = !latestAssessment 
+    ? 'Start Assessment' 
+    : isPulseCheckCompleted 
+      ? 'My Results' 
+      : 'Continue Assessment';
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 sm:h-14 max-w-screen-2xl items-center px-4 sm:px-6">
@@ -71,53 +88,21 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 </Button>
               </Link>
               
-              {/* Prominent Strategic Profile Button */}
-              {isPulseCheckCompleted ? (
-                <Link to={`/results/${latestAssessment.id}`}>
-                  <Button 
-                    variant="default" 
-                    size="sm" 
-                    className="font-ui font-semibold"
-                    data-testid="nav-strategic-profile"
-                  >
-                    <TrendingUp className="h-4 w-4 mr-2" />
-                    Strategic Profile
-                  </Button>
-                </Link>
-              ) : (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span 
-                      role="button"
-                      aria-disabled="true"
-                      aria-label="Strategic Profile - Complete the pulse check to view your strategic profile"
-                      tabIndex={0}
-                      className="inline-flex"
-                      data-testid="nav-strategic-profile-disabled-wrapper"
-                    >
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        disabled
-                        className="font-ui font-medium text-muted-foreground/50 cursor-not-allowed pointer-events-none"
-                        data-testid="nav-strategic-profile-disabled"
-                        tabIndex={-1}
-                      >
-                        <TrendingUp className="h-4 w-4 mr-2" />
-                        Strategic Profile
-                      </Button>
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Complete the pulse check to view your strategic profile</p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
-              
+              {/* Smart Assessment Button - adapts based on state */}
               <Link to={assessmentPath}>
-                <Button variant="ghost" size="sm" className="font-ui font-medium transition-colors" style={{ color: '#011627' }} data-testid="nav-assessment">
-                  <BarChart3 className="h-4 w-4 mr-2" />
-                  {latestAssessment ? 'My Results' : 'Assessment'}
+                <Button 
+                  variant={isPulseCheckCompleted ? "default" : "ghost"}
+                  size="sm" 
+                  className={isPulseCheckCompleted ? "font-ui font-semibold" : "font-ui font-medium transition-colors"}
+                  style={!isPulseCheckCompleted ? { color: '#011627' } : undefined}
+                  data-testid="nav-assessment"
+                >
+                  {isPulseCheckCompleted ? (
+                    <BarChart3 className="h-4 w-4 mr-2" />
+                  ) : (
+                    <TrendingUp className="h-4 w-4 mr-2" />
+                  )}
+                  {assessmentButtonText}
                 </Button>
               </Link>
               {(userProfile?.role === 'admin' || userProfile?.role === 'super_admin') && (
@@ -140,49 +125,24 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           )}
           
           <div className="flex items-center space-x-3 sm:space-x-2">
-            {/* Mobile Strategic Profile Button */}
+            {/* Mobile Assessment Button */}
             {showNav && (
-              isPulseCheckCompleted ? (
-                <Link to={`/results/${latestAssessment.id}`}>
-                  <Button 
-                    variant="default" 
-                    size="sm" 
-                    className="md:hidden font-ui font-semibold"
-                    data-testid="nav-strategic-profile-mobile"
-                  >
+              <Link to={assessmentPath}>
+                <Button 
+                  variant={isPulseCheckCompleted ? "default" : "ghost"}
+                  size="sm" 
+                  className={`md:hidden ${isPulseCheckCompleted ? 'font-ui font-semibold' : 'font-ui font-medium'}`}
+                  data-testid="nav-assessment-mobile"
+                >
+                  {isPulseCheckCompleted ? (
+                    <BarChart3 className="h-4 w-4 mr-1" />
+                  ) : (
                     <TrendingUp className="h-4 w-4 mr-1" />
-                    Profile
-                  </Button>
-                </Link>
-              ) : (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span 
-                      role="button"
-                      aria-disabled="true"
-                      aria-label="Strategic Profile - Complete the pulse check first"
-                      tabIndex={0}
-                      className="inline-flex md:hidden"
-                      data-testid="nav-strategic-profile-mobile-disabled-wrapper"
-                    >
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        disabled
-                        className="font-ui font-medium text-muted-foreground/50 cursor-not-allowed pointer-events-none"
-                        data-testid="nav-strategic-profile-mobile-disabled"
-                        tabIndex={-1}
-                      >
-                        <TrendingUp className="h-4 w-4 mr-1" />
-                        Profile
-                      </Button>
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Complete the pulse check first</p>
-                  </TooltipContent>
-                </Tooltip>
-              )
+                  )}
+                  <span className="hidden sm:inline">{assessmentButtonText}</span>
+                  <span className="sm:hidden">{isPulseCheckCompleted ? 'Results' : 'Assessment'}</span>
+                </Button>
+              </Link>
             )}
             
             {/* Cohort Display */}
