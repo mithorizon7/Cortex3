@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { CORTEX_PILLARS, MATURITY_STAGES, getStageColor } from "@/lib/cortex";
-import { getMicroGuidesByPillar, getMicroGuidesByTags, type MicroGuide } from "@/lib/micro-guides";
+import { getMicroGuidesByPillar, getMicroGuidesByTags, MICRO_GUIDES, type MicroGuide } from "@/lib/micro-guides";
 import { getMetricById, getContextAwareDefaults, getDefaultMetricForPillar } from "@/lib/value-overlay";
 import { ValueMetricChip, ValueInputFields, HowToMeasureDialog } from "@/components/value-overlay";
 import { Star, Info, Target, Cog, Shield, Users, Network, Lightbulb, TrendingUp, ArrowRight, BookOpen, ChevronDown, HelpCircle, CheckSquare } from "lucide-react";
@@ -471,17 +471,40 @@ const DOMAIN_GUIDANCE = {
 };
 
 export default function DomainCard({ pillar, stage, priority, contextReason, contextGuidance, contextProfile, valueOverlay, onValueOverlayUpdate, priorityMoves }: DomainCardProps) {
-  const [showGuides, setShowGuides] = useState(false);
+  const [showAdditionalGuides, setShowAdditionalGuides] = useState(false);
   const pillarInfo = CORTEX_PILLARS[pillar as keyof typeof CORTEX_PILLARS];
   const stageIndex = Math.floor(stage);
   const stageInfo = MATURITY_STAGES[stageIndex];
   const guidance = contextGuidance?.[pillar] || DOMAIN_GUIDANCE[pillar as keyof typeof DOMAIN_GUIDANCE];
   
-  // Get micro-guides for this pillar and context
-  const pillarGuides = getMicroGuidesByPillar(pillar);
-  const contextTags = contextGuidance?.contentTags || [];
-  const contextGuides = getMicroGuidesByTags(contextTags);
-  const relevantGuides = ([...pillarGuides, ...contextGuides].slice(0, 2)) as GuideWithSteps[]; // Show top 2 most relevant
+  // Get smart guides from backend if available, otherwise fallback to basic selection
+  const smartGuides = contextGuidance?.smartGuides?.[pillar] || [];
+  let relevantGuides: GuideWithSteps[] = [];
+  
+  if (smartGuides.length > 0) {
+    // Use smart guides from backend with enhanced scoring
+    relevantGuides = smartGuides.map((sg: any) => {
+      const guide = Object.values(MICRO_GUIDES).find(g => g.id.includes(sg.id));
+      if (guide) {
+        return {
+          ...guide,
+          priority: sg.priority,
+          reasons: sg.reasons,
+          difficulty: sg.difficulty,
+          timeToImplement: sg.timeToImplement,
+          urgency: sg.urgency,
+          score: sg.score
+        } as GuideWithSteps & { priority: string; reasons: string[]; difficulty: string; timeToImplement: string; urgency: string; score: number };
+      }
+      return null;
+    }).filter(Boolean) as GuideWithSteps[];
+  } else {
+    // Fallback to simple guide selection
+    const pillarGuides = getMicroGuidesByPillar(pillar);
+    const contextTags = contextGuidance?.contentTags || [];
+    const contextGuides = getMicroGuidesByTags(contextTags);
+    relevantGuides = [...pillarGuides, ...contextGuides].slice(0, 5) as GuideWithSteps[];
+  }
   
   // Handle Value Overlay
   const selectedMetric = valueOverlay ? getMetricById(valueOverlay.metric_id) : (contextProfile ? getMetricById(getContextAwareDefaults(contextProfile)[pillar]) : getDefaultMetricForPillar(pillar));
@@ -652,72 +675,134 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
             </div>
           )}
           
-          {/* Priority Moves */}
-          {priorityMoves && priorityMoves.length > 0 && (
-            <div>
-              <h4 className="font-medium mb-2 flex items-center gap-2 font-display text-sm sm:text-base text-foreground">
-                <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
-                <span>Top Priority Moves</span>
-              </h4>
-              <div className="space-y-1.5 sm:space-y-2">
-                {priorityMoves.slice(0, 2).map((move) => (
-                  <PriorityMoveItem key={move.id} move={move} />
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {/* Micro-Guides */}
+          {/* Implementation Guides - PRIMARY SECTION (Replacing Priority Moves) */}
           {relevantGuides.length > 0 && (
-            <Collapsible open={showGuides} onOpenChange={setShowGuides}>
-              <CollapsibleTrigger asChild>
-                <Button variant="outline" size="sm" className="w-full justify-between p-3 h-auto text-sm border-2 border-primary/40 bg-primary/8 shadow-sm">
-                  <div className="flex items-center gap-2 text-primary">
-                    <BookOpen className="h-4 w-4 flex-shrink-0" />
-                    <span className="text-sm font-semibold">Implementation Guides ({relevantGuides.length})</span>
-                  </div>
-                  <ChevronDown className={`h-4 w-4 text-primary transition-transform flex-shrink-0 ${showGuides ? 'rotate-180' : ''}`} />
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="space-y-2 sm:space-y-3 mt-2">
-                {relevantGuides.map((guide) => (
-                  <div key={guide.id} className="bg-muted/30 p-2 sm:p-3 rounded-lg border border-muted/50">
-                    <div className="flex items-start justify-between gap-2 mb-1.5 sm:mb-2">
-                      <h5 className="font-medium text-xs sm:text-sm text-foreground">{guide.title}</h5>
-                      <MicroGuideDialog guide={guide}>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          className="text-xs h-6 px-2 flex-shrink-0"
-                          data-testid={`button-guide-${guide.id}`}
-                        >
-                          {guide.steps?.length ? `${guide.steps.length} steps` : 'Guide'}
-                        </Button>
-                      </MicroGuideDialog>
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-1.5 sm:mb-2">{guide.overview}</p>
-                    
-                    {guide.steps?.slice(0, 2).map((step: GuideStep) => (
-                      <div key={step.order} className="flex items-start gap-1.5 sm:gap-2 text-xs mb-1">
-                        <div className="text-white rounded-full w-4 h-4 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5" style={{ backgroundColor: pillarInfo.color }}>
-                          {step.order}
+            <div className="border-t pt-3 sm:pt-4 mt-3 sm:mt-4">
+              <h4 className="font-semibold mb-3 flex items-center gap-2 font-display text-base sm:text-lg text-foreground">
+                <BookOpen className="h-4 sm:h-5 w-4 sm:w-5 flex-shrink-0 text-primary" />
+                <span>Implementation Guides</span>
+                <Badge variant="default" className="text-xs">
+                  {relevantGuides.length} Available
+                </Badge>
+              </h4>
+              
+              {/* Primary Guides - Always Visible */}
+              <div className="space-y-2 sm:space-y-3">
+                {relevantGuides.slice(0, 3).map((guide, index) => {
+                  const enhancedGuide = guide as any;
+                  const isPrimary = enhancedGuide.priority === 'primary' || index === 0;
+                  const urgencyColors = {
+                    critical: 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800',
+                    high: 'bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-800',
+                    medium: 'bg-yellow-50 dark:bg-yellow-950/30 border-yellow-200 dark:border-yellow-800',
+                    low: 'bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800'
+                  };
+                  
+                  return (
+                    <div 
+                      key={guide.id} 
+                      className={`p-3 sm:p-4 rounded-lg border ${
+                        isPrimary 
+                          ? 'border-primary/30 bg-primary/5' 
+                          : urgencyColors[enhancedGuide.urgency as keyof typeof urgencyColors] || 'bg-muted/30 border-muted/50'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            {isPrimary && (
+                              <Badge variant="default" className="text-xs">
+                                Top Priority
+                              </Badge>
+                            )}
+                            {enhancedGuide.urgency && (
+                              <Badge 
+                                variant={enhancedGuide.urgency === 'critical' ? 'destructive' : 'secondary'}
+                                className="text-xs"
+                              >
+                                {enhancedGuide.urgency}
+                              </Badge>
+                            )}
+                            {enhancedGuide.difficulty && (
+                              <Badge variant="outline" className="text-xs">
+                                {enhancedGuide.difficulty}
+                              </Badge>
+                            )}
+                            {enhancedGuide.timeToImplement && (
+                              <Badge variant="outline" className="text-xs">
+                                {enhancedGuide.timeToImplement}
+                              </Badge>
+                            )}
+                          </div>
+                          <h5 className="font-semibold text-sm sm:text-base text-foreground mb-1">
+                            {guide.title}
+                          </h5>
+                          
+                          {/* Why this guide was selected */}
+                          {enhancedGuide.reasons && enhancedGuide.reasons.length > 0 && (
+                            <p className="text-xs text-primary mb-2">
+                              <strong>Why selected:</strong> {enhancedGuide.reasons.join(', ')}
+                            </p>
+                          )}
+                          
+                          <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                            {guide.overview}
+                          </p>
                         </div>
-                        <div className="min-w-0">
-                          <span className="font-medium">{step.title}</span>
-                          <span className="text-muted-foreground ml-1">({step.timeframe})</span>
+                        <MicroGuideDialog guide={guide}>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="text-xs h-6 px-2 flex-shrink-0"
+                            data-testid={`button-guide-${guide.id}`}
+                          >
+                            View Full Guide
+                          </Button>
+                        </MicroGuideDialog>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              
+              {/* Additional Guides - Collapsible */}
+              {relevantGuides.length > 3 && (
+                <Collapsible open={showAdditionalGuides} onOpenChange={setShowAdditionalGuides}>
+                  <CollapsibleTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full mt-2 text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      <ChevronDown className={`h-3 w-3 mr-1 transition-transform ${showAdditionalGuides ? 'rotate-180' : ''}`} />
+                      Show {relevantGuides.length - 3} more guides
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-2 mt-2">
+                    {relevantGuides.slice(3).map((guide) => (
+                      <div key={guide.id} className="bg-muted/30 p-2 sm:p-3 rounded-lg border border-muted/50">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1">
+                            <h5 className="font-medium text-xs sm:text-sm text-foreground mb-1">{guide.title}</h5>
+                            <p className="text-xs text-muted-foreground leading-relaxed">{guide.overview}</p>
+                          </div>
+                          <MicroGuideDialog guide={guide}>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              className="text-xs h-6 px-2 flex-shrink-0"
+                              data-testid={`button-guide-${guide.id}`}
+                            >
+                              View
+                            </Button>
+                          </MicroGuideDialog>
                         </div>
                       </div>
                     ))}
-                    
-                    {guide.steps && guide.steps.length > 2 && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        +{guide.steps.length - 2} more steps...
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </CollapsibleContent>
-            </Collapsible>
+                  </CollapsibleContent>
+                </Collapsible>
+              )}
+            </div>
           )}
         </div>
       </CardContent>

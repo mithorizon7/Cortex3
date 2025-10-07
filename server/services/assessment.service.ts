@@ -233,10 +233,19 @@ export class AssessmentService {
     );
     
     const contentTags = this.generateContentTags(assessment.contextProfile);
-    const contextGuidance = this.generateContextGuidance(
+    
+    // Generate smart guides for each pillar
+    const smartGuides = this.generateSmartGuides(
       assessment.pillarScores,
-      contentTags
+      assessment.contextProfile,
+      assessment.pulseResponses
     );
+    
+    // Include smart guides in contextGuidance
+    const contextGuidance = {
+      ...this.generateContextGuidance(assessment.pillarScores, contentTags),
+      smartGuides
+    };
     
     const completed = await storage.updateAssessment(assessmentId, {
       triggeredGates,
@@ -894,6 +903,374 @@ export class AssessmentService {
     }
     
     return guidance;
+  }
+  
+  /**
+   * Generate smart guide recommendations for each pillar based on gaps, context, and pulse responses
+   * @private
+   */
+  private generateSmartGuides(
+    pillarScores: any,
+    contextProfile: any,
+    pulseResponses: any
+  ): any {
+    const smartGuides: Record<string, any[]> = {};
+    const pillars = ['C', 'O', 'R', 'T', 'E', 'X'];
+    
+    // For each pillar, generate smart guide recommendations
+    pillars.forEach(pillar => {
+      const score = pillarScores[pillar] || 0;
+      const guides: any[] = [];
+      
+      // Calculate guide relevance scores based on:
+      // 1. Gap analysis (weaker pillars get priority guides)
+      // 2. Context relevance (match to org characteristics)  
+      // 3. Pulse response targeting (specific weak answers)
+      
+      // Map guide IDs to recommendations with scoring
+      const guideRecommendations = this.scoreGuidesForPillar(
+        pillar,
+        score,
+        contextProfile,
+        pulseResponses
+      );
+      
+      // Add top 3-5 guides per pillar
+      guideRecommendations.slice(0, 5).forEach((rec, index) => {
+        guides.push({
+          id: rec.id,
+          title: rec.title,
+          priority: index === 0 ? 'primary' : index <= 2 ? 'secondary' : 'additional',
+          score: rec.score,
+          reasons: rec.reasons,
+          difficulty: rec.difficulty,
+          timeToImplement: rec.timeToImplement,
+          urgency: rec.urgency
+        });
+      });
+      
+      smartGuides[pillar] = guides;
+    });
+    
+    return smartGuides;
+  }
+  
+  /**
+   * Score and rank guides for a specific pillar
+   * @private
+   */
+  private scoreGuidesForPillar(
+    pillar: string,
+    pillarScore: number,
+    contextProfile: any,
+    pulseResponses: any
+  ): any[] {
+    const guides: any[] = [];
+    const p = contextProfile;
+    const pr = pulseResponses || {};
+    
+    // Define guide library with metadata for smart selection
+    const guideLibrary = this.getGuideLibrary();
+    
+    // Score each relevant guide
+    guideLibrary.forEach(guide => {
+      // Only include guides relevant to this pillar
+      if (guide.pillars && !guide.pillars.includes(pillar)) {
+        return;
+      }
+      
+      let score = guide.baseRelevance || 0.5;
+      const reasons: string[] = [];
+      
+      // Gap boost (40% weight) - bigger boost for weaker pillars
+      const gapBoost = (3 - pillarScore) * 0.4;
+      score += gapBoost;
+      if (gapBoost > 0.3) {
+        reasons.push(`addresses weak ${pillar} domain (${pillarScore.toFixed(1)}/3)`);
+      }
+      
+      // Context boost (35% weight) - match organizational characteristics
+      let contextBoost = 0;
+      
+      // High regulatory/compliance needs
+      if ((p.regulatory_intensity >= 3 || p.safety_criticality >= 3) && 
+          guide.tags?.includes('regulatory')) {
+        contextBoost += 0.25;
+        reasons.push('critical for regulatory compliance');
+      }
+      
+      // High data sensitivity
+      if (p.data_sensitivity >= 3 && guide.tags?.includes('data_governance')) {
+        contextBoost += 0.20;
+        reasons.push('essential for data protection');
+      }
+      
+      // Low readiness
+      if (p.build_readiness <= 1 && guide.tags?.includes('foundational')) {
+        contextBoost += 0.25;
+        reasons.push('builds foundational capabilities');
+      }
+      
+      // High scale needs
+      if (p.scale_throughput >= 3 && guide.tags?.includes('scale')) {
+        contextBoost += 0.20;
+        reasons.push('supports high-scale operations');
+      }
+      
+      // Edge operations
+      if (p.edge_operations && guide.tags?.includes('edge')) {
+        contextBoost += 0.20;
+        reasons.push('enables edge deployment');
+      }
+      
+      score += contextBoost * 0.35;
+      
+      // Pulse response targeting (25% weight)
+      let pulseBoost = 0;
+      if (guide.targetsPulseQuestions) {
+        guide.targetsPulseQuestions.forEach((qId: string) => {
+          const response = pr[qId];
+          if (response !== undefined) {
+            if (response === 0) { // "No"
+              pulseBoost += 0.25;
+              reasons.push(`directly addresses "${qId}" gap`);
+            } else if (response === 0.25) { // "Started"
+              pulseBoost += 0.15;
+              reasons.push(`builds on "${qId}" progress`);
+            } else if (response === 0.5) { // "Mostly"
+              pulseBoost += 0.05;
+            }
+          }
+        });
+      }
+      score += pulseBoost * 0.25;
+      
+      // Add urgency modifier
+      if (guide.urgency === 'critical') {
+        score += 0.1;
+        if (!reasons.includes('critical priority')) {
+          reasons.push('critical priority');
+        }
+      } else if (guide.urgency === 'high') {
+        score += 0.05;
+      }
+      
+      guides.push({
+        id: guide.id,
+        title: guide.title,
+        score,
+        reasons,
+        difficulty: guide.difficulty || 'intermediate',
+        timeToImplement: guide.timeToImplement || '1-month',
+        urgency: guide.urgency || 'medium',
+        tags: guide.tags || []
+      });
+    });
+    
+    // Sort by score (highest first)
+    guides.sort((a, b) => b.score - a.score);
+    
+    return guides;
+  }
+  
+  /**
+   * Get the guide library with metadata for scoring
+   * @private
+   */
+  private getGuideLibrary(): any[] {
+    return [
+      // Critical gate guides
+      {
+        id: 'gate_hitl',
+        title: 'Human-in-the-Loop Framework',
+        pillars: ['O', 'R'],
+        tags: ['regulatory', 'safety', 'oversight'],
+        targetsPulseQuestions: ['O1', 'R2'],
+        baseRelevance: 0.75,
+        difficulty: 'intermediate',
+        timeToImplement: '1-week',
+        urgency: 'critical'
+      },
+      {
+        id: 'gate_assurance',
+        title: 'AI Assurance Cadence',
+        pillars: ['R', 'O'],
+        tags: ['regulatory', 'monitoring', 'compliance'],
+        targetsPulseQuestions: ['R1', 'R3'],
+        baseRelevance: 0.70,
+        difficulty: 'advanced',
+        timeToImplement: '1-month',
+        urgency: 'high'
+      },
+      
+      // Clarity & Command
+      {
+        id: 'pillar_C_deep',
+        title: 'Clarity & Command Deep Dive',
+        pillars: ['C'],
+        tags: ['leadership', 'strategy', 'foundational'],
+        targetsPulseQuestions: ['C1', 'C2', 'C3'],
+        baseRelevance: 0.65,
+        difficulty: 'beginner',
+        timeToImplement: '1-week',
+        urgency: 'high'
+      },
+      
+      // Operations & Data
+      {
+        id: 'pillar_O_deep',
+        title: 'Operations & Data Engine Room',
+        pillars: ['O'],
+        tags: ['data', 'operations', 'mlops', 'scale'],
+        targetsPulseQuestions: ['O1', 'O2', 'O3'],
+        baseRelevance: 0.68,
+        difficulty: 'intermediate',
+        timeToImplement: '1-month',
+        urgency: 'high'
+      },
+      {
+        id: 'pillar_O_data_quality',
+        title: 'Data Quality Gates',
+        pillars: ['O'],
+        tags: ['data_governance', 'scale'],
+        targetsPulseQuestions: ['O2'],
+        baseRelevance: 0.72,
+        difficulty: 'intermediate',
+        timeToImplement: '1-month',
+        urgency: 'critical'
+      },
+      
+      // Risk & Trust
+      {
+        id: 'pillar_R_deep',
+        title: 'Risk & Trust Foundation',
+        pillars: ['R'],
+        tags: ['regulatory', 'safety', 'compliance'],
+        targetsPulseQuestions: ['R1', 'R2', 'R3'],
+        baseRelevance: 0.70,
+        difficulty: 'intermediate',
+        timeToImplement: '1-month',
+        urgency: 'high'
+      },
+      {
+        id: 'pillar_R_bias_testing',
+        title: 'Bias Testing Framework',
+        pillars: ['R'],
+        tags: ['regulatory', 'compliance'],
+        targetsPulseQuestions: ['R2'],
+        baseRelevance: 0.60,
+        difficulty: 'advanced',
+        timeToImplement: '1-month',
+        urgency: 'medium'
+      },
+      
+      // Talent & Culture
+      {
+        id: 'pillar_T_deep',
+        title: 'Talent & Culture Transformation',
+        pillars: ['T'],
+        tags: ['foundational', 'leadership'],
+        targetsPulseQuestions: ['T1', 'T2', 'T3'],
+        baseRelevance: 0.62,
+        difficulty: 'beginner',
+        timeToImplement: '3-months',
+        urgency: 'medium'
+      },
+      {
+        id: 'pillar_T_change_management',
+        title: 'AI Change Management',
+        pillars: ['T'],
+        tags: ['leadership'],
+        targetsPulseQuestions: ['T2', 'T3'],
+        baseRelevance: 0.58,
+        difficulty: 'intermediate',
+        timeToImplement: '3-months',
+        urgency: 'medium'
+      },
+      
+      // Ecosystem & Infrastructure
+      {
+        id: 'pillar_E_deep',
+        title: 'Ecosystem & Infrastructure Setup',
+        pillars: ['E'],
+        tags: ['scale', 'edge', 'infrastructure'],
+        targetsPulseQuestions: ['E1', 'E2', 'E3'],
+        baseRelevance: 0.65,
+        difficulty: 'advanced',
+        timeToImplement: '3-months',
+        urgency: 'medium'
+      },
+      {
+        id: 'pillar_E_cost_optimization',
+        title: 'Cost Optimization Framework',
+        pillars: ['E'],
+        tags: ['scale', 'cost_control'],
+        targetsPulseQuestions: ['E3'],
+        baseRelevance: 0.63,
+        difficulty: 'intermediate',
+        timeToImplement: '1-month',
+        urgency: 'high'
+      },
+      
+      // Experimentation & Evolution
+      {
+        id: 'pillar_X_deep',
+        title: 'Experimentation Framework',
+        pillars: ['X'],
+        tags: ['agility', 'innovation'],
+        targetsPulseQuestions: ['X1', 'X2', 'X3'],
+        baseRelevance: 0.60,
+        difficulty: 'beginner',
+        timeToImplement: '1-week',
+        urgency: 'medium'
+      },
+      {
+        id: 'pillar_X_pilot_management',
+        title: 'Pilot Management Process',
+        pillars: ['X'],
+        tags: ['agility'],
+        targetsPulseQuestions: ['X2'],
+        baseRelevance: 0.58,
+        difficulty: 'intermediate',
+        timeToImplement: '1-month',
+        urgency: 'medium'
+      },
+      
+      // Additional key guides
+      {
+        id: 'gate_data_governance',
+        title: 'Data Governance Framework',
+        pillars: ['O', 'R'],
+        tags: ['data_governance', 'regulatory'],
+        targetsPulseQuestions: ['O2', 'R1'],
+        baseRelevance: 0.72,
+        difficulty: 'advanced',
+        timeToImplement: '3-months',
+        urgency: 'critical'
+      },
+      {
+        id: 'gate_model_monitoring',
+        title: 'Model Monitoring Setup',
+        pillars: ['O', 'R'],
+        tags: ['monitoring', 'scale', 'safety'],
+        targetsPulseQuestions: ['O1', 'R1'],
+        baseRelevance: 0.68,
+        difficulty: 'intermediate',
+        timeToImplement: '1-month',
+        urgency: 'high'
+      },
+      {
+        id: 'gate_roi_measurement',
+        title: 'ROI Measurement Framework',
+        pillars: ['C', 'E'],
+        tags: ['cost_control', 'leadership'],
+        targetsPulseQuestions: ['C3'],
+        baseRelevance: 0.65,
+        difficulty: 'intermediate',
+        timeToImplement: '1-month',
+        urgency: 'high'
+      }
+    ];
   }
 }
 
