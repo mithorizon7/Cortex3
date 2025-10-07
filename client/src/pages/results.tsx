@@ -65,13 +65,13 @@ function getGateThreshold(gateId: string, dimension: string): string | null {
     'scale_hardening': {
       'scale_throughput': '≥3'
     },
-    'build_readiness_gate': {
+    'build_readiness': {
       'build_readiness': '≤1'
     },
     'procurement_compliance': {
       'procurement_constraints': 'True'
     },
-    'edge_operations_security': {
+    'edge_ops': {
       'edge_operations': 'True'
     }
   };
@@ -590,6 +590,20 @@ export default function ResultsPage() {
                             <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5" />
                           </div>
                           <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-2">
+                              {gate.pillar && CORTEX_PILLARS[gate.pillar as keyof typeof CORTEX_PILLARS] && (
+                                <Badge 
+                                  variant="outline" 
+                                  className="text-xs font-medium"
+                                  style={{ 
+                                    borderColor: CORTEX_PILLARS[gate.pillar as keyof typeof CORTEX_PILLARS].color,
+                                    color: CORTEX_PILLARS[gate.pillar as keyof typeof CORTEX_PILLARS].color
+                                  }}
+                                >
+                                  {gate.pillar} - {CORTEX_PILLARS[gate.pillar as keyof typeof CORTEX_PILLARS].name}
+                                </Badge>
+                              )}
+                            </div>
                             <h3 className="font-semibold text-base sm:text-lg mb-1 font-ui">{gate.title}</h3>
                             <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4 font-ui">{gate.reason}</p>
                             

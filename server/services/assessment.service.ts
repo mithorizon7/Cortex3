@@ -392,7 +392,7 @@ export class AssessmentService {
           safety_criticality: p.safety_criticality 
         },
         status: 'unmet',
-        howTo: ['Implement human oversight for critical AI decisions', 'Establish approval workflows']
+        actions: ['Implement human oversight for critical AI decisions', 'Establish approval workflows']
       });
     }
 
@@ -405,7 +405,7 @@ export class AssessmentService {
         reason: 'High regulatory intensity',
         explain: { regulatory_intensity: p.regulatory_intensity },
         status: 'unmet',
-        howTo: ['Monthly fairness/privacy/drift reviews', 'Annual internal/external audits']
+        actions: ['Monthly fairness/privacy/drift reviews', 'Annual internal/external audits']
       });
     }
 
@@ -418,7 +418,7 @@ export class AssessmentService {
         reason: 'High data sensitivity',
         explain: { data_sensitivity: p.data_sensitivity },
         status: 'unmet',
-        howTo: ['Implement regional data processing', 'Set retention caps (e.g., 30 days)']
+        actions: ['Implement regional data processing', 'Set retention caps (e.g., 30 days)']
       });
     }
 
@@ -431,7 +431,7 @@ export class AssessmentService {
         reason: 'High latency/edge requirements',
         explain: { latency_edge: p.latency_edge },
         status: 'unmet',
-        howTo: ['Implement p95 SLO (≤200ms)', 'Test failover scenarios']
+        actions: ['Implement p95 SLO (≤200ms)', 'Test failover scenarios']
       });
     }
 
@@ -444,7 +444,7 @@ export class AssessmentService {
         reason: 'High scale/throughput requirements',
         explain: { scale_throughput: p.scale_throughput },
         status: 'unmet',
-        howTo: ['Conduct load tests', 'Plan rate limiting', 'Prepare dual-region readiness']
+        actions: ['Conduct load tests', 'Plan rate limiting', 'Prepare dual-region readiness']
       });
     }
 
@@ -457,7 +457,7 @@ export class AssessmentService {
         reason: 'Low build readiness',
         explain: { build_readiness: p.build_readiness },
         status: 'unmet',
-        howTo: ['Establish MLOps capabilities', 'Implement governance framework']
+        actions: ['Establish MLOps capabilities', 'Implement governance framework']
       });
     }
 
@@ -470,7 +470,7 @@ export class AssessmentService {
         reason: 'Procurement constraints active',
         explain: { procurement_constraints: p.procurement_constraints },
         status: 'unmet',
-        howTo: ['Use public procurement templates', 'Adjust timeline estimates']
+        actions: ['Use public procurement templates', 'Adjust timeline estimates']
       });
     }
 
@@ -483,7 +483,7 @@ export class AssessmentService {
         reason: 'Edge operations environment',
         explain: { edge_operations: p.edge_operations },
         status: 'unmet',
-        howTo: ['Implement OT security patterns', 'Plan offline modes', 'Design field ops change management']
+        actions: ['Implement OT security patterns', 'Plan offline modes', 'Design field ops change management']
       });
     }
 
