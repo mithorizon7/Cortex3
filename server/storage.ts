@@ -374,56 +374,62 @@ export class DatabaseStorage implements IStorage {
       async () => {
         const db = await getDb();
         
-        // If cohortId is being updated, we need to handle usedSlots
+        // Get current user state if cohortId is being updated
+        let oldCohortId: string | null = null;
         if ('cohortId' in updates) {
-          // Get the current user to check their current cohort
           const [currentUser] = await db
             .select()
             .from(users)
             .where(eq(users.userId, userId));
           
           if (currentUser) {
-            const oldCohortId = currentUser.cohortId;
-            const newCohortId = updates.cohortId;
-            
-            // Decrement old cohort's usedSlots if user was in a cohort
-            if (oldCohortId) {
-              await db
-                .update(cohorts)
-                .set({ usedSlots: sql`${cohorts.usedSlots} - 1` })
-                .where(eq(cohorts.id, oldCohortId));
-            }
-            
-            // Increment new cohort's usedSlots if user is joining a cohort
-            if (newCohortId) {
-              await db
-                .update(cohorts)
-                .set({ usedSlots: sql`${cohorts.usedSlots} + 1` })
-                .where(eq(cohorts.id, newCohortId));
-            }
+            oldCohortId = currentUser.cohortId;
           }
         }
         
+        // Update the user first
         const [updated] = await db
           .update(users)
           .set(updates)
           .where(eq(users.userId, userId))
           .returning();
         
-        if (updated) {
-          logger.info('User updated successfully', {
-            additionalContext: { 
-              userId,
-              updateKeys: Object.keys(updates)
-            }
-          });
-          return updated;
-        } else {
+        if (!updated) {
           logger.warn('Cannot update user - not found', {
             additionalContext: { userId }
           });
           return null;
         }
+        
+        // Only update cohort counts AFTER user update succeeds
+        if ('cohortId' in updates) {
+          const newCohortId = updates.cohortId;
+          
+          // Decrement old cohort's usedSlots if user was in a cohort
+          if (oldCohortId) {
+            await db
+              .update(cohorts)
+              .set({ usedSlots: sql`${cohorts.usedSlots} - 1` })
+              .where(eq(cohorts.id, oldCohortId));
+          }
+          
+          // Increment new cohort's usedSlots if user is joining a cohort
+          if (newCohortId) {
+            await db
+              .update(cohorts)
+              .set({ usedSlots: sql`${cohorts.usedSlots} + 1` })
+              .where(eq(cohorts.id, newCohortId));
+          }
+        }
+        
+        logger.info('User updated successfully', {
+          additionalContext: { 
+            userId,
+            updateKeys: Object.keys(updates)
+          }
+        });
+        
+        return updated;
       },
       { functionArgs: { userId, updates } }
     );
@@ -448,31 +454,34 @@ export class DatabaseStorage implements IStorage {
           return false;
         }
         
+        const cohortId = userToDelete.cohortId;
+        
         // First, delete all assessments for this user
         await db.delete(assessments).where(eq(assessments.userId, userId));
-        
-        // Decrement cohort's usedSlots if user was in a cohort
-        if (userToDelete.cohortId) {
-          await db
-            .update(cohorts)
-            .set({ usedSlots: sql`${cohorts.usedSlots} - 1` })
-            .where(eq(cohorts.id, userToDelete.cohortId));
-        }
         
         // Then delete the user
         const result = await db.delete(users).where(eq(users.userId, userId)).returning();
         
-        if (result.length > 0) {
-          logger.info('User and their assessments deleted successfully', {
-            additionalContext: { 
-              userId,
-              wasCohortMember: !!userToDelete.cohortId
-            }
-          });
-          return true;
-        } else {
+        if (result.length === 0) {
           return false;
         }
+        
+        // Only decrement cohort's usedSlots AFTER user delete succeeds
+        if (cohortId) {
+          await db
+            .update(cohorts)
+            .set({ usedSlots: sql`${cohorts.usedSlots} - 1` })
+            .where(eq(cohorts.id, cohortId));
+        }
+        
+        logger.info('User and their assessments deleted successfully', {
+          additionalContext: { 
+            userId,
+            wasCohortMember: !!cohortId
+          }
+        });
+        
+        return true;
       },
       { functionArgs: { userId } }
     );
@@ -1418,9 +1427,15 @@ export class MemStorage implements IStorage {
           return null;
         }
         
-        // If cohortId is being updated, we need to handle usedSlots
+        // Store old cohort ID before update
+        const oldCohortId = existing.cohortId;
+        
+        // Update the user first
+        const updated: User = { ...existing, ...updates };
+        this.users.set(userId, updated);
+        
+        // Only update cohort counts AFTER user update succeeds
         if ('cohortId' in updates) {
-          const oldCohortId = existing.cohortId;
           const newCohortId = updates.cohortId;
           
           // Decrement old cohort's usedSlots if user was in a cohort
@@ -1445,9 +1460,6 @@ export class MemStorage implements IStorage {
             }
           }
         }
-        
-        const updated: User = { ...existing, ...updates };
-        this.users.set(userId, updated);
         
         logger.info('User updated successfully', {
           additionalContext: { 
@@ -1476,38 +1488,41 @@ export class MemStorage implements IStorage {
           return false;
         }
         
+        const cohortId = userToDelete.cohortId;
+        
         // First, delete all assessments for this user
         const userAssessments = Array.from(this.assessments.values()).filter(a => a.userId === userId);
         for (const assessment of userAssessments) {
           this.assessments.delete(assessment.id);
         }
         
-        // Decrement cohort's usedSlots if user was in a cohort
-        if (userToDelete.cohortId) {
-          const cohort = this.cohorts.get(userToDelete.cohortId);
+        // Then delete the user
+        const deleted = this.users.delete(userId);
+        
+        if (!deleted) {
+          return false;
+        }
+        
+        // Only decrement cohort's usedSlots AFTER user delete succeeds
+        if (cohortId) {
+          const cohort = this.cohorts.get(cohortId);
           if (cohort) {
-            this.cohorts.set(userToDelete.cohortId, {
+            this.cohorts.set(cohortId, {
               ...cohort,
               usedSlots: cohort.usedSlots - 1
             });
           }
         }
         
-        // Then delete the user
-        const deleted = this.users.delete(userId);
+        logger.info('User and their assessments deleted successfully', {
+          additionalContext: { 
+            userId,
+            assessmentCount: userAssessments.length,
+            wasCohortMember: !!cohortId
+          }
+        });
         
-        if (deleted) {
-          logger.info('User and their assessments deleted successfully', {
-            additionalContext: { 
-              userId,
-              assessmentCount: userAssessments.length,
-              wasCohortMember: !!userToDelete.cohortId
-            }
-          });
-          return true;
-        } else {
-          return false;
-        }
+        return true;
       },
       { functionArgs: { userId } }
     );
