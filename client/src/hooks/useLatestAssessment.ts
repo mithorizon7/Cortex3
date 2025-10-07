@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/auth-context';
+import { getFirebaseIdToken } from '@/lib/queryClient';
 
 /**
  * Hook to get the user's latest assessment from localStorage and verify it exists
@@ -17,7 +18,16 @@ export const useLatestAssessment = () => {
       
       // Verify the assessment exists (return it even if in progress)
       try {
-        const response = await fetch(`/api/assessments/${latestAssessmentId}`);
+        // Get Firebase ID token for authentication
+        const idToken = await getFirebaseIdToken();
+        
+        const response = await fetch(`/api/assessments/${latestAssessmentId}`, {
+          headers: {
+            ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {})
+          },
+          credentials: 'include'
+        });
+        
         if (!response.ok) return null;
         
         const assessment = await response.json();
