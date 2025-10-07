@@ -18,8 +18,8 @@ export const MICRO_GUIDES: Record<string, MicroGuide> = {
     title: 'Human-in-the-Loop (HITL) — When and How to Use It',
     category: 'gate',
     tags: ['regulatory', 'safety', 'oversight'],
-    overview: 'A human reviews, approves, or can intervene in AI-assisted decisions where stakes are high (financial exposure, safety, legal or brand risk). Human-in-the-Loop (HITL) is not a permanent brake; it is a temporary guardrail until you have evidence that automation is safe for specific tasks.',
-    body: `**What it is:** A human reviews, approves, or can intervene in AI-assisted decisions where stakes are high (financial exposure, safety, legal or brand risk). Human-in-the-Loop (HITL) is not a permanent brake; it is a **temporary guardrail** until you have evidence that automation is safe for specific tasks.
+    overview: 'A human reviews, approves, or can intervene in AI-assisted decisions where stakes are high (financial exposure, safety, legal or brand risk). In some cases Human-in-the-Loop (HITL) is a good idea long term, in others it may be a temporary guardrail until you have sufficient evidence relative to the risk that automation is safe enough for specific tasks.',
+    body: `**What it is:** A human reviews, approves, or can intervene in AI-assisted decisions where stakes are high (financial exposure, safety, legal or brand risk). In some cases Human-in-the-Loop (HITL) is a good idea long term, in others it may be a **temporary guardrail** until you have sufficient evidence relative to the risk that automation is safe enough for specific tasks.
 
 **Why it matters:** Complex systems fail in unexpected ways. Human-in-the-Loop (HITL) prevents single-point failures from harming customers or the organization while you learn how the system behaves. It also builds regulator and stakeholder confidence that you are balancing innovation with care.
 
