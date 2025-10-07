@@ -222,6 +222,80 @@ export default function HomePage() {
             A focused, two‑step assessment to align leadership and surface your next best moves.
           </p>
           
+          {/* Returning User Navigation - Only show if user has an existing assessment */}
+          {user && userAssessment && (
+            <Card className="border-2 border-primary/20 bg-primary/5" data-testid="card-returning-user">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Compass className="h-5 w-5 text-primary" />
+                  Continue Your Assessment
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {/* Context Profile Navigation */}
+                <div className="flex items-center justify-between p-3 rounded-lg bg-card border border-border hover-elevate">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#750014] to-[#5a000f] flex items-center justify-center flex-shrink-0">
+                      <ClipboardList className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <div className="font-semibold text-sm">Context Profile</div>
+                      <div className="text-xs text-muted-foreground">Your organizational context</div>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => navigate('/context-profile')}
+                      data-testid="button-review-context-answers"
+                    >
+                      Review Answers
+                    </Button>
+                    <Button 
+                      variant="default" 
+                      size="sm"
+                      onClick={() => navigate(`/context-insight/${userAssessment.id}`)}
+                      data-testid="button-view-situation-assessment"
+                    >
+                      View Results
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Pulse Check Navigation */}
+                <div className="flex items-center justify-between p-3 rounded-lg bg-card border border-border hover-elevate">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#007561] to-[#005a4a] flex items-center justify-center flex-shrink-0">
+                      <Activity className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <div className="font-semibold text-sm">Pulse Check</div>
+                      <div className="text-xs text-muted-foreground">6-domain maturity assessment</div>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => navigate(`/pulse/${userAssessment.id}`)}
+                      data-testid="button-review-pulse-answers"
+                    >
+                      Review Answers
+                    </Button>
+                    <Button 
+                      variant="default" 
+                      size="sm"
+                      onClick={() => navigate(`/results/${userAssessment.id}`)}
+                      data-testid="button-view-strategic-profile"
+                    >
+                      View Results
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <div className="space-y-5" data-testid="list-assessment-steps">
             {/* Step 1 - Context Profile */}

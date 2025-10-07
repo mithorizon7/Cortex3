@@ -292,6 +292,42 @@ function ContextInsightPageContent() {
         </Card>
       </div>
 
+      {/* Navigation Actions */}
+      <div className="border-t pt-6 mb-6" data-testid="navigation-actions">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <h3 className="text-base font-semibold text-foreground">Review or Update</h3>
+            <p className="text-sm text-muted-foreground">
+              Make changes to your context profile or regenerate this assessment
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link to="/context-profile" data-testid="link-edit-context-answers">
+              <Button variant="outline" size="sm" className="gap-2">
+                <ChevronRight className="h-4 w-4 rotate-180" />
+                Edit Answers
+              </Button>
+            </Link>
+            <Button 
+              variant="default" 
+              size="sm"
+              onClick={() => {
+                reset();
+                if (id) {
+                  generateSituationAssessment(id);
+                }
+              }}
+              disabled={isLoading}
+              data-testid="button-recalculate-situation"
+              className="gap-2"
+            >
+              <Loader2 className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              Recalculate
+            </Button>
+          </div>
+        </div>
+      </div>
+
       {/* Footer Actions */}
       <footer className="space-y-6 pt-8" data-testid="footer-actions">
         <div className="border-t pt-8">

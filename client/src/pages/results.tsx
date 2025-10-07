@@ -726,6 +726,41 @@ export default function ResultsPage() {
           </CollapsibleContent>
         </Collapsible>
 
+        {/* Navigation Actions */}
+        <Card className="mb-6" data-testid="navigation-actions">
+          <CardContent className="p-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <h3 className="text-base font-semibold text-foreground">Review or Update</h3>
+                <p className="text-sm text-muted-foreground">
+                  Make changes to your pulse check responses or recalculate results
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Link to={`/pulse/${assessmentId}`} data-testid="link-edit-pulse-answers">
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <ArrowRight className="h-4 w-4 rotate-180" />
+                    Edit Answers
+                  </Button>
+                </Link>
+                <Button 
+                  variant="default" 
+                  size="sm"
+                  onClick={() => {
+                    // Trigger a refetch of the assessment data to recalculate results
+                    queryClient.invalidateQueries({ queryKey: ['/api/assessments', assessmentId] });
+                  }}
+                  data-testid="button-recalculate-strategic"
+                  className="gap-2"
+                >
+                  <TrendingUp className="h-4 w-4" />
+                  Recalculate
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Actions */}
         <Card>
           <CardContent className="p-6">
