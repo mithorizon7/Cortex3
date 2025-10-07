@@ -1081,7 +1081,7 @@ export class AssessmentService {
     return [
       // Critical gate guides
       {
-        id: 'gate_hitl',
+        id: 'gate.hitl',
         title: 'Human-in-the-Loop Framework',
         pillars: ['O', 'R'],
         tags: ['regulatory', 'safety', 'oversight'],
@@ -1092,7 +1092,7 @@ export class AssessmentService {
         urgency: 'critical'
       },
       {
-        id: 'gate_assurance',
+        id: 'gate.assurance',
         title: 'AI Assurance Cadence',
         pillars: ['R', 'O'],
         tags: ['regulatory', 'monitoring', 'compliance'],
@@ -1105,7 +1105,7 @@ export class AssessmentService {
       
       // Clarity & Command
       {
-        id: 'pillar_C_deep',
+        id: 'pillar.C.deep',
         title: 'Clarity & Command Deep Dive',
         pillars: ['C'],
         tags: ['leadership', 'strategy', 'foundational'],
@@ -1118,7 +1118,7 @@ export class AssessmentService {
       
       // Operations & Data
       {
-        id: 'pillar_O_deep',
+        id: 'pillar.O.deep',
         title: 'Operations & Data Engine Room',
         pillars: ['O'],
         tags: ['data', 'operations', 'mlops', 'scale'],
@@ -1129,7 +1129,7 @@ export class AssessmentService {
         urgency: 'high'
       },
       {
-        id: 'pillar_O_data_quality',
+        id: 'pillar.O.data_quality',
         title: 'Data Quality Gates',
         pillars: ['O'],
         tags: ['data_governance', 'scale'],
@@ -1142,7 +1142,7 @@ export class AssessmentService {
       
       // Risk & Trust
       {
-        id: 'pillar_R_deep',
+        id: 'pillar.R.deep',
         title: 'Risk & Trust Foundation',
         pillars: ['R'],
         tags: ['regulatory', 'safety', 'compliance'],
@@ -1153,7 +1153,7 @@ export class AssessmentService {
         urgency: 'high'
       },
       {
-        id: 'pillar_R_bias_testing',
+        id: 'pillar.R.bias_testing',
         title: 'Bias Testing Framework',
         pillars: ['R'],
         tags: ['regulatory', 'compliance'],
@@ -1166,7 +1166,7 @@ export class AssessmentService {
       
       // Talent & Culture
       {
-        id: 'pillar_T_deep',
+        id: 'pillar.T.deep',
         title: 'Talent & Culture Transformation',
         pillars: ['T'],
         tags: ['foundational', 'leadership'],
@@ -1177,7 +1177,7 @@ export class AssessmentService {
         urgency: 'medium'
       },
       {
-        id: 'pillar_T_change_management',
+        id: 'pillar.T.change_management',
         title: 'AI Change Management',
         pillars: ['T'],
         tags: ['leadership'],
@@ -1190,7 +1190,7 @@ export class AssessmentService {
       
       // Ecosystem & Infrastructure
       {
-        id: 'pillar_E_deep',
+        id: 'pillar.E.deep',
         title: 'Ecosystem & Infrastructure Setup',
         pillars: ['E'],
         tags: ['scale', 'edge', 'infrastructure'],
@@ -1201,7 +1201,7 @@ export class AssessmentService {
         urgency: 'medium'
       },
       {
-        id: 'pillar_E_cost_optimization',
+        id: 'pillar.E.cost_optimization',
         title: 'Cost Optimization Framework',
         pillars: ['E'],
         tags: ['scale', 'cost_control'],
@@ -1214,7 +1214,7 @@ export class AssessmentService {
       
       // Experimentation & Evolution
       {
-        id: 'pillar_X_deep',
+        id: 'pillar.X.deep',
         title: 'Experimentation Framework',
         pillars: ['X'],
         tags: ['agility', 'innovation'],
@@ -1225,7 +1225,7 @@ export class AssessmentService {
         urgency: 'medium'
       },
       {
-        id: 'pillar_X_pilot_management',
+        id: 'pillar.X.pilot_management',
         title: 'Pilot Management Process',
         pillars: ['X'],
         tags: ['agility'],
@@ -1238,7 +1238,7 @@ export class AssessmentService {
       
       // Additional key guides
       {
-        id: 'gate_data_governance',
+        id: 'gate.data_governance',
         title: 'Data Governance Framework',
         pillars: ['O', 'R'],
         tags: ['data_governance', 'regulatory'],
@@ -1249,7 +1249,7 @@ export class AssessmentService {
         urgency: 'critical'
       },
       {
-        id: 'gate_model_monitoring',
+        id: 'gate.model_monitoring',
         title: 'Model Monitoring Setup',
         pillars: ['O', 'R'],
         tags: ['monitoring', 'scale', 'safety'],
@@ -1260,7 +1260,7 @@ export class AssessmentService {
         urgency: 'high'
       },
       {
-        id: 'gate_roi_measurement',
+        id: 'gate.roi_measurement',
         title: 'ROI Measurement Framework',
         pillars: ['C', 'E'],
         tags: ['cost_control', 'leadership'],

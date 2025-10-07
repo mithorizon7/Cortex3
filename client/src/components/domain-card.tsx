@@ -484,7 +484,7 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
   if (smartGuides.length > 0) {
     // Use smart guides from backend with enhanced scoring
     relevantGuides = smartGuides.map((sg: any) => {
-      const guide = Object.values(MICRO_GUIDES).find(g => g.id.includes(sg.id));
+      const guide = Object.values(MICRO_GUIDES).find(g => g.id === sg.id);
       if (guide) {
         return {
           ...guide,
@@ -690,7 +690,7 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
               <div className="space-y-2 sm:space-y-3">
                 {relevantGuides.slice(0, 3).map((guide, index) => {
                   const enhancedGuide = guide as any;
-                  const isPrimary = enhancedGuide.priority === 'primary' || index === 0;
+                  const isPrimary = enhancedGuide?.priority === 'primary' || index === 0;
                   const urgencyColors = {
                     critical: 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800',
                     high: 'bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-800',
@@ -704,7 +704,7 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
                       className={`p-3 sm:p-4 rounded-lg border ${
                         isPrimary 
                           ? 'border-primary/30 bg-primary/5' 
-                          : urgencyColors[enhancedGuide.urgency as keyof typeof urgencyColors] || 'bg-muted/30 border-muted/50'
+                          : (enhancedGuide?.urgency && urgencyColors[enhancedGuide.urgency as keyof typeof urgencyColors]) || 'bg-muted/30 border-muted/50'
                       }`}
                     >
                       <div className="flex items-start justify-between gap-2 mb-2">
@@ -715,7 +715,7 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
                                 Top Priority
                               </Badge>
                             )}
-                            {enhancedGuide.urgency && (
+                            {enhancedGuide?.urgency && (
                               <Badge 
                                 variant={enhancedGuide.urgency === 'critical' ? 'destructive' : 'secondary'}
                                 className="text-xs"
@@ -723,12 +723,12 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
                                 {enhancedGuide.urgency}
                               </Badge>
                             )}
-                            {enhancedGuide.difficulty && (
+                            {enhancedGuide?.difficulty && (
                               <Badge variant="outline" className="text-xs">
                                 {enhancedGuide.difficulty}
                               </Badge>
                             )}
-                            {enhancedGuide.timeToImplement && (
+                            {enhancedGuide?.timeToImplement && (
                               <Badge variant="outline" className="text-xs">
                                 {enhancedGuide.timeToImplement}
                               </Badge>
@@ -739,7 +739,7 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
                           </h5>
                           
                           {/* Why this guide was selected */}
-                          {enhancedGuide.reasons && enhancedGuide.reasons.length > 0 && (
+                          {enhancedGuide?.reasons && Array.isArray(enhancedGuide.reasons) && enhancedGuide.reasons.length > 0 && (
                             <p className="text-xs text-primary mb-2">
                               <strong>Why selected:</strong> {enhancedGuide.reasons.join(', ')}
                             </p>
