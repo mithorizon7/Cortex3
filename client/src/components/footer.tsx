@@ -18,7 +18,7 @@ export function Footer() {
               className="text-accent hover:text-accent/80 transition-colors underline"
               data-testid="footer-options-studio-link"
             >
-              Options Studio
+              Options
             </Link>
             <Link 
               to="/credits"
