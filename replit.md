@@ -37,7 +37,7 @@ The platform includes robust PDF generation capabilities for executive briefs wi
   - `h2Before: L(2.0) = 8.4mm, h2After: L(1.0) = 4.2mm` - H2 spacing (before > after)
   - `h3Before: L(1.2) = 5.04mm, h3After: L(0.8) = 3.36mm` - H3 spacing (before > after)
   - `paraGap: L(1.5) = 6.3mm` - Paragraph spacing
-  - `listGap: L(0.8) = 3.36mm` - List item spacing (tighter for bullets)
+  - `listGap: L(0.5) = 2.1mm` - List item spacing (tighter for bullets)
   - `headerPad: L(1.5) = 6.3mm` - Extra padding under running headers
   - `domainSeparator: L(2.5) = 10.5mm` - Domain separator spacing
 

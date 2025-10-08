@@ -191,7 +191,7 @@ const SPACING = {
   h3Before:       L(1.2),    // space before H3
   h3After:        L(0.8),    // space after H3 (before first bullet/content)
   paraGap:        L(1.5),    // gap between paragraphs
-  listGap:        L(0.8),    // gap between list items (tighter for bullets)
+  listGap:        L(0.5),    // gap between list items (tighter for bullets)
   headerPad:      L(1.5),    // extra pad under running header on fresh page
   domainSeparator: L(2.5)    // vertical space for domain separator line + spacing
 };
@@ -500,7 +500,7 @@ function drawBody(doc: any, text: string, maxWidth: number, y: number, runHeader
 // Draw bullet as vector dot for consistent rendering across all PDF viewers
 function drawBulletDot(doc: any, x: number, y: number, radius = 0.9) {
   setFill(doc, PALETTE.ink);
-  doc.circle(x, y - 2.6, radius, "F");  // "F" = filled circle
+  doc.circle(x, y - 2.0, radius, "F");  // "F" = filled circle, centered to text baseline
 }
 
 function drawBullets(doc: any, items: string[], maxWidth: number, x: number, y: number, runHeader?: string) {
