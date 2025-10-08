@@ -175,6 +175,7 @@ export default function HomePage() {
         identityText="MIT Open Learning"
         showHelp={true}
         onHelpClick={() => setMethodologyOpen(true)}
+        showAuthButton={true}
       />
       
       {/* Authentication Required Modal */}

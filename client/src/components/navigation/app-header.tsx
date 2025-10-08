@@ -14,6 +14,7 @@ interface AppHeaderProps {
   showHelp?: boolean;
   onHelpClick?: () => void;
   showNav?: boolean;
+  showAuthButton?: boolean;
 }
 
 export const AppHeader: React.FC<AppHeaderProps> = ({
@@ -21,7 +22,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   identityText = 'MIT Open Learning',
   showHelp = false,
   onHelpClick,
-  showNav = true
+  showNav = true,
+  showAuthButton = false
 }) => {
   const { data: latestAssessment } = useLatestAssessment();
   const { userProfile } = useAuth();
@@ -186,7 +188,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 </Button>
               </>
             )}
-            <AuthButton variant="outline" size="sm" />
+            {showAuthButton && <AuthButton variant="outline" size="sm" />}
           </div>
         </div>
       </div>
