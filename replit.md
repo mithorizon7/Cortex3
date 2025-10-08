@@ -27,21 +27,25 @@ The system utilizes a three-stage assessment workflow:
 A comprehensive Content Security Policy (CSP) is implemented in production environments to protect against XSS attacks and control resource loading. This CSP includes directives for `default-src`, `style-src`, `script-src`, `img-src`, `connect-src`, `font-src`, `object-src`, `media-src`, and `frame-src`, with specific allowances for Firebase and Google OAuth domains. Firebase Authentication requirements are managed. Rate limiting is implemented, with hybrid user-based tracking for authenticated users and IP-based limits for anonymous traffic.
 
 ### PDF Generation
-The platform includes robust PDF generation capabilities for executive briefs with a centralized spacing system ensuring consistent visual hierarchy across all three PDF generators (Core/Pulse Brief, Options Studio, Enhanced Brief).
+The platform includes robust PDF generation capabilities for executive briefs with a line-based spacing system ensuring consistent visual hierarchy across all three PDF generators (Core/Pulse Brief, Options Studio, Enhanced Brief).
 
-**Spacing Architecture**:
-- **Centralized Constants**: All spacing uses absolute millimeter values defined in the `SPACING` object:
-  - `h1Before: 8mm, h1After: 9mm` - Major section title spacing (total ~17mm clearance)
-  - `h2Before: 6mm, h2After: 3mm` - Subsection title spacing
-  - `sectionGap: 10mm` - Gap between major sections
-  - `paraGap: 3mm` - Paragraph spacing
-  - `listGap: 2.5mm` - List item spacing
+**Line-Based Spacing Architecture**:
+- **Line-Based System**: All spacing uses the L(n) = n * PAGE.line formula (where PAGE.line = 4.2mm) for scalable, maintainable vertical rhythm
+- **"Before > After" Philosophy**: Larger spacing before headings, smaller after for superior visual flow:
+  - `sectionGap: L(2.0) = 8.4mm` - Gap between major H1 sections
+  - `h1Before: L(1.75) = 7.35mm, h1After: L(0.60) = 2.52mm` - H1 spacing (before > after)
+  - `h2Before: L(1.25) = 5.25mm, h2After: L(0.50) = 2.1mm` - H2 spacing (before > after)
+  - `paraGap: L(0.80) = 3.36mm` - Paragraph spacing
+  - `listGap: L(0.70) = 2.94mm` - List item spacing
+  - `headerPad: L(1.00) = 4.2mm` - Extra padding under running headers
+  - `domainSeparator: L(1.80) = 7.56mm` - Domain separator spacing
 
 **Key Features**:
 - Comprehensive error handling and data validation
 - Pagination protection with dynamic height measurements to prevent white gaps
 - Running headers support for multi-page sections
-- Systematic replacement of hardcoded spacing values with SPACING constants for maintainability
+- Zero hardcoded spacing values - all spacing derived from line-based SPACING constants
+- Heading helpers own all vertical spacing (before + after) to prevent scattered y += statements
 - Three-tier spacing hierarchy (section > heading > paragraph) for clear visual structure
 
 ## External Dependencies

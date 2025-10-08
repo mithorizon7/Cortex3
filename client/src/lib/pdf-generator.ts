@@ -178,16 +178,20 @@ const PAGE = {
   line: 4.2               // baseline “leading”
 };
 
+// Line-based spacing helper (converts "lines" to mm)
+const L = (n: number) => n * PAGE.line;
+
 // Vertical spacing scale (before > after for better hierarchy)
-// Centralized spacing configuration (absolute mm values for consistency)
 const SPACING = {
-  sectionGap: 10,   // gap between major sections in mm
-  h1Before:   8,    // space before H1 in mm  
-  h1After:    9,    // space after H1 in mm (total ~17mm matches original PAGE.line*4)
-  h2Before:   6,    // space before H2 in mm
-  h2After:    3,    // space after H2 in mm
-  paraGap:    3,    // gap between paragraphs in mm
-  listGap:    2.5   // gap between list items in mm
+  sectionGap:     L(2.0),    // gap between major sections (before next H1)
+  h1Before:       L(1.75),   // space before H1 (larger = better separation)
+  h1After:        L(0.60),   // space after H1 (smaller = tighter lead-in)
+  h2Before:       L(1.25),   // space before H2
+  h2After:        L(0.50),   // space after H2
+  paraGap:        L(0.80),   // gap between paragraphs
+  listGap:        L(0.70),   // gap between list items
+  headerPad:      L(1.00),   // extra pad under running header on fresh page
+  domainSeparator: L(1.80)   // vertical space for domain separator line + spacing
 };
 
 // Shape helpers rely on jsPDF's built-ins only (no plugins)
@@ -311,15 +315,15 @@ function estimateListHeight(doc: any, items: string[], width: number): number {
   return items.reduce((h, item) => {
     if (!hasContent(item)) return h;
     const lines = wrap(doc, item, width - 6); // Account for bullet indent
-    return h + (lines.length * PAGE.line) + 1.5; // Line height + gap
+    return h + (lines.length * PAGE.line) + SPACING.listGap; // Line height + gap
   }, 0);
 }
 
 // Estimate height of an organizational context card
 function estimateCardHeight(bodyLines: string[][]): number {
-  const headerH = PAGE.line * 1.8; // Title area
+  const headerH = SPACING.h2After + PAGE.line; // Title area
   const bodyH = bodyLines.reduce((acc, ls) => 
-    acc + (ls.length * (PAGE.line - 0.1)) + 1.2, 0
+    acc + (ls.length * PAGE.line) + SPACING.listGap, 0
   );
   return headerH + bodyH;
 }
@@ -449,13 +453,13 @@ function addPageIfNeeded(doc: any, needed: number, cursorY: number, titleForRunH
 }
 
 function drawSectionTitle(doc: any, title: string, y: number, runHeader?: string) {
-  // Ensure we won't strand the title at the bottom
+  // Ensure we won't strand the title at the bottom (widow control)
   const needed = SPACING.h1Before + PAGE.line + SPACING.h1After;
   ({ cursorY: y } = addPageIfNeeded(doc, needed, y, runHeader));
   
-  // Extra pad if we are just under the running header
+  // Extra pad if we are just under the running header (prevents "kissing")
   const pageTop = PAGE.margin + 8; // running header height  
-  if (y < pageTop + 1) y = pageTop + PAGE.line;
+  if (y < pageTop + 1) y = pageTop + SPACING.headerPad;
   
   y += SPACING.h1Before;
   setFont(doc, TYPO.h1);
@@ -514,7 +518,7 @@ function drawBullets(doc: any, items: string[], maxWidth: number, x: number, y: 
       doc.text(line, x + indent, y);
       y += PAGE.line;
     }
-    y += 1.5;
+    y += SPACING.listGap;
   }
   return y;
 }
@@ -535,7 +539,7 @@ function drawPrompts(doc: any, items: string[], maxWidth: number, y: number, run
       doc.text(line, PAGE.margin + indent, y);
       y += PAGE.line;
     }
-    y += 1.5;
+    y += SPACING.listGap;
   }
   return y;
 }
@@ -546,18 +550,18 @@ function drawDomainSeparator(doc: any, y: number) {
   doc.setLineWidth(0.5);
   doc.line(PAGE.margin, y, pw - PAGE.margin, y);
   doc.setLineWidth(0.2); // reset
-  return y + PAGE.line * 2;
+  return y + SPACING.domainSeparator;
 }
 
 function drawCard(doc: any, x: number, y: number, w: number, header: string, bodyLines: string[][]) {
   // background
   setFill(doc, PALETTE.tint);
-  doc.rect(x, y - 3, w, 6 + bodyLines.reduce((acc, ls) => acc + (ls.length * PAGE.line) + 1.5, 0) + 2, "F");
+  doc.rect(x, y - 3, w, 6 + bodyLines.reduce((acc, ls) => acc + (ls.length * PAGE.line) + SPACING.listGap, 0) + 2, "F");
   // header
   setFont(doc, TYPO.h3);
   setText(doc, PALETTE.ink);
   doc.text(header, x + 3, y + 1);
-  y += PAGE.line * 1.8;
+  y += SPACING.h2After + PAGE.line;
   // divider
   setStroke(doc, PALETTE.line);
   doc.line(x + 3, y - 2, x + w - 3, y - 2);
@@ -566,9 +570,9 @@ function drawCard(doc: any, x: number, y: number, w: number, header: string, bod
   for (const lines of bodyLines) {
     for (const ln of lines) {
       doc.text(ln, x + 3, y);
-      y += PAGE.line - 0.1;
+      y += PAGE.line;
     }
-    y += 1.2;
+    y += SPACING.listGap;
   }
   return y;
 }
@@ -893,7 +897,7 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
     wy += SPACING.h2After; // H3 subsection spacing
     wy = drawBullets(doc, watchouts, grid.right.w, grid.right.x, wy);
   }
-  y = Math.max(ay, wy) + SPACING.paraGap;
+  y = Math.max(ay, wy) + SPACING.sectionGap;
 
   // Scenario Lens
   const sc = hasMirror ? data.mirror?.scenarios : undefined;
@@ -1018,8 +1022,9 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
 
       setFont(doc, TYPO.body);
       y = drawBody(doc, String(desc), bounds(doc).w, y);
-      y += 2;
+      y += SPACING.listGap;
     }
+    y += SPACING.sectionGap;
   }
 
   // Emphasized lenses
@@ -1029,7 +1034,7 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
     ({ cursorY: y } = addPageIfNeeded(doc, lensHeight, y, optionsRunHeader));
     y = drawSectionTitle(doc, "WHAT WE EMPHASIZED", y, optionsRunHeader);
     y = drawBullets(doc, sessionData.emphasizedLenses, bounds(doc).w, PAGE.margin, y);
-    y += SPACING.listGap;
+    y += SPACING.sectionGap;
   }
 
   // Misconception Check (if present)
@@ -1042,7 +1047,7 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
       if (!q) return h;
       const qHeight = estimateTextHeight(doc, q.question, bounds(doc).w) + SPACING.h2After;
       const explHeight = q.explanation ? estimateTextHeight(doc, q.explanation, bounds(doc).w) : 0;
-      return h + qHeight + explHeight + 1.2;
+      return h + qHeight + explHeight + SPACING.listGap;
     }, 0);
     ({ cursorY: y } = addPageIfNeeded(doc, miscHeight, y, optionsRunHeader));
     y = drawSectionTitle(doc, "MISCONCEPTION CHECK RESULTS", y, optionsRunHeader);
@@ -1063,15 +1068,16 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
         setText(doc, PALETTE.inkSubtle);
         y = drawBody(doc, q.explanation, bounds(doc).w, y);
       }
-      y += 1.2;
+      y += SPACING.listGap;
     }
+    y += SPACING.sectionGap;
   }
 
   // Reflection Q&A
   if (sessionData.reflectionAnswers && Object.keys(sessionData.reflectionAnswers).length) {
     setFont(doc, TYPO.body); // Set font BEFORE measurement
     const reflHeight = SPACING.h1Before + SPACING.h1After + PAGE.line + Object.entries(sessionData.reflectionAnswers).reduce((h, [qid, answer]) => {
-      return h + SPACING.h2After + estimateTextHeight(doc, String(answer), bounds(doc).w) + 1.5;
+      return h + SPACING.h2After + estimateTextHeight(doc, String(answer), bounds(doc).w) + SPACING.listGap;
     }, 0);
     ({ cursorY: y } = addPageIfNeeded(doc, reflHeight, y, optionsRunHeader));
     y = drawSectionTitle(doc, "REFLECTIONS", y, optionsRunHeader);
@@ -1082,7 +1088,7 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
       y += SPACING.h2After;
       setFont(doc, TYPO.body); setText(doc, PALETTE.ink);
       y = drawBody(doc, String(answer), bounds(doc).w, y);
-      y += 1.5;
+      y += SPACING.listGap;
     }
   }
 
@@ -1353,7 +1359,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
   y = drawSectionTitle(doc, "YOUR STRATEGIC MATURITY PROFILE", y, runHeader);
   setFont(doc, TYPO.h2); setText(doc, PALETTE.ink);
   doc.text(`Overall AI Readiness: ${maturityLevel} (${avg.toFixed(1)}/3)`, PAGE.margin, y);
-  y += SPACING.sectionGap;
+  y += SPACING.h2After; // H2 subtitle spacing
   
   // Quick overview
   setFont(doc, TYPO.body); setText(doc, PALETTE.ink);
@@ -1373,7 +1379,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
   // Domain bars
   ({ cursorY: y } = addPageIfNeeded(doc, 50, y, runHeader));
   y = drawScoreBars(doc, data.pillarScores, y);
-  y += SPACING.paraGap;
+  y += SPACING.sectionGap;
 
   // Triggered Gates Section
   if (Array.isArray(data.triggeredGates) && data.triggeredGates.length > 0) {
@@ -1399,7 +1405,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     setFont(doc, TYPO.body); // Set font BEFORE measurement
     const contextHeight = SPACING.h1Before + SPACING.h1After + PAGE.line + // Section title with spacing
       estimateTextHeight(doc, contextIntro, bounds(doc).w) +
-      PAGE.line * 8; // Estimate for context items (will be refined below)
+      (PAGE.line + SPACING.listGap) * 6; // Estimate for ~6 context items
     ({ cursorY: y } = addPageIfNeeded(doc, contextHeight, y, runHeader));
     y = drawSectionTitle(doc, "ORGANIZATIONAL CONTEXT", y, runHeader);
     setFont(doc, TYPO.body); setText(doc, PALETTE.ink);
@@ -1437,7 +1443,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     
     if (contextItems.length > 0) {
       y = drawBullets(doc, contextItems, bounds(doc).w, PAGE.margin, y, runHeader);
-      y += SPACING.paraGap;
+      y += SPACING.sectionGap;
     }
   }
 
@@ -1474,7 +1480,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     
     if (metricItems.length > 0) {
       y = drawBullets(doc, metricItems, bounds(doc).w, PAGE.margin, y, runHeader);
-      y += SPACING.paraGap;
+      y += SPACING.sectionGap;
     }
   }
 
@@ -1512,7 +1518,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
       
       y += SPACING.listGap;
     }
-    y += SPACING.listGap;
+    y += SPACING.sectionGap;
   }
 
   // Comprehensive Domain Analysis
@@ -1605,6 +1611,8 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
       y += SPACING.paraGap;
     }
   }
+
+  y += SPACING.sectionGap;
 
   // Executive Insights
   if (insightGenerationFailed) {
