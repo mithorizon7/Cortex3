@@ -36,15 +36,28 @@ export function corsMiddleware(req: Request, res: Response, next: NextFunction) 
 }
 
 /**
- * Basic rate limiting implementation
+ * Hybrid rate limiting implementation
+ * - Authenticated users: tracked by userId (prevents shared IP issues)
+ * - Anonymous users: tracked by IP address
+ * - Admin routes: exempt from rate limiting
  */
 const requestCounts = new Map<string, { count: number; resetTime: number }>();
 
 export function rateLimitMiddleware(req: Request, res: Response, next: NextFunction) {
-  const clientId = req.ip || 'unknown';
+  // Exempt admin routes from rate limiting
+  if (req.path.startsWith('/api/admin')) {
+    next();
+    return;
+  }
+  
   const now = Date.now();
   const windowMs = APP_CONFIG.RATE_LIMIT.windowMs;
-  const maxRequests = APP_CONFIG.RATE_LIMIT.max;
+  
+  // Use userId for authenticated users, IP for anonymous
+  // This prevents shared IP issues (MIT WiFi, corporate networks, etc.)
+  const isAuthenticated = req.userId && req.userId !== 'anonymous';
+  const clientId = isAuthenticated ? `user:${req.userId}` : `ip:${req.ip || 'unknown'}`;
+  const maxRequests = isAuthenticated ? APP_CONFIG.RATE_LIMIT.maxAuthenticated : APP_CONFIG.RATE_LIMIT.max;
   
   const clientData = requestCounts.get(clientId);
   
@@ -62,9 +75,14 @@ export function rateLimitMiddleware(req: Request, res: Response, next: NextFunct
     
     logger.warn('Rate limit exceeded', {
       additionalContext: {
+        userId: req.userId,
         ip: req.ip,
         userAgent: req.get('User-Agent'),
         path: req.path,
+        isAuthenticated,
+        clientId,
+        count: clientData.count,
+        maxRequests,
         incidentId
       }
     });
