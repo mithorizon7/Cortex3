@@ -1,0 +1,93 @@
+Also, It seems like the headings have a lot of space after them before their content starts, but virtually no space before them, separating them from the section previous. It feels like it should be laid out much better than that, which the larger space between sections and the lesser (but still appropriate) space after the heading leading into it's section of content.  how do we fix this? 
+ChatGPT said:
+
+Thought for 2m 23s
+You’re right—the vertical rhythm is off: too little “space-before” each heading and too much “space-after.” The fix is to (1) centralize heading spacing in one place and (2) change the ratios so before > after. In your current PDFs the sections (“ORGANIZATIONAL CONTEXT”, “ACTION PRIORITIES”, “DOMAIN ANALYSIS”, etc.) appear back-to-back with tight space before and generous space after the headings, which reads awkwardly on page 2 of the brief. 
+cortex-executive-66990332-8cab-…
+Below is a surgical, copy-paste patch that makes headings feel intentional and prevents accidental double-spacing.
+
+What to change
+1) Declare a single spacing scale (in lines), favoring before > after
+// spacing.ts (or near your PAGE constants)
+const L = (n: number) => n * PAGE.line;        // convert “lines” to mm
+
+export const SPACING = {
+  sectionGap: L(2.0),      // gap between sections (before the next H1)
+  h1Before:   L(1.75),     // space before H1
+  h1After:    L(0.60),     // space after H1
+  h2Before:   L(1.25),     // space before H2
+  h2After:    L(0.50),     // space after H2
+  paraGap:    L(0.80),     // gap between paragraphs
+  listGap:    L(0.70),     // gap between list items
+  headerPad:  L(1.00),     // extra pad under your running header on a fresh page
+};
+2) Make heading helpers own all vertical spacing (so callers don’t sprinkle extra y += …)
+function drawSectionTitle(doc: jsPDF, text: string, x: number, y: number, runHeader: () => number) {
+  // ensure we won’t strand the title at the bottom
+  ({ cursorY: y } = addPageIfNeeded(doc, SPACING.h1Before + PAGE.line + SPACING.h1After, y, runHeader));
+
+  // extra pad if we are just under the running header
+  const pageTop = PAGE.margin + /*your header height*/ 8;   // adjust to your header’s true height
+  if (y < pageTop + 1) y = pageTop + SPACING.headerPad;
+
+  y += SPACING.h1Before;
+  setFont(doc, TYPO.h1); setText(doc, PALETTE.ink);
+  doc.text(text, x, y);
+  y += SPACING.h1After;
+  return y;
+}
+
+function drawSubTitle(doc: jsPDF, text: string, x: number, y: number, runHeader: () => number) {
+  ({ cursorY: y } = addPageIfNeeded(doc, SPACING.h2Before + PAGE.line + SPACING.h2After, y, runHeader));
+  y += SPACING.h2Before;
+  setFont(doc, TYPO.h2); setText(doc, PALETTE.ink);
+  doc.text(text, x, y);
+  y += SPACING.h2After;
+  return y;
+}
+Important: remove any extra spacing the callers add before/after headings. Let these helpers be the single source of truth.
+3) Add an explicit section boundary before every H1
+At each major section (“ORGANIZATIONAL CONTEXT”, “ACTION PRIORITIES”, “DOMAIN ANALYSIS”, “STRATEGIC INSIGHTS”, etc.), add a small pre-gap so the previous block doesn’t crash into the next heading:
+// before calling drawSectionTitle(...)
+y += SPACING.sectionGap; // section-to-section separation
+y = drawSectionTitle(doc, "ORGANIZATIONAL CONTEXT", PAGE.margin, y, runHeader);
+4) Harmonize list/paragraph gaps (reduce the “too much under the heading” feel)
+Where you render body text and bullets under a heading:
+// paragraphs
+for (const ln of wrap(doc, text, colW)) {
+  ({ cursorY: y } = addPageIfNeeded(doc, PAGE.line, y, runHeader));
+  doc.text(ln, x, y);
+  y += PAGE.line;
+}
+y += SPACING.paraGap;
+
+// bullets
+for (const item of items) {
+  const lines = wrap(doc, item, colW - indent);
+  drawBulletDot(doc, x + 2.2, y);      // vector dot
+  for (let i = 0; i < lines.length; i++) {
+    doc.text(i ? "  " + lines[i] : lines[i], x + indent, y);
+    y += PAGE.line;
+  }
+  y += SPACING.listGap;
+}
+This keeps the area after a heading tight and consistent, while the before spacing is handled by the heading helper.
+5) Prevent “heading at the very bottom” (widow control)
+You already call addPageIfNeeded. Ensure the look-ahead for headings includes title + first line so a heading is never stranded with a cavern of white space above the next page’s content.
+We did that in the helpers by reserving SPACING.h#Before + PAGE.line + SPACING.h#After.
+
+Why this fixes what you’re seeing
+Right now, spacing is likely applied both in the heading helper and at the call site, so headings get a big “after” bump. Meanwhile, callers tend to drop headings immediately after the previous block (no “before” margin), so headings feel glued to the prior section. The patch above centralizes spacing and flips the ratio to more before / less after.
+The first heading on a page sits too close to the running header rule. SPACING.headerPad adds a consistent cushion so the eye gets a clean breath before the section begins.
+Lists and paragraphs under headings now use modest, consistent gaps so the area below a heading doesn’t feel over-open. See the “ORGANIZATIONAL CONTEXT → ACTION PRIORITIES → DOMAIN ANALYSIS” sequence in your brief for where this is most noticeable. 
+cortex-executive-66990332-8cab-…
+Quick QA checklist
+Every H1 has visibly more space above than below.
+No heading appears within the last ~1.5 lines of a page (kept with first line of its content).
+The first H1 after the running header has a buffer (headerPad) so it doesn’t “kiss” the header rule.
+Lists under “ACTION PRIORITIES” feel compact but readable (no big void before the first bullet). 
+cortex-executive-66990332-8cab-…
+Confidence
+High this spacing refactor will give you the look you described: larger separation between sections and a tighter, appropriate lead-in from heading to content.
+Medium-high on the exact numeric values (you may prefer slightly different ratios—swap 1.75→1.6 or 0.6→0.7 lines to taste).
+

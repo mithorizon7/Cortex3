@@ -178,6 +178,18 @@ const PAGE = {
   line: 4.2               // baseline “leading”
 };
 
+// Vertical spacing scale (before > after for better hierarchy)
+// Centralized spacing configuration (absolute mm values for consistency)
+const SPACING = {
+  sectionGap: 10,   // gap between major sections in mm
+  h1Before:   8,    // space before H1 in mm  
+  h1After:    4,    // space after H1 in mm
+  h2Before:   6,    // space before H2 in mm
+  h2After:    2.5,  // space after H2 in mm
+  paraGap:    3,    // gap between paragraphs in mm
+  listGap:    2.5   // gap between list items in mm
+};
+
 // Shape helpers rely on jsPDF's built-ins only (no plugins)
 function setFill(doc: any, c: RGB) { doc.setFillColor(c[0], c[1], c[2]); }
 function setStroke(doc: any, c: RGB) { doc.setDrawColor(c[0], c[1], c[2]); }
@@ -436,18 +448,33 @@ function addPageIfNeeded(doc: any, needed: number, cursorY: number, titleForRunH
   return { cursorY: PAGE.margin, added: true };
 }
 
-function drawSectionTitle(doc: any, title: string, y: number) {
+function drawSectionTitle(doc: any, title: string, y: number, runHeader?: string) {
+  // Ensure we won't strand the title at the bottom
+  const needed = SPACING.h1Before + PAGE.line + SPACING.h1After;
+  ({ cursorY: y } = addPageIfNeeded(doc, needed, y, runHeader));
+  
+  // Extra pad if we are just under the running header
+  const pageTop = PAGE.margin + 8; // running header height  
+  if (y < pageTop + 1) y = pageTop + PAGE.line;
+  
+  y += SPACING.h1Before;
   setFont(doc, TYPO.h1);
   setText(doc, PALETTE.danger);
   doc.text(title, PAGE.margin, y);
-  return y + PAGE.line * 4;
+  y += SPACING.h1After;
+  return y;
 }
 
-function drawSubTitle(doc: any, title: string, x: number, y: number) {
+function drawSubTitle(doc: any, title: string, x: number, y: number, runHeader?: string) {
+  const needed = SPACING.h2Before + PAGE.line + SPACING.h2After;
+  ({ cursorY: y } = addPageIfNeeded(doc, needed, y, runHeader));
+  
+  y += SPACING.h2Before;
   setFont(doc, TYPO.h2);
   setText(doc, PALETTE.ink);
   doc.text(title, x, y);
-  return y + PAGE.line * 3;
+  y += SPACING.h2After;
+  return y;
 }
 
 function drawBody(doc: any, text: string, maxWidth: number, y: number, runHeader?: string) {
@@ -717,13 +744,22 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
   // Body start
   let y = PAGE.headerBar + 10;
 
-  // Split insight text properly between Executive Summary and Strategic Context
-  const insightParts = (hasMirror ? data.mirror?.insight : data.insight)?.split('\n\n') || [];
-  const mainInsight = insightParts[0] || '';
-  // Always fall back to first paragraph if second doesn't exist (prevents empty context)
-  const strategicContext = (insightParts[1]?.trim() && insightParts[1].trim().length > 0) ? insightParts[1] : mainInsight;
+  // Split insight text properly to prevent duplication
+  const fullInsight = (hasMirror ? data.mirror?.insight : data.insight) || '';
+  const insightParts = fullInsight.split('\n\n').filter(p => p.trim());
+  const coverText = insightParts[0] || '';
+  const interiorText = insightParts[1] || '';
+  
+  // Check for near-duplicate (prevent showing same text twice)
+  const normalize = (s: string) => s.replace(/\s+/g, ' ').replace(/[^a-zA-Z0-9 ]/g, '').toLowerCase().trim();
+  const isDuplicate = interiorText && (
+    normalize(interiorText) === normalize(coverText) || 
+    normalize(coverText).includes(normalize(interiorText))
+  );
+  
+  const showInteriorContext = !!interiorText && !isDuplicate;
 
-  // Your Strategic Context
+  // Your Strategic Context (cover page - first paragraph only)
   y = drawSectionTitle(doc, "YOUR STRATEGIC CONTEXT", y);
   if (data.mirror?.headline) {
     setFont(doc, TYPO.hero);
@@ -731,18 +767,25 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
     y = drawBody(doc, data.mirror.headline, bounds(doc).w, y);
     y += PAGE.line * 1;
   }
-  if (mainInsight) {
-    y = drawBody(doc, mainInsight, bounds(doc).w, y);
+  if (coverText) {
+    y = drawBody(doc, coverText, bounds(doc).w, y);
   }
-  y += PAGE.line * 1;
+  y += SPACING.sectionGap;
 
-  // Two-column section: Strategic Context + Organizational Context
+  // Two-column section: Strategic Context (optional) + Organizational Context
   const runHeader = "CORTEX — Situation Assessment";
   
-  // Preflight: measure both columns to prevent starting near page bottom
-  const maxY = doc.internal.pageSize.getHeight() - PAGE.footer - PAGE.margin;
-  const preflightLeftLines = wrap(doc, strategicContext, twoColumn(doc, y).left.w);
-  const leftNeed = preflightLeftLines.length * PAGE.line + 2 + PAGE.line * 3; // lines + spacing + subtitle
+  // Set font BEFORE any measurement (font state safety)
+  setFont(doc, TYPO.body);
+  const col = twoColumn(doc, y);
+  
+  // Measure left column ONLY if we'll draw it
+  let leftNeed = 0;
+  let preflightLeftLines: string[] = [];
+  if (showInteriorContext) {
+    preflightLeftLines = wrap(doc, interiorText, col.left.w);
+    leftNeed = preflightLeftLines.length * PAGE.line + 2 + SPACING.h2Before + SPACING.h2After + PAGE.line;
+  }
   
   // Estimate right column height (all cards)
   const cp = data.contextProfile;
@@ -782,55 +825,58 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
   ];
   
   const rightNeed = buckets.reduce((h, b) => {
-    const body = b.items.map(arr => wrap(doc, arr.join(" "), twoColumn(doc, y).right.w - 6));
+    const body = b.items.map(arr => wrap(doc, arr.join(" "), col.right.w - 6));
     return h + estimateCardHeight(body) + 2;
-  }, PAGE.line * 3);
+  }, SPACING.h2Before + SPACING.h2After + PAGE.line);
   
-  const blockNeed = Math.max(leftNeed, rightNeed) + PAGE.line * 1.5;
-  if (y + blockNeed > maxY) {
-    const after = addPageIfNeeded(doc, blockNeed, y, runHeader);
-    y = after.cursorY;
-  }
+  // Preflight: prevent starting two-column block near page bottom
+  const blockNeed = Math.max(showInteriorContext ? leftNeed : 0, rightNeed) + PAGE.line * 1.5;
+  ({ cursorY: y } = addPageIfNeeded(doc, blockNeed, y, runHeader));
   
-  const col = twoColumn(doc, y);
-  let leftY = col.y;
-  let rightY = col.y;
+  // Recalculate column positions after potential page break
+  const finalCol = twoColumn(doc, y);
+  let leftY = finalCol.y;
+  let rightY = finalCol.y;
 
-  // Left card: Strategic Context (always present)
-  leftY = drawSubTitle(doc, "Strategic Context", col.left.x, leftY);
-  leftY += 2;
-  // Reuse preflightLeftLines from measurement above
-  for (const ln of preflightLeftLines) {
-    ({ cursorY: leftY } = addPageIfNeeded(doc, PAGE.line, leftY, runHeader));
-    setFont(doc, TYPO.body); setText(doc, PALETTE.ink);
-    doc.text(ln, col.left.x, leftY);
-    leftY += PAGE.line;
+  // Left column: Strategic Context (only if distinct from cover)
+  if (showInteriorContext) {
+    leftY = drawSubTitle(doc, "Strategic Context", finalCol.left.x, leftY, runHeader);
+    leftY += 2;
+    for (const ln of preflightLeftLines) {
+      ({ cursorY: leftY } = addPageIfNeeded(doc, PAGE.line, leftY, runHeader));
+      setFont(doc, TYPO.body); setText(doc, PALETTE.ink);
+      doc.text(ln, finalCol.left.x, leftY);
+      leftY += PAGE.line;
+    }
   }
 
   // Right column: Organizational Context as compact cards
-  rightY = drawSubTitle(doc, "Organizational Context", col.right.x, rightY);
+  const rightX = showInteriorContext ? finalCol.right.x : PAGE.margin;
+  const rightW = showInteriorContext ? finalCol.right.w : bounds(doc).w;
+  
+  rightY = drawSubTitle(doc, "Organizational Context", rightX, rightY, runHeader);
   rightY += 2;
 
   for (const b of buckets) {
     // Measure card height before drawing to prevent white gaps
-    const body = b.items.map(arr => wrap(doc, arr.join(" "), col.right.w - 6));
+    const body = b.items.map(arr => wrap(doc, arr.join(" "), rightW - 6));
     const cardHeight = estimateCardHeight(body);
     ({ cursorY: rightY } = addPageIfNeeded(doc, cardHeight, rightY, runHeader));
-    rightY = drawCard(doc, col.right.x, rightY, col.right.w, b.title, body);
+    rightY = drawCard(doc, rightX, rightY, rightW, b.title, body);
     rightY += 2;
   }
 
-  y = Math.max(leftY, rightY) + PAGE.line * 1.5;
+  y = Math.max(leftY, rightY) + SPACING.sectionGap;
 
   // Leadership Guidance (two buckets)
   const actions = hasMirror ? (data.mirror?.actions || []) : [];
   const watchouts = hasMirror ? (data.mirror?.watchouts || []) : [];
   setFont(doc, TYPO.body); // Set font BEFORE measurement
-  const guidanceHeight = PAGE.line * 2.5 + // Section title
-    estimateListHeight(doc, actions, col.left.w) + 
-    estimateListHeight(doc, watchouts, col.right.w);
+  const guidanceHeight = SPACING.h1Before + SPACING.h1After + PAGE.line + // Section title with spacing
+    estimateListHeight(doc, actions, finalCol.left.w) + 
+    estimateListHeight(doc, watchouts, finalCol.right.w);
   ({ cursorY: y } = addPageIfNeeded(doc, Math.max(guidanceHeight, 20), y, runHeader));
-  y = drawSectionTitle(doc, "LEADERSHIP GUIDANCE", y);
+  y = drawSectionTitle(doc, "LEADERSHIP GUIDANCE", y, runHeader);
   
   const grid = twoColumn(doc, y);
   let ay = grid.y, wy = grid.y;
@@ -853,12 +899,12 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
   const sc = hasMirror ? data.mirror?.scenarios : undefined;
   if (sc?.if_regulation_tightens || sc?.if_budgets_tighten) {
     setFont(doc, TYPO.body); // Set font BEFORE measurement
-    const scenarioHeight = PAGE.line * 2.5 + // Section title
+    const scenarioHeight = SPACING.h1Before + SPACING.h1After + PAGE.line + // Section title with spacing
       estimateTextHeight(doc, sc.if_regulation_tightens || '', bounds(doc).w) +
       estimateTextHeight(doc, sc.if_budgets_tighten || '', bounds(doc).w) +
       PAGE.line * 4; // Subsection titles and spacing
     ({ cursorY: y } = addPageIfNeeded(doc, scenarioHeight, y, runHeader));
-    y = drawSectionTitle(doc, "SCENARIO LENS", y);
+    y = drawSectionTitle(doc, "SCENARIO LENS", y, runHeader);
 
     if (sc.if_regulation_tightens) {
       setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
@@ -932,20 +978,21 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
   doc.text(idText,  pw - PAGE.margin - doc.getTextWidth(idText),  22);
 
   let y = PAGE.headerBar + 10;
+  const optionsRunHeader = "CORTEX — Options Studio";
 
   // Use Case
   if (sessionData.useCase) {
-    y = drawSectionTitle(doc, "USE CASE", y);
+    y = drawSectionTitle(doc, "USE CASE", y, optionsRunHeader);
     y = drawBody(doc, String(sessionData.useCase), bounds(doc).w, y);
-    y += PAGE.line;
+    y += SPACING.sectionGap;
   }
 
   // Goals
   const goals = sessionData.goals ?? [];
   if (goals.length) {
-    y = drawSectionTitle(doc, "GOALS", y);
+    y = drawSectionTitle(doc, "GOALS", y, optionsRunHeader);
     y = drawBullets(doc, goals, bounds(doc).w, PAGE.margin, y);
-    y += PAGE.line * 0.5;
+    y += SPACING.sectionGap;
   }
 
   // Compared Options
@@ -955,8 +1002,8 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
       const desc = (opt as any).shortDescription || (opt as any).fullDescription || "";
       return h + PAGE.line * 1.1 + estimateTextHeight(doc, String(desc), bounds(doc).w) + 2;
     }, 0);
-    ({ cursorY: y } = addPageIfNeeded(doc, optionsHeight, y, "CORTEX — Options Studio"));
-    y = drawSectionTitle(doc, "COMPARED OPTIONS", y);
+    ({ cursorY: y } = addPageIfNeeded(doc, optionsHeight, y, optionsRunHeader));
+    y = drawSectionTitle(doc, "COMPARED OPTIONS", y, optionsRunHeader);
     setFont(doc, TYPO.body); setText(doc, PALETTE.ink);
 
     for (let i = 0; i < sessionData.selectedOptions.length; i++) {
@@ -979,8 +1026,8 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
   if (Array.isArray(sessionData.emphasizedLenses) && sessionData.emphasizedLenses.length) {
     setFont(doc, TYPO.body); // Set font BEFORE measurement
     const lensHeight = PAGE.line * 2.5 + estimateListHeight(doc, sessionData.emphasizedLenses, bounds(doc).w) + PAGE.line * 0.5;
-    ({ cursorY: y } = addPageIfNeeded(doc, lensHeight, y, "CORTEX — Options Studio"));
-    y = drawSectionTitle(doc, "WHAT WE EMPHASIZED", y);
+    ({ cursorY: y } = addPageIfNeeded(doc, lensHeight, y, optionsRunHeader));
+    y = drawSectionTitle(doc, "WHAT WE EMPHASIZED", y, optionsRunHeader);
     y = drawBullets(doc, sessionData.emphasizedLenses, bounds(doc).w, PAGE.margin, y);
     y += PAGE.line * 0.5;
   }
@@ -997,8 +1044,8 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
       const explHeight = q.explanation ? estimateTextHeight(doc, q.explanation, bounds(doc).w) : 0;
       return h + qHeight + explHeight + 1.2;
     }, 0);
-    ({ cursorY: y } = addPageIfNeeded(doc, miscHeight, y, "CORTEX — Options Studio"));
-    y = drawSectionTitle(doc, "MISCONCEPTION CHECK RESULTS", y);
+    ({ cursorY: y } = addPageIfNeeded(doc, miscHeight, y, optionsRunHeader));
+    y = drawSectionTitle(doc, "MISCONCEPTION CHECK RESULTS", y, optionsRunHeader);
 
     for (const [qid, ans] of Object.entries(responses)) {
       const q = map[qid];
@@ -1026,8 +1073,8 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
     const reflHeight = PAGE.line * 2.5 + Object.entries(sessionData.reflectionAnswers).reduce((h, [qid, answer]) => {
       return h + PAGE.line * 1.1 + estimateTextHeight(doc, String(answer), bounds(doc).w) + 1.5;
     }, 0);
-    ({ cursorY: y } = addPageIfNeeded(doc, reflHeight, y, "CORTEX — Options Studio"));
-    y = drawSectionTitle(doc, "REFLECTIONS", y);
+    ({ cursorY: y } = addPageIfNeeded(doc, reflHeight, y, optionsRunHeader));
+    y = drawSectionTitle(doc, "REFLECTIONS", y, optionsRunHeader);
     for (const [qid, answer] of Object.entries(sessionData.reflectionAnswers)) {
       ({ cursorY: y } = addPageIfNeeded(doc, 14, y, "CORTEX — Options Studio"));
       setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
@@ -1303,10 +1350,10 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     (scoredValues.length > 0 ? scoredValues.reduce((sum: number, score: number) => sum + score, 0) / scoredValues.length : 0);
   const maturityLevel = getMaturityLevel(avg);
 
-  y = drawSectionTitle(doc, "YOUR STRATEGIC MATURITY PROFILE", y);
+  y = drawSectionTitle(doc, "YOUR STRATEGIC MATURITY PROFILE", y, runHeader);
   setFont(doc, TYPO.h2); setText(doc, PALETTE.ink);
   doc.text(`Overall AI Readiness: ${maturityLevel} (${avg.toFixed(1)}/3)`, PAGE.margin, y);
-  y += PAGE.line * 1.5;
+  y += SPACING.sectionGap;
   
   // Quick overview
   setFont(doc, TYPO.body); setText(doc, PALETTE.ink);
@@ -1338,12 +1385,12 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
       estimateListHeight(doc, gateItems, bounds(doc).w) +
       PAGE.line;
     ({ cursorY: y } = addPageIfNeeded(doc, gateHeight, y, runHeader));
-    y = drawSectionTitle(doc, "CRITICAL REQUIREMENTS", y);
+    y = drawSectionTitle(doc, "CRITICAL REQUIREMENTS", y, runHeader);
     setFont(doc, TYPO.body); setText(doc, PALETTE.ink);
     y = drawBody(doc, gateIntro, bounds(doc).w, y, runHeader);
     y += PAGE.line * 0.5;
     y = drawBullets(doc, gateItems, bounds(doc).w, PAGE.margin, y, runHeader);
-    y += PAGE.line;
+    y += SPACING.sectionGap;
   }
 
   // Organizational Context Summary
@@ -1354,7 +1401,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
       estimateTextHeight(doc, contextIntro, bounds(doc).w) +
       PAGE.line * 8; // Estimate for context items (will be refined below)
     ({ cursorY: y } = addPageIfNeeded(doc, contextHeight, y, runHeader));
-    y = drawSectionTitle(doc, "ORGANIZATIONAL CONTEXT", y);
+    y = drawSectionTitle(doc, "ORGANIZATIONAL CONTEXT", y, runHeader);
     setFont(doc, TYPO.body); setText(doc, PALETTE.ink);
     y = drawBody(doc, contextIntro, bounds(doc).w, y, runHeader);
     y += PAGE.line * 0.5;
@@ -1397,7 +1444,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
   // Value Overlay Metrics (if configured)
   if (data.valueOverlay) {
     ({ cursorY: y } = addPageIfNeeded(doc, 28, y, runHeader));
-    y = drawSectionTitle(doc, "VALUE METRICS", y);
+    y = drawSectionTitle(doc, "VALUE METRICS", y, runHeader);
     setFont(doc, TYPO.body); setText(doc, PALETTE.ink);
     y = drawBody(doc, "You have configured the following business metrics to track AI impact:", bounds(doc).w, y, runHeader);
     y += PAGE.line * 0.5;
@@ -1441,7 +1488,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
       return h + itemH + PAGE.line * 0.5;
     }, 0) + PAGE.line * 0.5;
     ({ cursorY: y } = addPageIfNeeded(doc, priHeight, y, runHeader));
-    y = drawSectionTitle(doc, "ACTION PRIORITIES", y);
+    y = drawSectionTitle(doc, "ACTION PRIORITIES", y, runHeader);
     
     for (let idx = 0; idx < Math.min(5, priorities.length); idx++) {
       const p = priorities[idx];
@@ -1469,9 +1516,9 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
   }
 
   // Comprehensive Domain Analysis
-  const domainHeight = PAGE.line * 2.5; // Just the section title
+  const domainHeight = SPACING.h1Before + SPACING.h1After + PAGE.line; // Section title with spacing
   ({ cursorY: y } = addPageIfNeeded(doc, domainHeight, y, runHeader));
-  y = drawSectionTitle(doc, "DOMAIN ANALYSIS", y);
+  y = drawSectionTitle(doc, "DOMAIN ANALYSIS", y, runHeader);
   
   const pillarOrder = ['C', 'O', 'R', 'T', 'E', 'X'];
   for (let i = 0; i < pillarOrder.length; i++) {
@@ -1566,7 +1613,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     setFont(doc, TYPO.body); // Set font BEFORE measurement
     const errorHeight = PAGE.line * 2.5 + estimateTextHeight(doc, errorNotice, bounds(doc).w) + PAGE.line * 1.5;
     ({ cursorY: y } = addPageIfNeeded(doc, errorHeight, y, runHeader));
-    y = drawSectionTitle(doc, "STRATEGIC INSIGHTS", y);
+    y = drawSectionTitle(doc, "STRATEGIC INSIGHTS", y, runHeader);
     setFont(doc, TYPO.body); setText(doc, PALETTE.inkSubtle);
     y = drawBody(doc, errorNotice, bounds(doc).w, y, runHeader);
     y += PAGE.line * 1.5;
@@ -1578,7 +1625,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
       return h + titleH + bodyH + PAGE.line * 0.8;
     }, 0);
     ({ cursorY: y } = addPageIfNeeded(doc, insightsHeight, y, runHeader));
-    y = drawSectionTitle(doc, "STRATEGIC INSIGHTS", y);
+    y = drawSectionTitle(doc, "STRATEGIC INSIGHTS", y, runHeader);
     for (const ins of insights.slice(0, 5)) {
       ({ cursorY: y } = addPageIfNeeded(doc, 16, y, runHeader));
       setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);

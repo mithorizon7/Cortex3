@@ -1,0 +1,128 @@
+Short answer: **it looks solid**. You fixed the two root causes of the “missing Strategic Context” and the odd letter‑spacing: (1) you now *always* have a fallback for the left column’s text, and (2) you’re doing careful Unicode‑safe normalization and robust wrapping. You also added preflight measurement and per‑block page‑break control, which cleans up the big white gaps. There are only a few small, surgical improvements I’d still make (below).
+
+---
+
+## What’s now correct (and why it matters)
+
+1. **Strategic Context never goes missing anymore.**
+   You split the insight on blank lines and—crucially—*fall back to the first paragraph* when a second paragraph isn’t present. That prevents the left column from rendering empty when users only write one paragraph. ✔️  
+
+2. **Robust preflight layout for the two‑column block.**
+   Before drawing, you compute `leftNeed` (wrapped lines + spacing) and a card‑by‑card `rightNeed`, then use `addPageIfNeeded` on the combined `blockNeed`. That avoids starting a two‑column section near the bottom and creating those big, uneven white holes. ✔️   
+
+3. **Per‑card measurement avoids ragged right column.**
+   Each organizational context card is pre‑measured (`estimateCardHeight`), and you page‑break *before* drawing when needed. That keeps card blocks intact and prevents split headers. ✔️   
+
+4. **Unicode‑safe text handling (no more “spaced out” glyphs).**
+   You sanitize control characters, preserve em/en dashes (good typography), collapse *only* ALL‑CAPS letter‑spaced runs (so you don’t fuse normal words), and split overlong tokens with zero‑width breaks. That eliminates the weird kerning artifacts and bad wraps without mangling copy/paste. ✔️   
+
+5. **Inter font is embedded and verified, with clean fallback.**
+   You register Inter Regular/Bold, probe availability, and fall back to Helvetica if needed. That makes shaping of quotes/dashes/accents consistent across viewers. ✔️  
+
+6. **Footer is now single‑pass and resilient.**
+   The new `finalizeFooters` draws the base64‑embedded logo + “MIT Open Learning” once per page and handles absence of `addImage` gracefully, then places the page labels. The prior double‑logo hazard is gone. ✔️   
+
+7. **Consistent page‑level helpers.**
+   `addPageIfNeeded`, `runningHeader`, `drawSectionTitle`/`drawSubTitle`, and bullet rendering are uniform and measured off the same baseline (`PAGE.line`)—a big part of why the documents feel steadier. ✔️   
+
+---
+
+## What I’d still tighten (small but worthwhile)
+
+### A. Make font state explicit before *every* measurement
+
+**Why:** `wrap()` relies on the current `doc` font to compute widths. In your current flow it’s usually set to body text just before measurement, but it’d be easy for a future refactor to leave you in `h1`/`h2` state and under‑ or over‑measure.
+
+**Change:** Set body font explicitly right before any preflight wrap/measure calls.
+
+```ts
+// before:
+const preflightLeftLines = wrap(doc, strategicContext, twoColumn(doc, y).left.w);
+
+// after:
+setFont(doc, TYPO.body);  // ensure measurement font is the body font
+const preflightLeftLines = wrap(doc, strategicContext, twoColumn(doc, y).left.w);
+```
+
+Do the same for the `buckets.reduce(...)` measurement. ✔️  (Context: your current preflight block.) 
+
+### B. Remove minor duplicate work in right‑column preflight
+
+**Why:** Inside your `buckets.reduce`, you recompute `twoColumn(doc, y)` for each bucket. It’s constant for a given `y`. Not a correctness bug, just wasted calls.
+
+**Change:**
+
+```ts
+const col = twoColumn(doc, y);
+const rightNeed = buckets.reduce((h, b) => {
+  const body = b.items.map(arr => wrap(doc, arr.join(" "), col.right.w - 6));
+  return h + estimateCardHeight(body) + 2;
+}, PAGE.line * 3);
+```
+
+✔️  (Current reduce site.) 
+
+### C. Consider dropping the `if (y + blockNeed > maxY)` guard
+
+**Why:** `addPageIfNeeded` already short‑circuits when there’s space. Calling it unconditionally is simpler and removes a second, parallel condition.
+
+**Change:**
+
+```ts
+({ cursorY: y } = addPageIfNeeded(doc, blockNeed, y, runHeader));
+```
+
+✔️  (Current guard.) 
+
+### D. Normalize once at ingestion for long paragraphs (optional perf)
+
+**Why:** You call `normalizeText()` inside `wrap()` for every wrap operation. For very long inputs (e.g., pasting a 1–2 page paragraph), normalize once and cache the clean string, then wrap that. Not required; just a micro‑perf win.
+
+**Where:** `wrap()` & call sites. ✔️  (Your normalization/wrap implementations.) 
+
+### E. Keep only one card‑height estimator
+
+**Why:** I see `estimateCardHeight` defined in the helpers; just ensure you don’t accidentally re‑declare it if you split modules later. Today you’re fine; just a caution for future refactors. ✔️  
+
+### F. One last guard for Leadership Guidance
+
+**Why:** You pre‑measure `actions` and `watchouts` and page‑break once, then draw both columns. If one side is empty and the other is long, it works—but you can reduce tiny trailing gaps by aligning the *start* of each sub‑column after a single `drawSectionTitle` call (you already do this) and keeping the per‑list indent/gaps consistent. This is nit‑level; the current code is acceptable. ✔️  
+
+---
+
+## Why the earlier PDFs looked inconsistent (root causes you already fixed)
+
+* **“Strategic Context” sometimes blank**: earlier logic expected a second paragraph and didn’t fall back, so the left column could be empty. Now you default to `mainInsight` when the second part is missing. Fixed. 
+* **Big white gaps**: starting a two‑column block near the bottom without measuring both columns produced orphaned card headers / uneven columns. Your preflight + `addPageIfNeeded` eliminates that. Fixed.  
+* **Weird letter spacing**: mixed Unicode spaces/soft hyphens + viewer font fallback caused the “S p a c e d O u t” look. Inter embedding + targeted normalization solved it. Fixed.  
+
+---
+
+## Nice touches worth keeping
+
+* Vector bullet dots for consistent bullets across viewers (no glyph dependency). ✔️  
+* Base64 logo with graceful failure path (no network flakiness). ✔️  
+* Consistent baseline grid (`PAGE.line`) applied across headings, body, lists, and cards. ✔️  
+
+---
+
+## TL;DR recommended patch set
+
+1. **Set body font before any preflight wrap/measure.**
+   Add `setFont(doc, TYPO.body)` right before preflight wrapping/height math for left and right columns. 
+
+2. **Cache `twoColumn(doc, y)` during preflight.**
+   Compute once; reuse for right column measurement. 
+
+3. **Call `addPageIfNeeded` unconditionally for the block.**
+   Let it no‑op when there’s space. 
+
+(Everything else is already at “ship” quality.)
+
+---
+
+### Bottom line
+
+**Verdict:** You’re in good shape. The PDFs should render reliably, without the prior spacing/lettering glitches, and with stable, predictable pagination. The minor tweaks above will make the code slightly safer against future regressions and a hair faster.
+
+**Confidence:** High on the code‑level assessment and root‑cause fixes; medium on visual perfection across all PDF viewers since I haven’t rendered your newest artifact here. The three “patch set” items are low‑risk and beneficial.
