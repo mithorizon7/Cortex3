@@ -32,13 +32,13 @@ The platform includes robust PDF generation capabilities for executive briefs wi
 **Line-Based Spacing Architecture**:
 - **Line-Based System**: All spacing uses the L(n) = n * PAGE.line formula (where PAGE.line = 4.2mm) for scalable, maintainable vertical rhythm
 - **"Before > After" Philosophy**: Larger spacing before headings, smaller after for superior visual flow:
-  - `sectionGap: L(2.0) = 8.4mm` - Gap between major H1 sections
-  - `h1Before: L(1.75) = 7.35mm, h1After: L(0.60) = 2.52mm` - H1 spacing (before > after)
-  - `h2Before: L(1.25) = 5.25mm, h2After: L(0.50) = 2.1mm` - H2 spacing (before > after)
-  - `paraGap: L(0.80) = 3.36mm` - Paragraph spacing
-  - `listGap: L(0.70) = 2.94mm` - List item spacing
-  - `headerPad: L(1.00) = 4.2mm` - Extra padding under running headers
-  - `domainSeparator: L(1.80) = 7.56mm` - Domain separator spacing
+  - `sectionGap: L(3.5) = 14.7mm` - Gap between major H1 sections
+  - `h1Before: L(3.0) = 12.6mm, h1After: L(1.5) = 6.3mm` - H1 spacing (before > after)
+  - `h2Before: L(2.0) = 8.4mm, h2After: L(1.0) = 4.2mm` - H2 spacing (before > after)
+  - `paraGap: L(1.5) = 6.3mm` - Paragraph spacing
+  - `listGap: L(1.2) = 5.04mm` - List item spacing
+  - `headerPad: L(1.5) = 6.3mm` - Extra padding under running headers
+  - `domainSeparator: L(2.5) = 10.5mm` - Domain separator spacing
 
 **Key Features**:
 - Comprehensive error handling and data validation

@@ -183,15 +183,15 @@ const L = (n: number) => n * PAGE.line;
 
 // Vertical spacing scale (before > after for better hierarchy)
 const SPACING = {
-  sectionGap:     L(2.0),    // gap between major sections (before next H1)
-  h1Before:       L(1.75),   // space before H1 (larger = better separation)
-  h1After:        L(0.60),   // space after H1 (smaller = tighter lead-in)
-  h2Before:       L(1.25),   // space before H2
-  h2After:        L(0.50),   // space after H2
-  paraGap:        L(0.80),   // gap between paragraphs
-  listGap:        L(0.70),   // gap between list items
-  headerPad:      L(1.00),   // extra pad under running header on fresh page
-  domainSeparator: L(1.80)   // vertical space for domain separator line + spacing
+  sectionGap:     L(3.5),    // gap between major sections (before next H1)
+  h1Before:       L(3.0),    // space before H1 (larger = better separation)
+  h1After:        L(1.5),    // space after H1 (smaller = tighter lead-in)
+  h2Before:       L(2.0),    // space before H2
+  h2After:        L(1.0),    // space after H2
+  paraGap:        L(1.5),    // gap between paragraphs
+  listGap:        L(1.2),    // gap between list items
+  headerPad:      L(1.5),    // extra pad under running header on fresh page
+  domainSeparator: L(2.5)    // vertical space for domain separator line + spacing
 };
 
 // Shape helpers rely on jsPDF's built-ins only (no plugins)
