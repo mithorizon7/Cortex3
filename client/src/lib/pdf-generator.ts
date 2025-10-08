@@ -438,7 +438,7 @@ function addPageIfNeeded(doc: any, needed: number, cursorY: number, titleForRunH
 
 function drawSectionTitle(doc: any, title: string, y: number) {
   setFont(doc, TYPO.h1);
-  setText(doc, PALETTE.accent);
+  setText(doc, PALETTE.danger);
   doc.text(title, PAGE.margin, y);
   return y + PAGE.line * 4;
 }
@@ -1490,8 +1490,8 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     
     ({ cursorY: y } = addPageIfNeeded(doc, 55, y, runHeader));
     
-    // Domain header with score badge
-    setFont(doc, TYPO.h2); setText(doc, PALETTE.accent);
+    // Domain header with score badge (using domain-specific color)
+    setFont(doc, TYPO.h2); setText(doc, hexToRgb(pillar.color));
     doc.text(`${pillarKey}. ${pillar.name}`, PAGE.margin, y);
     
     // Score badge on same line (using consistent thresholds with overall maturity)
