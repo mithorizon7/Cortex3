@@ -314,10 +314,11 @@ function estimateTextHeight(doc: any, text: string, width: number): number {
 // Estimate height of bullet list
 function estimateListHeight(doc: any, items: string[], width: number): number {
   if (!hasList(items)) return 0;
+  const BULLET_INDENT = 5.5;  // Must match drawBullets indent
   return items.reduce((h, item) => {
     if (!hasContent(item)) return h;
-    const lines = wrap(doc, item, width - 6); // Account for bullet indent
-    return h + (lines.length * PAGE.line) + SPACING.listGap; // Line height + gap
+    const lines = wrap(doc, item, width - BULLET_INDENT);
+    return h + (lines.length * PAGE.line) + SPACING.listGap;
   }, 0);
 }
 
@@ -527,7 +528,7 @@ function drawBullets(doc: any, items: string[], maxWidth: number, x: number, y: 
 function drawPrompts(doc: any, items: string[], maxWidth: number, y: number, runHeader?: string) {
   setFont(doc, TYPO.body);
   setText(doc, PALETTE.inkSubtle);
-  const indent = 5;
+  const indent = 5.5;  // Consistent with vector bullet indent
   for (const it of (items || [])) {
     // Use ASCII ">" for prompts (reliable across all fonts)
     const prompt = "> ";
