@@ -644,7 +644,7 @@ function drawScoreBars(doc: any, scores: Record<string, number>, y: number) {
   setFont(doc, TYPO.h2);
   setText(doc, PALETTE.ink);
   doc.text("Domain Performance", x, y);
-  y += PAGE.line * 2.5;
+  y += SPACING.h2After * 2; // H2 heading with extra spacing for visual separation
 
   Object.entries(scores).forEach(([k, raw]) => {
     const score = Math.max(0, Math.min(max, Number(raw)));
@@ -765,7 +765,7 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
     setFont(doc, TYPO.hero);
     setText(doc, PALETTE.ink);
     y = drawBody(doc, data.mirror.headline, bounds(doc).w, y);
-    y += PAGE.line * 1;
+    y += SPACING.paraGap;
   }
   if (coverText) {
     y = drawBody(doc, coverText, bounds(doc).w, y);
