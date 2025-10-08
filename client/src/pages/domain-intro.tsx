@@ -164,6 +164,11 @@ export default function DomainIntroPage() {
     }
   }, [domain, assessmentId]);
 
+  // Scroll to top when navigating to this page
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [domain, assessmentId]);
+
   return (
     <ProtectedRoute requireAuth>
       <div className="min-h-screen bg-background">

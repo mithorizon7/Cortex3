@@ -52,6 +52,11 @@ export default function DomainQuestionsPage() {
     }
   }, [assessment]);
 
+  // Scroll to top when navigating to this page
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [domain, assessmentId]);
+
   // Check if there are unsaved changes
   const hasUnsavedChanges = () => {
     const currentKeys = Object.keys(responses);
