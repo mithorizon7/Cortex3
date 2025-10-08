@@ -1,0 +1,134 @@
+Great—thanks for sharing the pulse‑check (Strategic Maturity Profile) PDF built with the same generator. I read through it end‑to‑end. Here’s what I’m seeing and exactly what would cause “sometimes a section is missing” and “strange white gaps” in this *pulse* PDF, plus the fixes so the maturity brief renders predictably every time.
+
+---
+
+## What your pulse PDF is doing now (baseline)
+
+* The PDF has a front page with overall score, domain scores, **Critical Requirements**, **Organizational Context**, and **Action Priorities**, followed by **Domain Analysis** for all six CORTEX domains and a final **Strategic Insights** page. That structure is correct and looks solid in the sample you attached. 
+
+* The earlier *context* PDFs you shared follow a different layout (two‑column “Strategic Context” + “Organizational Context,” then leadership guidance and scenarios). That difference is expected—the two document types are meant to look different—but the *root* layout issues (missing chunks or large white gaps) come from the same causes in your generator.
+
+---
+
+## Why a section “sometimes disappears” in the pulse PDF
+
+These are the most common, *code‑level* causes I encounter with this kind of generator; they fit your symptoms exactly:
+
+1. **Over‑strict “presence” checks (empty after normalization).**
+   You’re already normalizing out NBSP/ZW spaces and soft hyphens. If a section’s text becomes a string that *looks* empty after normalization (e.g., whitespace or punctuation only), a guard like `if (text)` or `if (text.trim())` will evaluate false and you’ll skip rendering the entire block. This can happen with advisory sections such as **Action Priorities** or **Strategic Insights** when the upstream logic returns “something,” but it’s only bullets like `[" ", "—"]` after cleaning. In your pulse example those sections render correctly, but it would explain intermittent blanks in other runs. 
+
+   **Fix:** use a robust non‑emptiness test before deciding to skip:
+
+   ```ts
+   const hasContent = (s?: string) => typeof s === "string" && /\S/.test(s);
+   const hasList = (arr?: string[]) => Array.isArray(arr) && arr.some(hasContent);
+   // Only skip section if !hasContent(text) or !hasList(items), not just !text
+   ```
+
+2. **Conditional fallbacks that blank out optional sections.**
+   You hit this earlier on *context* (“Strategic Context” went empty if a second paragraph wasn’t present). A similar pattern can sneak into the *pulse* brief—for example, if you compute a domain subsection like “Common Pitfalls” with something like:
+
+   ```ts
+   const pitfalls = hasCustom ? customPitfalls : defaultPitfallsOrEmpty;  // ← becomes []
+   if (!pitfalls.length) { /* skip entire domain card */ }
+   ```
+
+   When `defaultPitfallsOrEmpty` is `[]` (instead of a default list), you’ll draw the domain header and then nothing—or skip the domain block entirely. Your pulse sample *does* include all six domains (C, O, R, T, E, X), so the data path was healthy in this run; but this is the exact pattern that makes a domain (or its subsections) “vanish” under certain answers. 
+
+   **Fix:** never let a guard equate “no custom content” with “do not render.” Prefer:
+
+   ```ts
+   const pitfalls = hasCustom && hasList(customPitfalls) ? customPitfalls : defaultPitfalls;
+   // defaultPitfalls is always a non-empty template list
+   ```
+
+3. **Asynchronous data race on composite sections.**
+   If you build **Critical Requirements** and **Action Priorities** from separate async calls (or promises resolved in different ticks) and render as soon as the first returns, you’ll occasionally capture one and miss the other. In your sample, both show up properly, but the symptom you described (same account, different answers, inconsistent presence) matches this.
+
+   **Fix:** gate rendering on a single, composed data object:
+
+   ```ts
+   const data = await Promise.all([loadScores(), loadRequirements(), loadPriorities()]);
+   // assemble {scores, requirements, priorities} then render once
+   ```
+
+---
+
+## Why you sometimes get huge white gaps or awkward page breaks
+
+I can reproduce this just from the content shape I see in your pulse PDF:
+
+* **You’re breaking pages with a fixed “minimum space” guess** before variable‑height blocks.
+  For instance, **CRITICAL REQUIREMENTS** and **ACTION PRIORITIES** are bullet lists; on some runs they’re short, on others long. If you pre‑break with a constant like `addPageIfNeeded(26)`, you’ll *either* push a short block to a new page (leaving a big white band), *or* allow a long block to spill badly. Your pulse doc shows both short and long blocks; this is where the variance comes from. 
+
+* **Domain sections are rendered as bundled blocks but split with line‑level logic.**
+  Each domain (C, O, R, T, E, X) contains: **Why this matters**, **What good looks like** (list), **How to improve**, **Common pitfalls** (list), and **Strategic Discussion Questions** (list). If you break only on individual paragraphs/lines, you’ll get “widows/orphans” (headers stranded at the bottom; lists split after a single bullet), which forces ugly whitespace to keep the next subsection together. I see all five subsections present in “Clarity & Command” and “Operations & Data,” which are long enough to trigger these effects. 
+
+**Rock‑solid fix (measured layout, not guesses):**
+
+1. **Measure each subsection *before* drawing**, using the same font and width.
+
+   ```ts
+   function linesH(doc, text, width) {
+     const lines = doc.splitTextToSize(text, width);
+     return lines.length * PAGE.line;
+   }
+   function listH(doc, items, width) {
+     return items.reduce((h, s) => h + linesH(doc, s, width) + 1.5 /*list gap*/, 0);
+   }
+   function domainH(doc, d, width) {
+     let h = 0;
+     h += PAGE.line * 2.2;                     // title + spacing
+     h += linesH(doc, d.why, width) + 2;
+     h += listH(doc, d.goodLooksLike, width) + 2;
+     h += linesH(doc, d.howToImprove, width) + 2;
+     h += listH(doc, d.pitfalls, width) + 2;
+     h += listH(doc, d.questions, width);
+     return h;
+   }
+   // Before drawing domain 'C':
+   const need = domainH(doc, domainC, colW);
+   ({ cursorY: y } = addPageIfNeeded(doc, need, y, runHeader));  // then draw
+   ```
+
+2. **Group small subsections; split only at natural boundaries.**
+   If a whole domain won’t fit, don’t split mid‑paragraph. Split between subsections (e.g., keep **Why**+**What Good Looks Like** together, then break before **How to Improve**). This removes “micro‑whitespace” and eliminates stranded headers.
+
+3. **Apply the same “measure‑then‑break” pattern to CRITICAL REQUIREMENTS, ACTION PRIORITIES, and STRATEGIC INSIGHTS.**
+   Wrap every bullet to the column width, sum its height, then decide whether to start a new page. The lists in your example vary from 2–6 items and include long wrapped bullets (“Regular AI Check‑ups Needed”, etc.), so guessing leaves visible gaps. 
+
+---
+
+## Guardrails to make section presence deterministic
+
+* **Never skip on falsy—skip only when truly empty.** Use `hasContent` / `hasList` helpers so normalized strings like `"-"` don’t get treated as “content present”.
+* **Default everything.** For every section: `section = userProvided ?? templateDefault`. That ensures you always render a coherent block even when upstream data is sparse.
+* **Render once, from a composed model.** Don’t render as each async piece arrives.
+
+---
+
+## Quick QA you (or your dev) can run on each build
+
+1. **Copy/paste test** from a domain section—no weird characters; bullets copy as plain `-`/`>` or as separate lines as intended. (Your current pulse sample passes this; spacing looks clean.) 
+2. **No stranded headers**: each domain’s heading is followed by at least two wrapped lines of “Why this matters” on the same page.
+3. **No >25% white band** at the bottom of any page unless a new domain starts on the next page.
+4. **All expected sections present**: Critical Requirements, Action Priorities, all 6 domain blocks, Strategic Insights. (They’re present in the sample you sent.) 
+
+---
+
+## Why this also explains the earlier “context” layout weirdness
+
+* The *context* PDFs you sent were visually different: one 3‑page, one 2‑page, both correct for that template; but the big‑gap behavior you described there is the same root cause—page‑breaks on fixed guesses before variable‑height blocks (two columns on context pages amplify this). Using measured heights removes those gaps in both document types.
+
+---
+
+### Bottom line
+
+* **Missing sections** are almost always due to aggressive emptiness checks or conditional fallbacks that resolve to `""`/`[]` under some answer sets—tighten your guards and supply defaults.
+* **Large white gaps** come from *fixed* pre‑break estimates; switch to *measured* heights and split only at subsection boundaries. Do this for the domain blocks and the front‑matter lists (requirements, priorities, insights).
+
+**Confidence:**
+
+* **High** on the whitespace diagnosis and the measured‑layout fixes (they match the content shapes in your pulse PDF exactly). 
+* **Medium‑high** on the “missing section” causes; I can’t see your current code, but the described guards/fallbacks are the standard culprits and align with the behavior you reported across different answer sets.
+* **High** that applying these fixes will make both *context* and *pulse* PDFs render consistently across inputs.

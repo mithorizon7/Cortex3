@@ -1,0 +1,157 @@
+You’re seeing **two separate issues**:
+
+---
+
+## 1) Why “Strategic Context” sometimes appears empty
+
+**Root cause**
+In your generator you split the narrative into two paragraphs and then *only* use the second paragraph for the left‑hand **“Strategic Context”** column. If the “mirror” insight comes back as a single paragraph (i.e., no `\n\n`), your fallback makes the strategic context **empty** when `hasMirror` is true:
+
+```ts
+const insightParts = (hasMirror ? data.mirror?.insight : data.insight)?.split('\n\n') || [];
+const mainInsight = insightParts[0] || '';
+// current fallback:
+const strategicContext = insightParts[1] || (hasMirror ? '' : mainInsight);
+```
+
+That `hasMirror ? '' : mainInsight` is the culprit—when you have mirror data and only one paragraph, you explicitly set Strategic Context to **""**. 
+
+**Fix (robust fallback)**
+Always fall back to the first paragraph if a second one isn’t present:
+
+```ts
+// Replace your strategicContext line with either of these options:
+const strategicContext = insightParts[1] && insightParts[1].trim()
+  ? insightParts[1]
+  : mainInsight;
+
+// or, with nullish coalescing + trim guard:
+const second = insightParts[1]?.trim();
+const strategicContext = second?.length ? second : mainInsight;
+```
+
+With this change, Strategic Context will **never** be blank simply because the upstream text arrived as one paragraph. (Everything else in your left‑column render path assumes `strategicContext` is a non‑empty string. )
+
+> Note: In the two example context PDFs you attached, both do show a populated Strategic Context paragraph (e.g., the “Strategic Edge AI…” narrative in CCB33831 and “Accelerating Edge AI…” in 5EB68A4F), so the “missing” case likely happens with other answer combinations where the generator returned one paragraph.
+
+---
+
+## 2) Why the layout sometimes has big white gaps and spreads oddly
+
+You’re seeing extra whitespace for two reasons:
+
+### A) **Right‑column page breaks use a fixed estimate (26)**
+
+Before drawing each **Organizational Context** card you force a break with a constant:
+
+```ts
+({ cursorY: rightY } = addPageIfNeeded(doc, 26, rightY, runHeader));
+```
+
+…but the card’s height varies with content. The card is actually drawn with:
+
+```ts
+doc.rect(x, y - 3, w, 6 + bodyLines.reduce((acc, ls) => acc + (ls.length * PAGE.line) + 1.5, 0) + 2, "F");
+```
+
+So your “26” can be too small (card overflows) or too big (card gets pushed to a new page, leaving **avoidable** whitespace). Use a measured estimate instead of `26`.
+
+**Drop‑in fix**
+
+```ts
+function estimateCardHeight(bodyLines: string[][]) {
+  // mirror drawCard’s math
+  const headerH = PAGE.line * 1.8;           // title area you advance after header
+  const bodyH = bodyLines.reduce((acc, ls) => acc + (ls.length * (PAGE.line - 0.1)) + 1.2, 0);
+  const padding = 0;                          // drawCard returns y at end; we already include spacing outside
+  return headerH + bodyH + padding;
+}
+
+// …before each card:
+const body = b.items.map(arr => wrap(doc, arr.join(" "), col.right.w - 6));
+const need = estimateCardHeight(body);
+// Use the actual height instead of 26
+({ cursorY: rightY } = addPageIfNeeded(doc, need, rightY, runHeader));
+rightY = drawCard(doc, col.right.x, rightY, col.right.w, b.title, body);
+```
+
+That keeps cards together and prevents “mystery” gaps. 
+
+### B) **Two‑column sync across a page break**
+
+Within the left column you page‑break line‑by‑line (good), while the right column breaks only per‑card. If the **left** column turns the page mid‑paragraph and the **right** column still had room, the rest of that page (right side) ends with a **large blank band**—and the next section starts on the new page where the left column continued. This is a normal hazard of drawing columns **sequentially**.
+
+**Low‑code mitigation** (preflight): Before starting the two‑column block, measure both sides and force the entire two‑column block to start on a new page if it won’t fit together.
+
+```ts
+const maxY = doc.internal.pageSize.getHeight() - PAGE.footer - PAGE.margin;
+const leftLines = wrap(doc, strategicContext, col.left.w);
+const leftNeed = leftLines.length * PAGE.line + 2 + PAGE.line * 3; // lines + small spacer + subtitle block
+
+// reuse estimateCardHeight for right side:
+const allBodies = buckets.map(b => b.items.map(arr => wrap(doc, arr.join(" "), col.right.w - 6)));
+const rightNeed = allBodies.reduce((h, body) => h + estimateCardHeight(body) + 2, PAGE.line * 3 /*subTitle*/);
+
+const blockNeed = Math.max(leftNeed, rightNeed) + PAGE.line * 1.5; // trailing space you already add
+if (col.y + blockNeed > maxY) {
+  const after = addPageIfNeeded(doc, blockNeed, col.y, runHeader);
+  leftY = rightY = after.cursorY; // reset both to the same top
+}
+```
+
+This avoids starting a two‑column block near the bottom of a page where one side inevitably spills and creates a big whitespace mismatch. (You already compute `y = Math.max(leftY, rightY) + PAGE.line * 1.5` after the columns; this preflight keeps the columns on the **same** page to begin with.) 
+
+**Also worth doing**
+You use the same fixed “26” before other sections too (e.g., **LEADERSHIP GUIDANCE**, **SCENARIO LENS**), which can push whole sections to the next page even when enough space exists, leaving big bands of white. Measure those sections the same way (or at least use a smaller minimum) instead of `26`.
+
+---
+
+## (Optional) Keep the Strategic Context title clean when input is truly empty
+
+Even with the fallback above, you may occasionally get a legitimately empty narrative. If you prefer to **hide the left card** in that case:
+
+```ts
+const sc = strategicContext.trim();
+if (sc) {
+  leftY = drawSubTitle(doc, "Strategic Context", col.left.x, leftY);
+  leftY += 2;
+  for (const ln of wrap(doc, sc, col.left.w)) {
+    ({ cursorY: leftY } = addPageIfNeeded(doc, PAGE.line, leftY, runHeader));
+    setFont(doc, TYPO.body); setText(doc, PALETTE.ink);
+    doc.text(ln, col.left.x, leftY);
+    leftY += PAGE.line;
+  }
+}
+```
+
+(Otherwise you’ll produce a bold “Strategic Context” heading with nothing under it.) 
+
+---
+
+## What I see in the two sample context PDFs you attached
+
+* **CCB33831** (3 pages) shows a full Strategic Context narrative and the right‑hand cards; the layout looks balanced. 
+* **5EB68A4F** (2 pages) also shows Strategic Context + Organizational Context, but the composition is tighter (fewer words—so no spill). This is expected variance given different answers; the *blank‑space problem* appears when a long left column spills but the right column doesn’t (or when a `26`‑unit prebreak pushes a short card). 
+
+---
+
+## One‑screen summary of changes to make
+
+1. **Never blank out “Strategic Context”**
+   Replace the fallback so the left column uses the first paragraph if a second isn’t present. 
+
+2. **Break the right column using measured height, not `26`**
+   Add `estimateCardHeight(...)` and pass that to `addPageIfNeeded` before each card. 
+
+3. **Preflight the whole two‑column block**
+   If `y + max(leftNeed, rightNeed)` won’t fit, start the columns on a fresh page so they stay together. 
+
+4. **(Nice‑to‑have)** Measure before **LEADERSHIP GUIDANCE** and **SCENARIO LENS** too, instead of `26`. 
+
+---
+
+### Confidence
+
+* **High** that the missing/empty Strategic Context is caused by the `hasMirror ? '' : mainInsight` fallback. The logic is visible in your generator and would exactly produce the symptom you described. 
+* **High** that the oversized white bands are driven by (a) fixed `26`‑unit prebreaks before variable‑height cards/sections and (b) two‑column flow starting too low on the page, yielding column desynchronization across a page break. The constants and column code are present as cited.
+* **Medium** that you will want the optional “hide empty left card” guard; with the improved fallback you may not need it, but it prevents a lone title with no body.

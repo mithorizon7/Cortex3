@@ -1,0 +1,22 @@
+⚠️ Last tweaks before you ship
+Avoid double logos in the footer
+Right now you draw:
+In finalizeFooters(...): a left-aligned brand lockup at (logoX = PAGE.margin, logoY ≈ pageHeight − 34.5mm) with text “MIT Open Learning”.
+Then again addFooterLogoToAllPages(...): a centered logo near the bottom (y ≈ pageHeight − 12mm − drawH).
+That’s two separate images on every page. If the intention is both institute branding and a partner/company logo, great—just make it intentional (e.g., keep one left, one right, and ensure they never collide with page numbers). If you only wanted the company mark, remove one:
+Option A (simple): Delete the image block in finalizeFooters and keep addFooterLogoToAllPages.
+Option B (single pass): move the company logo code into finalizeFooters and stop calling addFooterLogoToAllPages.
+(Optional, typography) keep true en/em dashes now that Inter is embedded
+In normalizeText() you currently map \u2013/\u2014 → "-". With Inter, you can preserve them for nicer typography. Remove:
+.replace(/\u2013/g, "-")
+.replace(/\u2014/g, "-")
+Keep \u2011 (NB hyphen) and \u2212 (math minus) mappings as-is.
+(Optional, copy/paste polish) hyphen-free long-token wraps
+Your long-token handler inserts visible - and spaces. If you’d prefer clean copy/paste, insert a zero-width space \u200B as the break opportunity instead of a hyphen. (You’re normalizing before wrap, so it won’t be stripped.)
+// inside the long-token chunking branch in wrap()
+// instead of: chunks.push(chunk + '-');
+chunks.push(chunk + '\u200B');  // invisible break, no pasted hyphen
+(Cosmetic) footer spacing consistency
+You reserve a footer band with PAGE.footer = 18. finalizeFooters places the left logo at y ≈ pageHeight − 34.5, the page label at y = pageHeight − 6, and the centered logo (from addFooterLogoToAllPages) sits around pageHeight − 12 − drawH. These won’t technically overlap, but it’s tight. If you keep both logos, I’d set:
+addFooterLogoToAllPages({ marginMm: 14, widthMm: 20 }) to lower it slightly and reduce size, or
+Move the left lockup a bit down (closer to y ≈ pageHeight − 28) and the centered one a bit up (margin 16) so the eye reads a consistent band.
