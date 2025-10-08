@@ -1,0 +1,86 @@
+2) Two‑column preflight overestimates height → causes huge white gaps
+For “Leadership Guidance,” the preflight height sums the left and right column list heights. On the page they render side‑by‑side, so you must reserve space for the max, not the sum. Overestimation triggers premature page breaks and the long empty regions you’re seeing.
+Where: current preflight sums both lists before addPageIfNeeded. Example in 9/10 predecessors (same pattern): guidance height = title + estimateListHeight(actions, left.w) + estimateListHeight(watchouts, right.w); then addPageIfNeeded(...). 
+pdf-generator-9
+
+Fix:
+// measure with the actual column widths you'll use
+const grid = twoColumn(doc, y);
+setFont(doc, TYPO.body);               // ensure same font used for measuring
+const actionsH   = estimateListHeight(doc, actions,   grid.left.w);
+const watchoutsH = estimateListHeight(doc, watchouts, grid.right.w);
+
+// reserve heading + the taller column only
+const headingH = SPACING.h1Before + PAGE.line + SPACING.h1After;
+({ cursorY: y } = addPageIfNeeded(doc, headingH + Math.max(actionsH, watchoutsH), y, runHeader));
+
+y = drawSectionTitle(doc, "LEADERSHIP GUIDANCE", y, runHeader);
+This one change eliminates the spurious page breaks (and big white spaces).
+3) Long‑token wrapper inserts visible spaces inside words
+Your wrap helper now splits long tokens and then joins chunks with a normal space (' '). That introduces visible internal spaces in long identifiers/URLs, and can look like letter‑spacing glitches.
+Where: the wrap function in pdf-generator-10.ts (the branch that splits long tokens). It pushes chunks and returns chunks.join(' '). 
+pdf-generator-10
+
+Fix (minimal): join with a zero‑width space so copy/paste remains clean and no visible gaps appear:
+// before
+return chunks.join(' ');
+
+// after
+return chunks.join('\u200B');
+Also remove the + '\u200B' in width checks—it doesn’t change text width and can confuse later processing:
+// before
+if (doc.getTextWidth(testChunk + '\u200B') > maxTokenLength) ...
+
+// after
+if (doc.getTextWidth(testChunk) > maxTokenLength) ...
+Rationale: doc.getTextWidth already returns values in the document units (mm here), so comparing directly to your token limit is correct; adding ZWSP does nothing for measurement but risks polluting the content.
+4) Duplicated “MISCONCEPTION CHECK RESULTS” block
+That section appears twice in the Options Studio export code path, which can lead to duplicated output when present.
+Where: two near‑identical “Misconception Check” sections in the current generator source (two occurrences of the same heading and body). 
+pdf-generator-10
+ 
+pdf-generator-10
+
+Fix:
+Extract a helper drawMisconceptionCheck(doc, y, data, runHeader) and call it exactly once where appropriate.
+Delete the duplicate block.
+5) Heading spacing: consistent “more before than after”, and no “kissing” headers
+You’ve started this, but tighten it so every title uses the same spacing model and the measurement matches draw time:
+Use SPACING.h1Before/h1After and SPACING.h2Before/h2After both in preflight and in the draw functions. Your drawSectionTitle already applies widow control + an extra header pad (great), but keep color as accent (see #1) and ensure all subtitle calls pass through the same pattern.
+Where (good pattern exists): drawSectionTitle and drawSubTitle using SPACING blocks and calling addPageIfNeeded with SPACING.* + PAGE.line + SPACING.*. 
+pdf-generator-10
+
+Small upgrade: replace literal post‑draw arithmetic elsewhere with the constants to avoid drift. For example, domain separators currently add PAGE.line * 2 instead of your spacing constant—prefer one source of truth. See earlier helper: drawDomainSeparator returns y + PAGE.line * 2. Change to y + SPACING.domainSeparator. 
+pdf-generator-4
+6) Footer logo: guard + consistent baseline
+Your footer pass is robust, but add a simple guard to avoid ReferenceErrors when the logo constant is unavailable, and compute the baseline once:
+function finalizeFooters(doc: any, labelLeft: string) {
+  const n = doc.getNumberOfPages();
+  const { pw, ph } = bounds(doc);
+  const y = ph - PAGE.footer/2;  // single baseline
+  for (let i = 1; i <= n; i++) {
+    doc.setPage(i);
+    // logo (optional)
+    try {
+      if (typeof EMBEDDED_LOGO === 'string' && EMBEDDED_LOGO) {
+        const w = 16, h = 16;
+        const x = pw/2 - w/2;
+        doc.addImage(EMBEDDED_LOGO, "PNG", x, y - h/2, w, h);
+      }
+    } catch {}
+    // left label + right page number as you already do...
+  }
+}
+Your current implementation is already close; this just avoids rare crashes and keeps optical alignment consistent across pages. (See the prior footer implementation you added.) 
+pdf-generator-10
+Small improvements (quality, not correctness)
+Use the same measuring font as the drawing font before every estimate*Height call. You already do this in some places (“Set font BEFORE measurement”); make it universal to keep wrapping identical at draw time. 
+pdf-generator-9
+Unify list indents and bullets. Some versions use indent = 4.5 with glyph bullets; newer ones use vector dots with indent = 5.5. Pick one (the vector dot is more reliable across viewers) and consolidate to one drawBullets implementation. 
+pdf-generator-4
+ 
+pdf-generator-7
+Normalize domain separator spacing. Change the return in drawDomainSeparator from y + PAGE.line*2 to a named constant so it stays harmonious with the rest of the rhythm system. 
+pdf-generator-4
+Keep two‑column measurement single‑pass. In a couple of spots I still see twoColumn(doc, y) called only after preflight. Call it before measuring left/right lists so you use the exact widths for measurement (you already do this in places; just ensure it’s consistent everywhere). 
+pdf-generator-9

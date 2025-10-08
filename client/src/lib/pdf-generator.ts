@@ -264,22 +264,22 @@ function wrap(doc: any, text: string, width: number): string[] {
   const maxTokenLength = width * 0.8;
   const safeText = clean.split(/\s+/).map(token => {
     if (doc.getTextWidth(token) > maxTokenLength) {
-      // Break long token into chunks with hyphens
+      // Break long token into chunks with zero-width spaces
       const chars = Array.from(token);
       const chunks: string[] = [];
       let chunk = '';
       
       for (const char of chars) {
         const testChunk = chunk + char;
-        if (doc.getTextWidth(testChunk + '\u200B') > maxTokenLength && chunk.length > 0) {
-          chunks.push(chunk + '\u200B');  // Zero-width space for clean copy/paste
+        if (doc.getTextWidth(testChunk) > maxTokenLength && chunk.length > 0) {
+          chunks.push(chunk);
           chunk = char;
         } else {
           chunk = testChunk;
         }
       }
       if (chunk) chunks.push(chunk);
-      return chunks.join(' ');
+      return chunks.join('\u200B');  // Zero-width space prevents visible gaps
     }
     return token;
   }).join(' ');
@@ -877,14 +877,17 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
   // Leadership Guidance (two buckets)
   const actions = hasMirror ? (data.mirror?.actions || []) : [];
   const watchouts = hasMirror ? (data.mirror?.watchouts || []) : [];
-  setFont(doc, TYPO.body); // Set font BEFORE measurement
-  const guidanceHeight = SPACING.h1Before + SPACING.h1After + PAGE.line + // Section title with spacing
-    estimateListHeight(doc, actions, finalCol.left.w) + 
-    estimateListHeight(doc, watchouts, finalCol.right.w);
-  ({ cursorY: y } = addPageIfNeeded(doc, Math.max(guidanceHeight, 20), y, runHeader));
-  y = drawSectionTitle(doc, "LEADERSHIP GUIDANCE", y, runHeader);
   
+  // Measure with actual column widths before preflight
   const grid = twoColumn(doc, y);
+  setFont(doc, TYPO.body); // Set font BEFORE measurement
+  const actionsH = estimateListHeight(doc, actions, grid.left.w);
+  const watchoutsH = estimateListHeight(doc, watchouts, grid.right.w);
+  
+  // Reserve heading + taller column only (not sum!)
+  const headingH = SPACING.h1Before + PAGE.line + SPACING.h1After;
+  ({ cursorY: y } = addPageIfNeeded(doc, headingH + Math.max(actionsH, watchoutsH), y, runHeader));
+  y = drawSectionTitle(doc, "LEADERSHIP GUIDANCE", y, runHeader);
   let ay = grid.y, wy = grid.y;
 
   if (actions.length) {
