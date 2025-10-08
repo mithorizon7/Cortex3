@@ -825,6 +825,7 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
   // Leadership Guidance (two buckets)
   const actions = hasMirror ? (data.mirror?.actions || []) : [];
   const watchouts = hasMirror ? (data.mirror?.watchouts || []) : [];
+  setFont(doc, TYPO.body); // Set font BEFORE measurement
   const guidanceHeight = PAGE.line * 2.5 + // Section title
     estimateListHeight(doc, actions, col.left.w) + 
     estimateListHeight(doc, watchouts, col.right.w);
@@ -851,6 +852,7 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
   // Scenario Lens
   const sc = hasMirror ? data.mirror?.scenarios : undefined;
   if (sc?.if_regulation_tightens || sc?.if_budgets_tighten) {
+    setFont(doc, TYPO.body); // Set font BEFORE measurement
     const scenarioHeight = PAGE.line * 2.5 + // Section title
       estimateTextHeight(doc, sc.if_regulation_tightens || '', bounds(doc).w) +
       estimateTextHeight(doc, sc.if_budgets_tighten || '', bounds(doc).w) +
@@ -1330,6 +1332,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
   if (Array.isArray(data.triggeredGates) && data.triggeredGates.length > 0) {
     const gateIntro = `Your organizational context triggered ${data.triggeredGates.length} critical requirement${data.triggeredGates.length > 1 ? 's' : ''} that must be addressed before scaling AI:`;
     const gateItems = data.triggeredGates.map((gate: any) => `${gate.title}: ${gate.reason || gate.explanation || ''}`);
+    setFont(doc, TYPO.body); // Set font BEFORE measurement
     const gateHeight = PAGE.line * 2.5 + // Section title
       estimateTextHeight(doc, gateIntro, bounds(doc).w) +
       estimateListHeight(doc, gateItems, bounds(doc).w) +
@@ -1346,6 +1349,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
   // Organizational Context Summary
   if (data.contextProfile) {
     const contextIntro = "Your assessment captured the following organizational dimensions that shape your AI readiness requirements:";
+    setFont(doc, TYPO.body); // Set font BEFORE measurement
     const contextHeight = PAGE.line * 2.5 + // Section title
       estimateTextHeight(doc, contextIntro, bounds(doc).w) +
       PAGE.line * 8; // Estimate for context items (will be refined below)
@@ -1510,6 +1514,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     y += PAGE.line * 0.8;
     
     // What good looks like
+    setFont(doc, TYPO.body); // Set font BEFORE measurement
     const goodLooksHeight = PAGE.line * 1.2 + estimateListHeight(doc, guidance.whatGoodLooks, bounds(doc).w) + PAGE.line * 0.5;
     ({ cursorY: y } = addPageIfNeeded(doc, goodLooksHeight, y, runHeader));
     setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
@@ -1519,6 +1524,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     y += PAGE.line * 0.5;
     
     // How to improve
+    setFont(doc, TYPO.body); // Set font BEFORE measurement
     const improveHeight = PAGE.line * 1.2 + estimateTextHeight(doc, guidance.howToImprove, bounds(doc).w) + PAGE.line * 0.8;
     ({ cursorY: y } = addPageIfNeeded(doc, improveHeight, y, runHeader));
     setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
@@ -1530,6 +1536,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     
     // Common pitfalls
     if (guidance.commonPitfalls && guidance.commonPitfalls.length > 0) {
+      setFont(doc, TYPO.body); // Set font BEFORE measurement
       const pitfallsHeight = PAGE.line * 1.2 + estimateListHeight(doc, guidance.commonPitfalls, bounds(doc).w) + PAGE.line * 0.5;
       ({ cursorY: y } = addPageIfNeeded(doc, pitfallsHeight, y, runHeader));
       setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
@@ -1541,6 +1548,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     
     // Discussion prompts (styled differently)
     if (guidance.discussionPrompts && guidance.discussionPrompts.length > 0) {
+      setFont(doc, TYPO.body); // Set font BEFORE measurement
       const promptsHeight = PAGE.line * 1.2 + estimateListHeight(doc, guidance.discussionPrompts, bounds(doc).w) + PAGE.line * 0.8;
       ({ cursorY: y } = addPageIfNeeded(doc, promptsHeight, y, runHeader));
       setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);

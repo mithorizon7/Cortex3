@@ -56,8 +56,9 @@ The system utilizes a three-stage assessment workflow:
   - **Typography Preservation**: Preserved en/em dashes (– and —) in PDF by removing unnecessary Unicode replacements, maintaining Inter font's native support for these characters
   - **Long Token Wrapping**: Replaced visible hyphen with zero-width space (`\u200B`) for clean copy/paste of long technical terms
   - **Strategic Context Empty Bug**: Fixed fallback logic to always use first paragraph when second paragraph doesn't exist
-  - **Dynamic Height Measurements**: Created `estimateBodyHeight()`, `estimateListHeight()`, and `estimateCardHeight()` helper functions for accurate content measurement
-  - **Eliminated White Gaps**: Replaced all fixed "26mm" page breaks with measured heights throughout the PDF generator, preventing white space between sections
+  - **Dynamic Height Measurements**: Created `estimateTextHeight()`, `estimateListHeight()`, and `estimateCardHeight()` helper functions for accurate content measurement
+  - **Eliminated White Gaps**: Replaced all major section-level hardcoded page breaks (18, 20, 22, 24, 26mm) with dynamic height calculations throughout the PDF generator, preventing white space between sections
+  - **CRITICAL Font State Fix**: Added `setFont()` calls BEFORE all height estimation calls (16+ locations) to ensure measurements use correct typography, preventing page overflow bugs caused by stale font state
   - **Two-Column Preflight Logic**: Added column height preflight checks to prevent columns from starting near page bottom, eliminating layout desynchronization across page breaks
   - All changes in `client/src/lib/pdf-generator.ts`
 
