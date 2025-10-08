@@ -27,7 +27,22 @@ The system utilizes a three-stage assessment workflow:
 A comprehensive Content Security Policy (CSP) is implemented in production environments to protect against XSS attacks and control resource loading. This CSP includes directives for `default-src`, `style-src`, `script-src`, `img-src`, `connect-src`, `font-src`, `object-src`, `media-src`, and `frame-src`, with specific allowances for Firebase and Google OAuth domains. Firebase Authentication requirements are managed. Rate limiting is implemented, with hybrid user-based tracking for authenticated users and IP-based limits for anonymous traffic.
 
 ### PDF Generation
-The platform includes robust PDF generation capabilities for executive briefs, featuring comprehensive error handling, data validation, and pagination protection to ensure reliable output for multi-page documents with varying content lengths. It also includes a centralized spacing configuration for consistent visual hierarchy and dynamic height measurements to prevent white gaps.
+The platform includes robust PDF generation capabilities for executive briefs with a centralized spacing system ensuring consistent visual hierarchy across all three PDF generators (Core/Pulse Brief, Options Studio, Enhanced Brief).
+
+**Spacing Architecture**:
+- **Centralized Constants**: All spacing uses absolute millimeter values defined in the `SPACING` object:
+  - `h1Before: 8mm, h1After: 9mm` - Major section title spacing (total ~17mm clearance)
+  - `h2Before: 6mm, h2After: 3mm` - Subsection title spacing
+  - `sectionGap: 10mm` - Gap between major sections
+  - `paraGap: 3mm` - Paragraph spacing
+  - `listGap: 2.5mm` - List item spacing
+
+**Key Features**:
+- Comprehensive error handling and data validation
+- Pagination protection with dynamic height measurements to prevent white gaps
+- Running headers support for multi-page sections
+- Systematic replacement of hardcoded spacing values with SPACING constants for maintainability
+- Three-tier spacing hierarchy (section > heading > paragraph) for clear visual structure
 
 ## External Dependencies
 
