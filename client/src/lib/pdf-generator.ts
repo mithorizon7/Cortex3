@@ -346,46 +346,45 @@ function finalizeFooters(doc: any, labelLeft: string) {
   
   for (let i = 1; i <= n; i++) {
     doc.setPage(i);
-    const w = doc.internal.pageSize.getWidth();
-    const h = doc.internal.pageSize.getHeight();
+    const { pw, ph } = bounds(doc);
+    const y = ph - PAGE.footer / 2;  // Single baseline for footer elements
     
     // Add embedded logo and MIT Open Learning branding
     try {
-      const logoWidth = 32;
-      const logoHeight = 8.5;
-      const brandingText = "MIT Open Learning";
-      
-      setFont(doc, TYPO.caption);
-      setText(doc, PALETTE.inkSubtle);
-      const textWidth = doc.getTextWidth(brandingText);
-      
-      // Center the logo + text combination
-      const totalWidth = logoWidth + 3 + textWidth;
-      const startX = (w - totalWidth) / 2;
-      
-      // Logo on left (verify image plugin is available)
-      const logoX = startX;
-      const logoY = h - 18;
-      if (typeof doc.addImage === 'function') {
+      if (typeof EMBEDDED_LOGO === 'string' && EMBEDDED_LOGO && typeof doc.addImage === 'function') {
+        const logoWidth = 32;
+        const logoHeight = 8.5;
+        const brandingText = "MIT Open Learning";
+        
+        setFont(doc, TYPO.caption);
+        setText(doc, PALETTE.inkSubtle);
+        const textWidth = doc.getTextWidth(brandingText);
+        
+        // Center the logo + text combination
+        const totalWidth = logoWidth + 3 + textWidth;
+        const startX = (pw - totalWidth) / 2;
+        const logoX = startX;
+        const logoY = ph - 18;
+        
         doc.addImage(EMBEDDED_LOGO, 'PNG', logoX, logoY, logoWidth, logoHeight);
+        
+        // Text on right of logo, vertically centered
+        const textX = logoX + logoWidth + 3;
+        const textY = logoY + (logoHeight / 2) + 1.5;
+        doc.text(brandingText, textX, textY);
       }
-      
-      // Text on right of logo, vertically centered
-      const textX = logoX + logoWidth + 3;
-      const textY = logoY + (logoHeight / 2) + 1.5;
-      doc.text(brandingText, textX, textY);
     } catch (error) {
       // Logo failed to load - skip it and continue with PDF generation
       console.warn('Logo could not be added to PDF footer:', error);
     }
     
     // Page text at bottom
-    const y = h - 6;
+    const pageY = ph - 6;
     setFont(doc, TYPO.caption);
     setText(doc, PALETTE.inkSubtle);
-    doc.text(labelLeft, PAGE.margin, y);
+    doc.text(labelLeft, PAGE.margin, pageY);
     const pageText = `Page ${i} of ${n}`;
-    doc.text(pageText, w - PAGE.margin - doc.getTextWidth(pageText), y);
+    doc.text(pageText, pw - PAGE.margin - doc.getTextWidth(pageText), pageY);
   }
 }
 
