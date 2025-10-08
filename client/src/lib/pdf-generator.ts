@@ -691,7 +691,7 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
   setFont(doc, TYPO.hero);
   doc.text("CORTEX™", PAGE.margin, 18);
   setFont(doc, TYPO.body);
-  doc.text("EXECUTIVE AI READINESS BRIEF", PAGE.margin, 26);
+  doc.text("AI STRATEGIC MATURITY INDEX", PAGE.margin, 26);
 
   // Right meta
   const dateText = `Generated: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`;
@@ -1271,7 +1271,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
   setFont(doc, TYPO.hero);
   doc.text("CORTEX™", PAGE.margin, 18);
   setFont(doc, TYPO.body);
-  doc.text("EXECUTIVE AI READINESS BRIEF", PAGE.margin, 26);
+  doc.text("AI STRATEGIC MATURITY INDEX", PAGE.margin, 26);
 
   const dateText = `Generated: ${new Date(data.completedAt ?? Date.now()).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`;
   const idText = `ID: ${String(assessmentId).slice(0, 8).toUpperCase()}`;
