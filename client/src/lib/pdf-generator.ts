@@ -738,25 +738,13 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
 
   // Two-column section: Strategic Context + Organizational Context
   const runHeader = "CORTEX — Situation Assessment";
-  const col = twoColumn(doc, y);
-  let leftY = col.y;
-  let rightY = col.y;
-
-  // Left card: Strategic Context (always present)
-  leftY = drawSubTitle(doc, "Strategic Context", col.left.x, leftY);
-  leftY += 2;
-  const leftLines = wrap(doc, strategicContext, col.left.w);
-  for (const ln of leftLines) {
-    ({ cursorY: leftY } = addPageIfNeeded(doc, PAGE.line, leftY, runHeader));
-    setFont(doc, TYPO.body); setText(doc, PALETTE.ink);
-    doc.text(ln, col.left.x, leftY);
-    leftY += PAGE.line;
-  }
-
-  // Right column: Organizational Context as compact cards
-  rightY = drawSubTitle(doc, "Organizational Context", col.right.x, rightY);
-  rightY += 2;
-
+  
+  // Preflight: measure both columns to prevent starting near page bottom
+  const maxY = doc.internal.pageSize.getHeight() - PAGE.footer - PAGE.margin;
+  const preflightLeftLines = wrap(doc, strategicContext, twoColumn(doc, y).left.w);
+  const leftNeed = preflightLeftLines.length * PAGE.line + 2 + PAGE.line * 3; // lines + spacing + subtitle
+  
+  // Estimate right column height (all cards)
   const cp = data.contextProfile;
   const buckets: { title: string; items: (string[])[] }[] = [
     {
@@ -792,11 +780,42 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
       ]
     }
   ];
+  
+  const rightNeed = buckets.reduce((h, b) => {
+    const body = b.items.map(arr => wrap(doc, arr.join(" "), twoColumn(doc, y).right.w - 6));
+    return h + estimateCardHeight(body) + 2;
+  }, PAGE.line * 3);
+  
+  const blockNeed = Math.max(leftNeed, rightNeed) + PAGE.line * 1.5;
+  if (y + blockNeed > maxY) {
+    const after = addPageIfNeeded(doc, blockNeed, y, runHeader);
+    y = after.cursorY;
+  }
+  
+  const col = twoColumn(doc, y);
+  let leftY = col.y;
+  let rightY = col.y;
+
+  // Left card: Strategic Context (always present)
+  leftY = drawSubTitle(doc, "Strategic Context", col.left.x, leftY);
+  leftY += 2;
+  // Reuse preflightLeftLines from measurement above
+  for (const ln of preflightLeftLines) {
+    ({ cursorY: leftY } = addPageIfNeeded(doc, PAGE.line, leftY, runHeader));
+    setFont(doc, TYPO.body); setText(doc, PALETTE.ink);
+    doc.text(ln, col.left.x, leftY);
+    leftY += PAGE.line;
+  }
+
+  // Right column: Organizational Context as compact cards
+  rightY = drawSubTitle(doc, "Organizational Context", col.right.x, rightY);
+  rightY += 2;
 
   for (const b of buckets) {
-    // estimate height and force break if needed
-    ({ cursorY: rightY } = addPageIfNeeded(doc, 26, rightY, runHeader));
+    // Measure card height before drawing to prevent white gaps
     const body = b.items.map(arr => wrap(doc, arr.join(" "), col.right.w - 6));
+    const cardHeight = estimateCardHeight(body);
+    ({ cursorY: rightY } = addPageIfNeeded(doc, cardHeight, rightY, runHeader));
     rightY = drawCard(doc, col.right.x, rightY, col.right.w, b.title, body);
     rightY += 2;
   }
@@ -804,12 +823,14 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
   y = Math.max(leftY, rightY) + PAGE.line * 1.5;
 
   // Leadership Guidance (two buckets)
-  ({ cursorY: y } = addPageIfNeeded(doc, 26, y, runHeader));
-  y = drawSectionTitle(doc, "LEADERSHIP GUIDANCE", y);
-
   const actions = hasMirror ? (data.mirror?.actions || []) : [];
   const watchouts = hasMirror ? (data.mirror?.watchouts || []) : [];
-
+  const guidanceHeight = PAGE.line * 2.5 + // Section title
+    estimateListHeight(doc, actions, col.left.w) + 
+    estimateListHeight(doc, watchouts, col.right.w);
+  ({ cursorY: y } = addPageIfNeeded(doc, Math.max(guidanceHeight, 20), y, runHeader));
+  y = drawSectionTitle(doc, "LEADERSHIP GUIDANCE", y);
+  
   const grid = twoColumn(doc, y);
   let ay = grid.y, wy = grid.y;
 
@@ -830,7 +851,11 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
   // Scenario Lens
   const sc = hasMirror ? data.mirror?.scenarios : undefined;
   if (sc?.if_regulation_tightens || sc?.if_budgets_tighten) {
-    ({ cursorY: y } = addPageIfNeeded(doc, 30, y, runHeader));
+    const scenarioHeight = PAGE.line * 2.5 + // Section title
+      estimateTextHeight(doc, sc.if_regulation_tightens || '', bounds(doc).w) +
+      estimateTextHeight(doc, sc.if_budgets_tighten || '', bounds(doc).w) +
+      PAGE.line * 4; // Subsection titles and spacing
+    ({ cursorY: y } = addPageIfNeeded(doc, scenarioHeight, y, runHeader));
     y = drawSectionTitle(doc, "SCENARIO LENS", y);
 
     if (sc.if_regulation_tightens) {
@@ -1282,23 +1307,31 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
 
   // Triggered Gates Section
   if (Array.isArray(data.triggeredGates) && data.triggeredGates.length > 0) {
-    ({ cursorY: y } = addPageIfNeeded(doc, 26, y, runHeader));
+    const gateIntro = `Your organizational context triggered ${data.triggeredGates.length} critical requirement${data.triggeredGates.length > 1 ? 's' : ''} that must be addressed before scaling AI:`;
+    const gateItems = data.triggeredGates.map((gate: any) => `${gate.title}: ${gate.reason || gate.explanation || ''}`);
+    const gateHeight = PAGE.line * 2.5 + // Section title
+      estimateTextHeight(doc, gateIntro, bounds(doc).w) +
+      estimateListHeight(doc, gateItems, bounds(doc).w) +
+      PAGE.line;
+    ({ cursorY: y } = addPageIfNeeded(doc, gateHeight, y, runHeader));
     y = drawSectionTitle(doc, "CRITICAL REQUIREMENTS", y);
     setFont(doc, TYPO.body); setText(doc, PALETTE.ink);
-    y = drawBody(doc, `Your organizational context triggered ${data.triggeredGates.length} critical requirement${data.triggeredGates.length > 1 ? 's' : ''} that must be addressed before scaling AI:`, bounds(doc).w, y, runHeader);
+    y = drawBody(doc, gateIntro, bounds(doc).w, y, runHeader);
     y += PAGE.line * 0.5;
-    
-    const gateItems = data.triggeredGates.map((gate: any) => `${gate.title}: ${gate.reason || gate.explanation || ''}`);
     y = drawBullets(doc, gateItems, bounds(doc).w, PAGE.margin, y, runHeader);
     y += PAGE.line;
   }
 
   // Organizational Context Summary
   if (data.contextProfile) {
-    ({ cursorY: y } = addPageIfNeeded(doc, 28, y, runHeader));
+    const contextIntro = "Your assessment captured the following organizational dimensions that shape your AI readiness requirements:";
+    const contextHeight = PAGE.line * 2.5 + // Section title
+      estimateTextHeight(doc, contextIntro, bounds(doc).w) +
+      PAGE.line * 8; // Estimate for context items (will be refined below)
+    ({ cursorY: y } = addPageIfNeeded(doc, contextHeight, y, runHeader));
     y = drawSectionTitle(doc, "ORGANIZATIONAL CONTEXT", y);
     setFont(doc, TYPO.body); setText(doc, PALETTE.ink);
-    y = drawBody(doc, "Your assessment captured the following organizational dimensions that shape your AI readiness requirements:", bounds(doc).w, y, runHeader);
+    y = drawBody(doc, contextIntro, bounds(doc).w, y, runHeader);
     y += PAGE.line * 0.5;
     
     const contextItems: string[] = [];
@@ -1448,7 +1481,8 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     y += PAGE.line * 0.8;
     
     // What good looks like
-    ({ cursorY: y } = addPageIfNeeded(doc, 26, y, runHeader));
+    const goodLooksHeight = PAGE.line * 1.2 + estimateListHeight(doc, guidance.whatGoodLooks, bounds(doc).w) + PAGE.line * 0.5;
+    ({ cursorY: y } = addPageIfNeeded(doc, goodLooksHeight, y, runHeader));
     setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
     doc.text("What Good Looks Like", PAGE.margin, y);
     y += PAGE.line * 1.2;
@@ -1456,7 +1490,8 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     y += PAGE.line * 0.5;
     
     // How to improve
-    ({ cursorY: y } = addPageIfNeeded(doc, 18, y, runHeader));
+    const improveHeight = PAGE.line * 1.2 + estimateTextHeight(doc, guidance.howToImprove, bounds(doc).w) + PAGE.line * 0.8;
+    ({ cursorY: y } = addPageIfNeeded(doc, improveHeight, y, runHeader));
     setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
     doc.text("How to Improve", PAGE.margin, y);
     y += PAGE.line * 1.2;
@@ -1466,7 +1501,8 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     
     // Common pitfalls
     if (guidance.commonPitfalls && guidance.commonPitfalls.length > 0) {
-      ({ cursorY: y } = addPageIfNeeded(doc, 20, y, runHeader));
+      const pitfallsHeight = PAGE.line * 1.2 + estimateListHeight(doc, guidance.commonPitfalls, bounds(doc).w) + PAGE.line * 0.5;
+      ({ cursorY: y } = addPageIfNeeded(doc, pitfallsHeight, y, runHeader));
       setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
       doc.text("Common Pitfalls to Avoid", PAGE.margin, y);
       y += PAGE.line * 1.2;
@@ -1476,7 +1512,8 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     
     // Discussion prompts (styled differently)
     if (guidance.discussionPrompts && guidance.discussionPrompts.length > 0) {
-      ({ cursorY: y } = addPageIfNeeded(doc, 20, y, runHeader));
+      const promptsHeight = PAGE.line * 1.2 + estimateListHeight(doc, guidance.discussionPrompts, bounds(doc).w) + PAGE.line * 0.8;
+      ({ cursorY: y } = addPageIfNeeded(doc, promptsHeight, y, runHeader));
       setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
       doc.text("Strategic Discussion Questions", PAGE.margin, y);
       y += PAGE.line * 1.2;
@@ -1509,9 +1546,6 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
   }
 
   finalizeFooters(doc, "CORTEX Executive Brief");
-
-  // Add footer logo to all pages
-  addFooterLogoToAllPages(doc, FOOTER_LOGO_BASE64, { widthMm: 22, marginMm: 12, format: "PNG", align: "center", compression: "FAST" });
 
   const blob = doc.output("blob");
   if (!(blob instanceof Blob)) throw new Error("Failed to generate PDF blob");
