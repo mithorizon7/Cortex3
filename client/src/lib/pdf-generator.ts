@@ -183,9 +183,9 @@ const PAGE = {
 const SPACING = {
   sectionGap: 10,   // gap between major sections in mm
   h1Before:   8,    // space before H1 in mm  
-  h1After:    4,    // space after H1 in mm
+  h1After:    9,    // space after H1 in mm (total ~17mm matches original PAGE.line*4)
   h2Before:   6,    // space before H2 in mm
-  h2After:    2.5,  // space after H2 in mm
+  h2After:    3,    // space after H2 in mm
   paraGap:    3,    // gap between paragraphs in mm
   listGap:    2.5   // gap between list items in mm
 };
@@ -884,16 +884,16 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
   if (actions.length) {
     setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
     doc.text("Priority Actions", grid.left.x, ay);
-    ay += PAGE.line * 1.6;
+    ay += SPACING.h2After; // H3 subsection spacing
     ay = drawBullets(doc, actions, grid.left.w, grid.left.x, ay);
   }
   if (watchouts.length) {
     setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
     doc.text("Watch-outs", grid.right.x, wy);
-    wy += PAGE.line * 1.6;
+    wy += SPACING.h2After; // H3 subsection spacing
     wy = drawBullets(doc, watchouts, grid.right.w, grid.right.x, wy);
   }
-  y = Math.max(ay, wy) + PAGE.line;
+  y = Math.max(ay, wy) + SPACING.paraGap;
 
   // Scenario Lens
   const sc = hasMirror ? data.mirror?.scenarios : undefined;
@@ -909,16 +909,16 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
     if (sc.if_regulation_tightens) {
       setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
       doc.text("If regulation tightens:", PAGE.margin, y);
-      y += PAGE.line * 1.2;
+      y += SPACING.h2After; // H3 subsection spacing
       y = drawBody(doc, sc.if_regulation_tightens, bounds(doc).w, y);
-      y += PAGE.line * 0.6;
+      y += SPACING.paraGap;
     }
     if (sc.if_budgets_tighten) {
       setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
       doc.text("If budgets tighten:", PAGE.margin, y);
-      y += PAGE.line * 1.2;
+      y += SPACING.h2After; // H3 subsection spacing
       y = drawBody(doc, sc.if_budgets_tighten, bounds(doc).w, y);
-      y += PAGE.line * 0.6;
+      y += SPACING.paraGap;
     }
   }
 
@@ -1368,12 +1368,12 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
   if (emergingDomains > 0) summaryText += `${emergingDomains} ${emergingDomains === 1 ? 'is' : 'are'} in early stages. `;
   
   y = drawBody(doc, summaryText, bounds(doc).w, y, runHeader);
-  y += PAGE.line * 1.5;
+  y += SPACING.paraGap;
 
   // Domain bars
   ({ cursorY: y } = addPageIfNeeded(doc, 50, y, runHeader));
   y = drawScoreBars(doc, data.pillarScores, y);
-  y += PAGE.line;
+  y += SPACING.paraGap;
 
   // Triggered Gates Section
   if (Array.isArray(data.triggeredGates) && data.triggeredGates.length > 0) {
@@ -1388,7 +1388,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     y = drawSectionTitle(doc, "CRITICAL REQUIREMENTS", y, runHeader);
     setFont(doc, TYPO.body); setText(doc, PALETTE.ink);
     y = drawBody(doc, gateIntro, bounds(doc).w, y, runHeader);
-    y += PAGE.line * 0.5;
+    y += SPACING.listGap;
     y = drawBullets(doc, gateItems, bounds(doc).w, PAGE.margin, y, runHeader);
     y += SPACING.sectionGap;
   }
@@ -1404,7 +1404,7 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     y = drawSectionTitle(doc, "ORGANIZATIONAL CONTEXT", y, runHeader);
     setFont(doc, TYPO.body); setText(doc, PALETTE.ink);
     y = drawBody(doc, contextIntro, bounds(doc).w, y, runHeader);
-    y += PAGE.line * 0.5;
+    y += SPACING.listGap;
     
     const contextItems: string[] = [];
     const cp = data.contextProfile;
@@ -1549,16 +1549,16 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     const scoreText = `${scoreLabel} (${score.toFixed(1)}/3)`;
     const scoreX = bounds(doc).pw - PAGE.margin - doc.getTextWidth(scoreText);
     doc.text(scoreText, scoreX, y);
-    y += PAGE.line * 2;
+    y += SPACING.h2After * 2; // Extra space after domain header
     
     // Why it matters
     setText(doc, PALETTE.ink);
     setFont(doc, TYPO.h3);
     doc.text("Why This Matters", PAGE.margin, y);
-    y += PAGE.line * 1.2;
+    y += SPACING.h2After; // H3 subsection spacing
     setFont(doc, TYPO.body);
     y = drawBody(doc, guidance.whyMatters, bounds(doc).w, y, runHeader);
-    y += PAGE.line * 0.8;
+    y += SPACING.paraGap;
     
     // What good looks like
     setFont(doc, TYPO.body); // Set font BEFORE measurement
@@ -1566,9 +1566,9 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     ({ cursorY: y } = addPageIfNeeded(doc, goodLooksHeight, y, runHeader));
     setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
     doc.text("What Good Looks Like", PAGE.margin, y);
-    y += PAGE.line * 1.2;
+    y += SPACING.h2After; // H3 subsection spacing
     y = drawBullets(doc, guidance.whatGoodLooks, bounds(doc).w, PAGE.margin, y, runHeader);
-    y += PAGE.line * 0.5;
+    y += SPACING.listGap;
     
     // How to improve
     setFont(doc, TYPO.body); // Set font BEFORE measurement
@@ -1576,10 +1576,10 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     ({ cursorY: y } = addPageIfNeeded(doc, improveHeight, y, runHeader));
     setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
     doc.text("How to Improve", PAGE.margin, y);
-    y += PAGE.line * 1.2;
+    y += SPACING.h2After; // H3 subsection spacing
     setFont(doc, TYPO.body);
     y = drawBody(doc, guidance.howToImprove, bounds(doc).w, y, runHeader);
-    y += PAGE.line * 0.8;
+    y += SPACING.paraGap;
     
     // Common pitfalls
     if (guidance.commonPitfalls && guidance.commonPitfalls.length > 0) {
@@ -1588,9 +1588,9 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
       ({ cursorY: y } = addPageIfNeeded(doc, pitfallsHeight, y, runHeader));
       setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
       doc.text("Common Pitfalls to Avoid", PAGE.margin, y);
-      y += PAGE.line * 1.2;
+      y += SPACING.h2After; // H3 subsection spacing
       y = drawBullets(doc, guidance.commonPitfalls, bounds(doc).w, PAGE.margin, y, runHeader);
-      y += PAGE.line * 0.5;
+      y += SPACING.listGap;
     }
     
     // Discussion prompts (styled differently)
@@ -1600,9 +1600,9 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
       ({ cursorY: y } = addPageIfNeeded(doc, promptsHeight, y, runHeader));
       setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
       doc.text("Strategic Discussion Questions", PAGE.margin, y);
-      y += PAGE.line * 1.2;
+      y += SPACING.h2After; // H3 subsection spacing
       y = drawPrompts(doc, guidance.discussionPrompts, bounds(doc).w, y, runHeader);
-      y += PAGE.line * 0.8;
+      y += SPACING.paraGap;
     }
   }
 
@@ -1616,13 +1616,13 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
     y = drawSectionTitle(doc, "STRATEGIC INSIGHTS", y, runHeader);
     setFont(doc, TYPO.body); setText(doc, PALETTE.inkSubtle);
     y = drawBody(doc, errorNotice, bounds(doc).w, y, runHeader);
-    y += PAGE.line * 1.5;
+    y += SPACING.paraGap;
   } else if (Array.isArray(insights) && insights.length > 0) {
     setFont(doc, TYPO.body); // Set font BEFORE measurement
-    const insightsHeight = PAGE.line * 2.5 + insights.slice(0, 5).reduce((h, ins) => {
-      const titleH = PAGE.line * 1.1;
+    const insightsHeight = SPACING.h1Before + SPACING.h1After + PAGE.line + insights.slice(0, 5).reduce((h, ins) => {
+      const titleH = SPACING.h2After;
       const bodyH = estimateTextHeight(doc, normalizeText(ins.description || ins.reasoning || ""), bounds(doc).w);
-      return h + titleH + bodyH + PAGE.line * 0.8;
+      return h + titleH + bodyH + SPACING.paraGap;
     }, 0);
     ({ cursorY: y } = addPageIfNeeded(doc, insightsHeight, y, runHeader));
     y = drawSectionTitle(doc, "STRATEGIC INSIGHTS", y, runHeader);
@@ -1630,10 +1630,10 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
       ({ cursorY: y } = addPageIfNeeded(doc, 16, y, runHeader));
       setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
       doc.text(normalizeText(ins.title || "Insight"), PAGE.margin, y);
-      y += PAGE.line * 1.1;
+      y += SPACING.h2After; // H3 subsection spacing
       setFont(doc, TYPO.body);
       y = drawBody(doc, normalizeText(ins.description || ins.reasoning || ""), bounds(doc).w, y, runHeader);
-      y += PAGE.line * 0.8;
+      y += SPACING.paraGap;
     }
   }
 
