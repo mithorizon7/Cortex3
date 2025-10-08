@@ -408,7 +408,7 @@ function newDoc(J: any, fonts: PDFFontData | null, metadata?: { title?: string; 
   
   doc.setProperties({
     title: metadata?.title || "CORTEX Brief",
-    subject: metadata?.subject || "Executive AI Readiness Brief",
+    subject: metadata?.subject || "Executive AI Strategic Maturity Assessment",
     creator: "CORTEX™ Executive AI Readiness Platform",
     author: "CORTEX",
     keywords: metadata?.keywords || "AI, readiness, assessment, executive, strategy"
@@ -888,7 +888,7 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
   }
 
   // Finalize footers (includes logo - no need for separate addFooterLogoToAllPages call)
-  finalizeFooters(doc, "CORTEX Executive AI Readiness Brief");
+  finalizeFooters(doc, "CORTEX Executive AI Strategic Maturity Assessment");
 
   const blob = doc.output("blob");
   if (!(blob instanceof Blob)) throw new Error("Failed to generate PDF blob");
