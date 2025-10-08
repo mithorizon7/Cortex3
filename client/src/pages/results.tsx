@@ -728,7 +728,7 @@ export default function ResultsPage() {
                             
                             {gate.actions && gate.actions.length > 0 && (
                               <div className="space-y-2">
-                                <p className="font-medium text-xs text-muted-foreground uppercase tracking-wide">Quick Actions:</p>
+                                <p className="font-medium text-xs text-muted-foreground uppercase tracking-wide">Quick Actions to Consider:</p>
                                 <div className="grid gap-1.5">
                                   {gate.actions.map((action: string, index: number) => (
                                     <div key={index} className="flex items-start gap-2">
