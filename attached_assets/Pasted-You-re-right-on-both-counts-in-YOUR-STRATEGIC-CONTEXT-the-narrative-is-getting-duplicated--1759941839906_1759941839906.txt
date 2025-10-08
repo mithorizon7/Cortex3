@@ -1,0 +1,167 @@
+You're right on both counts: in **YOUR STRATEGIC CONTEXT** the narrative is getting **duplicated**, and the layout logic is sometimes reserving space that ends up as **big white gaps**.
+
+Below I’ll (1) show exactly where it happens in your two PDFs, (2) explain the code‑level cause, and (3) give drop‑in fixes that stop the duplicate, keep the section tight, and avoid the excess whitespace.
+
+---
+
+## What’s happening (with evidence)
+
+* In **ID 66990332**, page 1 prints a full narrative under **YOUR STRATEGIC CONTEXT** (“This organization's signature combines high regulatory intensity…”) **and then the same narrative appears again** as the **Strategic Context** paragraph on page 2. That’s the duplicate you’re seeing. 
+
+* In **ID CCB33831** and **ID 5EB68A4F**, the top “YOUR STRATEGIC CONTEXT” block and the interior **Strategic Context** paragraph are **not identical**; the cover is a high‑level narrative, while the interior “Strategic Context” starts with executive “what to do now” guidance. Those look right and don’t feel repetitive.
+
+* The **large white space** shows up in 66990332 because the layout engine reserves a left column for “Strategic Context” and preflights a two‑column block even when the left text ends up duplicative or effectively empty. That forces a page break or leaves unused space to keep columns aligned on the next page. You can see an entire page devoted to “Strategic Context + Org Context + (short) Leadership Guidance,” followed by a separate **Scenario Lens** page with a lot of open area. 
+
+---
+
+## Why it happens (root cause in the generator)
+
+1. **Paragraph‑split fallback = duplication.**
+   You split the long narrative into paragraphs for two placements:
+
+   * Cover page: **YOUR STRATEGIC CONTEXT** (you currently render **the full narrative** there).
+   * Interior: **Strategic Context** (you render `parts[1] || parts[0]` as a fallback).
+
+   When the narrative only has **one paragraph**, the interior fallback picks **the same paragraph** (`parts[0]`), so the reader sees the same text twice. That exact pattern yields the 66990332 duplicate. 
+
+2. **Preflight assumes a left column exists.**
+   Your two‑column preflight reserves height for the left **Strategic Context** block and for the right **Organizational Context** cards. When the left should be omitted (deduped) or is very short, that reserved height still drives a break/start position, leaving **avoidable white bands**.
+
+---
+
+## The fixes (surgical and reliable)
+
+### A) Never render the same paragraph twice
+
+Make the cover and interior **mutually exclusive** sources:
+
+```ts
+// Build once
+const full = (hasMirror ? data.mirror.insight : data.insight) ?? "";
+const paras = splitOnBlankLines(full); // e.g., text.split(/\n{2,}/)
+const coverText = paras[0] ?? "";
+const interiorContext = (paras[1] && paras[1].trim()) ? paras[1] : "";
+
+// Near-duplicate guard (prevents subtle “same text with tiny edits” repeat)
+const norm = (s: string) => s.replace(/\s+/g, " ").replace(/[^\p{L}\p{N} ]/gu,"").toLowerCase().trim();
+const isDup = interiorContext && (norm(interiorContext) === norm(coverText) || norm(coverText).includes(norm(interiorContext)));
+
+// What to render
+const showCoverContext = !!coverText;
+const showInteriorContext = !!interiorContext && !isDup;
+
+// Render:
+// 1) Cover page uses ONLY coverText (not the full narrative).
+// 2) Interior Strategic Context renders ONLY if showInteriorContext.
+```
+
+> Key change: **the cover prints *only the first paragraph***; the interior prints the **second**. If there’s no second paragraph—or it’s effectively the same—**skip** the interior Strategic Context entirely. That alone removes the duplication you see in 66990332 (cover = narrative; interior = duplicate paragraph), while preserving the healthy behavior in 5EB68A4F where the cover paragraph differs from the interior executive guidance.
+
+---
+
+### B) Don’t reserve space for a left column you won’t draw
+
+Teach the column layout to adapt when `showInteriorContext` is false:
+
+```ts
+// Before building the two-column block:
+const cols = twoColumn(doc, y); // {left:{x,w}, right:{x,w}}
+setFont(doc, TYPO.body);
+
+// Measure left only if we’ll draw it
+let leftNeed = 0;
+if (showInteriorContext) {
+  const leftLines = wrap(doc, interiorContext, cols.left.w);
+  leftNeed = leftLines.length * PAGE.line + 2 + (PAGE.line * 1.5 /* title + spacing */);
+}
+
+// Measure right cards (as you already do)
+const allBodies = buckets.map(b => b.items.map(arr => wrap(doc, arr.join(" "), cols.right.w - 6)));
+const rightNeed = allBodies.reduce((h, body) => h + estimateCardHeight(body) + 2, PAGE.line * 3);
+
+// Preflight height = only what we will actually draw
+const blockNeed = Math.max(showInteriorContext ? leftNeed : 0, rightNeed) + PAGE.line * 1.5;
+({ cursorY: y } = addPageIfNeeded(doc, blockNeed, y, runHeader));
+
+// Draw:
+if (showInteriorContext) {
+  drawSubTitle(doc, "Strategic Context", cols.left.x, y); y += 2;
+  for (const ln of wrap(doc, interiorContext, cols.left.w)) { /* draw */ }
+}
+
+// Right column always draws
+for (const card of buckets) { /* measure, addPageIfNeeded(need), drawCard */ }
+```
+
+> If `showInteriorContext` is false, the **leftNeed** contribution is zero—so you **don’t** push a new page for a block that won’t be drawn. That’s how you eliminate the big white bands caused by reserving space for a phantom left column. The result mirrors the cleaner composition you see in the non‑duplicated report. 
+
+---
+
+### C) (Optional) Use a single‑column fallback when there’s no interior context
+
+If you want to reclaim even more space when the duplicate is skipped, switch to a **wide** layout for the right‑hand content:
+
+```ts
+const useWideRight = !showInteriorContext;
+const rightWidth = useWideRight ? (PAGE.width - 2*PAGE.margin) : cols.right.w;
+const rightX = useWideRight ? PAGE.margin : cols.right.x;
+
+// Measure and draw cards using rightWidth/rightX when useWideRight
+```
+
+This keeps the “Organizational Context” and “Leadership Guidance” from appearing skinny with a blank column beside them.
+
+---
+
+### D) Keep cover concise by design
+
+On the **YOUR STRATEGIC CONTEXT** page:
+
+* Use only **`coverText` (first paragraph)**, not the entire insight blob.
+* Keep the long, step‑by‑step guidance for the **interior** “Strategic Context” section when there’s a distinct second paragraph.
+
+That’s exactly the difference you see in the non‑duplicated report (cover = high‑level; interior = executive “what to do next”), and it keeps the first page visually tight. 
+
+---
+
+## Quick regression tests you/your dev can run
+
+1. **One‑paragraph input** (like 66990332):
+
+   * Cover shows that paragraph once.
+   * Interior *Strategic Context* is **omitted** (no duplicate text).
+   * The right‑hand content starts immediately with no large blank band. 
+
+2. **Two‑paragraph input** (like 5EB68A4F):
+
+   * Cover shows para 1.
+   * Interior *Strategic Context* shows para 2 (distinct language), followed by Org Context and Guidance. 
+
+3. **Copy/paste** a sentence from cover and interior—should differ when `paras.length > 1`; should match only once otherwise.
+
+4. **Acrobat page thumbnails**: no single page dominated by a narrow column with a blank neighbor unless you intentionally chose two columns.
+
+---
+
+## Extra polish (optional, if you want the pages to feel “magazine‑clean”)
+
+* **Widow/orphan control:** if a section header would land in the last 2–3 lines of a page, force it to next page so headings aren’t stranded.
+* **Dynamic lens placement:** if **Scenario Lens**’s measured height is < ~35% of the page, allow it to share the previous page beneath **Leadership Guidance**; otherwise start a fresh page.
+* **Similarity threshold:** instead of exact near‑duplicate check, use a token‑set Jaccard ≥0.9 to decide if cover and interior are “the same enough” to drop one.
+
+---
+
+## Bottom line
+
+* The duplicate is caused by **fallback to the same paragraph** for the interior “Strategic Context” when there isn’t a second paragraph; the fix is to **render cover’s first paragraph only** and **skip the interior** when it would duplicate.
+* The white space is caused by **preflighting space for a left column you then don’t meaningfully use**; measure only what you’ll draw, and optionally expand the right‑hand content to full width when the left is omitted.
+
+Do those two things and YOUR STRATEGIC CONTEXT will read once, look tight, and avoid the big white bands.
+
+---
+
+**Confidence**
+
+* **High** on the duplication diagnosis (you can see the same text on page 1 and again under *Strategic Context* in 66990332). 
+* **High** that the gating + preflight changes will eliminate the white‑space artifacts (they flow from reserving a left column that shouldn’t render).
+* **Medium‑high** on exact implementation details since I can’t see the private `pdf-generator-9.ts` diff here; the snippets above slot cleanly into the pattern you’ve used so far.

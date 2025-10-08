@@ -1,0 +1,37 @@
+What I’d still tighten (small but worthwhile)
+A. Make font state explicit before every measurement
+Why: wrap() relies on the current doc font to compute widths. In your current flow it’s usually set to body text just before measurement, but it’d be easy for a future refactor to leave you in h1/h2 state and under‑ or over‑measure.
+Change: Set body font explicitly right before any preflight wrap/measure calls.
+// before:
+const preflightLeftLines = wrap(doc, strategicContext, twoColumn(doc, y).left.w);
+
+// after:
+setFont(doc, TYPO.body);  // ensure measurement font is the body font
+const preflightLeftLines = wrap(doc, strategicContext, twoColumn(doc, y).left.w);
+Do the same for the buckets.reduce(...) measurement. ✔️ (Context: your current preflight block.) 
+pdf-generator-8
+B. Remove minor duplicate work in right‑column preflight
+Why: Inside your buckets.reduce, you recompute twoColumn(doc, y) for each bucket. It’s constant for a given y. Not a correctness bug, just wasted calls.
+Change:
+const col = twoColumn(doc, y);
+const rightNeed = buckets.reduce((h, b) => {
+  const body = b.items.map(arr => wrap(doc, arr.join(" "), col.right.w - 6));
+  return h + estimateCardHeight(body) + 2;
+}, PAGE.line * 3);
+✔️ (Current reduce site.) 
+pdf-generator-8
+C. Consider dropping the if (y + blockNeed > maxY) guard
+Why: addPageIfNeeded already short‑circuits when there’s space. Calling it unconditionally is simpler and removes a second, parallel condition.
+Change:
+({ cursorY: y } = addPageIfNeeded(doc, blockNeed, y, runHeader));
+✔️ (Current guard.) 
+pdf-generator-8
+D. Normalize once at ingestion for long paragraphs (optional perf)
+Why: You call normalizeText() inside wrap() for every wrap operation. For very long inputs (e.g., pasting a 1–2 page paragraph), normalize once and cache the clean string, then wrap that. Not required; just a micro‑perf win.
+Where: wrap() & call sites. ✔️ (Your normalization/wrap implementations.) 
+pdf-generator-8
+E. Keep only one card‑height estimator
+Why: I see estimateCardHeight defined in the helpers; just ensure you don’t accidentally re‑declare it if you split modules later. Today you’re fine; just a caution for future refactors. ✔️  
+pdf-generator-8
+F. One last guard for Leadership Guidance
+Why: You pre‑measure actions and watchouts and page‑break once, then draw both columns. If one side is empty and the other is long, it works—but you can reduce tiny trailing gaps by aligning the start of each sub‑column after a single drawSectionTitle call (you already do this) and keeping the per‑list indent/gaps consistent. This is nit‑level; the current code is acceptable. ✔️

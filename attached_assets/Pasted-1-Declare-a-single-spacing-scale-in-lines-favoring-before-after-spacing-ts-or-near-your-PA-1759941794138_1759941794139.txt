@@ -1,0 +1,68 @@
+1) Declare a single spacing scale (in lines), favoring before > after
+// spacing.ts (or near your PAGE constants)
+const L = (n: number) => n * PAGE.line;        // convert “lines” to mm
+
+export const SPACING = {
+  sectionGap: L(2.0),      // gap between sections (before the next H1)
+  h1Before:   L(1.75),     // space before H1
+  h1After:    L(0.60),     // space after H1
+  h2Before:   L(1.25),     // space before H2
+  h2After:    L(0.50),     // space after H2
+  paraGap:    L(0.80),     // gap between paragraphs
+  listGap:    L(0.70),     // gap between list items
+  headerPad:  L(1.00),     // extra pad under your running header on a fresh page
+};
+2) Make heading helpers own all vertical spacing (so callers don’t sprinkle extra y += …)
+function drawSectionTitle(doc: jsPDF, text: string, x: number, y: number, runHeader: () => number) {
+  // ensure we won’t strand the title at the bottom
+  ({ cursorY: y } = addPageIfNeeded(doc, SPACING.h1Before + PAGE.line + SPACING.h1After, y, runHeader));
+
+  // extra pad if we are just under the running header
+  const pageTop = PAGE.margin + /*your header height*/ 8;   // adjust to your header’s true height
+  if (y < pageTop + 1) y = pageTop + SPACING.headerPad;
+
+  y += SPACING.h1Before;
+  setFont(doc, TYPO.h1); setText(doc, PALETTE.ink);
+  doc.text(text, x, y);
+  y += SPACING.h1After;
+  return y;
+}
+
+function drawSubTitle(doc: jsPDF, text: string, x: number, y: number, runHeader: () => number) {
+  ({ cursorY: y } = addPageIfNeeded(doc, SPACING.h2Before + PAGE.line + SPACING.h2After, y, runHeader));
+  y += SPACING.h2Before;
+  setFont(doc, TYPO.h2); setText(doc, PALETTE.ink);
+  doc.text(text, x, y);
+  y += SPACING.h2After;
+  return y;
+}
+Important: remove any extra spacing the callers add before/after headings. Let these helpers be the single source of truth.
+3) Add an explicit section boundary before every H1
+At each major section (“ORGANIZATIONAL CONTEXT”, “ACTION PRIORITIES”, “DOMAIN ANALYSIS”, “STRATEGIC INSIGHTS”, etc.), add a small pre-gap so the previous block doesn’t crash into the next heading:
+// before calling drawSectionTitle(...)
+y += SPACING.sectionGap; // section-to-section separation
+y = drawSectionTitle(doc, "ORGANIZATIONAL CONTEXT", PAGE.margin, y, runHeader);
+4) Harmonize list/paragraph gaps (reduce the “too much under the heading” feel)
+Where you render body text and bullets under a heading:
+// paragraphs
+for (const ln of wrap(doc, text, colW)) {
+  ({ cursorY: y } = addPageIfNeeded(doc, PAGE.line, y, runHeader));
+  doc.text(ln, x, y);
+  y += PAGE.line;
+}
+y += SPACING.paraGap;
+
+// bullets
+for (const item of items) {
+  const lines = wrap(doc, item, colW - indent);
+  drawBulletDot(doc, x + 2.2, y);      // vector dot
+  for (let i = 0; i < lines.length; i++) {
+    doc.text(i ? "  " + lines[i] : lines[i], x + indent, y);
+    y += PAGE.line;
+  }
+  y += SPACING.listGap;
+}
+This keeps the area after a heading tight and consistent, while the before spacing is handled by the heading helper.
+5) Prevent “heading at the very bottom” (widow control)
+You already call addPageIfNeeded. Ensure the look-ahead for headings includes title + first line so a heading is never stranded with a cavern of white space above the next page’s content.
+We did that in the helpers by reserving SPACING.h#Before + PAGE.line + SPACING.h#After.
