@@ -877,9 +877,11 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
   // Disclaimer (no title, smaller italic-style text at bottom)
   const disclaimerText = hasMirror ? data.mirror?.disclaimer : data.disclaimer;
   if (disclaimerText) {
-    ({ cursorY: y } = addPageIfNeeded(doc, 18, y, runHeader));
+    setFont(doc, TYPO.caption); // Set font BEFORE measurement
+    const disclaimerHeight = PAGE.line * 0.5 + estimateTextHeight(doc, disclaimerText, bounds(doc).w);
+    ({ cursorY: y } = addPageIfNeeded(doc, disclaimerHeight, y, runHeader));
     y += PAGE.line * 0.5; // Small spacer before disclaimer
-    setFont(doc, TYPO.caption); setText(doc, PALETTE.inkSubtle);
+    setText(doc, PALETTE.inkSubtle);
     y = drawBody(doc, disclaimerText, bounds(doc).w, y);
   }
 
@@ -946,7 +948,12 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
 
   // Compared Options
   if (Array.isArray(sessionData.selectedOptions) && sessionData.selectedOptions.length) {
-    ({ cursorY: y } = addPageIfNeeded(doc, 20, y, "CORTEX — Options Studio"));
+    setFont(doc, TYPO.body); // Set font BEFORE measurement
+    const optionsHeight = PAGE.line * 2.5 + sessionData.selectedOptions.reduce((h, opt) => {
+      const desc = (opt as any).shortDescription || (opt as any).fullDescription || "";
+      return h + PAGE.line * 1.1 + estimateTextHeight(doc, String(desc), bounds(doc).w) + 2;
+    }, 0);
+    ({ cursorY: y } = addPageIfNeeded(doc, optionsHeight, y, "CORTEX — Options Studio"));
     y = drawSectionTitle(doc, "COMPARED OPTIONS", y);
     setFont(doc, TYPO.body); setText(doc, PALETTE.ink);
 
@@ -968,7 +975,9 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
 
   // Emphasized lenses
   if (Array.isArray(sessionData.emphasizedLenses) && sessionData.emphasizedLenses.length) {
-    ({ cursorY: y } = addPageIfNeeded(doc, 18, y, "CORTEX — Options Studio"));
+    setFont(doc, TYPO.body); // Set font BEFORE measurement
+    const lensHeight = PAGE.line * 2.5 + estimateListHeight(doc, sessionData.emphasizedLenses, bounds(doc).w) + PAGE.line * 0.5;
+    ({ cursorY: y } = addPageIfNeeded(doc, lensHeight, y, "CORTEX — Options Studio"));
     y = drawSectionTitle(doc, "WHAT WE EMPHASIZED", y);
     y = drawBullets(doc, sessionData.emphasizedLenses, bounds(doc).w, PAGE.margin, y);
     y += PAGE.line * 0.5;
@@ -977,10 +986,18 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
   // Misconception Check (if present)
   const responses = sessionData.misconceptionResponses ?? {};
   if (Object.keys(responses).length) {
-    ({ cursorY: y } = addPageIfNeeded(doc, 22, y, "CORTEX — Options Studio"));
+    setFont(doc, TYPO.body); // Set font BEFORE measurement
+    const map = MISCONCEPTION_QUESTIONS.reduce((acc, q) => { acc[q.id] = q; return acc; }, {} as Record<string, typeof MISCONCEPTION_QUESTIONS[0]>);
+    const miscHeight = PAGE.line * 2.5 + Object.entries(responses).reduce((h, [qid]) => {
+      const q = map[qid];
+      if (!q) return h;
+      const qHeight = estimateTextHeight(doc, q.question, bounds(doc).w) + PAGE.line * 1.1;
+      const explHeight = q.explanation ? estimateTextHeight(doc, q.explanation, bounds(doc).w) : 0;
+      return h + qHeight + explHeight + 1.2;
+    }, 0);
+    ({ cursorY: y } = addPageIfNeeded(doc, miscHeight, y, "CORTEX — Options Studio"));
     y = drawSectionTitle(doc, "MISCONCEPTION CHECK RESULTS", y);
 
-    const map = MISCONCEPTION_QUESTIONS.reduce((acc, q) => { acc[q.id] = q; return acc; }, {} as Record<string, typeof MISCONCEPTION_QUESTIONS[0]>);
     for (const [qid, ans] of Object.entries(responses)) {
       const q = map[qid];
       if (!q) continue;
@@ -1003,7 +1020,11 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
 
   // Reflection Q&A
   if (sessionData.reflectionAnswers && Object.keys(sessionData.reflectionAnswers).length) {
-    ({ cursorY: y } = addPageIfNeeded(doc, 22, y, "CORTEX — Options Studio"));
+    setFont(doc, TYPO.body); // Set font BEFORE measurement
+    const reflHeight = PAGE.line * 2.5 + Object.entries(sessionData.reflectionAnswers).reduce((h, [qid, answer]) => {
+      return h + PAGE.line * 1.1 + estimateTextHeight(doc, String(answer), bounds(doc).w) + 1.5;
+    }, 0);
+    ({ cursorY: y } = addPageIfNeeded(doc, reflHeight, y, "CORTEX — Options Studio"));
     y = drawSectionTitle(doc, "REFLECTIONS", y);
     for (const [qid, answer] of Object.entries(sessionData.reflectionAnswers)) {
       ({ cursorY: y } = addPageIfNeeded(doc, 14, y, "CORTEX — Options Studio"));
@@ -1408,7 +1429,14 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
 
   // Action Priorities
   if (Array.isArray(priorities) && priorities.length > 0) {
-    ({ cursorY: y } = addPageIfNeeded(doc, 22, y, runHeader));
+    setFont(doc, TYPO.body); // Set font BEFORE measurement
+    const priHeight = PAGE.line * 2.5 + priorities.slice(0, 5).reduce((h, p) => {
+      let itemH = PAGE.line * 1.1; // title
+      if (p.timeframe) itemH += PAGE.line * 1.1;
+      if (p.description) itemH += estimateTextHeight(doc, normalizeText(p.description), bounds(doc).w - 6);
+      return h + itemH + PAGE.line * 0.5;
+    }, 0) + PAGE.line * 0.5;
+    ({ cursorY: y } = addPageIfNeeded(doc, priHeight, y, runHeader));
     y = drawSectionTitle(doc, "ACTION PRIORITIES", y);
     
     for (let idx = 0; idx < Math.min(5, priorities.length); idx++) {
@@ -1437,7 +1465,8 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
   }
 
   // Comprehensive Domain Analysis
-  ({ cursorY: y } = addPageIfNeeded(doc, 22, y, runHeader));
+  const domainHeight = PAGE.line * 2.5; // Just the section title
+  ({ cursorY: y } = addPageIfNeeded(doc, domainHeight, y, runHeader));
   y = drawSectionTitle(doc, "DOMAIN ANALYSIS", y);
   
   const pillarOrder = ['C', 'O', 'R', 'T', 'E', 'X'];
@@ -1525,14 +1554,22 @@ export async function generateExecutiveBriefPDF(data: EnhancedAssessmentResults,
   // Executive Insights
   if (insightGenerationFailed) {
     // Show visible notice when AI insight generation fails
-    ({ cursorY: y } = addPageIfNeeded(doc, 22, y, runHeader));
+    const errorNotice = "AI-powered strategic insights could not be generated for this report. This does not affect your assessment results or domain guidance. Please contact support if this issue persists.";
+    setFont(doc, TYPO.body); // Set font BEFORE measurement
+    const errorHeight = PAGE.line * 2.5 + estimateTextHeight(doc, errorNotice, bounds(doc).w) + PAGE.line * 1.5;
+    ({ cursorY: y } = addPageIfNeeded(doc, errorHeight, y, runHeader));
     y = drawSectionTitle(doc, "STRATEGIC INSIGHTS", y);
     setFont(doc, TYPO.body); setText(doc, PALETTE.inkSubtle);
-    const errorNotice = "AI-powered strategic insights could not be generated for this report. This does not affect your assessment results or domain guidance. Please contact support if this issue persists.";
     y = drawBody(doc, errorNotice, bounds(doc).w, y, runHeader);
     y += PAGE.line * 1.5;
   } else if (Array.isArray(insights) && insights.length > 0) {
-    ({ cursorY: y } = addPageIfNeeded(doc, 22, y, runHeader));
+    setFont(doc, TYPO.body); // Set font BEFORE measurement
+    const insightsHeight = PAGE.line * 2.5 + insights.slice(0, 5).reduce((h, ins) => {
+      const titleH = PAGE.line * 1.1;
+      const bodyH = estimateTextHeight(doc, normalizeText(ins.description || ins.reasoning || ""), bounds(doc).w);
+      return h + titleH + bodyH + PAGE.line * 0.8;
+    }, 0);
+    ({ cursorY: y } = addPageIfNeeded(doc, insightsHeight, y, runHeader));
     y = drawSectionTitle(doc, "STRATEGIC INSIGHTS", y);
     for (const ins of insights.slice(0, 5)) {
       ({ cursorY: y } = addPageIfNeeded(doc, 16, y, runHeader));
