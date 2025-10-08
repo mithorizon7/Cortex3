@@ -217,8 +217,7 @@ function normalizeText(s: any): string {
     .replace(/\u00AD/g, "")                               // Soft hyphen -> remove (no display)
     .replace(/\u2011/g, "-")                              // Non-breaking hyphen -> hyphen-minus
     .replace(/\u2212/g, "-")                              // Math minus -> hyphen-minus
-    .replace(/\u2013/g, "-")                              // En dash -> hyphen-minus
-    .replace(/\u2014/g, "-")                              // Em dash -> hyphen-minus
+    // Preserve en/em dashes now that Inter font is embedded (better typography)
     .replace(/[ \t]{2,}/g, " ")
     .replace(/\s+\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
@@ -254,8 +253,8 @@ function wrap(doc: any, text: string, width: number): string[] {
       
       for (const char of chars) {
         const testChunk = chunk + char;
-        if (doc.getTextWidth(testChunk + '-') > maxTokenLength && chunk.length > 0) {
-          chunks.push(chunk + '-');
+        if (doc.getTextWidth(testChunk + '\u200B') > maxTokenLength && chunk.length > 0) {
+          chunks.push(chunk + '\u200B');  // Zero-width space for clean copy/paste
           chunk = char;
         } else {
           chunk = testChunk;
@@ -679,8 +678,8 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
   // Split insight text properly between Executive Summary and Strategic Context
   const insightParts = (hasMirror ? data.mirror?.insight : data.insight)?.split('\n\n') || [];
   const mainInsight = insightParts[0] || '';
-  // Use the second part for context, or fall back to empty for mirror data if not split
-  const strategicContext = insightParts[1] || (hasMirror ? '' : mainInsight);
+  // Always fall back to first paragraph if second doesn't exist (prevents empty context)
+  const strategicContext = (insightParts[1]?.trim() && insightParts[1].trim().length > 0) ? insightParts[1] : mainInsight;
 
   // Your Strategic Context
   y = drawSectionTitle(doc, "YOUR STRATEGIC CONTEXT", y);
@@ -817,12 +816,8 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
     y = drawBody(doc, disclaimerText, bounds(doc).w, y);
   }
 
-  // Finalize footers
+  // Finalize footers (includes logo - no need for separate addFooterLogoToAllPages call)
   finalizeFooters(doc, "CORTEX Executive AI Readiness Brief");
-
-  // Download
-  // Add footer logo to all pages
-  addFooterLogoToAllPages(doc, FOOTER_LOGO_BASE64, { widthMm: 22, marginMm: 12, format: "PNG", align: "center", compression: "FAST" });
 
   const blob = doc.output("blob");
   if (!(blob instanceof Blob)) throw new Error("Failed to generate PDF blob");
@@ -961,9 +956,6 @@ export async function handleExportPDF(sessionData: OptionsStudioData, assessment
   doc.text(summary, PAGE.margin, y + 2);
 
   finalizeFooters(doc, "CORTEX Options Studio");
-
-  // Add footer logo to all pages
-  addFooterLogoToAllPages(doc, FOOTER_LOGO_BASE64, { widthMm: 22, marginMm: 12, format: "PNG", align: "center", compression: "FAST" });
 
   const blob = doc.output("blob");
   if (!(blob instanceof Blob)) throw new Error("Failed to generate PDF blob");
