@@ -270,6 +270,48 @@ function wrap(doc: any, text: string, width: number): string[] {
   return Array.isArray(lines) ? lines.map((x: any) => String(x)) : [String(lines)];
 }
 
+/* ====================================================================================
+   CONTENT MEASUREMENT & VALIDATION HELPERS
+   - Measure content height before drawing to prevent white gaps
+   - Robust validation to prevent skipping sections with whitespace-only text
+==================================================================================== */
+
+// Check if content is truly non-empty (not just whitespace)
+function hasContent(s?: string): boolean {
+  return typeof s === "string" && /\S/.test(s);
+}
+
+// Check if array has any non-empty content
+function hasList(arr?: string[]): boolean {
+  return Array.isArray(arr) && arr.some(hasContent);
+}
+
+// Estimate height of wrapped text lines
+function estimateTextHeight(doc: any, text: string, width: number): number {
+  if (!hasContent(text)) return 0;
+  const lines = wrap(doc, text, width);
+  return lines.length * PAGE.line;
+}
+
+// Estimate height of bullet list
+function estimateListHeight(doc: any, items: string[], width: number): number {
+  if (!hasList(items)) return 0;
+  return items.reduce((h, item) => {
+    if (!hasContent(item)) return h;
+    const lines = wrap(doc, item, width - 6); // Account for bullet indent
+    return h + (lines.length * PAGE.line) + 1.5; // Line height + gap
+  }, 0);
+}
+
+// Estimate height of an organizational context card
+function estimateCardHeight(bodyLines: string[][]): number {
+  const headerH = PAGE.line * 1.8; // Title area
+  const bodyH = bodyLines.reduce((acc, ls) => 
+    acc + (ls.length * (PAGE.line - 0.1)) + 1.2, 0
+  );
+  return headerH + bodyH;
+}
+
 // Running header (page > 1)
 function runningHeader(doc: any, pageWidth: number, title: string) {
   const y = PAGE.margin - 8;
