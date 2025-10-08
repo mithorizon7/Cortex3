@@ -7,7 +7,7 @@ export const APP_CONFIG = {
   // Rate Limiting
   RATE_LIMIT: {
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: process.env.NODE_ENV === 'development' ? 1000 : 1000, // Anonymous users (by IP) - raised for MIT event
+    max: process.env.NODE_ENV === 'development' ? 10000 : 10000, // Anonymous users (by IP) - raised for MIT event
     maxAuthenticated: process.env.NODE_ENV === 'development' ? 1000 : 150, // Authenticated users (by userId)
     message: 'Too many requests, please try again later'
   },
