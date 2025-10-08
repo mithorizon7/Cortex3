@@ -233,22 +233,23 @@ export default function HomePage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {/* Context Profile Navigation */}
-                <div className="flex items-center justify-between p-3 rounded-lg bg-card border border-border hover-elevate">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 rounded-lg bg-card border border-border hover-elevate">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#750014] to-[#5a000f] flex items-center justify-center flex-shrink-0">
                       <ClipboardList className="h-5 w-5 text-white" />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <div className="font-semibold text-sm">Context Profile</div>
                       <div className="text-xs text-muted-foreground">Your organizational context</div>
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto flex-shrink-0">
                     <Button 
                       variant="outline" 
                       size="sm"
                       onClick={() => navigate('/context-profile')}
                       data-testid="button-review-context-answers"
+                      className="w-full sm:w-auto"
                     >
                       Review Answers
                     </Button>
@@ -257,6 +258,7 @@ export default function HomePage() {
                       size="sm"
                       onClick={() => navigate(`/context-insight/${userAssessment.id}`)}
                       data-testid="button-view-situation-assessment"
+                      className="w-full sm:w-auto"
                     >
                       View Results
                     </Button>
@@ -264,22 +266,23 @@ export default function HomePage() {
                 </div>
 
                 {/* Pulse Check Navigation */}
-                <div className="flex items-center justify-between p-3 rounded-lg bg-card border border-border hover-elevate">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 rounded-lg bg-card border border-border hover-elevate">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#007561] to-[#005a4a] flex items-center justify-center flex-shrink-0">
                       <Activity className="h-5 w-5 text-white" />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <div className="font-semibold text-sm">Pulse Check</div>
                       <div className="text-xs text-muted-foreground">6-domain maturity assessment</div>
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto flex-shrink-0">
                     <Button 
                       variant="outline" 
                       size="sm"
                       onClick={() => navigate(`/pulse/${userAssessment.id}`)}
                       data-testid="button-review-pulse-answers"
+                      className="w-full sm:w-auto"
                     >
                       Review Answers
                     </Button>
@@ -288,6 +291,7 @@ export default function HomePage() {
                       size="sm"
                       onClick={() => navigate(`/results/${userAssessment.id}`)}
                       data-testid="button-view-strategic-profile"
+                      className="w-full sm:w-auto"
                     >
                       View Results
                     </Button>

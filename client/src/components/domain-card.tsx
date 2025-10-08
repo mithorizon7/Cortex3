@@ -235,26 +235,26 @@ function MicroGuideDialog({ guide, children }: MicroGuideDialogProps) {
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="w-[95vw] sm:max-w-3xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] sm:max-w-3xl max-h-[85vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base sm:text-lg pr-8">
             <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-            <span className="truncate">{guide.title}</span>
+            <span className="break-words">{guide.title}</span>
           </DialogTitle>
         </DialogHeader>
-        <div className="space-y-3 sm:space-y-4">
+        <div className="space-y-3 sm:space-y-4 overflow-x-hidden">
           {/* Category and Tags */}
           <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-            <Badge variant="secondary" className="text-xs">
+            <Badge variant="secondary" className="text-xs whitespace-nowrap">
               {guide.category}
             </Badge>
             {guide.pillar && (
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-xs whitespace-nowrap">
                 {CORTEX_PILLARS[guide.pillar as keyof typeof CORTEX_PILLARS]?.name || guide.pillar}
               </Badge>
             )}
             {guide.tags.map(tag => (
-              <Badge key={tag} variant="outline" className="text-xs">
+              <Badge key={tag} variant="outline" className="text-xs whitespace-nowrap">
                 {tag}
               </Badge>
             ))}
@@ -263,13 +263,13 @@ function MicroGuideDialog({ guide, children }: MicroGuideDialogProps) {
           {/* Overview */}
           <div className="bg-muted p-3 sm:p-4 rounded-lg">
             <div className="font-medium text-xs sm:text-sm mb-1.5 sm:mb-2">Overview</div>
-            <div className="text-xs sm:text-sm text-muted-foreground">{guide.overview}</div>
+            <div className="text-xs sm:text-sm text-muted-foreground break-words">{guide.overview}</div>
           </div>
           
           {/* Full Body Content */}
-          <div className="prose prose-sm max-w-none">
+          <div className="prose prose-sm max-w-none overflow-x-hidden">
             <div 
-              className="text-xs sm:text-sm leading-relaxed"
+              className="text-xs sm:text-sm leading-relaxed break-words [&_p]:break-words [&_li]:break-words [&_strong]:break-words"
               dangerouslySetInnerHTML={{ 
                 __html: formatBody(guide.body)
               }} 
@@ -292,9 +292,9 @@ function MicroGuideDialog({ guide, children }: MicroGuideDialogProps) {
                         {step.order}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-xs sm:text-sm">{step.title}</div>
+                        <div className="font-medium text-xs sm:text-sm break-words">{step.title}</div>
                         {step.timeframe && (
-                          <div className="text-xs text-muted-foreground mt-0.5">{step.timeframe}</div>
+                          <div className="text-xs text-muted-foreground mt-0.5 break-words">{step.timeframe}</div>
                         )}
                       </div>
                     </div>
@@ -707,9 +707,9 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
                           : (enhancedGuide?.urgency && urgencyColors[enhancedGuide.urgency as keyof typeof urgencyColors]) || 'bg-muted/30 border-muted/50'
                       }`}
                     >
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
                             {isPrimary && (
                               <Badge variant="default" className="text-xs">
                                 Top Priority
@@ -734,18 +734,18 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
                               </Badge>
                             )}
                           </div>
-                          <h5 className="font-semibold text-sm sm:text-base text-foreground mb-1">
+                          <h5 className="font-semibold text-sm sm:text-base text-foreground mb-1 break-words">
                             {guide.title}
                           </h5>
                           
                           {/* Why this guide was selected */}
                           {enhancedGuide?.reasons && Array.isArray(enhancedGuide.reasons) && enhancedGuide.reasons.length > 0 && (
-                            <p className="text-xs text-primary mb-2">
+                            <p className="text-xs text-primary mb-2 break-words">
                               <strong>Why selected:</strong> {enhancedGuide.reasons.join(', ')}
                             </p>
                           )}
                           
-                          <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                          <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed break-words">
                             {guide.overview}
                           </p>
                         </div>
@@ -753,7 +753,7 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
                           <Button 
                             variant="outline" 
                             size="sm"
-                            className="text-xs h-6 px-2 flex-shrink-0"
+                            className="text-xs h-7 px-3 w-full sm:w-auto flex-shrink-0"
                             data-testid={`button-guide-${guide.id}`}
                           >
                             View Full Guide
@@ -781,16 +781,16 @@ export default function DomainCard({ pillar, stage, priority, contextReason, con
                   <CollapsibleContent className="space-y-2 mt-2">
                     {relevantGuides.slice(3).map((guide) => (
                       <div key={guide.id} className="bg-muted/30 p-2 sm:p-3 rounded-lg border border-muted/50">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1">
-                            <h5 className="font-medium text-xs sm:text-sm text-foreground mb-1">{guide.title}</h5>
-                            <p className="text-xs text-muted-foreground leading-relaxed">{guide.overview}</p>
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <h5 className="font-medium text-xs sm:text-sm text-foreground mb-1 break-words">{guide.title}</h5>
+                            <p className="text-xs text-muted-foreground leading-relaxed break-words">{guide.overview}</p>
                           </div>
                           <MicroGuideDialog guide={guide}>
                             <Button 
                               variant="ghost" 
                               size="sm"
-                              className="text-xs h-6 px-2 flex-shrink-0"
+                              className="text-xs h-7 px-2 w-full sm:w-auto flex-shrink-0"
                               data-testid={`button-guide-${guide.id}`}
                             >
                               View
