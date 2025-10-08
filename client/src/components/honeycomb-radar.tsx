@@ -15,7 +15,7 @@ export default function HoneycombRadar({ pillarScores, className }: HoneycombRad
   
   const centerX = 200;
   const centerY = 200;
-  const maxRadius = 60;
+  const maxRadius = 130;
   
   const pillarOrder = ['C', 'O', 'R', 'T', 'E', 'X'];
   
@@ -36,7 +36,7 @@ export default function HoneycombRadar({ pillarScores, className }: HoneycombRad
       {!showTable ? (
         <>
           <div className="relative">
-            <svg viewBox="0 0 400 400" className="w-full h-auto max-w-md mx-auto" data-testid="radar-chart">
+            <svg viewBox="0 0 400 400" className="w-full h-auto max-w-lg mx-auto" data-testid="radar-chart">
               {/* Background grid rings (equal area) */}
               <g className="radar-grid">
                 {/* Equal-area rings */}
