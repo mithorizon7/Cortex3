@@ -888,7 +888,7 @@ export async function generateSituationAssessmentBrief(data: SituationAssessment
   const headingH = SPACING.h1Before + PAGE.line + SPACING.h1After;
   ({ cursorY: y } = addPageIfNeeded(doc, headingH + Math.max(actionsH, watchoutsH), y, runHeader));
   y = drawSectionTitle(doc, "LEADERSHIP GUIDANCE", y, runHeader);
-  let ay = grid.y, wy = grid.y;
+  let ay = y, wy = y;  // Use updated y after title is drawn
 
   if (actions.length) {
     setFont(doc, TYPO.h3); setText(doc, PALETTE.ink);
