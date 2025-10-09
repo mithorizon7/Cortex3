@@ -189,7 +189,7 @@ const SPACING = {
   h2Before:       L(2.0),    // space before H2
   h2After:        L(1.0),    // space after H2
   h3Before:       L(1.2),    // space before H3
-  h3After:        L(0.8),    // space after H3 (before first bullet/content)
+  h3After:        L(1.5),    // space after H3 (before first bullet/content)
   paraGap:        L(1.5),    // gap between paragraphs
   listGap:        L(0.5),    // gap between list items (tighter for bullets)
   headerPad:      L(1.5),    // extra pad under running header on fresh page
